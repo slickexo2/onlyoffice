@@ -1,4 +1,4 @@
-OnlyOffice Add-on
-=======
+eXo Onlyoffice Editor add-on
+============================
 
-ONLYOFFICE  (http://www.onlyoffice.com/) integration for eXo Platform
+TBD

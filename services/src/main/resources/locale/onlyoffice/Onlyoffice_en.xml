@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bundle>
+  <!-- For menu caption in Action Bar -->
+  <UIActionBar>
+    <tooltip>
+      <OnlyofficeOpen>Edit in Onlyoffice</OnlyofficeOpen>
+      <OnlyofficeClose>Close Onlyoffice</OnlyofficeClose>
+    </tooltip>
+  </UIActionBar>
+  <!-- Used in Administration-Content-Explorer in Views settings a popup with actions list -->
+  <UITabForm>
+    <label>
+      <onlyofficeOpen>Edit in Onlyoffice</onlyofficeOpen>
+      <onlyofficeClose>Close Onlyoffice</onlyofficeClose>
+    </label>
+  </UITabForm>
+  <!-- Messages -->
+  <OnlyofficeEditor>
+    <message>
+      <ViewerNotFound>Office document viewer (PDF) not found</ViewerNotFound>
+      <ViewerNotFound>Office document editor (Onlyoffice) not found</ViewerNotFound>
+    </message>
+  </OnlyofficeEditor>
+</bundle>
