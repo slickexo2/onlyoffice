@@ -16,6 +16,7 @@
  */
 package org.exoplatform.onlyoffice;
 
+import org.apache.commons.io.input.AutoCloseInputStream;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.configuration.ConfigurationException;
 import org.exoplatform.container.xml.InitParams;
@@ -429,23 +430,48 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       if (config != null) {
         validateUser(userId, config);
 
-        // TODO use user session here, see download()
-        Node node = systemNode(config.getWorkspace(), config.getPath());
-        Node content = node.getNode("jcr:content");
-        final String mimeType = content.getProperty("jcr:mimeType").getString();
-        final InputStream data = content.getProperty("jcr:data").getStream();
-        // TODO ensure data stream closed properly: wrap the stream to close on EoF
-        return new DocumentContent() {
-          @Override
-          public String getType() {
-            return mimeType;
+        // use user session here:
+        // remember real context state and session provider to restore them at the end
+        ConversationState contextState = ConversationState.getCurrent();
+        SessionProvider contextProvider = sessionProviders.getSessionProvider(null);
+        try {
+          // XXX we want do all the job under actual (requester) user here
+          Identity userIdentity = identityRegistry.getIdentity(userId);
+          if (userIdentity != null) {
+            ConversationState state = new ConversationState(userIdentity);
+            // Keep subject as attribute in ConversationState.
+            state.setAttribute(ConversationState.SUBJECT, userIdentity.getSubject());
+            ConversationState.setCurrent(state);
+            SessionProvider userProvider = new SessionProvider(state);
+            sessionProviders.setSessionProvider(null, userProvider);
+          } else {
+            LOG.warn("User identity not found " + userId + " for content of " + config.getDocument().getKey() + " " + config.getPath());
+            throw new OnlyofficeEditorException("User identity not found " + userId);
           }
+          
+          // work in user session
+          Node node = node(config.getWorkspace(), config.getPath());
+          Node content = nodeContent(node);
 
-          @Override
-          public InputStream getData() {
-            return data;
-          }
-        };
+          final String mimeType = content.getProperty("jcr:mimeType").getString();
+          // data stream will be closed when EoF will be reached
+          final InputStream data = new AutoCloseInputStream(content.getProperty("jcr:data").getStream());
+          return new DocumentContent() {
+            @Override
+            public String getType() {
+              return mimeType;
+            }
+
+            @Override
+            public InputStream getData() {
+              return data;
+            }
+          };
+        } finally {
+          // restore context env
+          ConversationState.setCurrent(contextState);
+          sessionProviders.setSessionProvider(null, contextProvider);
+        }
       } else {
         throw new BadParameterException("User editor not found or already closed " + userId);
       }
@@ -968,7 +994,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         if (checkIn) {
           node.checkin();
         }
-        
+
         config.close(); // close for use in listeners
         fireSaved(config);
       } catch (RepositoryException e) {
