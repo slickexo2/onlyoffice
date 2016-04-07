@@ -341,7 +341,8 @@
 		};
 
 		this.create = function() {
-			var sampleConfig = {
+			// TODO not used
+			var sampleConfig_ = {
 				width : "100%",
 				height : "100%",
 				type : "desktop",
@@ -391,7 +392,7 @@
 			};
 
 			// TODO for debug only
-			var testConfig = {
+			var testConfig_ = {
 				"width" : "100%",
 				"height" : "100%",
 				"type" : "desktop",
@@ -602,6 +603,9 @@
 			$("#ECMContextMenu a[exo\\:attr='RefreshView'] i").click();
 		};
 
+		/**
+		 * TODO Deprecated. Not used. 
+		 */
 		var initDocument = function() {
 			var $toolbarViewer = $("#UIDocumentWorkspace #toolbarViewerRight");
 			if ($toolbarViewer.size() > 0) {
@@ -925,7 +929,7 @@
 						});
 					} else {
 						if (!state.saved) {
-							if (state.users && state.users.length > 1) {
+							if (state.users && state.users.length > 0) {
 								UI.showInfo("Document in use by others", "Document will be saved when all users will close it.");
 							}
 						}
@@ -1010,7 +1014,6 @@
 	// Load onlyoffice dependencies only in top window (not in iframes of gadgets).
 	if (window == top) {
 		$(function() {
-			//setTimeout(function() {
 			try {
 				// load required styles
 				loadStyle("/onlyoffice/skin/jquery-ui.css");
@@ -1027,7 +1030,6 @@
 			} catch(e) {
 				log("Error configuring Onlyoffice Editor style.", e);
 			}
-			//}, 750);
 		});
 	}
 

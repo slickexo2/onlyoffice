@@ -90,8 +90,11 @@ public class OnlyofficeEditorUIService {
      */
     @Override
     public void onError(Config config) {
-      // on error
-      //reset(config.getEditorConfig().getUser().getId(), config.getWorkspace(), config.getPath());
+      // on error: do some extra server-side handling here if required
+      // FYI in case of error browser user will see it thanks to config state obtained from /state
+      // (localState) REST endpoint.
+      // TODO reset not required here
+      // reset(config.getEditorConfig().getUser().getId(), config.getWorkspace(), config.getPath());
     }
   }
 

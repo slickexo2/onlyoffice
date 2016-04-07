@@ -76,55 +76,12 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
       context.addUIComponentToUpdateByAjax(docWorkspace);
       UIActionBar actionBar = explorer.findFirstComponentOfType(UIActionBar.class);
       context.addUIComponentToUpdateByAjax(actionBar);
-
-      ////// TODO cleanup
-      // UIDocumentInfo docInfo = docWorkspace.findComponentById(UIDocumentInfo.class.getSimpleName());
-      // OnlyofficeEditor editor = docWorkspace.findFirstComponentOfType(OnlyofficeEditor.class);
-      // if (editor == null) {
-      // PDFViewer viewer = docInfo.getChild(PDFViewer.class);
-      // if (viewer == null) {
-      // // Show warning
-      // UIApplication uiApp = comp.getAncestorOfType(UIApplication.class);
-      // uiApp.addMessage(new ApplicationMessage("OnlyofficeEditor.message.ViewerNotFound",
-      // null,
-      // ApplicationMessage.WARNING));
-      // event.getRequestContext().addUIComponentToUpdateByAjax(comp);
-      // return;
-      // }
-      //
-      // // hide viewer
-      // viewer.setRendered(false);
-      // // create editor and open it below
-      // editor = docInfo.addChild(OnlyofficeEditor.class, null, null);
-      // // docInfo.setRenderedChild(OnlyofficeEditor.class);
-      // docWorkspace.setRenderedChild(UIDocumentContainer.class);
-      // event.getRequestContext().addUIComponentToUpdateByAjax(docWorkspace);
-      // } else {
-      // // else, editor already shown - just (re)open it - this should not happen due to filter
-      // event.getRequestContext().addUIComponentToUpdateByAjax(editor);
-      // }
-      // editor.open();
     }
   }
 
   @UIExtensionFilters
   public List<UIExtensionFilter> getFilters() {
     return FILTERS;
-    // TODO cleanup
-    // List<UIExtensionFilter> filters = new ArrayList<UIExtensionFilter>(FILTERS);
-    // WebuiRequestContext context = WebuiRequestContext.getCurrentInstance();
-    // UIJCRExplorer explorer = context.getUIApplication().findFirstComponentOfType(UIJCRExplorer.class);
-    // OnlyofficeEditorUIService editorsUI = WCMCoreUtils.getService(OnlyofficeEditorUIService.class);
-    //
-    // try {
-    // filters.add(new AcceptFilter(editorsUI.canOpen(context.getRemoteUser(),
-    // explorer.getCurrentWorkspace(),
-    // explorer.getCurrentNode().getPath())));
-    // return filters;
-    // } catch (Exception e) {
-    // LOG.error("Error reading current node in explorer", e);
-    // return null;
-    // }
   }
 
   /**

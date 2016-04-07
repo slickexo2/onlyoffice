@@ -423,7 +423,7 @@ public class Config {
       return user;
     }
 
-    protected Editor forUser(String id, String firstName, String lastName, String callbackUrl) {
+    protected Editor forUser(String id, String firstName, String lastName, String lang, String callbackUrl) {
       User otherUser = new User(id, firstName, lastName);
       // FYI locks maintenance will introduce complex logic
       // simpler: each user may contain own lock token only, but don't rely on others
@@ -561,16 +561,17 @@ public class Config {
    * @param id {@link String}
    * @param firstName {@link String}
    * @param lastName {@link String}
+   * @param lang {@link String}
    * @return {@link Config} an instance of config similar to this but with another user in the editor
    */
-  public Config forUser(String id, String firstName, String lastName) {
+  public Config forUser(String id, String firstName, String lastName, String lang) {
     return new Config(documentserverUrl,
                       platformUrl,
                       workspace,
                       path,
                       documentType,
                       document.forUser(id, firstName, lastName, fileUrl(platformUrl, id, document.getKey())),
-                      editorConfig.forUser(id, firstName, lastName, callbackUrl(platformUrl, id, document.getKey())));
+                      editorConfig.forUser(id, firstName, lastName, lang, callbackUrl(platformUrl, id, document.getKey())));
   }
 
   public boolean isCreated() {

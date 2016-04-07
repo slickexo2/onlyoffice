@@ -75,7 +75,17 @@ public interface OnlyofficeEditorService {
    * @throws RepositoryException
    */
   DocumentContent getContent(String userId, String fileKey) throws OnlyofficeEditorException, RepositoryException;
-  
+
+  /**
+   * Check does given host can download document content by this service. It's optional feature, configurable
+   * and allow only configured Document server by default.
+   * 
+   * @param hostName {@link String}
+   * @return <code>true</code> if client host with given name can download document content,
+   *         <code>false</code> otherwise.
+   */
+  boolean canDownloadBy(String hostName);
+
   /**
    * Local state of editing document.
    * 
@@ -85,15 +95,17 @@ public interface OnlyofficeEditorService {
    * @return {@link ChangeState}
    */
   ChangeState getState(String userId, String fileKey) throws OnlyofficeEditorException;
-  
+
   /**
    * Add listener to the service.
+   * 
    * @param listener
    */
   void addListener(OnlyofficeEditorListener listener);
-  
+
   /**
    * Remove listener from the service.
+   * 
    * @param listener
    */
   void removeListener(OnlyofficeEditorListener listener);

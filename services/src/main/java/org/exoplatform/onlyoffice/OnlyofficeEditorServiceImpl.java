@@ -21,6 +21,7 @@ import org.exoplatform.container.configuration.ConfigurationException;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.PropertiesParam;
 import org.exoplatform.onlyoffice.jcr.NodeFinder;
+import org.exoplatform.portal.Constants;
 import org.exoplatform.services.jcr.RepositoryService;
 import org.exoplatform.services.jcr.ext.app.SessionProviderService;
 import org.exoplatform.services.jcr.ext.common.SessionProvider;
@@ -28,6 +29,8 @@ import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.User;
+import org.exoplatform.services.organization.UserProfile;
+import org.exoplatform.services.organization.UserProfileHandler;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.security.IdentityRegistry;
@@ -58,6 +61,7 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Random;
@@ -86,27 +90,29 @@ import javax.xml.parsers.ParserConfigurationException;
  */
 public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Startable {
 
-  protected static final Log                                                   LOG               = ExoLogger.getLogger(OnlyofficeEditorServiceImpl.class);
+  protected static final Log                                                   LOG                   = ExoLogger.getLogger(OnlyofficeEditorServiceImpl.class);
 
-  protected static final Random                                                RANDOM            = new Random();
+  protected static final Random                                                RANDOM                = new Random();
 
-  public static final String                                                   CONFIG_HOST       = "server-host";
+  public static final String                                                   CONFIG_HOST           = "server-host";
 
-  public static final String                                                   CONFIG_SCHEMA     = "server-schema";
+  public static final String                                                   CONFIG_SCHEMA         = "server-schema";
 
-  public static final String                                                   CONFIG_DS_HOST    = "documentserver-host";
+  public static final String                                                   CONFIG_DS_HOST        = "documentserver-host";
 
-  public static final String                                                   CONFIG_DS_SCHEMA  = "documentserver-schema";
+  public static final String                                                   CONFIG_DS_SCHEMA      = "documentserver-schema";
 
-  protected static final String                                                TYPE_TEXT         = "text";
+  public static final String                                                   CONFIG_DS_ACCESS_ONLY = "documentserver-access-only";
 
-  protected static final String                                                TYPE_SPREADSHEET  = "spreadsheet";
+  protected static final String                                                TYPE_TEXT             = "text";
 
-  protected static final String                                                TYPE_PRESENTATION = "presentation";
+  protected static final String                                                TYPE_SPREADSHEET      = "spreadsheet";
 
-  protected static final int                                                   LOCK_WAIT_ATTEMTS = 20;
+  protected static final String                                                TYPE_PRESENTATION     = "presentation";
 
-  protected static final long                                                  LOCK_WAIT_TIMEOUT = 250;
+  protected static final int                                                   LOCK_WAIT_ATTEMTS     = 20;
+
+  protected static final long                                                  LOCK_WAIT_TIMEOUT     = 250;
 
   protected final RepositoryService                                            jcrService;
 
@@ -121,7 +127,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /**
    * Editing documents.
    */
-  protected final ConcurrentHashMap<String, ConcurrentHashMap<String, Config>> active            = new ConcurrentHashMap<String, ConcurrentHashMap<String, Config>>();
+  protected final ConcurrentHashMap<String, ConcurrentHashMap<String, Config>> active                = new ConcurrentHashMap<String, ConcurrentHashMap<String, Config>>();
 
   protected final Map<String, String>                                          config;
 
@@ -129,15 +135,19 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
   protected final String                                                       uploadUrl;
 
+  protected final String                                                       documentserverHost;
+
   protected final String                                                       documentserverUrl;
+
+  protected final boolean                                                      documentserverAccessOnly;
 
   protected final URI                                                          baseWebdavUri;
 
-  protected final Map<String, String>                                          fileTypes         = new ConcurrentHashMap<String, String>();
+  protected final Map<String, String>                                          fileTypes             = new ConcurrentHashMap<String, String>();
 
-  protected final MessageFormat                                                uploadParams      = new MessageFormat("?url={0}&outputtype={1}&filetype={2}&title={3}&key={4}");
+  protected final MessageFormat                                                uploadParams          = new MessageFormat("?url={0}&outputtype={1}&filetype={2}&title={3}&key={4}");
 
-  protected final ConcurrentLinkedQueue<OnlyofficeEditorListener>              listeners         = new ConcurrentLinkedQueue<OnlyofficeEditorListener>();
+  protected final ConcurrentLinkedQueue<OnlyofficeEditorListener>              listeners             = new ConcurrentLinkedQueue<OnlyofficeEditorListener>();
 
   /**
    * Cloud Drive service with storage in JCR and with managed features.
@@ -203,6 +213,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     if (dsHost == null || (dsHost = dsHost.trim()).length() == 0) {
       throw new ConfigurationException("Configuration of " + CONFIG_DS_HOST + " required");
     }
+    this.documentserverHost = dsHost;
 
     String schema = config.get(CONFIG_SCHEMA);
     if (schema == null || (schema = schema.trim()).length() == 0) {
@@ -239,12 +250,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       LOG.warn("Configuration of " + CONFIG_HOST + " is not set, will use " + host);
     }
 
+    this.documentserverAccessOnly = Boolean.parseBoolean(config.get(CONFIG_DS_ACCESS_ONLY));
+
     // base parameters for API
 
     StringBuilder documentserverUrl = new StringBuilder();
     documentserverUrl.append(dsSchema);
     documentserverUrl.append("://");
-    documentserverUrl.append(dsHost);
+    documentserverUrl.append(this.documentserverHost);
 
     this.uploadUrl = new StringBuilder(documentserverUrl).append("/FileUploader.ashx").toString();
     this.documentserverUrl = new StringBuilder(documentserverUrl).append("/OfficeWeb/").toString();
@@ -304,7 +317,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         // copy editor for this user from any entry in the configs map
         try {
           User user = getUser(userId);
-          config = configs.values().iterator().next().forUser(user.getUserName(), user.getFirstName(), user.getLastName());
+          String lang = getUserLang(userId); // use this user language
+          config = configs.values().iterator().next().forUser(user.getUserName(),
+                                                              user.getFirstName(),
+                                                              user.getLastName(),
+                                                              lang);
           Config existing = configs.putIfAbsent(userId, config);
           if (existing != null) {
             config = existing;
@@ -350,7 +367,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       builder.fileType(fileType);
       builder.created(nodeCreated(node));
       builder.folder(node.getParent().getName());
-      builder.lang("en"); // TODO take locale from user profile
+      String lang = getUserLang(userId);
+      builder.lang(lang);
       builder.mode("edit");
       builder.title(nodeTitle(node));
       builder.userId(user.getUserName());
@@ -364,11 +382,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
       // file and callback URLs fill be generated respectively the platform URL and actual user
       builder.generateUrls(platformUrl);
-      // builder.callbackUrl(platformUrl + "/status/" + userId + "/" + key);
-      // builder.url(platformUrl + "/content/" + userId + "/" + key);
-      // builder.url(webdavUrl(workspace, path)); // XXX WebDAV will need auth, but DS hasn't it
+      // // TODO upload content to Openoffice DS: cleanup
       // try {
-      // // TODO upload content to Openoffice DS
       // Node content = nodeContent(node);
       // String mimeType = mimeType(content);
       // Property data = data(content);
@@ -391,16 +406,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         if (config == null) {
           // it's unexpected state as existing map SHOULD contain a config and it must be copied for
           // given user in getEditor(): client will need to retry the operation
-          throw new ConflictException("Cannot create editor from existing");
+          throw new ConflictException("Cannot obtain configuration for already existing editor");
         }
-        // mapping by unique file key should be done by the thread that created this existing map
+        // FYI mapping by unique file key should be done by the thread that created this existing map
       } else {
         // mapping by unique file key for updateDocument(): no concurrent calls (duplicates) expected
         active.put(key, configs);
       }
       fireCreated(config);
-    } else {
-      fireGet(config);
     }
     return config;
   }
@@ -439,6 +452,17 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     } else {
       throw new BadParameterException("File key not found " + key);
     }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public boolean canDownloadBy(String hostName) {
+    if (documentserverAccessOnly) {
+      return documentserverHost.equals(hostName);
+    }
+    return false;
   }
 
   /**
@@ -503,16 +527,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           syncUsers(configs, users);
         } else if (statusCode == 2) {
           // save as "document is ready for saving" (2)
-          // trackChange(config, status); // TODO cleanup
-          // if (configs.size() == 1) {
-          // only this user editing the doc: it's last change of the document - download it
-          // downloadChange(config);
           download(config, status);
           active.remove(key);
           active.remove(nodePath);
-          config.close(); // close for use in listeners
-          fireSaved(config);
-          // }
         } else if (statusCode == 3) {
           // it's an error of saving in Onlyoffice
           // we sync to remote editors list first
@@ -603,7 +620,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         return fileExt;
       }
     }
-    // TODO otherwise we need find a type from MIME-type
+    // TODO should we find a type from MIME-type?
     // String mimeType = node.getProperty("jcr:content/jcr:mimeType").getString();
     return null;
   }
@@ -814,8 +831,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       String cuser = ce.getKey();
       Config config = ce.getValue();
       if (editors.contains(cuser)) {
-        if (config.isCreated()) {
-          // editor was opened by user
+        if (config.isCreated() || config.isClosed()) {
+          // editor was (re)opened by user
           config.open();
           fireJoined(config);
         }
@@ -871,7 +888,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       LOG.debug(">> download(" + nodePath + ", " + config.getDocument().getKey() + ")");
     }
 
-    String userId = status.getUsers()[0]; // assuming a single user here (last modifier)
+    String userId = status.getUsers()[0]; // assuming a single user here (last editor)
     validateUser(userId, config);
 
     String contentUrl = status.getUrl();
@@ -892,11 +909,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       throw new OnlyofficeEditorException("Error reading content stream " + contentUrl + " for " + nodePath, e);
     }
 
+    // remember real context state and session provider to restore them at the end
     ConversationState contextState = ConversationState.getCurrent();
     SessionProvider contextProvider = sessionProviders.getSessionProvider(null);
     try {
-      // XXX we want do all the job under actual user here, as some WCM actions
-      // (FileUpdateActivityListener) will fail as user provider is anonymous here
+      // XXX we want do all the job under actual (last editor) user here
+      // Notable that some WCM actions (FileUpdateActivityListener) will fail if user will be anonymous
       // TODO but it seems looks as nasty thing for security, it should be carefully reviewed for production
       Identity userIdentity = identityRegistry.getIdentity(userId);
       if (userIdentity != null) {
@@ -950,6 +968,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         if (checkIn) {
           node.checkin();
         }
+        
+        config.close(); // close for use in listeners
+        fireSaved(config);
       } catch (RepositoryException e) {
         try {
           node.refresh(false); // rollback JCR modifications
@@ -1244,6 +1265,31 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     if (user == null) {
       LOG.warn("Attempt to access editor document (" + nodePath(config) + ") under not existing user " + userId);
       throw new BadParameterException("User not found for " + config.getDocument().getTitle());
+    }
+  }
+
+  protected String getUserLang(String userId) throws OnlyofficeEditorException {
+    UserProfileHandler hanlder = organization.getUserProfileHandler();
+    try {
+      UserProfile userProfile = hanlder.findUserProfileByName(userId);
+      if (userProfile != null) {
+        String lang = userProfile.getAttribute(Constants.USER_LANGUAGE);
+        if (lang != null) {
+          // XXX Onlyoffice doesn't support country codes (as of Apr 6, 2016)
+          // All supported langauges here http://helpcenter.onlyoffice.com/tipstricks/available-languages.aspx
+          int cci = lang.indexOf("_");
+          if (cci > 0) {
+            lang = lang.substring(0, cci);
+          }
+        } else {
+          lang = Locale.ENGLISH.getLanguage();
+        }
+        return lang;
+      } else {
+        throw new BadParameterException("User profile not found for " + userId);
+      }
+    } catch (Exception e) {
+      throw new OnlyofficeEditorException("Error searching user profile " + userId, e);
     }
   }
 

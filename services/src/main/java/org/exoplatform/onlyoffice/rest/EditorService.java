@@ -38,6 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.security.RolesAllowed;
 import javax.jcr.RepositoryException;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -122,9 +123,9 @@ public class EditorService implements ResourceContainer {
   }
 
   /**
-   * Config status posted from the editor. WARNING! It is publicly accessible service as Onlyoffice will
-   * access it
-   * from the Documents Server.
+   * Config status posted from the Document Server. <br>
+   * WARNING! It is publicly accessible service but access from the Documents Server host can be restricted
+   * (by default).
    * 
    * @param uriInfo - request info
    * @param key - config key generated when requested editor config
@@ -133,72 +134,81 @@ public class EditorService implements ResourceContainer {
    */
   @POST
   @Path("/status/{userId}/{key}")
-  // @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public Response status(@Context UriInfo uriInfo,
+                         @Context HttpServletRequest request,
                          @PathParam("userId") String userId,
                          @PathParam("key") String key,
                          String statusText) {
 
+    String clientHost = getClientHost(request);
+    String clientIp = getClientIpAddr(request);
+
     if (LOG.isDebugEnabled()) {
-      LOG.debug("> Onlyoffice document status: " + userId + "@" + key + " " + statusText);
+      LOG.debug("> Onlyoffice document status: " + userId + "@" + key + " " + statusText + " from " + clientHost + "("
+          + clientIp + ")");
     }
 
     EditorResponse resp = new EditorResponse();
+    if (editors.canDownloadBy(clientHost) || editors.canDownloadBy(clientIp)) {
+      try {
+        DocumentStatus status = new DocumentStatus();
 
-    try {
-      DocumentStatus status = new DocumentStatus();
+        JSONParser parser = new JSONParser();
+        Object obj = parser.parse(statusText);
+        JSONObject jsonObj = (JSONObject) obj;
+        String statusKey = (String) jsonObj.get("key");
+        long statusCode = (long) jsonObj.get("status");
+        String statusUrl = (String) jsonObj.get("url");
+        JSONArray statusUsersArray = (JSONArray) jsonObj.get("users");
+        String[] statusUsers = new String[statusUsersArray.size()];
+        statusUsersArray.toArray(statusUsers);
 
-      JSONParser parser = new JSONParser();
-      Object obj = parser.parse(statusText);
-      JSONObject jsonObj = (JSONObject) obj;
-      String statusKey = (String) jsonObj.get("key");
-      long statusCode = (long) jsonObj.get("status");
-      String statusUrl = (String) jsonObj.get("url");
-      JSONArray statusUsersArray = (JSONArray) jsonObj.get("users");
-      String[] statusUsers = new String[statusUsersArray.size()];
-      statusUsersArray.toArray(statusUsers);
+        if (key != null && key.length() > 0) {
+          if (userId != null && userId.length() > 0) {
+            status.setKey(statusKey != null && statusKey.length() > 0 ? statusKey : key);
+            status.setStatus(statusCode);
+            status.setUrl(statusUrl);
+            status.setUsers(statusUsers);
 
-      if (key != null && key.length() > 0) {
-        if (userId != null && userId.length() > 0) {
-          status.setKey(statusKey != null && statusKey.length() > 0 ? statusKey : key);
-          status.setStatus(statusCode);
-          status.setUrl(statusUrl);
-          status.setUsers(statusUsers);
-          
-          try {
-            editors.updateDocument(userId, status);
-            resp.entity("{\"error\": 0}");
-          } catch (BadParameterException e) {
-            LOG.error("Bad parameter to update status for " + key, e);
-            resp.error(e.getMessage()).status(Status.BAD_REQUEST);
-          } catch (OnlyofficeEditorException e) {
-            LOG.error("Error handling status for " + key, e);
-            resp.error("Error handling status. " + e.getMessage()).status(Status.INTERNAL_SERVER_ERROR);
-          } catch (RepositoryException e) {
-            LOG.error("Storage error while handling status for " + key, e);
-            resp.error("Storage error.").status(Status.INTERNAL_SERVER_ERROR);
-          } catch (Throwable e) {
-            LOG.error("Runtime error while handling status for " + key, e);
-            resp.error("Runtime error.").status(Status.INTERNAL_SERVER_ERROR);
+            try {
+              editors.updateDocument(userId, status);
+              resp.entity("{\"error\": 0}");
+            } catch (BadParameterException e) {
+              LOG.error("Bad parameter to update status for " + key, e);
+              resp.error(e.getMessage()).status(Status.BAD_REQUEST);
+            } catch (OnlyofficeEditorException e) {
+              LOG.error("Error handling status for " + key, e);
+              resp.error("Error handling status. " + e.getMessage()).status(Status.INTERNAL_SERVER_ERROR);
+            } catch (RepositoryException e) {
+              LOG.error("Storage error while handling status for " + key, e);
+              resp.error("Storage error.").status(Status.INTERNAL_SERVER_ERROR);
+            } catch (Throwable e) {
+              LOG.error("Runtime error while handling status for " + key, e);
+              resp.error("Runtime error.").status(Status.INTERNAL_SERVER_ERROR);
+            }
+          } else {
+            LOG.error("Error processing editor status. User not provided");
+            resp.error("User not provided").status(Status.BAD_REQUEST);
           }
         } else {
-          LOG.error("Error processing editor status. User not provided");
-          resp.error("User not provided").status(Status.BAD_REQUEST);
+          resp.status(Status.BAD_REQUEST).error("Null or empty file key.");
         }
-      } else {
-        resp.status(Status.BAD_REQUEST).error("Null or empty file key.");
+      } catch (ParseException e) {
+        LOG.error("JSON parse error while handling status for " + key + ". JSON: " + statusText, e);
+        resp.error("JSON parse error: " + e.getMessage()).status(Status.BAD_REQUEST);
       }
-    } catch (ParseException e) {
-      LOG.error("JSON parse error while handling status for " + key + ". JSON: " + statusText, e);
-      resp.error("JSON parse error: " + e.getMessage()).status(Status.BAD_REQUEST);
+    } else {
+      LOG.warn("Attempt to update status by not allowed host: " + clientHost);
+      resp.error("Not a document server").status(Status.UNAUTHORIZED);
     }
     return resp.build();
   }
 
   /**
-   * Document content download link. WARNING! It is publicly accessible service as Onlyoffice will access it
-   * from the Documents Server.
+   * Document content download link. <br>
+   * WARNING! It is publicly accessible service but access from the Documents Server host can be restricted
+   * (by default).
    * 
    * @param uriInfo - request info
    * @param key - file key generated by /config method
@@ -206,37 +216,47 @@ public class EditorService implements ResourceContainer {
    */
   @GET
   @Path("/content/{userId}/{key}")
-  public Response content(@Context UriInfo uriInfo, @PathParam("userId") String userId, @PathParam("key") String key) {
+  public Response content(@Context UriInfo uriInfo,
+                          @Context HttpServletRequest request,
+                          @PathParam("userId") String userId,
+                          @PathParam("key") String key) {
+    String clientHost = getClientHost(request);
+    String clientIp = getClientIpAddr(request);
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("> Onlyoffice document content: " + userId + "@" + key);
+      LOG.debug("> Onlyoffice document content: " + userId + "@" + key + " to " + clientHost + "(" + clientIp + ")");
     }
 
     EditorResponse resp = new EditorResponse();
-    if (key != null && key.length() > 0) {
-      try {
-        if (userId != null && userId.length() > 0) {
-          DocumentContent content = editors.getContent(userId, key);
-          resp.entity(content.getData()).type(content.getType()).ok();
-        } else {
-          LOG.error("Error downloading content. User identity not provided");
-          resp.error("User not provided").status(Status.BAD_REQUEST);
+    if (editors.canDownloadBy(clientHost) || editors.canDownloadBy(clientIp)) {
+      if (key != null && key.length() > 0) {
+        try {
+          if (userId != null && userId.length() > 0) {
+            DocumentContent content = editors.getContent(userId, key);
+            resp.entity(content.getData()).type(content.getType()).ok();
+          } else {
+            LOG.error("Error downloading content. User identity not provided");
+            resp.error("User not provided").status(Status.BAD_REQUEST);
+          }
+        } catch (BadParameterException e) {
+          LOG.error("Bad parameter to downloading content for " + key, e);
+          resp.error(e.getMessage()).status(Status.BAD_REQUEST);
+        } catch (OnlyofficeEditorException e) {
+          LOG.error("Error downloading content for " + key, e);
+          resp.error("Error downloading content. " + e.getMessage()).status(Status.INTERNAL_SERVER_ERROR);
+        } catch (RepositoryException e) {
+          LOG.error("Storage error while downloading content for " + key, e);
+          resp.error("Storage error.").status(Status.INTERNAL_SERVER_ERROR);
+        } catch (Throwable e) {
+          LOG.error("Runtime error while downloading content for " + key, e);
+          resp.error("Runtime error.").status(Status.INTERNAL_SERVER_ERROR);
         }
-      } catch (BadParameterException e) {
-        LOG.error("Bad parameter to downloading content for " + key, e);
-        resp.error(e.getMessage()).status(Status.BAD_REQUEST);
-      } catch (OnlyofficeEditorException e) {
-        LOG.error("Error downloading content for " + key, e);
-        resp.error("Error downloading content. " + e.getMessage()).status(Status.INTERNAL_SERVER_ERROR);
-      } catch (RepositoryException e) {
-        LOG.error("Storage error while downloading content for " + key, e);
-        resp.error("Storage error.").status(Status.INTERNAL_SERVER_ERROR);
-      } catch (Throwable e) {
-        LOG.error("Runtime error while downloading content for " + key, e);
-        resp.error("Runtime error.").status(Status.INTERNAL_SERVER_ERROR);
+      } else {
+        resp.status(Status.BAD_REQUEST).error("Null or empty file key.");
       }
     } else {
-      resp.status(Status.BAD_REQUEST).error("Null or empty file key.");
+      LOG.warn("Attempt to download content by not allowed host: " + clientHost);
+      resp.error("Not a document server").status(Status.UNAUTHORIZED);
     }
     return resp.build();
   }
@@ -270,9 +290,6 @@ public class EditorService implements ResourceContainer {
           ConversationState convo = ConversationState.getCurrent();
           if (convo != null) {
             String username = convo.getIdentity().getUserId();
-            // String host = locator.getServiceHost(uriInfo.getRequestUri().getHost());
-            // initiated.put(initId, new UserInit(localUser, host));
-
             Config config = editors.createEditor(username, workspace, path);
             if (LOG.isDebugEnabled()) {
               LOG.debug("> Onlyoffice document config: " + workspace + ":" + path + " -> " + config.getDocument().getKey());
@@ -314,6 +331,7 @@ public class EditorService implements ResourceContainer {
    */
   @GET
   @Path("/state/{userId}/{key}")
+  @RolesAllowed("users")
   @Produces(MediaType.APPLICATION_JSON)
   public Response localState(@Context UriInfo uriInfo, @PathParam("userId") String userId, @PathParam("key") String key) {
     if (LOG.isDebugEnabled()) {
@@ -345,6 +363,75 @@ public class EditorService implements ResourceContainer {
     }
 
     return resp.build();
+  }
+
+  protected String getClientIpAddr(HttpServletRequest request) {
+    String ip = request.getHeader("X-Forwarded-For");
+    if (isValidName(ip)) {
+      return ip;
+    }
+    ip = request.getHeader("Proxy-Client-IP");
+    if (isValidName(ip)) {
+      return ip;
+    }
+    ip = request.getHeader("WL-Proxy-Client-IP");
+    if (isValidName(ip)) {
+      return ip;
+    }
+    ip = request.getHeader("HTTP_CLIENT_IP");
+    if (isValidName(ip)) {
+      return ip;
+    }
+    ip = request.getHeader("HTTP_X_FORWARDED_FOR");
+    if (isValidName(ip)) {
+      return ip;
+    }
+    ip = request.getHeader("HTTP_X_FORWARDED");
+    if (isValidName(ip)) {
+      return ip;
+    }
+    ip = request.getHeader("HTTP_X_CLUSTER_CLIENT_IP");
+    if (isValidName(ip)) {
+      return ip;
+    }
+    // http://stackoverflow.com/questions/1634782/what-is-the-most-accurate-way-to-retrieve-a-users-correct-ip-address-in-php
+    ip = request.getHeader("HTTP_FORWARDED_FOR");
+    if (isValidName(ip)) {
+      return ip;
+    }
+    ip = request.getHeader("HTTP_FORWARDED");
+    if (isValidName(ip)) {
+      return ip;
+    }
+    ip = request.getHeader("REMOTE_ADDR");
+    if (isValidName(ip)) {
+      return ip;
+    }
+    // last chance to get it from Servlet request
+    ip = request.getRemoteAddr();
+    if (isValidName(ip)) {
+      return ip;
+    }
+    return null;
+  }
+
+  protected String getClientHost(HttpServletRequest request) {
+    String host = request.getHeader("X-Forwarded-Host");
+    if (isValidName(host)) {
+      return host;
+    }
+    host = request.getRemoteHost();
+    if (isValidName(host)) {
+      return host;
+    }
+    return null;
+  }
+
+  protected boolean isValidName(String hostName) {
+    if (hostName != null && hostName.length() > 0 && !"unknown".equalsIgnoreCase(hostName)) {
+      return true;
+    }
+    return false;
   }
 
 }

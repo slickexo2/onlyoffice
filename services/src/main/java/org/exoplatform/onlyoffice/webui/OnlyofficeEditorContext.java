@@ -64,6 +64,8 @@ public class OnlyofficeEditorContext {
 
       context.init(workspace, nodePath);
 
+      // TODO this approach can be used to pass asynchronous messages to UI: they'll appear in right upper
+      // corner notification popover
       // Map<String, String> contextMessages = messages.get();
       // if (contextMessages != null) {
       // for (Map.Entry<String, String> msg : contextMessages.entrySet()) {
