@@ -25,7 +25,6 @@ import org.exoplatform.onlyoffice.webui.OnlyofficeEditor.OnErrorActionListener;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.wcm.utils.WCMCoreUtils;
-import org.exoplatform.web.application.Parameter;
 import org.exoplatform.web.application.RequestContext;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
@@ -41,7 +40,9 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * An UI for Onlyoffice editor in ECMS explorer.
+ * An UI for Onlyoffice editor in ECMS explorer. This viewer will be shown only for document opened by
+ * {@link OnlyofficeEditorUIService#open(String, String, String)} method - the filter
+ * {@link CanShowOnlyofficeFilter} does this check.<br>
  * 
  * Created by The eXo Platform SAS
  * 
@@ -124,7 +125,7 @@ public class OnlyofficeEditor extends UIForm {
   public void initContext() throws Exception {
     initContext(WebuiRequestContext.getCurrentInstance());
   }
-  
+
   protected void initContext(RequestContext context) throws Exception {
     UIJCRExplorer uiExplorer = getAncestorOfType(UIJCRExplorer.class);
     if (uiExplorer != null) {
@@ -132,7 +133,7 @@ public class OnlyofficeEditor extends UIForm {
       String path = uiExplorer.getCurrentNode().getPath();
       String workspace = uiExplorer.getCurrentNode().getSession().getWorkspace().getName();
       OnlyofficeEditorContext.init(context, workspace, path);
-      
+
       OnlyofficeEditorUIService editorsUI = WCMCoreUtils.getService(OnlyofficeEditorUIService.class);
       if (editorsUI.isOpen(context.getRemoteUser(), workspace, path)) {
         OnlyofficeEditorContext.open(context);
@@ -153,4 +154,14 @@ public class OnlyofficeEditor extends UIForm {
     }
     return id;
   }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void processRender(WebuiRequestContext context) throws Exception {
+    // TODO Auto-generated method stub
+    super.processRender(context);
+  }
+  
 }

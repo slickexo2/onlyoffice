@@ -21,7 +21,10 @@ package org.exoplatform.onlyoffice.webui;
 
 import org.exoplatform.ecm.webui.component.explorer.UIJCRExplorer;
 import org.exoplatform.ecm.webui.component.explorer.UIJcrExplorerContainer;
+import org.exoplatform.ecm.webui.presentation.UIBaseNodePresentation;
 import org.exoplatform.onlyoffice.OnlyofficeEditorException;
+import org.exoplatform.social.webui.activity.UIActivitiesContainer;
+import org.exoplatform.social.webui.composer.PopupContainer;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.core.UIApplication;
 import org.exoplatform.webui.ext.filter.UIExtensionAbstractFilter;
@@ -69,6 +72,8 @@ public abstract class AbstractOnlyofficeFilter extends UIExtensionAbstractFilter
   public boolean accept(Map<String, Object> context) throws Exception {
     if (context != null) {
       Node contextNode = (Node) context.get(Node.class.getName());
+
+      // search in ECMS explorer first
       if (contextNode == null) {
         UIJCRExplorer uiExplorer = (UIJCRExplorer) context.get(UIJCRExplorer.class.getName());
         if (uiExplorer != null) {
@@ -83,6 +88,20 @@ public abstract class AbstractOnlyofficeFilter extends UIExtensionAbstractFilter
             UIJCRExplorer jcrExplorer = jcrExplorerContainer.getChild(UIJCRExplorer.class);
             contextNode = jcrExplorer.getCurrentNode();
           }
+
+          // case of file preview in Social activity stream
+          if (contextNode == null) {
+            UIActivitiesContainer uiActivitiesContainer = uiApp.findFirstComponentOfType(UIActivitiesContainer.class);
+            if (uiActivitiesContainer != null) {
+              PopupContainer uiPopupContainer = uiActivitiesContainer.getPopupContainer();
+              if (uiPopupContainer != null) {
+                UIBaseNodePresentation docViewer = uiPopupContainer.findComponentById("UIDocViewer");
+                if (docViewer != null) {
+                  contextNode = docViewer.getNode();
+                }
+              }
+            }
+          }
         }
       }
 
@@ -92,7 +111,7 @@ public abstract class AbstractOnlyofficeFilter extends UIExtensionAbstractFilter
         return accept(userId, contextNode);
       }
     }
-    return true;
+    return false;
   }
 
   /**

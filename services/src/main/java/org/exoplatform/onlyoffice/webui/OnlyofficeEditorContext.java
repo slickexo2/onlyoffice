@@ -60,7 +60,9 @@ public class OnlyofficeEditorContext {
     if (obj == null) {
       OnlyofficeEditorContext context = new OnlyofficeEditorContext(requestContext);
 
-      LOG.info("Init Onlyoffice editor for " + workspace + ":" + nodePath);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Init Onlyoffice editor for " + workspace + ":" + nodePath);
+      }
 
       context.init(workspace, nodePath);
 

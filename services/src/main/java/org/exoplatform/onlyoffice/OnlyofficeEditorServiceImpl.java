@@ -488,7 +488,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     if (documentserverAccessOnly) {
       return documentserverHost.equals(hostName);
     }
-    return false;
+    return true;
   }
 
   /**

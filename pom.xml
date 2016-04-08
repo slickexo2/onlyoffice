@@ -34,9 +34,9 @@
   <description>eXo OnlyOffice Editor for Documents extension</description>
 
   <scm>
-    <connection>https://github.com/exo-addons/onlyoffice-editor-extension/</connection>
-    <developerConnection>https://github.com/exo-addons/onlyoffice-editor-extension/</developerConnection>
-    <url>https://github.com/exo-addons/onlyoffice-editor-extension/</url>
+    <connection>https://github.com/exo-addons/onlyoffice/</connection>
+    <developerConnection>https://github.com/exo-addons/onlyoffice/</developerConnection>
+    <url>https://github.com/exo-addons/onlyoffice/</url>
   </scm>
 
   <properties>

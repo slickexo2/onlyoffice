@@ -342,7 +342,7 @@
 
 		this.create = function() {
 			// TODO not used
-			var sampleConfig_ = {
+			/*var sampleConfig_ = {
 				width : "100%",
 				height : "100%",
 				type : "desktop",
@@ -389,10 +389,10 @@
 					"onDocumentStateChange" : onDocumentStateChange,
 					"onError" : onError
 				}
-			};
+			};*/
 
 			// TODO for debug only
-			var testConfig_ = {
+			/*var testConfig_ = {
 				"width" : "100%",
 				"height" : "100%",
 				"type" : "desktop",
@@ -435,7 +435,7 @@
 					}
 				},
 				"events" : {}
-			};
+			};*/
 
 			currentConfig = null;
 			var process = $.Deferred();
@@ -458,7 +458,7 @@
 							saveUrl : config.document.url,
 							embedUrl : config.document.url,
 							shareUrl : config.document.url,
-							toolbarDocked : "top",
+							toolbarDocked : "top"
 						};
 						config.events = {
 							"onDocumentStateChange" : onDocumentStateChange,
@@ -865,13 +865,7 @@
 				// create and start editor
 				var create = editor.create();
 				create.done(function(config) {
-					// XXX timeout mandatory to let DocsAPI load successfully - is it required here?
-					//setTimeout(function() {
-					//$(function() {
 					docEditor = new DocsAPI.DocEditor("onlyoffice", config);
-					//});
-					//}, 2000);
-
 					// show editor
 					var $editor = $fileContent.find(".editor");
 					var $loading = $fileContent.find(".loading");
