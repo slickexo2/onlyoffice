@@ -1,6 +1,6 @@
 #eXo Onlyoffice add-on
 
-This add-on allow editing office documents directly in eXo Platform using Onlyoffice Documents Server. Thanks to added menu items, in action bar of Documents explorer, users of eXo Platform can switch to editor in file preview of any supportable office document format. As for now, the add-on offers support of following formats: 
+This add-on allow editing office documents directly in eXo Platform using Onlyoffice Documents Server. Thanks to added menu items, in action bar of Documents explorer, users of eXo Platform can switch to editor in file preview of any supportable office document. As for now, the add-on offers support of following formats: 
 * Office Open XML (Microsoft Office 2007 and later):
 ** Word (.docx)
 ** Excel (.xlsx) 
@@ -18,18 +18,18 @@ The Document Server should be [installed](http://helpcenter.onlyoffice.com/serve
 
 Since add-on installed, it adds two menu items in Document explorer action bar: "Edit In Onlyoffice" and "Close Onlyoffice". These menu items available in file preview mode (need open a file in the explorer) and also work for large files when preview not possible. 
 
-![Editor in Action bar]()
+![Editor in Action bar](/docs/images/action_bar.png)
 
 After user will choose to open an editor for current file, it will be laoded instead of file preview on the explorer page. As Onlyoffice requires some time to download the document content from eXo to Document Server and then prepare an UI, users will need wait for seconds before starting to work. Large files may require more time for loading (e.g. spreadsheets with lot of cells). 
 
-![Editor open]()
+![Editor open](/docs/images/editor.png)
 
 When users start to edit a document it's important to understand how Onlyoffice editor works. All modifications will go to a temporal storage in their Documents Server and only after all editors will be closed, in about 10 seconds, the file will be updated in eXo Platform. Thus, while document is open in the editor, all users opened it see actual state, but if look at the preview in eXo it will show a state before the editing session start.
 To finish editing the document, user needs to close the editor by menu "Close Onlyoffice".
 
 When several users edit the same document, it is required to make extra operations to get synced with others. In single user mode all editings will be applied immediately to the document temporal storage. But when multiple users open the document and someone edited something in it, edited part of the document will be locked for others until this user save the document explicitly using Save menu. After document saved current user will see also changes of others (in other paragraph, table cell etc). But others, in order to see remote modifications, will need also to click Save button in their editors, even if they haven't changed anything. Onlyoffice shows a popover on the Save button by default when document changed by others, it lets user to see need of such synchronization.
 
-![Co-editing]()
+![Co-editing](/docs/images/coediting.png)
 
 ##Installation
 
