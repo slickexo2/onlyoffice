@@ -25,6 +25,7 @@ After user will choose to open an editor for current file, it will be laoded ins
 ![Editor open]()
 
 When users start to edit a document it's important to understand how Onlyoffice editor works. All modifications will go to a temporal storage in their Documents Server and only after all editors will be closed, in about 10 seconds, the file will be updated in eXo Platform. Thus, while document is open in the editor, all users opened it see actual state, but if look at the preview in eXo it will show a state before the editing session start.
+To finish editing the document, user needs to close the editor by menu "Close Onlyoffice".
 
 When several users edit the same document, it is required to make extra operations to get synced with others. In single user mode all editings will be applied immediately to the document temporal storage. But when multiple users open the document and someone edited something in it, edited part of the document will be locked for others until this user save the document explicitly using Save menu. After document saved current user will see also changes of others (in other paragraph, table cell etc). But others, in order to see remote modifications, will need also to click Save button in their editors, even if they haven't changed anything. Onlyoffice shows a popover on the Save button by default when document changed by others, it lets user to see need of such synchronization.
 
