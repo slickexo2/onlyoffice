@@ -1,6 +1,6 @@
 #eXo Onlyoffice add-on
 
-This add-on allow editing office documents directly in eXo Platform using Onlyoffice Documents Server. Thanks to added menu items, in action bar of Documents explorer, users of eXo Platform can switch to editor in file preview of any supportable office document. As for now, the add-on offers support of following formats: 
+This add-on allow editing office documents directly in eXo Platform using Onlyoffice Documents Server. Thanks to the introduced menu items, in action bar of Documents explorer, users of eXo Platform can switch to editor in file preview of any supportable office document. As for now, the add-on offers support of following formats: 
 - Office Open XML (Microsoft Office 2007 and later):
   - Word (.docx)
   - Excel (.xlsx) 
