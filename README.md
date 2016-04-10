@@ -1,14 +1,14 @@
 #eXo Onlyoffice add-on
 
 This add-on allow editing office documents directly in eXo Platform using Onlyoffice Documents Server. Thanks to added menu items, in action bar of Documents explorer, users of eXo Platform can switch to editor in file preview of any supportable office document. As for now, the add-on offers support of following formats: 
-* Office Open XML (Microsoft Office 2007 and later):
-** Word (.docx)
-** Excel (.xlsx) 
-** PowerPoint (.pptx) 
-* Open Document Format (OnlyOffice and LibreOffice):
-** Text (.odt)
-** Spreadsheet (.ods)
-** Presentation (.odp)
+- Office Open XML (Microsoft Office 2007 and later):
+  - Word (.docx)
+  - Excel (.xlsx) 
+  - PowerPoint (.pptx) 
+- Open Document Format (OnlyOffice and LibreOffice):
+  - Text (.odt)
+  - Spreadsheet (.ods)
+  - Presentation (.odp)
  
 The Document Server should be [installed](http://helpcenter.onlyoffice.com/server/document.aspx) on reachable network. Onlyoffice offers native installers for Windows and Linux, they also have [Docker installation](http://helpcenter.onlyoffice.com/server/docker/document/docker-installation.aspx) which will be described below in details. 
 
