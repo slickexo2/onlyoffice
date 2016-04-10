@@ -41,7 +41,7 @@ import java.util.List;
 
 /**
  * An UI for Onlyoffice editor in ECMS explorer. This viewer will be shown only for document opened by
- * {@link OnlyofficeEditorUIService#open(String, String, String)} method - the filter
+ * {@link OnlyofficeEditorUIService#opened(String, String, String)} method - the filter
  * {@link CanShowOnlyofficeFilter} does this check.<br>
  * 
  * Created by The eXo Platform SAS
@@ -61,34 +61,46 @@ public class OnlyofficeEditor extends UIForm {
       // new IsNotLockedFilter()
       new CanShowOnlyofficeFilter() });
 
+  /**
+   * Used in UI, by Javascript client after actual download of the edited content. See Javascript UI.close().
+   */
   public static class OnCloseActionListener extends EventListener<OnlyofficeEditor> {
     public void execute(Event<OnlyofficeEditor> event) throws Exception {
       WebuiRequestContext context = event.getRequestContext();
       UIJCRExplorer explorer = event.getSource().getAncestorOfType(UIJCRExplorer.class);
-      OnlyofficeEditorUIService editorsUI = WCMCoreUtils.getService(OnlyofficeEditorUIService.class);
 
       explorer.getSession().refresh(false);
       // TODO do we need this whole refresh here?
       // explorer.refreshExplorer();
       String workspace = explorer.getCurrentWorkspace();
       String path = explorer.getCurrentNode().getPath();
+
+      // call closed() here for current user in portal,
+      // FYI In case of saving, reset() will be called by OnlyofficeEditorServiceImpl.updateDocument() via
+      // onSaved() listener for last editor user, it may differ to this current portal user, thus need both
+      // places to call closed and reset respectively.
+      OnlyofficeEditorUIService editorsUI = WCMCoreUtils.getService(OnlyofficeEditorUIService.class);
       editorsUI.closed(context.getRemoteUser(), workspace, path);
 
       OnlyofficeEditorContext.init(context, workspace, path);
     }
   }
 
+  /**
+   * Used in UI, by Javascript client on creation and download errors.
+   */
   public static class OnErrorActionListener extends EventListener<OnlyofficeEditor> {
     public void execute(Event<OnlyofficeEditor> event) throws Exception {
       WebuiRequestContext context = event.getRequestContext();
       UIJCRExplorer explorer = event.getSource().getAncestorOfType(UIJCRExplorer.class);
-      OnlyofficeEditorUIService editorsUI = WCMCoreUtils.getService(OnlyofficeEditorUIService.class);
 
       explorer.getSession().refresh(false);
       // TODO do we need this whole refresh here?
       // explorer.refreshExplorer();
       String workspace = explorer.getCurrentWorkspace();
       String path = explorer.getCurrentNode().getPath();
+
+      OnlyofficeEditorUIService editorsUI = WCMCoreUtils.getService(OnlyofficeEditorUIService.class);
       editorsUI.reset(context.getRemoteUser(), workspace, path);
 
       OnlyofficeEditorContext.init(context, workspace, path);
@@ -122,10 +134,12 @@ public class OnlyofficeEditor extends UIForm {
     // }
   }
 
+  @Deprecated // TODO not used
   public void initContext() throws Exception {
     initContext(WebuiRequestContext.getCurrentInstance());
   }
 
+  @Deprecated
   protected void initContext(RequestContext context) throws Exception {
     UIJCRExplorer uiExplorer = getAncestorOfType(UIJCRExplorer.class);
     if (uiExplorer != null) {
@@ -154,14 +168,4 @@ public class OnlyofficeEditor extends UIForm {
     }
     return id;
   }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void processRender(WebuiRequestContext context) throws Exception {
-    // TODO Auto-generated method stub
-    super.processRender(context);
-  }
-  
 }

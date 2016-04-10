@@ -920,6 +920,7 @@
 						create.fail(function(error) {
 							log("ERROR: " + JSON.stringify(error));
 							UI.showError("Error creating editor", error.error);
+							$loading.find(".onError").click();
 						});
 					} else {
 						if (!state.saved) {

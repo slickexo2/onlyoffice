@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class OnlyofficeEditorUIService {
 
   protected static enum State {
-    OPEN, CLOSING
+    OPENING, OPEN, CLOSING
   }
 
   protected class EditorListener implements OnlyofficeEditorListener {
@@ -47,7 +47,7 @@ public class OnlyofficeEditorUIService {
      */
     @Override
     public void onCreate(Config config) {
-      // FYI it is not mandatory to act on create
+      // FYI creator's editor will be marked open when he'll join in onJoined()
       open(config.getEditorConfig().getUser().getId(), config.getWorkspace(), config.getPath());
     }
 
@@ -56,7 +56,7 @@ public class OnlyofficeEditorUIService {
      */
     @Override
     public void onGet(Config config) {
-      // FYI it is not mandatory to act on get
+      // FYI user's editor will be marked open when he'll join in onJoined()
       open(config.getEditorConfig().getUser().getId(), config.getWorkspace(), config.getPath());
     }
 
@@ -65,8 +65,8 @@ public class OnlyofficeEditorUIService {
      */
     @Override
     public void onJoined(Config config) {
-      // FYI it is not mandatory to act on user join (co-editor)
-      open(config.getEditorConfig().getUser().getId(), config.getWorkspace(), config.getPath());
+      // FYI mark as open for all users (creator and co-editors)
+      opened(config.getEditorConfig().getUser().getId(), config.getWorkspace(), config.getPath());
     }
 
     /**
@@ -115,16 +115,26 @@ public class OnlyofficeEditorUIService {
 
   public boolean open(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
-    State state = State.OPEN;
+    State state = State.OPENING;
     State prev = editors.putIfAbsent(id, state);
-    return prev != null ? State.OPEN == prev : true;
+    return prev != null ? State.OPENING == prev : true;
+  }
+
+  public boolean opened(String userId, String workspace, String path) {
+    String id = editorId(userId, workspace, path);
+    return editors.replace(id, State.OPENING, State.OPEN);
   }
 
   public boolean close(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
-    return editors.replace(id, State.OPEN, State.CLOSING);
+    if (!editors.replace(id, State.OPEN, State.CLOSING)) {
+      // if wasn't OPEN but close requested, ensure document also isn't OPENING 
+      return editors.remove(id, State.OPENING);
+    }
+    return true;
   }
 
+  // TODO this method not used, reset used by listener instead
   public boolean closed(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
     return editors.remove(id, State.CLOSING);
@@ -134,6 +144,11 @@ public class OnlyofficeEditorUIService {
     String id = editorId(userId, workspace, path);
     State state = editors.remove(id);
     return state != null;
+  }
+
+  public boolean isOpening(String userId, String workspace, String path) {
+    String id = editorId(userId, workspace, path);
+    return State.OPENING == editors.get(id);
   }
 
   public boolean isOpen(String userId, String workspace, String path) {
@@ -146,15 +161,27 @@ public class OnlyofficeEditorUIService {
     return State.CLOSING == editors.get(id);
   }
 
+  public boolean isClosed(String userId, String workspace, String path) {
+    String id = editorId(userId, workspace, path);
+    return !editors.containsKey(id);
+  }
+
   public boolean canShow(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
     State state = editors.get(id);
-    return State.OPEN == state || State.CLOSING == state;
+    return State.OPENING == state || State.OPEN == state || State.CLOSING == state;
   }
 
   public boolean canOpen(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
-    return !editors.containsKey(id);
+    State state = editors.get(id);
+    return state == null || State.CLOSING == state;
+  }
+
+  public boolean canClose(String userId, String workspace, String path) {
+    String id = editorId(userId, workspace, path);
+    State state = editors.get(id);
+    return State.OPENING == state || State.OPEN == state;
   }
 
   protected String editorId(String userId, String workspace, String path) {

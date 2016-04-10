@@ -54,7 +54,7 @@ public class OnlyofficeCloseManageComponent extends UIAbstractManagerComponent {
 
   private static final List<UIExtensionFilter> FILTERS = Arrays.asList(new UIExtensionFilter[] {
       // new IsNotLockedFilter()
-      new IsOpenOnlyofficeFilter() });
+      new CanCloseOnlyofficeFilter() });
 
   public static class OnlyofficeCloseActionListener extends UIActionBarActionListener<OnlyofficeCloseManageComponent> {
     public void processEvent(Event<OnlyofficeCloseManageComponent> event) throws Exception {

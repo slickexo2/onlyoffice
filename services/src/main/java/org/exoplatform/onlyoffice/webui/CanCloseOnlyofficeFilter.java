@@ -33,18 +33,18 @@ import javax.jcr.RepositoryException;
  * @version $Id: IsEditingOnlyofficeFilter.java 00000 Mar 1, 2016 pnedonosko $
  * 
  */
-public class IsOpenOnlyofficeFilter extends AbstractOnlyofficeFilter {
+public class CanCloseOnlyofficeFilter extends AbstractOnlyofficeFilter {
 
   /**
    * 
    */
-  public IsOpenOnlyofficeFilter() {
+  public CanCloseOnlyofficeFilter() {
   }
 
   /**
    * @param messageKey
    */
-  public IsOpenOnlyofficeFilter(String messageKey) {
+  public CanCloseOnlyofficeFilter(String messageKey) {
     super(messageKey);
   }
 
@@ -52,7 +52,7 @@ public class IsOpenOnlyofficeFilter extends AbstractOnlyofficeFilter {
    * @param messageKey
    * @param type
    */
-  public IsOpenOnlyofficeFilter(String messageKey, UIExtensionFilterType type) {
+  public CanCloseOnlyofficeFilter(String messageKey, UIExtensionFilterType type) {
     super(messageKey, type);
   }
 
@@ -69,7 +69,7 @@ public class IsOpenOnlyofficeFilter extends AbstractOnlyofficeFilter {
   @Override
   protected boolean accept(String userId, Node node) throws RepositoryException, OnlyofficeEditorException {
     OnlyofficeEditorUIService editorsUI = WCMCoreUtils.getService(OnlyofficeEditorUIService.class);
-    return editorsUI.isOpen(userId, node.getSession().getWorkspace().getName(), node.getPath());
+    return editorsUI.canClose(userId, node.getSession().getWorkspace().getName(), node.getPath());
   }
 
 }

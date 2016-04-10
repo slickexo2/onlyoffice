@@ -66,6 +66,8 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
 
       String workspace = explorer.getCurrentWorkspace();
       String path = explorer.getCurrentNode().getPath();
+      // call open() explicitly here for UI filter reason (to show Close menu), when document will be loading
+      // to the editor it also will be called by the service's createEditor() invoked via REST service
       editorsUI.open(context.getRemoteUser(), workspace, path);
 
       OnlyofficeEditorContext.init(context, workspace, path);
