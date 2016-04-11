@@ -20,7 +20,7 @@ Since add-on installed, it adds two menu items in Document explorer action bar: 
 
 ![Editor in Action bar](/docs/images/action_bar.png)
 
-After user will choose to open an editor for current file, it will be laoded instead of file preview. As Onlyoffice requires some time to download the document content to its Document Server and then prepare an UI, users will need wait for seconds before starting to work. Large files may require more time for loading (e.g. spreadsheets with lot of cells). 
+After user will choose to open an editor for current file, it will be loaded instead of file preview. As Onlyoffice requires some time to download the document content to its Document Server and then prepare an UI, users will need wait for seconds before starting to work. Large files may require more time for loading (e.g. spreadsheets with lot of cells). 
 
 ![Editor open](/docs/images/editor.png)
 
@@ -50,7 +50,7 @@ After you successfuly installed Onlyoffice Document Server, you need install Onl
 
 If you want use released binaries from eXo Catalog, simple run command in root of the server:
 
-    > ./addon install onlyoffice
+    > ./addon install exo-onlyoffice
 
 When building from sources, then go to `/packaging/target` folder of the project and extract `exo-onlyoffice-packaging.zip` to a root of your server. You also may setup local add-ons catalog for eXo Addon manager if plan development with frequent installations, and then use this archive as a local package.
 
