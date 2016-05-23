@@ -105,6 +105,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
   public static final String                                                   CONFIG_DS_ACCESS_ONLY = "documentserver-access-only";
 
+  protected static final char                                                  HTTP_PORT_DELIMITER   = ':';
+
   protected static final String                                                TYPE_TEXT             = "text";
 
   protected static final String                                                TYPE_SPREADSHEET      = "spreadsheet";
@@ -136,7 +138,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
   protected final String                                                       uploadUrl;
 
-  protected final String                                                       documentserverHost;
+  protected final String                                                       documentserverHostName;
 
   protected final String                                                       documentserverUrl;
 
@@ -214,7 +216,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     if (dsHost == null || (dsHost = dsHost.trim()).length() == 0) {
       throw new ConfigurationException("Configuration of " + CONFIG_DS_HOST + " required");
     }
-    this.documentserverHost = dsHost;
+    int portIndex = dsHost.indexOf(HTTP_PORT_DELIMITER);
+    if (portIndex > 0) {
+      // cut port from DS host to use in canDownloadBy() method
+      this.documentserverHostName = dsHost.substring(0, portIndex);
+    } else {
+      this.documentserverHostName = dsHost;
+    }
 
     String schema = config.get(CONFIG_SCHEMA);
     if (schema == null || (schema = schema.trim()).length() == 0) {
@@ -258,7 +266,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     StringBuilder documentserverUrl = new StringBuilder();
     documentserverUrl.append(dsSchema);
     documentserverUrl.append("://");
-    documentserverUrl.append(this.documentserverHost);
+    documentserverUrl.append(dsHost);
 
     this.uploadUrl = new StringBuilder(documentserverUrl).append("/FileUploader.ashx").toString();
     this.documentserverUrl = new StringBuilder(documentserverUrl).append("/OfficeWeb/").toString();
@@ -445,10 +453,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             SessionProvider userProvider = new SessionProvider(state);
             sessionProviders.setSessionProvider(null, userProvider);
           } else {
-            LOG.warn("User identity not found " + userId + " for content of " + config.getDocument().getKey() + " " + config.getPath());
+            LOG.warn("User identity not found " + userId + " for content of " + config.getDocument().getKey() + " "
+                + config.getPath());
             throw new OnlyofficeEditorException("User identity not found " + userId);
           }
-          
+
           // work in user session
           Node node = node(config.getWorkspace(), config.getPath());
           Node content = nodeContent(node);
@@ -486,7 +495,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   @Override
   public boolean canDownloadBy(String hostName) {
     if (documentserverAccessOnly) {
-      return documentserverHost.equals(hostName);
+      return documentserverHostName.equals(hostName);
     }
     return true;
   }

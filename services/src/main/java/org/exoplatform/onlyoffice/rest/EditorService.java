@@ -61,9 +61,7 @@ import javax.ws.rs.core.UriInfo;
 @Path("/onlyoffice/editor")
 public class EditorService implements ResourceContainer {
 
-  public static final String INIT_COOKIE_PATH = "/portal/rest/onlyoffice/editor";
-
-  protected static final Log LOG              = ExoLogger.getLogger(EditorService.class);
+  protected static final Log LOG = ExoLogger.getLogger(EditorService.class);
 
   /**
    * Response builder for connect and state.
