@@ -58,7 +58,7 @@ public class OnlyofficeEditor extends UIForm {
   protected static final Log                   LOG     = ExoLogger.getLogger(OnlyofficeEditor.class);
 
   private static final List<UIExtensionFilter> FILTERS = Arrays.asList(new UIExtensionFilter[] {
-      // new IsNotLockedFilter()
+      // new IsNotLockedFilter() // TODO should we care?
       new CanShowOnlyofficeFilter() });
 
   /**
@@ -116,27 +116,6 @@ public class OnlyofficeEditor extends UIForm {
   @UIExtensionFilters
   public List<UIExtensionFilter> getFilters() {
     return FILTERS;
-    // TODO cleanup
-    // List<UIExtensionFilter> filters = new ArrayList<UIExtensionFilter>(FILTERS);
-    // WebuiRequestContext context = WebuiRequestContext.getCurrentInstance();
-    // UIJCRExplorer explorer = context.getUIApplication().findFirstComponentOfType(UIJCRExplorer.class);
-    // OnlyofficeEditorUIService editorsUI = WCMCoreUtils.getService(OnlyofficeEditorUIService.class);
-    //
-    // try {
-    // // show only if already open or closing in UI service
-    // filters.add(new AcceptFilter(editorsUI.canShow(context.getRemoteUser(),
-    // explorer.getCurrentWorkspace(),
-    // explorer.getCurrentNode().getPath())));
-    // return filters;
-    // } catch (Exception e) {
-    // LOG.error("Error reading current node in explorer", e);
-    // return null;
-    // }
-  }
-
-  @Deprecated // TODO not used
-  public void initContext() throws Exception {
-    initContext(WebuiRequestContext.getCurrentInstance());
   }
 
   @Deprecated

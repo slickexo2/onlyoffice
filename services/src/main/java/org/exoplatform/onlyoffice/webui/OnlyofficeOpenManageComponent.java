@@ -54,7 +54,7 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
   protected static final Log                   LOG     = ExoLogger.getLogger(OnlyofficeOpenManageComponent.class);
 
   private static final List<UIExtensionFilter> FILTERS = Arrays.asList(new UIExtensionFilter[] {
-      // new IsNotLockedFilter()
+      // new IsNotLockedFilter() // TODO should we care?
       new CanOpenOnlyofficeFilter() });
 
   public static class OnlyofficeOpenActionListener extends EventListener<OnlyofficeOpenManageComponent> {

@@ -16,6 +16,32 @@
  */
 package org.exoplatform.onlyoffice;
 
+import org.apache.commons.io.input.AutoCloseInputStream;
+import org.exoplatform.container.PortalContainer;
+import org.exoplatform.container.configuration.ConfigurationException;
+import org.exoplatform.container.xml.InitParams;
+import org.exoplatform.container.xml.PropertiesParam;
+import org.exoplatform.onlyoffice.jcr.NodeFinder;
+import org.exoplatform.portal.Constants;
+import org.exoplatform.services.jcr.RepositoryService;
+import org.exoplatform.services.jcr.ext.app.SessionProviderService;
+import org.exoplatform.services.jcr.ext.common.SessionProvider;
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
+import org.exoplatform.services.organization.OrganizationService;
+import org.exoplatform.services.organization.User;
+import org.exoplatform.services.organization.UserProfile;
+import org.exoplatform.services.organization.UserProfileHandler;
+import org.exoplatform.services.security.ConversationState;
+import org.exoplatform.services.security.Identity;
+import org.exoplatform.services.security.IdentityRegistry;
+import org.picocontainer.Startable;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,32 +76,6 @@ import javax.jcr.version.Version;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-
-import org.apache.commons.io.input.AutoCloseInputStream;
-import org.exoplatform.container.PortalContainer;
-import org.exoplatform.container.configuration.ConfigurationException;
-import org.exoplatform.container.xml.InitParams;
-import org.exoplatform.container.xml.PropertiesParam;
-import org.exoplatform.onlyoffice.jcr.NodeFinder;
-import org.exoplatform.portal.Constants;
-import org.exoplatform.services.jcr.RepositoryService;
-import org.exoplatform.services.jcr.ext.app.SessionProviderService;
-import org.exoplatform.services.jcr.ext.common.SessionProvider;
-import org.exoplatform.services.log.ExoLogger;
-import org.exoplatform.services.log.Log;
-import org.exoplatform.services.organization.OrganizationService;
-import org.exoplatform.services.organization.User;
-import org.exoplatform.services.organization.UserProfile;
-import org.exoplatform.services.organization.UserProfileHandler;
-import org.exoplatform.services.security.ConversationState;
-import org.exoplatform.services.security.Identity;
-import org.exoplatform.services.security.IdentityRegistry;
-import org.picocontainer.Startable;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
 /**
  * Service implementing {@link OnlyofficeEditorService} and {@link Startable}.<br>
@@ -127,8 +127,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
   protected final Map<String, String>                                          config;
 
-  // protected final String platformUrl;
-
   protected final String                                                       uploadUrl;
 
   protected final String                                                       documentserverHostName;
@@ -136,8 +134,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   protected final String                                                       documentserverUrl;
 
   protected final boolean                                                      documentserverAccessOnly;
-
-  // protected final URI baseWebdavUri;
 
   protected final Map<String, String>                                          fileTypes             = new ConcurrentHashMap<String, String>();
 
@@ -326,16 +322,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
       // file and callback URLs fill be generated respectively the platform URL and actual user
       builder.generateUrls(editorUrl(schema, host).toString());
-      // // TODO upload content to Openoffice DS: cleanup
-      // try {
-      // Node content = nodeContent(node);
-      // String mimeType = mimeType(content);
-      // Property data = data(content);
-      // String fileUrl = uploadContent(data.getStream(), key, mimeType, data.getLength());
-      // builder.url(fileUrl);
-      // } catch (IOException e) {
-      // throw new OnlyofficeEditorException("Error uploading content to editor for " + key);
-      // }
 
       config = builder.build();
 
@@ -806,25 +792,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         }
       }
     }
-    // TODO Cleanup: add new editors (if ones) - this will be done by getEditor() method calls
-    // if (configs.size() > 0) {
-    // try {
-    // Config anyConfig = configs.values().iterator().next();
-    // for (String userId : editors) {
-    // User user;
-    // try {
-    // user = getUser(userId);
-    // } catch (OnlyofficeEditorException e) {
-    // LOG.warn("Found not existing user in Onlyoffice editors " + userId + ". Ignoring it.");
-    // continue;
-    // }
-    // Config userConfig = anyConfig.forUser(user.getUserName(), user.getFirstName(), user.getLastName());
-    // configs.putIfAbsent(userId, userConfig);
-    // }
-    // } catch (NoSuchElementException e) {
-    // // maybe configs was cleaned by closing all active editors
-    // }
-    // }
   }
 
   protected String[] getCurrentUsers(ConcurrentHashMap<String, Config> configs) {

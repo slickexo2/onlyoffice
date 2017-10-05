@@ -52,9 +52,7 @@ public class OnlyofficeEditorContext {
    * @param nodePath {@link String}
    * @throws OnlyofficeEditorException if cannot auth url from the provider
    */
-  public static void init(RequestContext requestContext,
-                          String workspace,
-                          String nodePath) throws OnlyofficeEditorException {
+  public static void init(RequestContext requestContext, String workspace, String nodePath) throws OnlyofficeEditorException {
 
     Object obj = requestContext.getAttribute(JAVASCRIPT);
     if (obj == null) {
@@ -65,16 +63,6 @@ public class OnlyofficeEditorContext {
       }
 
       context.init(workspace, nodePath);
-
-      // TODO this approach can be used to pass asynchronous messages to UI: they'll appear in right upper
-      // corner notification popover
-      // Map<String, String> contextMessages = messages.get();
-      // if (contextMessages != null) {
-      // for (Map.Entry<String, String> msg : contextMessages.entrySet()) {
-      // context.showInfo(msg.getKey(), msg.getValue());
-      // }
-      // contextMessages.clear();
-      // }
 
       requestContext.setAttribute(JAVASCRIPT, context);
     } else {
@@ -137,11 +125,7 @@ public class OnlyofficeEditorContext {
     }
   }
 
-  // static variables
-
   private final static ThreadLocal<Map<String, String>> messages = new ThreadLocal<Map<String, String>>();
-
-  // instance methods
 
   private final RequireJS                               require;
 

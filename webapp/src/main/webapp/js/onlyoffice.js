@@ -76,7 +76,6 @@
 				style.rel = "stylesheet";
 				style.href = cssUrl;
 				headElems[headElems.length - 1].appendChild(style);
-				// $("head").append($("<link href='" + cssUrl + "' rel='stylesheet' type='text/css' />"));
 			} // else, already added
 		}
 	};
@@ -324,56 +323,6 @@
 		};
 
 		this.create = function() {
-			// TODO not used
-			/*var sampleConfig_ = {
-				width : "100%",
-				height : "100%",
-				type : "desktop",
-				documentType : "text",
-				document : {
-					title : "fileName",
-					url : "http://192.168.99.100/ResourceService.ashx?path=temp_531919286%2f531919286.tmp&nocache=true&deletepath=temp_531919286&filename=531919286.tmp",
-					fileType : "fileType",
-					key : "-1598705153",
-					info : {
-						author : "Me",
-						created : "02/22/2016",
-					},
-					permissions : {
-						edit : true,
-						download : true,
-					}
-				},
-				editorConfig : {
-					mode : "edit",
-					lang : "en",
-					callbackUrl : "http://192.168.1.101:8080/onlysample/IndexServlet?type=track&userAddress=192.168.1.101&fileName=Simple_Document.docx",
-					user : {
-						id : "192.168.1.101",
-						firstname : "John",
-						lastname : "Smith",
-					},
-					embedded : {
-						saveUrl : "http://192.168.99.100/ResourceService.ashx?path=temp_531919286%2f531919286.tmp&nocache=true&deletepath=temp_531919286&filename=531919286.tmp",
-						embedUrl : "http://192.168.99.100/ResourceService.ashx?path=temp_531919286%2f531919286.tmp&nocache=true&deletepath=temp_531919286&filename=531919286.tmp",
-						shareUrl : "http://192.168.99.100/ResourceService.ashx?path=temp_531919286%2f531919286.tmp&nocache=true&deletepath=temp_531919286&filename=531919286.tmp",
-						toolbarDocked : "top",
-					},
-					customization : {
-						about : true,
-						feedback : true,
-						goback : {
-							url : "http://192.168.1.101:8080/IndexServlet",
-						},
-					},
-				},
-				events : {
-					"onReady" : onReady,
-					"onDocumentStateChange" : onDocumentStateChange,
-					"onError" : onError
-				}
-			};*/
-
 			// TODO for debug only
 			/*var testConfig_ = {
 				"width" : "100%",
@@ -710,118 +659,10 @@
 			if (!$actionOpenIcon.hasClass("uiIconEdit")) {
 				$actionOpenIcon.addClass("uiIconEdit");
 			}
-
 			var $actionCloseIcon = $("#uiActionsBarContainer i.uiIconEcmsOnlyofficeClose");
 			if (!$actionCloseIcon.hasClass("uiIconClose")) {
-				$actionCloseIcon.addClass("uiIconSave");
-				// uiIconClose
+				$actionCloseIcon.addClass("uiIconSave"); // uiIconClose
 			}
-
-			// var $fileContent = $("#UIDocumentWorkspace .fileContent");
-			// var $title = $fileContent.find(".title");
-			// var $content = $fileContent.find(".content");
-			// var $editor = $fileContent.find(".editor");
-			// var $progress = $fileContent.find(".progress");
-			//
-			// function showProgress() {
-			// //var $progress = $fileContent.find(".progress");
-			// if ($progress.size() == 0) {
-			// // uiLoadingIconXLarge
-			// $progress = $("<div id='progress'><div class='waitThrobber'></div></div>");
-			// $fileContent.append($progress);
-			// }
-			//
-			// // need remove to let Onlyoffice see end of work
-			// $fileContent.find(".editor").remove();
-			// $content.hide("blind");
-			// $progress.show("blind");
-			// }
-			//
-			// function showEditor(config) {
-			// //var $editor = $container.find(".editor");
-			// if ($editor.size() == 0) {
-			// // this will load Onlyoffice JS!
-			// $editor = $("<div id='editor'><div id='onlyoffice'></div></div>");
-			// $fileContent.append($editor);
-			// }
-			//
-			// $fileContent.find(".progress").hide("blind");
-			// $editor.show("blind");
-			// }
-			//
-			// if ($actionOpenIcon.size() > 0) {
-			// // at this point we have document in viewer
-			// var $action = $actionOpenIcon.parent().parent();
-			// //$action.removeAttr("onclick");
-			//
-			// if ($fileContent.size() > 0) {
-			// if ($title.size() > 0) {
-			// // TODO add full-screen button to the title
-			// }
-			//
-			// $action.click(function() {
-			// // show loading while upload to editor
-			// showProgress();
-			//
-			// // create and start editor
-			// var create = editor.create();
-			// create.done(function(config) {
-			// // XXX timeout mandatory to let DocsAPI load successfully
-			// setTimeout(function() {
-			// $(function() {
-			// docEditor = new DocsAPI.DocEditor("onlyoffice", config);
-			// });
-			// }, 2000);
-			// // show editor
-			// showEditor(config);
-			// });
-			// create.fail(function(error) {
-			// log("ERROR: " + JSON.stringify(error));
-			// UI.showError("Error creating editor", error.error);
-			// showViewer();
-			// });
-			// });
-			// }
-			// } else {
-			// $actionOpenIcon.prop("disabled", true);
-			// }
-			//
-			// if ($actionCloseIcon.size() > 0) {
-			// var $action = $actionCloseIcon.parent().parent();
-			// //var onclickScript = $action.attr("onclick");
-			// var $origAction = $action.clone(true);
-			// $origAction.empty();
-			// $action.removeAttr("onclick");
-			//
-			// if ($fileContent.size() > 0) {
-			// // show loading while downloading from editor
-			// showProgress();
-			//
-			// // TODO seems this not required
-			// if (docEditor) {
-			// docEditor.processSaveResult(true);
-			// docEditor = null;
-			// }
-			//
-			// // save the doc and switch to viewer
-			// var download = editor.download();
-			// download.done(function(state) {
-			// if (!state.saved) {
-			// if (state.users && state.users.length > 1) {
-			// UI.showInfo("Document in use by others", "Document will be saved when all users will close it.");
-			// }
-			// }
-			// $origAction.click();
-			// // invoke original (WebUI's) action
-			// });
-			// download.fail(function(error) {
-			// log(JSON.stringify(error));
-			// UI.showError("Download error", error.data.errorDescription);
-			// });
-			// }
-			// } else {
-			// $actionCloseIcon.prop("disabled", true);
-			// }
 		};
 
 		/**
@@ -843,7 +684,6 @@
 				}
 
 				// show loading while upload to editor - it is already by WebUI side
-				// showProgress();
 
 				// create and start editor
 				var create = editor.create();
@@ -867,7 +707,6 @@
 			var $fileContent = $("#UIDocumentWorkspace .fileContent");
 			if ($fileContent.size() > 0) {
 				// show loading while download the document - it is already by WebUI side
-				// showProgress();
 
 				// TODO seems this not required
 				if (docEditor) {
