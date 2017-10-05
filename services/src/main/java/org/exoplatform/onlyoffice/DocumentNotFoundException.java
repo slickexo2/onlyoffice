@@ -20,16 +20,17 @@
 package org.exoplatform.onlyoffice;
 
 /**
- * Created by The eXo Platform SAS
- * 
+ * Created by The eXo Platform SAS.
+ *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: DocumentNotFoundException.java 00000 Feb 2, 2016 pnedonosko $
- * 
  */
 public class DocumentNotFoundException extends OnlyofficeEditorException {
 
   /**
-   * @param message
+   * Instantiates a new document not found exception.
+   *
+   * @param message the message
    */
   public DocumentNotFoundException(String message) {
     super(message);
@@ -37,7 +38,9 @@ public class DocumentNotFoundException extends OnlyofficeEditorException {
   }
 
   /**
-   * @param cause
+   * Instantiates a new document not found exception.
+   *
+   * @param cause the cause
    */
   public DocumentNotFoundException(Throwable cause) {
     super(cause);
@@ -45,8 +48,10 @@ public class DocumentNotFoundException extends OnlyofficeEditorException {
   }
 
   /**
-   * @param message
-   * @param cause
+   * Instantiates a new document not found exception.
+   *
+   * @param message the message
+   * @param cause the cause
    */
   public DocumentNotFoundException(String message, Throwable cause) {
     super(message, cause);

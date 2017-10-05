@@ -20,21 +20,20 @@
 package org.exoplatform.onlyoffice;
 
 /**
- * Created by The eXo Platform SAS
- * 
+ * Created by The eXo Platform SAS.
+ *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: BadParameterException.java 00000 Feb 16, 2016 pnedonosko $
- * 
  */
 public class BadParameterException extends OnlyofficeEditorException {
 
-  /**
-   * 
-   */
+  /** The Constant serialVersionUID. */
   private static final long serialVersionUID = 8675025886542058618L;
 
   /**
-   * @param message
+   * Instantiates a new bad parameter exception.
+   *
+   * @param message the message
    */
   public BadParameterException(String message) {
     super(message);
@@ -42,7 +41,9 @@ public class BadParameterException extends OnlyofficeEditorException {
   }
 
   /**
-   * @param cause
+   * Instantiates a new bad parameter exception.
+   *
+   * @param cause the cause
    */
   public BadParameterException(Throwable cause) {
     super(cause);
@@ -50,8 +51,10 @@ public class BadParameterException extends OnlyofficeEditorException {
   }
 
   /**
-   * @param message
-   * @param cause
+   * Instantiates a new bad parameter exception.
+   *
+   * @param message the message
+   * @param cause the cause
    */
   public BadParameterException(String message, Throwable cause) {
     super(message, cause);

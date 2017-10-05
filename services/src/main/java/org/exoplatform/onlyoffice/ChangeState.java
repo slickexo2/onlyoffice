@@ -30,14 +30,21 @@ package org.exoplatform.onlyoffice;
  */
 public class ChangeState {
 
+  /** The saved. */
   protected final boolean  saved;
 
+  /** The error. */
   protected final String   error;
 
+  /** The users. */
   protected final String[] users;
 
   /**
-   * 
+   * Instantiates a new change state.
+   *
+   * @param saved the saved
+   * @param error the error
+   * @param users the users
    */
   public ChangeState(boolean saved, String error, String[] users) {
     this.saved = saved;
@@ -46,13 +53,18 @@ public class ChangeState {
   }
 
   /**
-   * 
+   * Instantiates a new change state.
+   *
+   * @param saved the saved
+   * @param users the users
    */
   public ChangeState(boolean saved, String[] users) {
     this(saved, null, users);
   }
 
   /**
+   * Gets the error.
+   *
    * @return the error
    */
   public String getError() {
@@ -60,6 +72,8 @@ public class ChangeState {
   }
 
   /**
+   * Checks if is saved.
+   *
    * @return the saved
    */
   public boolean isSaved() {
@@ -67,6 +81,8 @@ public class ChangeState {
   }
 
   /**
+   * Gets the users.
+   *
    * @return the users
    */
   public String[] getUsers() {

@@ -56,29 +56,40 @@ import javax.jcr.Session;
  */
 public class CustomizeViewPlugin extends ManageViewPlugin {
 
+  /** The params. */
   protected final InitParams           params;
 
+  /** The repository service. */
   protected final RepositoryService    repositoryService;
 
+  /** The node hierarchy creator. */
   protected final NodeHierarchyCreator nodeHierarchyCreator;
 
+  /** The cservice. */
   protected final ConfigurationManager cservice;
 
+  /** The dms configuration. */
   protected final DMSConfiguration     dmsConfiguration;
 
+  /** The template service. */
   protected final TemplateService      templateService;
 
+  /** The configured template. */
   protected final Set<String>          configuredTemplate = new HashSet<String>();
 
+  /** The configured views. */
   protected final Set<String>          configuredViews    = new HashSet<String>();
 
   /**
-   * @param repositoryService
-   * @param params
-   * @param cservice
-   * @param nodeHierarchyCreator
-   * @param dmsConfiguration
-   * @throws Exception
+   * Instantiates a new customize view plugin.
+   *
+   * @param repositoryService the repository service
+   * @param params the params
+   * @param cservice the cservice
+   * @param nodeHierarchyCreator the node hierarchy creator
+   * @param dmsConfiguration the dms configuration
+   * @param templateService the template service
+   * @throws Exception the exception
    */
   public CustomizeViewPlugin(RepositoryService repositoryService,
                              InitParams params,
@@ -124,6 +135,11 @@ public class CustomizeViewPlugin extends ManageViewPlugin {
 
   /// ****** internals ******
 
+  /**
+   * Import customized views.
+   *
+   * @throws Exception the exception
+   */
   private void importCustomizedViews() throws Exception {
     configuredTemplate.clear();
     configuredViews.clear();
@@ -166,6 +182,17 @@ public class CustomizeViewPlugin extends ManageViewPlugin {
     session.logout();
   }
 
+  /**
+   * Customize view.
+   *
+   * @param viewManager the view manager
+   * @param viewName the view name
+   * @param permissions the permissions
+   * @param hideExplorerPanel the hide explorer panel
+   * @param template the template
+   * @return the node
+   * @throws Exception the exception
+   */
   protected Node customizeView(Node viewManager,
                                String viewName,
                                String permissions,
@@ -190,6 +217,14 @@ public class CustomizeViewPlugin extends ManageViewPlugin {
     return viewNode;
   }
 
+  /**
+   * Customize tab.
+   *
+   * @param view the view
+   * @param tabName the tab name
+   * @param buttons the buttons
+   * @throws Exception the exception
+   */
   protected void customizeTab(Node view, String tabName, String buttons) throws Exception {
     buttons = buttons.trim();
     if (view.hasNode(tabName) && buttons.length() > 0) {
@@ -213,11 +248,11 @@ public class CustomizeViewPlugin extends ManageViewPlugin {
 
   /**
    * Read all buttons from given node, in buttons property, to given string builder.
-   * 
-   * @param buttons
-   * @param addButtons
-   * @return
-   * @throws RepositoryException
+   *
+   * @param buttons the buttons
+   * @param addButtons the add buttons
+   * @return the string
+   * @throws RepositoryException the repository exception
    */
   protected String mergeButtons(String buttons, Set<String> addButtons) throws RepositoryException {
     StringBuilder buttonStr = new StringBuilder();

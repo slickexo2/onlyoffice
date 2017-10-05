@@ -31,15 +31,21 @@ package org.exoplatform.onlyoffice;
  */
 public class DocumentStatus {
 
+  /** The key. */
   protected String   key;
 
+  /** The status. */
   protected Long  status;
 
+  /** The url. */
   protected String   url;
 
+  /** The users. */
   protected String[] users;
 
   /**
+   * Gets the key.
+   *
    * @return the key
    */
   public String getKey() {
@@ -47,6 +53,8 @@ public class DocumentStatus {
   }
 
   /**
+   * Sets the key.
+   *
    * @param key the key to set
    */
   public void setKey(String key) {
@@ -54,6 +62,8 @@ public class DocumentStatus {
   }
 
   /**
+   * Gets the status.
+   *
    * @return the status
    */
   public Long getStatus() {
@@ -61,6 +71,8 @@ public class DocumentStatus {
   }
 
   /**
+   * Sets the status.
+   *
    * @param status the status to set
    */
   public void setStatus(Long status) {
@@ -68,6 +80,8 @@ public class DocumentStatus {
   }
 
   /**
+   * Gets the url.
+   *
    * @return the url
    */
   public String getUrl() {
@@ -75,6 +89,8 @@ public class DocumentStatus {
   }
 
   /**
+   * Sets the url.
+   *
    * @param url the url to set
    */
   public void setUrl(String url) {
@@ -82,6 +98,8 @@ public class DocumentStatus {
   }
 
   /**
+   * Gets the users.
+   *
    * @return the users
    */
   public String[] getUsers() {
@@ -89,6 +107,8 @@ public class DocumentStatus {
   }
 
   /**
+   * Sets the users.
+   *
    * @param users the users to set
    */
   public void setUsers(String[] users) {

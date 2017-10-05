@@ -26,25 +26,27 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
 /**
- * Created by The eXo Platform SAS
- * 
+ * Created by The eXo Platform SAS.
+ *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: AcceptFilter.java 00000 Mar 1, 2016 pnedonosko $
- * 
  */
 public class AcceptFilter extends AbstractOnlyofficeFilter {
 
+  /** The accept. */
   protected final boolean accept;
 
   /**
-   * 
+   * Instantiates a new accept filter.
    */
   public AcceptFilter() {
     this.accept = false;
   }
 
   /**
-   * 
+   * Instantiates a new accept filter.
+   *
+   * @param accept the accept
    */
   public AcceptFilter(boolean accept) {
     this.accept = accept;

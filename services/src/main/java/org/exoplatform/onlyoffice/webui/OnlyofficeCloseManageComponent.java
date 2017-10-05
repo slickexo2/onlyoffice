@@ -50,13 +50,29 @@ import java.util.List;
     @EventConfig(listeners = OnlyofficeCloseManageComponent.OnlyofficeCloseActionListener.class) })
 public class OnlyofficeCloseManageComponent extends UIAbstractManagerComponent {
 
+  /** The Constant LOG. */
   protected static final Log                   LOG     = ExoLogger.getLogger(OnlyofficeCloseManageComponent.class);
 
+  /** The Constant FILTERS. */
   private static final List<UIExtensionFilter> FILTERS = Arrays.asList(new UIExtensionFilter[] {
       // new IsNotLockedFilter()
       new CanCloseOnlyofficeFilter() });
 
+  /**
+   * The listener interface for receiving onlyofficeCloseAction events.
+   * The class that is interested in processing a onlyofficeCloseAction
+   * event implements this interface, and the object created
+   * with that class is registered with a component using the
+   * component's <code>addOnlyofficeCloseActionListener</code> method. When
+   * the onlyofficeCloseAction event occurs, that object's appropriate
+   * method is invoked.
+   *
+   */
   public static class OnlyofficeCloseActionListener extends UIActionBarActionListener<OnlyofficeCloseManageComponent> {
+    
+    /**
+     * {@inheritDoc}
+     */
     public void processEvent(Event<OnlyofficeCloseManageComponent> event) throws Exception {
       WebuiRequestContext context = event.getRequestContext();
       UIJCRExplorer explorer = event.getSource().getAncestorOfType(UIJCRExplorer.class);
@@ -115,6 +131,11 @@ public class OnlyofficeCloseManageComponent extends UIAbstractManagerComponent {
     }
   }
 
+  /**
+   * Gets the filters.
+   *
+   * @return the filters
+   */
   @UIExtensionFilters
   public List<UIExtensionFilter> getFilters() {
     return FILTERS;
@@ -145,6 +166,12 @@ public class OnlyofficeCloseManageComponent extends UIAbstractManagerComponent {
     return super.renderEventURL(ajax, name, beanId, params);
   }
 
+  /**
+   * Inits the context.
+   *
+   * @param context the context
+   * @throws Exception the exception
+   */
   protected void initContext(RequestContext context) throws Exception {
     UIJCRExplorer uiExplorer = getAncestorOfType(UIJCRExplorer.class);
     if (uiExplorer != null) {
@@ -157,6 +184,9 @@ public class OnlyofficeCloseManageComponent extends UIAbstractManagerComponent {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Class<? extends UIAbstractManager> getUIAbstractManagerClass() {
     return null;

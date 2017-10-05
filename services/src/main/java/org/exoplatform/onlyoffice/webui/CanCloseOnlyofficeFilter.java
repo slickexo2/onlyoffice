@@ -27,30 +27,33 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
 /**
- * Created by The eXo Platform SAS
- * 
+ * Created by The eXo Platform SAS.
+ *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: IsEditingOnlyofficeFilter.java 00000 Mar 1, 2016 pnedonosko $
- * 
  */
 public class CanCloseOnlyofficeFilter extends AbstractOnlyofficeFilter {
 
   /**
-   * 
+   * Instantiates a new can close onlyoffice filter.
    */
   public CanCloseOnlyofficeFilter() {
   }
 
   /**
-   * @param messageKey
+   * Instantiates a new can close onlyoffice filter.
+   *
+   * @param messageKey the message key
    */
   public CanCloseOnlyofficeFilter(String messageKey) {
     super(messageKey);
   }
 
   /**
-   * @param messageKey
-   * @param type
+   * Instantiates a new can close onlyoffice filter.
+   *
+   * @param messageKey the message key
+   * @param type the type
    */
   public CanCloseOnlyofficeFilter(String messageKey, UIExtensionFilterType type) {
     super(messageKey, type);

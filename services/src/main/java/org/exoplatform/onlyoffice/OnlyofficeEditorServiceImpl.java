@@ -86,37 +86,53 @@ import javax.xml.parsers.ParserConfigurationException;
  */
 public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Startable {
 
+  /** The Constant LOG. */
   protected static final Log                                                   LOG                   =
                                                                                    ExoLogger.getLogger(OnlyofficeEditorServiceImpl.class);
 
+  /** The Constant RANDOM. */
   protected static final Random                                                RANDOM                = new Random();
 
+  /** The Constant CONFIG_DS_HOST. */
   public static final String                                                   CONFIG_DS_HOST        = "documentserver-host";
 
+  /** The Constant CONFIG_DS_SCHEMA. */
   public static final String                                                   CONFIG_DS_SCHEMA      = "documentserver-schema";
 
+  /** The Constant CONFIG_DS_ACCESS_ONLY. */
   public static final String                                                   CONFIG_DS_ACCESS_ONLY = "documentserver-access-only";
 
+  /** The Constant HTTP_PORT_DELIMITER. */
   protected static final char                                                  HTTP_PORT_DELIMITER   = ':';
 
+  /** The Constant TYPE_TEXT. */
   protected static final String                                                TYPE_TEXT             = "text";
 
+  /** The Constant TYPE_SPREADSHEET. */
   protected static final String                                                TYPE_SPREADSHEET      = "spreadsheet";
 
+  /** The Constant TYPE_PRESENTATION. */
   protected static final String                                                TYPE_PRESENTATION     = "presentation";
 
+  /** The Constant LOCK_WAIT_ATTEMTS. */
   protected static final int                                                   LOCK_WAIT_ATTEMTS     = 20;
 
+  /** The Constant LOCK_WAIT_TIMEOUT. */
   protected static final long                                                  LOCK_WAIT_TIMEOUT     = 250;
 
+  /** The jcr service. */
   protected final RepositoryService                                            jcrService;
 
+  /** The session providers. */
   protected final SessionProviderService                                       sessionProviders;
 
+  /** The identity registry. */
   protected final IdentityRegistry                                             identityRegistry;
 
+  /** The finder. */
   protected final NodeFinder                                                   finder;
 
+  /** The organization. */
   protected final OrganizationService                                          organization;
 
   /**
@@ -125,30 +141,42 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   protected final ConcurrentHashMap<String, ConcurrentHashMap<String, Config>> active                =
                                                                                       new ConcurrentHashMap<String, ConcurrentHashMap<String, Config>>();
 
+  /** The config. */
   protected final Map<String, String>                                          config;
 
+  /** The upload url. */
   protected final String                                                       uploadUrl;
 
+  /** The documentserver host name. */
   protected final String                                                       documentserverHostName;
 
+  /** The documentserver url. */
   protected final String                                                       documentserverUrl;
 
+  /** The documentserver access only. */
   protected final boolean                                                      documentserverAccessOnly;
 
+  /** The file types. */
   protected final Map<String, String>                                          fileTypes             = new ConcurrentHashMap<String, String>();
 
+  /** The upload params. */
   protected final MessageFormat                                                uploadParams          =
                                                                                             new MessageFormat("?url={0}&outputtype={1}&filetype={2}&title={3}&key={4}");
 
+  /** The listeners. */
   protected final ConcurrentLinkedQueue<OnlyofficeEditorListener>              listeners             =
                                                                                          new ConcurrentLinkedQueue<OnlyofficeEditorListener>();
 
   /**
    * Cloud Drive service with storage in JCR and with managed features.
-   * 
+   *
    * @param jcrService {@link RepositoryService}
    * @param sessionProviders {@link SessionProviderService}
-   * @param features {@link CloudDriveFeatures}
+   * @param identityRegistry the identity registry
+   * @param finder the finder
+   * @param organization the organization
+   * @param params the params
+   * @throws ConfigurationException the configuration exception
    */
   public OnlyofficeEditorServiceImpl(RepositoryService jcrService,
                                      SessionProviderService sessionProviders,
@@ -253,6 +281,15 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     return getEditor(userId, nodePath(workspace, path));
   }
 
+  /**
+   * Gets the editor.
+   *
+   * @param userId the user id
+   * @param nodePath the node path
+   * @return the editor
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   * @throws RepositoryException the repository exception
+   */
   protected Config getEditor(String userId, String nodePath) throws OnlyofficeEditorException, RepositoryException {
     ConcurrentHashMap<String, Config> configs = active.get(nodePath);
     if (configs != null) {
@@ -561,10 +598,24 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
   // *********************** implementation level ***************
 
+  /**
+   * Node title.
+   *
+   * @param node the node
+   * @return the string
+   * @throws RepositoryException the repository exception
+   */
   protected String nodeTitle(Node node) throws RepositoryException {
     return node.getProperty("exo:title").getString();
   }
 
+  /**
+   * File type.
+   *
+   * @param node the node
+   * @return the string
+   * @throws RepositoryException the repository exception
+   */
   protected String fileType(Node node) throws RepositoryException {
     String title = nodeTitle(node);
     int dotIndex = title.lastIndexOf('.');
@@ -579,6 +630,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     return null;
   }
 
+  /**
+   * Document type.
+   *
+   * @param fileType the file type
+   * @return the string
+   */
   protected String documentType(String fileType) {
     String docType = fileTypes.get(fileType);
     if (docType != null) {
@@ -587,22 +644,57 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     return TYPE_TEXT; // we assume text document by default
   }
 
+  /**
+   * Node content.
+   *
+   * @param node the node
+   * @return the node
+   * @throws RepositoryException the repository exception
+   */
   protected Node nodeContent(Node node) throws RepositoryException {
     return node.getNode("jcr:content");
   }
 
+  /**
+   * Node created.
+   *
+   * @param node the node
+   * @return the calendar
+   * @throws RepositoryException the repository exception
+   */
   protected Calendar nodeCreated(Node node) throws RepositoryException {
     return node.getProperty("jcr:created").getDate();
   }
 
+  /**
+   * Mime type.
+   *
+   * @param content the content
+   * @return the string
+   * @throws RepositoryException the repository exception
+   */
   protected String mimeType(Node content) throws RepositoryException {
     return content.getProperty("jcr:mimeType").getString();
   }
 
+  /**
+   * Data.
+   *
+   * @param content the content
+   * @return the property
+   * @throws RepositoryException the repository exception
+   */
   protected Property data(Node content) throws RepositoryException {
     return content.getProperty("jcr:data");
   }
 
+  /**
+   * Generate id.
+   *
+   * @param workspace the workspace
+   * @param path the path
+   * @return the uuid
+   */
   protected UUID generateId(String workspace, String path) {
     StringBuilder s = new StringBuilder();
     s.append(workspace);
@@ -613,14 +705,34 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     return UUID.nameUUIDFromBytes(s.toString().getBytes());
   }
 
+  /**
+   * Node path.
+   *
+   * @param workspace the workspace
+   * @param path the path
+   * @return the string
+   */
   protected String nodePath(String workspace, String path) {
     return new StringBuilder().append(workspace).append(":").append(path).toString();
   }
 
+  /**
+   * Node path.
+   *
+   * @param config the config
+   * @return the string
+   */
   protected String nodePath(Config config) {
     return nodePath(config.getWorkspace(), config.getPath());
   }
 
+  /**
+   * Gets the user.
+   *
+   * @param username the username
+   * @return the user
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   */
   protected User getUser(String username) throws OnlyofficeEditorException {
     try {
       return organization.getUserHandler().findUserByName(username);
@@ -629,6 +741,17 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * Webdav url.
+   *
+   * @param schema the schema
+   * @param host the host
+   * @param workspace the workspace
+   * @param path the path
+   * @return the string
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   * @throws RepositoryException the repository exception
+   */
   protected String webdavUrl(String schema, String host, String workspace, String path) throws OnlyofficeEditorException, RepositoryException {
     StringBuilder filePath = new StringBuilder();
     try {
@@ -648,6 +771,17 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * Upload content.
+   *
+   * @param localContent the local content
+   * @param fileKey the file key
+   * @param mimeType the mime type
+   * @param length the length
+   * @return the string
+   * @throws IOException Signals that an I/O exception has occurred.
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   */
   @Deprecated
   protected String uploadContent(InputStream localContent, String fileKey, String mimeType, long length) throws IOException,
                                                                                                          OnlyofficeEditorException {
@@ -732,6 +866,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * Process convert service responce error.
+   *
+   * @param errorCode the error code
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   */
   private void processConvertServiceResponceError(int errorCode) throws OnlyofficeEditorException {
     String errorMessage = "";
     String errorMessageTemplate = "Error occurred in the ConvertService: ";
@@ -771,6 +911,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     throw new OnlyofficeEditorException(errorMessage);
   }
 
+  /**
+   * Sync users.
+   *
+   * @param configs the configs
+   * @param users the users
+   */
   protected void syncUsers(ConcurrentHashMap<String, Config> configs, String[] users) {
     Set<String> editors = new HashSet<String>(Arrays.asList(users));
     // remove gone editors
@@ -794,6 +940,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * Gets the current users.
+   *
+   * @param configs the configs
+   * @return the current users
+   */
   protected String[] getCurrentUsers(ConcurrentHashMap<String, Config> configs) {
     // copy key set to avoid confuses w/ concurrency
     Set<String> userIds = new LinkedHashSet<String>(configs.keySet());
@@ -808,6 +960,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     return userIds.toArray(new String[userIds.size()]);
   }
 
+  /**
+   * Download.
+   *
+   * @param config the config
+   * @param status the status
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   * @throws RepositoryException the repository exception
+   */
   protected void download(Config config, DocumentStatus status) throws OnlyofficeEditorException, RepositoryException {
     String workspace = config.getWorkspace();
     String path = config.getPath();
@@ -933,6 +1093,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * Download change.
+   *
+   * @param config the config
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   * @throws RepositoryException the repository exception
+   */
   @Deprecated
   protected void downloadChange(Config config) throws OnlyofficeEditorException, RepositoryException {
     String workspace = config.getWorkspace();
@@ -1042,6 +1209,15 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * Track change.
+   *
+   * @param config the config
+   * @param status the status
+   * @throws BadParameterException the bad parameter exception
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   * @throws RepositoryException the repository exception
+   */
   @Deprecated
   protected void trackChange(Config config, DocumentStatus status) throws BadParameterException, OnlyofficeEditorException, RepositoryException {
     String workspace = config.getWorkspace();
@@ -1078,6 +1254,15 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * Node.
+   *
+   * @param workspace the workspace
+   * @param path the path
+   * @return the node
+   * @throws BadParameterException the bad parameter exception
+   * @throws RepositoryException the repository exception
+   */
   protected Node node(String workspace, String path) throws BadParameterException, RepositoryException {
     SessionProvider sp = sessionProviders.getSessionProvider(null);
     Session userSession = sp.getSession(workspace, jcrService.getCurrentRepository());
@@ -1090,6 +1275,15 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * System node.
+   *
+   * @param workspace the workspace
+   * @param path the path
+   * @return the node
+   * @throws BadParameterException the bad parameter exception
+   * @throws RepositoryException the repository exception
+   */
   protected Node systemNode(String workspace, String path) throws BadParameterException, RepositoryException {
     SessionProvider sp = sessionProviders.getSystemSessionProvider(null);
     Session sysSession = sp.getSession(workspace, jcrService.getCurrentRepository());
@@ -1102,6 +1296,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * Checkout.
+   *
+   * @param node the node
+   * @return true, if successful
+   * @throws RepositoryException the repository exception
+   */
   protected boolean checkout(Node node) throws RepositoryException {
     if (node.isNodeType("mix:versionable")) {
       if (!node.isCheckedOut()) {
@@ -1113,6 +1314,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * Checkin.
+   *
+   * @param node the node
+   * @return the version
+   * @throws RepositoryException the repository exception
+   */
   @Deprecated
   protected Version checkin(Node node) throws RepositoryException {
     if (node.isNodeType("mix:versionable")) {
@@ -1126,12 +1334,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /**
    * Lock by current user of the node. If lock attempts will succeed in predefined time this method will throw
    * {@link OnlyofficeEditorException}. If node isn't mix:versionable it will be added first and node saved.
-   * 
+   *
    * @param node {@link Node}
    * @param config {@link Config}
    * @return {@link Lock} acquired by current user.
-   * @throws OnlyofficeEditorException
-   * @throws RepositoryException
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   * @throws RepositoryException the repository exception
    */
   protected Lock lock(Node node, Config config) throws OnlyofficeEditorException, RepositoryException {
     if (!node.isNodeType("mix:lockable")) {
@@ -1171,6 +1379,15 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     return lock;
   }
 
+  /**
+   * Unlock.
+   *
+   * @param node the node
+   * @param config the config
+   * @return true, if successful
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   * @throws RepositoryException the repository exception
+   */
   @Deprecated
   protected boolean unlock(Node node, Config config) throws OnlyofficeEditorException, RepositoryException {
     if (node.isLocked()) {
@@ -1186,6 +1403,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     return false;
   }
 
+  /**
+   * Validate user.
+   *
+   * @param userId the user id
+   * @param config the config
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   */
   protected void validateUser(String userId, Config config) throws OnlyofficeEditorException {
     User user = getUser(userId);
     if (user == null) {
@@ -1194,6 +1418,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * Gets the user lang.
+   *
+   * @param userId the user id
+   * @return the user lang
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   */
   protected String getUserLang(String userId) throws OnlyofficeEditorException {
     UserProfileHandler hanlder = organization.getUserProfileHandler();
     try {
@@ -1219,6 +1450,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * Platform url.
+   *
+   * @param schema the schema
+   * @param host the host
+   * @return the string builder
+   */
   protected StringBuilder platformUrl(String schema, String host) {
     StringBuilder platformUrl = new StringBuilder();
     platformUrl.append(schema);
@@ -1232,10 +1470,25 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     return platformUrl;
   }
 
+  /**
+   * Editor url.
+   *
+   * @param schema the schema
+   * @param host the host
+   * @return the string builder
+   */
   protected StringBuilder editorUrl(String schema, String host) {
     return platformUrl(schema, host).append("/onlyoffice/editor");
   }
 
+  /**
+   * Webdav uri.
+   *
+   * @param schema the schema
+   * @param host the host
+   * @return the uri
+   * @throws URISyntaxException the URI syntax exception
+   */
   protected URI webdavUri(String schema, String host) throws URISyntaxException {
     StringBuilder webdavUrl = new StringBuilder();
     webdavUrl.append(platformUrl(schema, host));
@@ -1243,6 +1496,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     return new URI(webdavUrl.toString());
   }
 
+  /**
+   * Fire created.
+   *
+   * @param config the config
+   */
   protected void fireCreated(Config config) {
     for (OnlyofficeEditorListener l : listeners) {
       try {
@@ -1253,6 +1511,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * Fire get.
+   *
+   * @param config the config
+   */
   protected void fireGet(Config config) {
     for (OnlyofficeEditorListener l : listeners) {
       try {
@@ -1263,6 +1526,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * Fire joined.
+   *
+   * @param config the config
+   */
   protected void fireJoined(Config config) {
     for (OnlyofficeEditorListener l : listeners) {
       try {
@@ -1273,6 +1541,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * Fire leaved.
+   *
+   * @param config the config
+   */
   protected void fireLeaved(Config config) {
     for (OnlyofficeEditorListener l : listeners) {
       try {
@@ -1283,6 +1556,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * Fire saved.
+   *
+   * @param config the config
+   */
   protected void fireSaved(Config config) {
     for (OnlyofficeEditorListener l : listeners) {
       try {
@@ -1293,6 +1571,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * Fire error.
+   *
+   * @param config the config
+   */
   protected void fireError(Config config) {
     for (OnlyofficeEditorListener l : listeners) {
       try {

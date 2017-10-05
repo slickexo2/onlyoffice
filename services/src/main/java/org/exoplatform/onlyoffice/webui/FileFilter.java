@@ -30,16 +30,15 @@ import java.util.Map;
 import javax.jcr.Node;
 
 /**
- * Created by The eXo Platform SAS
- * 
+ * Created by The eXo Platform SAS.
+ *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: FileFilter.java 00000 Mar 2, 2016 pnedonosko $
- * 
  */
 public class FileFilter extends org.exoplatform.webui.ext.filter.impl.FileFilter {
 
   /**
-   * 
+   * Instantiates a new file filter.
    */
   public FileFilter() {
   }

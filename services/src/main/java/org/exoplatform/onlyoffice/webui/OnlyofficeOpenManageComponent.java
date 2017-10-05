@@ -51,13 +51,28 @@ import java.util.List;
                  events = { @EventConfig(listeners = OnlyofficeOpenManageComponent.OnlyofficeOpenActionListener.class) })
 public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
 
+  /** The Constant LOG. */
   protected static final Log                   LOG     = ExoLogger.getLogger(OnlyofficeOpenManageComponent.class);
 
+  /** The Constant FILTERS. */
   private static final List<UIExtensionFilter> FILTERS = Arrays.asList(new UIExtensionFilter[] {
       // new IsNotLockedFilter() // TODO should we care?
       new CanOpenOnlyofficeFilter() });
 
+  /**
+   * The listener interface for receiving onlyofficeOpenAction events.
+   * The class that is interested in processing a onlyofficeOpenAction
+   * event implements this interface, and the object created
+   * with that class is registered with a component using the
+   * component's <code>addOnlyofficeOpenActionListener</code> method. When
+   * the onlyofficeOpenAction event occurs, that object's appropriate
+   * method is invoked.
+   */
   public static class OnlyofficeOpenActionListener extends EventListener<OnlyofficeOpenManageComponent> {
+    
+    /**
+     * {@inheritDoc}
+     */
     public void execute(Event<OnlyofficeOpenManageComponent> event) throws Exception {
       // OnlyofficeOpenManageComponent comp = event.getSource();
       WebuiRequestContext context = event.getRequestContext();
@@ -81,6 +96,11 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
     }
   }
 
+  /**
+   * Gets the filters.
+   *
+   * @return the filters
+   */
   @UIExtensionFilters
   public List<UIExtensionFilter> getFilters() {
     return FILTERS;
@@ -96,6 +116,12 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
     return super.renderEventURL(ajax, name, beanId, params);
   }
 
+  /**
+   * Inits the context.
+   *
+   * @param context the context
+   * @throws Exception the exception
+   */
   protected void initContext(RequestContext context) throws Exception {
     UIJCRExplorer uiExplorer = getAncestorOfType(UIJCRExplorer.class);
     if (uiExplorer != null) {
@@ -108,6 +134,9 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Class<? extends UIAbstractManager> getUIAbstractManagerClass() {
     return null;

@@ -47,11 +47,26 @@ import org.exoplatform.webui.ext.manager.UIAbstractManagerComponent;
                  events = { @EventConfig(listeners = RefreshViewManagerComponent.RefreshViewActionListener.class) })
 public class RefreshViewManagerComponent extends UIAbstractManagerComponent {
 
+  /** The Constant LOG. */
   protected static final Log LOG        = ExoLogger.getLogger(RefreshViewManagerComponent.class);
 
+  /** The Constant EVENT_NAME. */
   public static final String EVENT_NAME = "RefreshView";
 
+  /**
+   * The listener interface for receiving refreshViewAction events.
+   * The class that is interested in processing a refreshViewAction
+   * event implements this interface, and the object created
+   * with that class is registered with a component using the
+   * component's <code>addRefreshViewActionListener</code> method. When
+   * the refreshViewAction event occurs, that object's appropriate
+   * method is invoked.
+   */
   public static class RefreshViewActionListener extends EventListener<RefreshViewManagerComponent> {
+    
+    /**
+     * {@inheritDoc}
+     */
     public void execute(Event<RefreshViewManagerComponent> event) throws Exception {
       // code adopted from UIAddressBar.RefreshSessionActionListener.execute()
       UIJCRExplorer explorer = event.getSource().getAncestorOfType(UIJCRExplorer.class);
@@ -80,6 +95,12 @@ public class RefreshViewManagerComponent extends UIAbstractManagerComponent {
     return super.renderEventURL(ajax, name, beanId, params);
   }
 
+  /**
+   * Inits the context.
+   *
+   * @param context the context
+   * @throws Exception the exception
+   */
   protected void initContext(RequestContext context) throws Exception {
     UIJCRExplorer uiExplorer = getAncestorOfType(UIJCRExplorer.class);
     if (uiExplorer != null) {
@@ -92,6 +113,9 @@ public class RefreshViewManagerComponent extends UIAbstractManagerComponent {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Class<? extends UIAbstractManager> getUIAbstractManagerClass() {
     // TODO Auto-generated method stub

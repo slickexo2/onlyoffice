@@ -37,35 +37,37 @@ public interface NodeFinder {
 
   /**
    * Return JCR item by given path.
-   * 
+   *
    * @param userSession {@link Session}
    * @param path {@link String}
    * @param symlinkTarget boolean, if {@code true} and found item is a symlink node, return the symlink target
    *          node, if {@code false} just return the item obtained from the session
-   * @throws RepositoryException if repository error eccurs
+   * @return the item
    * @throws PathNotFoundException if item not found by given path
+   * @throws RepositoryException if repository error eccurs
    */
   Item getItem(Session userSession, String path, boolean symlinkTarget) throws PathNotFoundException, RepositoryException;
 
   /**
    * Find JCR item by given path, if the path points to a symlink this method return a target node of the
    * link.
-   * 
+   *
    * @param userSession {@link Session}
    * @param path {@link String}
-   * @throws RepositoryException if repository error eccurs
+   * @return the item
    * @throws PathNotFoundException if item not found by given path
+   * @throws RepositoryException if repository error eccurs
    */
   Item findItem(Session userSession, String path) throws PathNotFoundException, RepositoryException;
 
   /**
    * Find nodes linked to given node.
-   * 
-   * @param userSession {@link Session}
+   *
+   * @param session the session
    * @param uuid {@link String}
    * @return {@link Collection} of nodes
-   * @throws PathNotFoundException
-   * @throws RepositoryException
+   * @throws PathNotFoundException the path not found exception
+   * @throws RepositoryException the repository exception
    */
   Collection<Node> findLinked(Session session, String uuid) throws PathNotFoundException, RepositoryException;
 
@@ -79,10 +81,10 @@ public interface NodeFinder {
 
   /**
    * Return user home node of given user.
-   * 
+   *
    * @param userName String with user name in organization
    * @return {@link Node} user home node
-   * @throws Exception
+   * @throws Exception the exception
    */
   Node getUserNode(String userName) throws Exception;
 

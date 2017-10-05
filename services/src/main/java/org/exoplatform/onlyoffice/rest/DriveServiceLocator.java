@@ -56,7 +56,8 @@ public class DriveServiceLocator {
   /**
    * Answers whether the request (to given host) should be redirected to its contextual link. See also
    * {@link #getServiceLink(String, String)}.
-   * 
+   *
+   * @param requestHost the request host
    * @return boolean, <code>true</code> if request should be redirected, <code>false</code> otherwise.
    */
   public final boolean isRedirect(String requestHost) {

@@ -22,11 +22,10 @@ package org.exoplatform.onlyoffice;
 import java.io.InputStream;
 
 /**
- * Created by The eXo Platform SAS
- * 
+ * Created by The eXo Platform SAS.
+ *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: DocumentContent.java 00000 Feb 19, 2016 pnedonosko $
- * 
  */
 public abstract class DocumentContent {
 

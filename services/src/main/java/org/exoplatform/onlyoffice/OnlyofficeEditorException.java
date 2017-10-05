@@ -20,31 +20,36 @@
 package org.exoplatform.onlyoffice;
 
 /**
- * Created by The eXo Platform SAS
- * 
+ * Created by The eXo Platform SAS.
+ *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: OnlyofficeEditorException.java 00000 Jan 31, 2016 pnedonosko $
- * 
  */
 public class OnlyofficeEditorException extends Exception {
 
   /**
-   * @param message
+   * Instantiates a new onlyoffice editor exception.
+   *
+   * @param message the message
    */
   public OnlyofficeEditorException(String message) {
     super(message);
   }
 
   /**
-   * @param cause
+   * Instantiates a new onlyoffice editor exception.
+   *
+   * @param cause the cause
    */
   public OnlyofficeEditorException(Throwable cause) {
     super(cause);
   }
 
   /**
-   * @param message
-   * @param cause
+   * Instantiates a new onlyoffice editor exception.
+   *
+   * @param message the message
+   * @param cause the cause
    */
   public OnlyofficeEditorException(String message, Throwable cause) {
     super(message, cause);

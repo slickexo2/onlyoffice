@@ -40,8 +40,10 @@ import javax.jcr.RepositoryException;
  */
 public class OnlyofficeEditorContext {
 
+  /** The Constant JAVASCRIPT. */
   protected static final String JAVASCRIPT = "OnlyofficeEditorContext_Javascript".intern();
 
+  /** The Constant LOG. */
   protected static final Log    LOG        = ExoLogger.getLogger(OnlyofficeEditorContext.class);
 
   /**
@@ -72,6 +74,12 @@ public class OnlyofficeEditorContext {
     }
   }
 
+  /**
+   * Open.
+   *
+   * @param requestContext the request context
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   */
   public static void open(RequestContext requestContext) throws OnlyofficeEditorException {
     Object obj = requestContext.getAttribute(JAVASCRIPT);
     if (obj != null) {
@@ -84,6 +92,12 @@ public class OnlyofficeEditorContext {
     }
   }
 
+  /**
+   * Close.
+   *
+   * @param requestContext the request context
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   */
   public static void close(RequestContext requestContext) throws OnlyofficeEditorException {
     Object obj = requestContext.getAttribute(JAVASCRIPT);
     if (obj != null) {
@@ -98,11 +112,12 @@ public class OnlyofficeEditorContext {
 
   /**
    * Show info notification to the user.
-   * 
+   *
+   * @param requestContext the request context
    * @param title {@link String}
    * @param message {@link String}
-   * @throws RepositoryException
-   * @throws CloudDriveException
+   * @throws RepositoryException the repository exception
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
    */
   public static void showInfo(RequestContext requestContext, String title, String message) throws RepositoryException,
                                                                                            OnlyofficeEditorException {
@@ -125,8 +140,10 @@ public class OnlyofficeEditorContext {
     }
   }
 
+  /** The Constant messages. */
   private final static ThreadLocal<Map<String, String>> messages = new ThreadLocal<Map<String, String>>();
 
+  /** The require. */
   private final RequireJS                               require;
 
   /**
@@ -139,21 +156,45 @@ public class OnlyofficeEditorContext {
     this.require = jsMan.require("SHARED/onlyoffice", "onlyoffice");
   }
 
+  /**
+   * Inits the.
+   *
+   * @param workspace the workspace
+   * @param nodePath the node path
+   * @return the onlyoffice editor context
+   */
   private OnlyofficeEditorContext init(String workspace, String nodePath) {
     require.addScripts("onlyoffice.init('" + workspace + "','" + nodePath + "');");
     return this;
   }
 
+  /**
+   * Open.
+   *
+   * @return the onlyoffice editor context
+   */
   private OnlyofficeEditorContext open() {
     require.addScripts("onlyoffice.open();");
     return this;
   }
 
+  /**
+   * Close.
+   *
+   * @return the onlyoffice editor context
+   */
   private OnlyofficeEditorContext close() {
     require.addScripts("onlyoffice.close();");
     return this;
   }
 
+  /**
+   * Show info.
+   *
+   * @param title the title
+   * @param text the text
+   * @return the onlyoffice editor context
+   */
   private OnlyofficeEditorContext showInfo(String title, String text) {
     // require.addScripts("onlyoffice.showInfo('" + title + "','" + text + "');");
     return this;

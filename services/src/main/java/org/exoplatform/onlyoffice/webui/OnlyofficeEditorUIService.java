@@ -36,10 +36,28 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class OnlyofficeEditorUIService {
 
+  /**
+   * The Enum State.
+   */
   protected static enum State {
-    OPENING, OPEN, CLOSING
+    
+    /** The opening. */
+    OPENING, 
+ /** The open. */
+ OPEN, 
+ /** The closing. */
+ CLOSING
   }
 
+  /**
+   * The listener interface for receiving editor events.
+   * The class that is interested in processing a editor
+   * event implements this interface, and the object created
+   * with that class is registered with a component using the
+   * component's <code>addEditorListener</code> method. When
+   * the editor event occurs, that object's appropriate
+   * method is invoked.
+   */
   protected class EditorListener implements OnlyofficeEditorListener {
 
     /**
@@ -103,16 +121,27 @@ public class OnlyofficeEditorUIService {
    */
   protected final ConcurrentHashMap<String, State> editors = new ConcurrentHashMap<String, State>();
 
+  /** The editor service. */
   protected final OnlyofficeEditorService          editorService;
 
   /**
-   * 
+   * Instantiates a new onlyoffice editor UI service.
+   *
+   * @param editorService the editor service
    */
   public OnlyofficeEditorUIService(OnlyofficeEditorService editorService) {
     this.editorService = editorService;
     editorService.addListener(new EditorListener());
   }
 
+  /**
+   * Open.
+   *
+   * @param userId the user id
+   * @param workspace the workspace
+   * @param path the path
+   * @return true, if successful
+   */
   public boolean open(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
     State state = State.OPENING;
@@ -120,11 +149,27 @@ public class OnlyofficeEditorUIService {
     return prev != null ? State.OPENING == prev : true;
   }
 
+  /**
+   * Opened.
+   *
+   * @param userId the user id
+   * @param workspace the workspace
+   * @param path the path
+   * @return true, if successful
+   */
   public boolean opened(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
     return editors.replace(id, State.OPENING, State.OPEN);
   }
 
+  /**
+   * Close.
+   *
+   * @param userId the user id
+   * @param workspace the workspace
+   * @param path the path
+   * @return true, if successful
+   */
   public boolean close(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
     if (!editors.replace(id, State.OPEN, State.CLOSING)) {
@@ -134,56 +179,136 @@ public class OnlyofficeEditorUIService {
     return true;
   }
 
+  /**
+   * Closed.
+   *
+   * @param userId the user id
+   * @param workspace the workspace
+   * @param path the path
+   * @return true, if successful
+   */
   // TODO this method not used, reset used by listener instead
   public boolean closed(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
     return editors.remove(id, State.CLOSING);
   }
 
+  /**
+   * Reset.
+   *
+   * @param userId the user id
+   * @param workspace the workspace
+   * @param path the path
+   * @return true, if successful
+   */
   public boolean reset(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
     State state = editors.remove(id);
     return state != null;
   }
 
+  /**
+   * Checks if is opening.
+   *
+   * @param userId the user id
+   * @param workspace the workspace
+   * @param path the path
+   * @return true, if is opening
+   */
   public boolean isOpening(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
     return State.OPENING == editors.get(id);
   }
 
+  /**
+   * Checks if is open.
+   *
+   * @param userId the user id
+   * @param workspace the workspace
+   * @param path the path
+   * @return true, if is open
+   */
   public boolean isOpen(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
     return State.OPEN == editors.get(id);
   }
 
+  /**
+   * Checks if is closing.
+   *
+   * @param userId the user id
+   * @param workspace the workspace
+   * @param path the path
+   * @return true, if is closing
+   */
   public boolean isClosing(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
     return State.CLOSING == editors.get(id);
   }
 
+  /**
+   * Checks if is closed.
+   *
+   * @param userId the user id
+   * @param workspace the workspace
+   * @param path the path
+   * @return true, if is closed
+   */
   public boolean isClosed(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
     return !editors.containsKey(id);
   }
 
+  /**
+   * Can show.
+   *
+   * @param userId the user id
+   * @param workspace the workspace
+   * @param path the path
+   * @return true, if successful
+   */
   public boolean canShow(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
     State state = editors.get(id);
     return State.OPENING == state || State.OPEN == state || State.CLOSING == state;
   }
 
+  /**
+   * Can open.
+   *
+   * @param userId the user id
+   * @param workspace the workspace
+   * @param path the path
+   * @return true, if successful
+   */
   public boolean canOpen(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
     State state = editors.get(id);
     return state == null || State.CLOSING == state;
   }
 
+  /**
+   * Can close.
+   *
+   * @param userId the user id
+   * @param workspace the workspace
+   * @param path the path
+   * @return true, if successful
+   */
   public boolean canClose(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
     State state = editors.get(id);
     return State.OPENING == state || State.OPEN == state;
   }
 
+  /**
+   * Editor id.
+   *
+   * @param userId the user id
+   * @param workspace the workspace
+   * @param path the path
+   * @return the string
+   */
   protected String editorId(String userId, String workspace, String path) {
     StringBuilder id = new StringBuilder();
     id.append(userId);

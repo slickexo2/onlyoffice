@@ -55,16 +55,23 @@ import java.util.List;
                      @EventConfig(listeners = OnErrorActionListener.class) })
 public class OnlyofficeEditor extends UIForm {
 
+  /** The Constant LOG. */
   protected static final Log                   LOG     = ExoLogger.getLogger(OnlyofficeEditor.class);
 
+  /** The Constant FILTERS. */
   private static final List<UIExtensionFilter> FILTERS = Arrays.asList(new UIExtensionFilter[] {
       // new IsNotLockedFilter() // TODO should we care?
       new CanShowOnlyofficeFilter() });
 
   /**
    * Used in UI, by Javascript client after actual download of the edited content. See Javascript UI.close().
+   *
    */
   public static class OnCloseActionListener extends EventListener<OnlyofficeEditor> {
+    
+    /**
+     * {@inheritDoc}
+     */
     public void execute(Event<OnlyofficeEditor> event) throws Exception {
       WebuiRequestContext context = event.getRequestContext();
       UIJCRExplorer explorer = event.getSource().getAncestorOfType(UIJCRExplorer.class);
@@ -88,8 +95,13 @@ public class OnlyofficeEditor extends UIForm {
 
   /**
    * Used in UI, by Javascript client on creation and download errors.
+   *
    */
   public static class OnErrorActionListener extends EventListener<OnlyofficeEditor> {
+    
+    /**
+     * {@inheritDoc}
+     */
     public void execute(Event<OnlyofficeEditor> event) throws Exception {
       WebuiRequestContext context = event.getRequestContext();
       UIJCRExplorer explorer = event.getSource().getAncestorOfType(UIJCRExplorer.class);
@@ -108,16 +120,27 @@ public class OnlyofficeEditor extends UIForm {
   }
 
   /**
-   * 
+   * Instantiates a new onlyoffice editor.
    */
   public OnlyofficeEditor() {
   }
 
+  /**
+   * Gets the filters.
+   *
+   * @return the filters
+   */
   @UIExtensionFilters
   public List<UIExtensionFilter> getFilters() {
     return FILTERS;
   }
 
+  /**
+   * Inits the context.
+   *
+   * @param context the context
+   * @throws Exception the exception
+   */
   @Deprecated
   protected void initContext(RequestContext context) throws Exception {
     UIJCRExplorer uiExplorer = getAncestorOfType(UIJCRExplorer.class);

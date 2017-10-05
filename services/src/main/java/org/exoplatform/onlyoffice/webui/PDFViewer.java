@@ -32,11 +32,10 @@ import org.exoplatform.webui.event.Event.Phase;
 import javax.portlet.PortletRequest;
 
 /**
- * Created by The eXo Platform SAS
- * 
+ * Created by The eXo Platform SAS.
+ *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: PDFViewer.java 00000 Jan 31, 2016 pnedonosko $
- * 
  */
 @ComponentConfig(lifecycle = UIFormLifecycle.class, template = "classpath:resources/templates/PDFJSViewer.gtmpl", events = {
     @EventConfig(listeners = org.exoplatform.ecm.webui.viewer.PDFViewer.NextPageActionListener.class, phase = Phase.DECODE),
@@ -57,21 +56,22 @@ import javax.portlet.PortletRequest;
 @Deprecated
 public class PDFViewer extends org.exoplatform.ecm.webui.viewer.PDFViewer {
 
+  /** The Constant LOG. */
   protected static final Log LOG                                  = ExoLogger.getLogger(PDFViewer.class);
 
-  /**
-   * XXX CONSTANTS COPIED FROM ECMS's PDFViewer because it is private there! See also
-   * {@link #isNotModernBrowser()}
-   */
+  /** XXX CONSTANTS COPIED FROM ECMS's PDFViewer because it is private there! See also {@link #isNotModernBrowser()}. */
   protected static final int MIN_IE_SUPPORTED_BROWSER_VERSION     = 9;
 
+  /** The Constant MIN_FF_SUPPORTED_BROWSER_VERSION. */
   protected static final int MIN_FF_SUPPORTED_BROWSER_VERSION     = 20;
 
+  /** The Constant MIN_CHROME_SUPPORTED_BROWSER_VERSION. */
   protected static final int MIN_CHROME_SUPPORTED_BROWSER_VERSION = 20;
-  /** ************* */
-
+  
   /**
-   * @throws Exception
+   * Instantiates a new PDF viewer.
+   *
+   * @throws Exception the exception
    */
   public PDFViewer() throws Exception {
     super();
@@ -88,6 +88,12 @@ public class PDFViewer extends org.exoplatform.ecm.webui.viewer.PDFViewer {
     super.processRender(context);
   }
   
+  /**
+   * Inits the context.
+   *
+   * @param context the context
+   * @throws Exception the exception
+   */
   protected void initContext(WebuiRequestContext context) throws Exception {
     UIJCRExplorer uiExplorer = getAncestorOfType(UIJCRExplorer.class);
     if (uiExplorer != null) {
@@ -103,6 +109,9 @@ public class PDFViewer extends org.exoplatform.ecm.webui.viewer.PDFViewer {
   /**
    * XXX METHOD COPIED FROM ECMS's PDFViewer because it is private there!
    * Check if client has modern browser (IE9+, FF20+, Chrome 20+).
+   *
+   * @return true, if is not modern browser
+   * @throws Exception the exception
    */
   protected boolean isNotModernBrowser() throws Exception {
     PortletRequestContext requestContext = PortletRequestContext.getCurrentInstance();

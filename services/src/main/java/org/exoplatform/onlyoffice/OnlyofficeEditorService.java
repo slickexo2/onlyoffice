@@ -20,8 +20,8 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
 /**
- * Created by The eXo Platform SAS
- * 
+ * Created by The eXo Platform SAS.
+ *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: CloudDriveService.java 00000 Feb 14, 2013 pnedonosko $
  */
@@ -30,13 +30,13 @@ public interface OnlyofficeEditorService {
   /**
    * Return existing editor for given user and node. If user not valid or editor not open for given node then
    * <code>null</code> will be returned.
-   * 
+   *
    * @param userId {@link String}
    * @param workspace {@link String}
    * @param path {@link String}
    * @return {@link Config} or <code>null</code>
-   * @throws OnlyofficeEditorException
-   * @throws RepositoryException
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   * @throws RepositoryException the repository exception
    */
   Config getEditor(String userId, String workspace, String path) throws OnlyofficeEditorException,
                                                                  RepositoryException;
@@ -75,12 +75,12 @@ public interface OnlyofficeEditorService {
 
   /**
    * Get file content.
-   * 
+   *
    * @param userId {@link String}
    * @param fileKey {@link String}
    * @return {@link DocumentContent}
-   * @throws OnlyofficeEditorException
-   * @throws RepositoryException
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   * @throws RepositoryException the repository exception
    */
   DocumentContent getContent(String userId, String fileKey) throws OnlyofficeEditorException,
                                                             RepositoryException;
@@ -97,25 +97,25 @@ public interface OnlyofficeEditorService {
 
   /**
    * Local state of editing document.
-   * 
+   *
    * @param userId {@link String}
    * @param fileKey {@link String}
-   * @throws OnlyofficeEditorException
    * @return {@link ChangeState}
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
    */
   ChangeState getState(String userId, String fileKey) throws OnlyofficeEditorException;
 
   /**
    * Add listener to the service.
-   * 
-   * @param listener
+   *
+   * @param listener the listener
    */
   void addListener(OnlyofficeEditorListener listener);
 
   /**
    * Remove listener from the service.
-   * 
-   * @param listener
+   *
+   * @param listener the listener
    */
   void removeListener(OnlyofficeEditorListener listener);
 }

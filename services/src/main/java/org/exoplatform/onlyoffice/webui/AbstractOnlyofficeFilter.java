@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2003-2016 eXo Platform SAS.
  *
@@ -36,30 +35,33 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
 /**
- * Created by The eXo Platform SAS
- * 
+ * Created by The eXo Platform SAS.
+ *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: AbstractOnlyofficeFilter.java 00000 Mar 1, 2016 pnedonosko $
- * 
  */
 public abstract class AbstractOnlyofficeFilter extends UIExtensionAbstractFilter {
 
   /**
-   * 
+   * Instantiates a new abstract onlyoffice filter.
    */
   public AbstractOnlyofficeFilter() {
   }
 
   /**
-   * @param messageKey
+   * Instantiates a new abstract onlyoffice filter.
+   *
+   * @param messageKey the message key
    */
   public AbstractOnlyofficeFilter(String messageKey) {
     super(messageKey);
   }
 
   /**
-   * @param messageKey
-   * @param type
+   * Instantiates a new abstract onlyoffice filter.
+   *
+   * @param messageKey the message key
+   * @param type the type
    */
   public AbstractOnlyofficeFilter(String messageKey, UIExtensionFilterType type) {
     super(messageKey, type);
@@ -121,6 +123,15 @@ public abstract class AbstractOnlyofficeFilter extends UIExtensionAbstractFilter
   public void onDeny(Map<String, Object> context) throws Exception {
   }
 
+  /**
+   * Accept.
+   *
+   * @param userId the user id
+   * @param node the node
+   * @return true, if successful
+   * @throws RepositoryException the repository exception
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   */
   protected abstract boolean accept(String userId, Node node) throws RepositoryException, OnlyofficeEditorException;
 
 }

@@ -30,28 +30,32 @@ package org.exoplatform.onlyoffice;
  */
 public class ConflictException extends OnlyofficeEditorException {
 
-  /**
-   * 
-   */
+  /** The Constant serialVersionUID. */
   private static final long serialVersionUID = -8997447485990474429L;
 
   /**
-   * @param message
+   * Instantiates a new conflict exception.
+   *
+   * @param message the message
    */
   public ConflictException(String message) {
     super(message);
   }
 
   /**
-   * @param cause
+   * Instantiates a new conflict exception.
+   *
+   * @param cause the cause
    */
   public ConflictException(Throwable cause) {
     super(cause);
   }
 
   /**
-   * @param message
-   * @param cause
+   * Instantiates a new conflict exception.
+   *
+   * @param message the message
+   * @param cause the cause
    */
   public ConflictException(String message, Throwable cause) {
     super(message, cause);

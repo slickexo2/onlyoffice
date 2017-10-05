@@ -43,12 +43,22 @@ import javax.jcr.Session;
  */
 public class JCRNodeFinder implements NodeFinder {
 
+  /** The jcr service. */
   protected final RepositoryService      jcrService;
 
+  /** The session provider service. */
   protected final SessionProviderService sessionProviderService;
 
+  /** The hierarchy creator. */
   protected final NodeHierarchyCreator   hierarchyCreator;
 
+  /**
+   * Instantiates a new JCR node finder.
+   *
+   * @param jcrService the jcr service
+   * @param sessionProviderService the session provider service
+   * @param hierarchyCreator the hierarchy creator
+   */
   public JCRNodeFinder(RepositoryService jcrService,
                        SessionProviderService sessionProviderService,
                        NodeHierarchyCreator hierarchyCreator) {
@@ -58,7 +68,7 @@ public class JCRNodeFinder implements NodeFinder {
   }
 
   /**
-   * @inherritDoc
+   * {@inheritDoc}
    */
   @Override
   public Item getItem(Session userSession, String path, boolean symlinkTarget) throws PathNotFoundException,
@@ -67,7 +77,7 @@ public class JCRNodeFinder implements NodeFinder {
   }
 
   /**
-   * @inherritDoc
+   * {@inheritDoc}
    */
   @Override
   public Item findItem(Session userSession, String path) throws PathNotFoundException, RepositoryException {
