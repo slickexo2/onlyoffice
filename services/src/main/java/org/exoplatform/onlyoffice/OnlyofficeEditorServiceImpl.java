@@ -16,6 +16,41 @@
  */
 package org.exoplatform.onlyoffice;
 
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Locale;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+import javax.jcr.Item;
+import javax.jcr.Node;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.lock.Lock;
+import javax.jcr.version.Version;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.apache.commons.io.input.AutoCloseInputStream;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.configuration.ConfigurationException;
@@ -42,46 +77,6 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.UnknownHostException;
-import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.Locale;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-
-import javax.jcr.Item;
-import javax.jcr.Node;
-import javax.jcr.Property;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.lock.Lock;
-import javax.jcr.version.Version;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
 /**
  * Service implementing {@link OnlyofficeEditorService} and {@link Startable}.<br>
  * Created by The eXo Platform SAS.
@@ -91,13 +86,10 @@ import javax.xml.parsers.ParserConfigurationException;
  */
 public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Startable {
 
-  protected static final Log                                                   LOG                   = ExoLogger.getLogger(OnlyofficeEditorServiceImpl.class);
+  protected static final Log                                                   LOG                   =
+                                                                                   ExoLogger.getLogger(OnlyofficeEditorServiceImpl.class);
 
   protected static final Random                                                RANDOM                = new Random();
-
-  public static final String                                                   CONFIG_HOST           = "server-host";
-
-  public static final String                                                   CONFIG_SCHEMA         = "server-schema";
 
   public static final String                                                   CONFIG_DS_HOST        = "documentserver-host";
 
@@ -130,11 +122,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /**
    * Editing documents.
    */
-  protected final ConcurrentHashMap<String, ConcurrentHashMap<String, Config>> active                = new ConcurrentHashMap<String, ConcurrentHashMap<String, Config>>();
+  protected final ConcurrentHashMap<String, ConcurrentHashMap<String, Config>> active                =
+                                                                                      new ConcurrentHashMap<String, ConcurrentHashMap<String, Config>>();
 
   protected final Map<String, String>                                          config;
 
-  protected final String                                                       platformUrl;
+  // protected final String platformUrl;
 
   protected final String                                                       uploadUrl;
 
@@ -144,13 +137,15 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
   protected final boolean                                                      documentserverAccessOnly;
 
-  protected final URI                                                          baseWebdavUri;
+  // protected final URI baseWebdavUri;
 
   protected final Map<String, String>                                          fileTypes             = new ConcurrentHashMap<String, String>();
 
-  protected final MessageFormat                                                uploadParams          = new MessageFormat("?url={0}&outputtype={1}&filetype={2}&title={3}&key={4}");
+  protected final MessageFormat                                                uploadParams          =
+                                                                                            new MessageFormat("?url={0}&outputtype={1}&filetype={2}&title={3}&key={4}");
 
-  protected final ConcurrentLinkedQueue<OnlyofficeEditorListener>              listeners             = new ConcurrentLinkedQueue<OnlyofficeEditorListener>();
+  protected final ConcurrentLinkedQueue<OnlyofficeEditorListener>              listeners             =
+                                                                                         new ConcurrentLinkedQueue<OnlyofficeEditorListener>();
 
   /**
    * Cloud Drive service with storage in JCR and with managed features.
@@ -164,7 +159,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                      IdentityRegistry identityRegistry,
                                      NodeFinder finder,
                                      OrganizationService organization,
-                                     InitParams params) throws ConfigurationException {
+                                     InitParams params)
+      throws ConfigurationException {
     this.jcrService = jcrService;
     this.sessionProviders = sessionProviders;
     this.identityRegistry = identityRegistry;
@@ -224,41 +220,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       this.documentserverHostName = dsHost;
     }
 
-    String schema = config.get(CONFIG_SCHEMA);
-    if (schema == null || (schema = schema.trim()).length() == 0) {
-      schema = "http";
-    }
-
-    String host = config.get(CONFIG_HOST);
-    if (host == null || host.trim().length() == 0) {
-      host = null;
-      try {
-        Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-        while (host == null && interfaces.hasMoreElements()) {
-          NetworkInterface nic = interfaces.nextElement();
-          Enumeration<InetAddress> addresses = nic.getInetAddresses();
-          while (host == null && addresses.hasMoreElements()) {
-            InetAddress address = addresses.nextElement();
-            if (!address.isLoopbackAddress()) {
-              host = address.getHostName();
-            }
-          }
-        }
-      } catch (SocketException e) {
-        // cannot get net interfaces
-      }
-
-      if (host == null) {
-        try {
-          host = InetAddress.getLocalHost().getHostName();
-        } catch (UnknownHostException e) {
-          host = "localhost";
-        }
-      }
-
-      LOG.warn("Configuration of " + CONFIG_HOST + " is not set, will use " + host);
-    }
-
     this.documentserverAccessOnly = Boolean.parseBoolean(config.get(CONFIG_DS_ACCESS_ONLY));
 
     // base parameters for API
@@ -270,27 +231,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
     this.uploadUrl = new StringBuilder(documentserverUrl).append("/FileUploader.ashx").toString();
     this.documentserverUrl = new StringBuilder(documentserverUrl).append("/OfficeWeb/").toString();
-
-    StringBuilder platformUrl = new StringBuilder();
-    platformUrl.append(schema);
-    platformUrl.append("://");
-    platformUrl.append(host);
-    platformUrl.append('/');
-    platformUrl.append(PortalContainer.getCurrentPortalContainerName());
-    platformUrl.append('/');
-    platformUrl.append(PortalContainer.getCurrentRestContextName());
-
-    StringBuilder webdavUrl = new StringBuilder();
-    webdavUrl.append(platformUrl);
-    webdavUrl.append("/jcr");
-    try {
-      this.baseWebdavUri = new URI(webdavUrl.toString());
-    } catch (URISyntaxException e) {
-      throw new ConfigurationException("Error parsing WebDAV URL " + webdavUrl, e);
-    }
-
-    platformUrl.append("/onlyoffice/editor");
-    this.platformUrl = platformUrl.toString();
   }
 
   /**
@@ -313,8 +253,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * {@inheritDoc}
    */
   @Override
-  public Config getEditor(String userId, String workspace, String path) throws OnlyofficeEditorException,
-                                                                        RepositoryException {
+  public Config getEditor(String userId, String workspace, String path) throws OnlyofficeEditorException, RepositoryException {
     return getEditor(userId, nodePath(workspace, path));
   }
 
@@ -327,10 +266,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         try {
           User user = getUser(userId);
           String lang = getUserLang(userId); // use this user language
-          config = configs.values().iterator().next().forUser(user.getUserName(),
-                                                              user.getFirstName(),
-                                                              user.getLastName(),
-                                                              lang);
+          config = configs.values().iterator().next().forUser(user.getUserName(), user.getFirstName(), user.getLastName(), lang);
           Config existing = configs.putIfAbsent(userId, config);
           if (existing != null) {
             config = existing;
@@ -351,11 +287,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
   /**
    * {@inheritDoc}
-   * @throws
    */
   @Override
-  public Config createEditor(String userId, String workspace, String path) throws OnlyofficeEditorException,
-                                                                           RepositoryException {
+  public Config createEditor(String schema, String host, String userId, String workspace, String path) throws OnlyofficeEditorException,
+                                                                                                       RepositoryException {
     Node node = node(workspace, path);
     String nodePath = nodePath(workspace, path);
 
@@ -390,7 +325,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       builder.key(key);
 
       // file and callback URLs fill be generated respectively the platform URL and actual user
-      builder.generateUrls(platformUrl);
+      builder.generateUrls(editorUrl(schema, host).toString());
       // // TODO upload content to Openoffice DS: cleanup
       // try {
       // Node content = nodeContent(node);
@@ -453,8 +388,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             SessionProvider userProvider = new SessionProvider(state);
             sessionProviders.setSessionProvider(null, userProvider);
           } else {
-            LOG.warn("User identity not found " + userId + " for content of " + config.getDocument().getKey() + " "
-                + config.getPath());
+            LOG.warn("User identity not found " + userId + " for content of " + config.getDocument().getKey() + " " + config.getPath());
             throw new OnlyofficeEditorException("User identity not found " + userId);
           }
 
@@ -549,8 +483,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // Onlyoffice doesn't know about such document: we clean our records and raise an error
           active.remove(key);
           active.remove(nodePath);
-          LOG.warn("Received Onlyoffice status: no document with the key identifier could be found. Key: " + key
-              + ". Document " + nodePath);
+          LOG.warn("Received Onlyoffice status: no document with the key identifier could be found. Key: " + key + ". Document " + nodePath);
           throw new OnlyofficeEditorException("Error editing document: document ID not found");
         } else if (statusCode == 1) {
           // while "document is being edited" (1) will come just before "document is ready for saving"
@@ -584,8 +517,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               // config.close(); // close for use in listeners
               // fireSaved(config);
               fireError(config);
-              LOG.warn("Received Onlyoffice error of saving document. Key: " + key + ". Users: "
-                  + Arrays.toString(status.getUsers()) + ". Last change was successfully saved for " + nodePath);
+              LOG.warn("Received Onlyoffice error of saving document. Key: " + key + ". Users: " + Arrays.toString(status.getUsers())
+                  + ". Last change was successfully saved for " + nodePath);
             } else {
               // if error without content URL and last user: it's error state
               LOG.warn("Received Onlyoffice error of saving document without changes URL. Key: " + key + ". Users: "
@@ -612,8 +545,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           active.remove(nodePath);
         } else {
           // warn unexpected status, wait for next status
-          LOG.warn("Received Onlyoffice unexpected status. Key: " + key + ". URL: " + status.getUrl() + ". Users: "
-              + status.getUsers() + ". Document " + nodePath);
+          LOG.warn("Received Onlyoffice unexpected status. Key: " + key + ". URL: " + status.getUrl() + ". Users: " + status.getUsers()
+              + ". Document " + nodePath);
         }
       } else {
         throw new BadParameterException("User editor not found " + userId);
@@ -710,34 +643,28 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
-  protected String webdavUrl(String workspace, String path) throws OnlyofficeEditorException, RepositoryException {
+  protected String webdavUrl(String schema, String host, String workspace, String path) throws OnlyofficeEditorException, RepositoryException {
     StringBuilder filePath = new StringBuilder();
-    filePath.append(baseWebdavUri.getPath());
-    filePath.append('/');
-    filePath.append(jcrService.getCurrentRepository().getConfiguration().getName());
-    filePath.append('/');
-    filePath.append(workspace);
-    filePath.append(path);
-
     try {
-      URI uri = new URI(baseWebdavUri.getScheme(),
-                        null,
-                        baseWebdavUri.getHost(),
-                        baseWebdavUri.getPort(),
-                        filePath.toString(),
-                        null,
-                        null);
+      URI baseWebdavUri = webdavUri(schema, host);
+
+      filePath.append(baseWebdavUri.getPath());
+      filePath.append('/');
+      filePath.append(jcrService.getCurrentRepository().getConfiguration().getName());
+      filePath.append('/');
+      filePath.append(workspace);
+      filePath.append(path);
+
+      URI uri = new URI(baseWebdavUri.getScheme(), null, baseWebdavUri.getHost(), baseWebdavUri.getPort(), filePath.toString(), null, null);
       return uri.toASCIIString();
     } catch (URISyntaxException e) {
-      throw new OnlyofficeEditorException("Error creating content link (WebDAV) for " + filePath, e);
+      throw new OnlyofficeEditorException("Error creating content link (WebDAV) for " + path + " in " + workspace, e);
     }
   }
 
   @Deprecated
-  protected String uploadContent(InputStream localContent,
-                                 String fileKey,
-                                 String mimeType,
-                                 long length) throws IOException, OnlyofficeEditorException {
+  protected String uploadContent(InputStream localContent, String fileKey, String mimeType, long length) throws IOException,
+                                                                                                         OnlyofficeEditorException {
     String urlTostorage = uploadUrl + uploadParams.format(new String[] { "", "", "", "", fileKey });
 
     URL url = new URL(urlTostorage);
@@ -1149,9 +1076,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   @Deprecated
-  protected void trackChange(Config config, DocumentStatus status) throws BadParameterException,
-                                                                   OnlyofficeEditorException,
-                                                                   RepositoryException {
+  protected void trackChange(Config config, DocumentStatus status) throws BadParameterException, OnlyofficeEditorException, RepositoryException {
     String workspace = config.getWorkspace();
     String path = config.getPath();
 
@@ -1161,8 +1086,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     if (users != null && users.length > 0) {
       user = users[0];
     } else {
-      LOG.warn("No user in status from Onlyoffice document editing service for file " + status.getKey() + " ("
-          + nodePath(workspace, path) + ")");
+      LOG.warn("No user in status from Onlyoffice document editing service for file " + status.getKey() + " (" + nodePath(workspace, path)
+          + ")");
       user = null;
     }
     if (contentUrl != null && contentUrl.length() > 0) {
@@ -1181,8 +1106,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       content.setProperty("exo:lastEditedTime", Calendar.getInstance());
       content.save();
     } else {
-      throw new OnlyofficeEditorException("Empty link to the edited document from editing service. User " + user
-          + ". Document " + nodePath(workspace, path));
+      throw new OnlyofficeEditorException("Empty link to the edited document from editing service. User " + user + ". Document "
+          + nodePath(workspace, path));
     }
   }
 
@@ -1274,8 +1199,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       } while (lock == null && attempts <= LOCK_WAIT_ATTEMTS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new OnlyofficeEditorException("Error waiting for lock of " + nodePath(config.getWorkspace(), config.getPath()),
-                                          e);
+      throw new OnlyofficeEditorException("Error waiting for lock of " + nodePath(config.getWorkspace(), config.getPath()), e);
     }
     return lock;
   }
@@ -1326,6 +1250,30 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     } catch (Exception e) {
       throw new OnlyofficeEditorException("Error searching user profile " + userId, e);
     }
+  }
+
+  protected StringBuilder platformUrl(String schema, String host) {
+    StringBuilder platformUrl = new StringBuilder();
+    platformUrl.append(schema);
+    platformUrl.append("://");
+    platformUrl.append(host);
+    platformUrl.append('/');
+    platformUrl.append(PortalContainer.getCurrentPortalContainerName());
+    platformUrl.append('/');
+    platformUrl.append(PortalContainer.getCurrentRestContextName());
+
+    return platformUrl;
+  }
+
+  protected StringBuilder editorUrl(String schema, String host) {
+    return platformUrl(schema, host).append("/onlyoffice/editor");
+  }
+
+  protected URI webdavUri(String schema, String host) throws URISyntaxException {
+    StringBuilder webdavUrl = new StringBuilder();
+    webdavUrl.append(platformUrl(schema, host));
+    webdavUrl.append("/jcr");
+    return new URI(webdavUrl.toString());
   }
 
   protected void fireCreated(Config config) {

@@ -26,7 +26,7 @@
 
   <!-- Javascript for Onlyoffice editor in WCM -->
   <module>
-    <name>jqueryPnotify</name>
+    <name>onlyofficeJqueryPnotify</name>
     <load-group>onlyofficeGRP</load-group>
     <script>
       <path>/js/jquery.pnotify.min.js</path>
@@ -37,7 +37,7 @@
     </depends>
   </module>
   <module>
-    <name>jqueryUI</name>
+    <name>onlyofficeJqueryUI</name>
     <as>jqueryUI</as>
     <load-group>onlyofficeGRP</load-group>
     <script>
@@ -58,10 +58,10 @@
       <module>jquery</module>
     </depends>
     <depends>
-      <module>jqueryPnotify</module>
+      <module>onlyofficeJqueryPnotify</module>
     </depends>
     <depends>
-      <module>jqueryUI</module>
+      <module>onlyofficeJqueryUI</module>
     </depends>
   </module>
 </gatein-resources>

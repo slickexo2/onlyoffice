@@ -1,4 +1,4 @@
-#eXo Onlyoffice add-on
+# eXo Onlyoffice add-on
 
 This add-on allow editing office documents directly in eXo Platform using ONLYOFFICE™ Documents Server. Thanks to the introduced menu items, in action bar of Documents explorer, users of eXo Platform can switch to editor in file preview of any supportable office document. As for now, the add-on offers support of following formats: 
 - Office Open XML (Microsoft Office 2007 and later):
@@ -12,9 +12,9 @@ This add-on allow editing office documents directly in eXo Platform using ONLYOF
  
 The Document Server should be [installed](http://helpcenter.onlyoffice.com/server/document.aspx) on reachable network. ONLYOFFICE™ offers native installers for Windows and Linux, they also have [Docker installation](http://helpcenter.onlyoffice.com/server/docker/document/docker-installation.aspx) which will be described below in details. 
 
-![Video]()
+![Video](https://www.youtube.com/watch?v=Ifioa0GfG-k)
 
-##Usage
+## Usage
 
 Since add-on installed, it adds two menu items in Document explorer action bar: "Edit In Onlyoffice" and "Close Onlyoffice". These menu items available in file preview mode (need open a file in the explorer) and also work for large files when preview not possible. 
 
@@ -31,9 +31,9 @@ When several users edit the same document, it is required to make extra operatio
 
 ![Co-editing](/docs/images/coediting.png)
 
-##Installation
+## Installation
 
-###ONLYOFFICE™ Document Server
+### ONLYOFFICE™ Document Server
 
 ONLYOFFICE™ Document Server can be [installed](http://helpcenter.onlyoffice.com/server/docker/document/docker-installation.aspx) in Docker container from ready image with pre-configured defaults. While this add-on has no constraints on how the Onlyoffice installed, Docker way is a simplest and strightforward way to add Document Office to you infra, for both development or production. Document Server is an Open Source Software, thus if you'll need to customize it, it's always possible to get the sources and make your Docker image.
 
@@ -45,7 +45,7 @@ The Document Server needs only port 80 by default, but you also can run in on HT
 
 To check you have running Document Server successfuly, open a page on its address [http://DOCUMENT\_SERVER\_HOST/OnlineEditorsExample/](http://localhost/OnlineEditorsExample/), it will show you simple demo page where you can upload a document, or use their sample, and try to edit online in your browser. After you'll see it works well, you are ready to install the add-on in eXo Platform.
 
-###eXo Platform Add-on
+### eXo Platform Add-on
 After you successfuly installed ONLYOFFICE™ Document Server, you need install Onlyoffice add-on to eXo Platform server. It should be Platform version 4.3 or higher. 
 
 If you want use released binaries from eXo Catalog, simple run command in root of the server:
@@ -54,19 +54,23 @@ If you want use released binaries from eXo Catalog, simple run command in root o
 
 When building from sources, then go to `/packaging/target` folder of the project and extract `exo-onlyoffice-packaging.zip` to a root of your server. You also may setup local add-ons catalog for eXo Addon manager if plan development with frequent installations, and then use this archive as a local package.
 
-##Configuration
+## Configuration
 
-Onlyoffice add-on need to know an adress of your Document Server and eXo Platform server, and it's also required to point a protocol scheme to use (`http` or `https`). Add following lines to your `exo.properties`:
+Onlyoffice add-on need to know an adress of your Document Server and eXo Platform server, and it's also required to point a protocol scheme to use (`http` or `https`). Add following lines to your `exo.properties`.
+
+For Platform 4.4 and higher:
 
     onlyoffice.documentserver.host=YOUR_DOCUMENT_SERVER_HOST
     onlyoffice.documentserver.schema=http
 
+For Platform 4.3 also need point your server public host and schema:
+
     onlyoffice.server.host=YOUR_EXO_SERVER_HOST
     onlyoffice.server.schema=http
 
-Where `YOUR_DOCUMENT_SERVER_HOST` is an IP or host name of Document Server and `YOUR_EXO_SERVER_HOST` host ip or name (with port if not 80 or 443) of your eXo Platform.
+Where `YOUR_DOCUMENT_SERVER_HOST` is an IP or host name of Document Server and `YOUR_EXO_SERVER_HOST` host ip or name (with port if not 80 or 443) of your eXo Platform server.
 
-##Security
+## Security
 
 ONLYOFFICE™ Document Server standalone doesn't offer a user authorization or such integration with external identities. As a result it's required to place it in secure network and for production it will be mandatory to run via [HTTPS](http://helpcenter.onlyoffice.com/server/docker/document/docker-installation.aspx#RunningHTTPS) or even use [strong SSL security](https://raymii.org/s/tutorials/Strong_SSL_Security_On_nginx.html). 
 

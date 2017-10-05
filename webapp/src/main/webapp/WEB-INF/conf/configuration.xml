@@ -33,8 +33,6 @@
         <property name="documentserver-host" value="${onlyoffice.documentserver.host:127.0.0.1:80}" />
         <property name="documentserver-schema" value="${onlyoffice.documentserver.schema:http}" />
         <property name="documentserver-access-only" value="${onlyoffice.documentserver.accessOnly:true}" />
-        <property name="server-host" value="${onlyoffice.server.host:}" />
-        <property name="server-schema" value="${onlyoffice.server.schema:http}" />
       </properties-param>
     </init-params>
   </component>
@@ -45,9 +43,9 @@
     <key>org.exoplatform.onlyoffice.jcr.NodeFinder</key>
     <type>org.exoplatform.onlyoffice.jcr.CMSNodeFinder</type>
   </component>
-  <component>
+  <!-- component>
     <type>org.exoplatform.onlyoffice.rest.DriveServiceLocator</type>
-  </component>
+  </component -->
   <component>
     <type>org.exoplatform.onlyoffice.rest.EditorService</type>
   </component>

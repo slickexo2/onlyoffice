@@ -19,7 +19,7 @@
 package org.exoplatform.onlyoffice.rest;
 
 /**
- * Host management for Cloud Drive connections.<br>
+ * Host management for add-on connections.<br>
  * 
  * Created by The eXo Platform SAS.
  * 
@@ -27,6 +27,7 @@ package org.exoplatform.onlyoffice.rest;
  * @version $Id: DriveServiceLocator.java 00000 May 22, 2013 pnedonosko $
  * 
  */
+@Deprecated // TODO not used
 public class DriveServiceLocator {
 
   /**

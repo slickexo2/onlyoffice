@@ -248,23 +248,6 @@
 		return process.promise(processTarget);
 	};
 
-	/**
-	 * NOT USED
-	 */
-	var statusPost = function(key, status) {
-		var request = $.ajax({
-			type : "POST",
-			url : prefixUrl + "/portal/rest/onlyoffice/editor/status/" + key,
-			dataType : "json",
-			data : status,
-			xhrFields : {
-				withCredentials : true
-			}
-		});
-
-		return initRequest(request);
-	};
-
 	var configGet = function(workspace, path) {
 		var request = $.ajax({
 			type : "GET",
@@ -530,7 +513,7 @@
 			if (downloadProcess) {
 				if (currentConfig && downloadProcess.state() === "pending") {
 					// wait a bit (up to ~60sec) to let Onlyoffice post document status
-					var attempts = 40;
+					var attempts = 20;
 					function checkSaved() {
 						attempts--;
 						var get = stateGet(currentConfig.editorConfig.user.id, currentConfig.document.key);
@@ -541,7 +524,7 @@
 								if (attempts >= 0 && state.users && state.users.length == 1 && state.users[0] == currentConfig.editorConfig.user.id) {
 									setTimeout(function() {
 										checkSaved();
-									}, 1500);
+									}, 3000);
 								} else {
 									// resolve as-is, this will cover co-editing when others still edit
 									downloadProcess.resolve(state);

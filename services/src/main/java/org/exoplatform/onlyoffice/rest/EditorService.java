@@ -16,22 +16,7 @@
  */
 package org.exoplatform.onlyoffice.rest;
 
-import org.exoplatform.onlyoffice.BadParameterException;
-import org.exoplatform.onlyoffice.ChangeState;
-import org.exoplatform.onlyoffice.Config;
-import org.exoplatform.onlyoffice.DocumentContent;
-import org.exoplatform.onlyoffice.DocumentStatus;
-import org.exoplatform.onlyoffice.OnlyofficeEditorException;
-import org.exoplatform.onlyoffice.OnlyofficeEditorService;
-import org.exoplatform.services.log.ExoLogger;
-import org.exoplatform.services.log.Log;
-import org.exoplatform.services.rest.resource.ResourceContainer;
-import org.exoplatform.services.security.ConversationState;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-
+import java.net.URI;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -49,6 +34,22 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
+
+import org.exoplatform.onlyoffice.BadParameterException;
+import org.exoplatform.onlyoffice.ChangeState;
+import org.exoplatform.onlyoffice.Config;
+import org.exoplatform.onlyoffice.DocumentContent;
+import org.exoplatform.onlyoffice.DocumentStatus;
+import org.exoplatform.onlyoffice.OnlyofficeEditorException;
+import org.exoplatform.onlyoffice.OnlyofficeEditorService;
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
+import org.exoplatform.services.rest.resource.ResourceContainer;
+import org.exoplatform.services.security.ConversationState;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 /**
  * REST service implementing Onlyoffice config storage service. <br>
@@ -102,8 +103,6 @@ public class EditorService implements ResourceContainer {
 
   protected final OnlyofficeEditorService editors;
 
-  protected final DriveServiceLocator     locator;
-
   protected final Map<UUID, Config>       initiated = new ConcurrentHashMap<UUID, Config>();
 
   /**
@@ -115,9 +114,8 @@ public class EditorService implements ResourceContainer {
    * @param sessionProviders
    * @param finder
    */
-  public EditorService(OnlyofficeEditorService editors, DriveServiceLocator locator) {
+  public EditorService(OnlyofficeEditorService editors) {
     this.editors = editors;
-    this.locator = locator;
   }
 
   /**
@@ -143,8 +141,8 @@ public class EditorService implements ResourceContainer {
     String clientIp = getClientIpAddr(request);
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("> Onlyoffice document status: " + userId + "@" + key + " " + statusText + " from " + clientHost + "("
-          + clientIp + ")");
+      LOG.debug("> Onlyoffice document status: " + userId + "@" + key + " " + statusText + " from "
+          + clientHost + "(" + clientIp + ")");
     }
 
     EditorResponse resp = new EditorResponse();
@@ -222,7 +220,8 @@ public class EditorService implements ResourceContainer {
     String clientIp = getClientIpAddr(request);
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("> Onlyoffice document content: " + userId + "@" + key + " to " + clientHost + "(" + clientIp + ")");
+      LOG.debug("> Onlyoffice document content: " + userId + "@" + key + " to " + clientHost + "(" + clientIp
+          + ")");
     }
 
     EditorResponse resp = new EditorResponse();
@@ -288,9 +287,15 @@ public class EditorService implements ResourceContainer {
           ConversationState convo = ConversationState.getCurrent();
           if (convo != null) {
             String username = convo.getIdentity().getUserId();
-            Config config = editors.createEditor(username, workspace, path);
+            URI requestUri = uriInfo.getRequestUri();
+            Config config = editors.createEditor(requestUri.getScheme(),
+                                                 requestHost(requestUri),
+                                                 username,
+                                                 workspace,
+                                                 path);
             if (LOG.isDebugEnabled()) {
-              LOG.debug("> Onlyoffice document config: " + workspace + ":" + path + " -> " + config.getDocument().getKey());
+              LOG.debug("> Onlyoffice document config: " + workspace + ":" + path + " -> "
+                  + config.getDocument().getKey());
             }
             resp.config(config).ok();
           } else {
@@ -331,7 +336,9 @@ public class EditorService implements ResourceContainer {
   @Path("/state/{userId}/{key}")
   @RolesAllowed("users")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response localState(@Context UriInfo uriInfo, @PathParam("userId") String userId, @PathParam("key") String key) {
+  public Response localState(@Context UriInfo uriInfo,
+                             @PathParam("userId") String userId,
+                             @PathParam("key") String key) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("> localState: " + userId + "@" + key);
     }
@@ -430,6 +437,15 @@ public class EditorService implements ResourceContainer {
       return true;
     }
     return false;
+  }
+
+  protected String requestHost(URI requestUri) {
+    StringBuilder host = new StringBuilder(requestUri.getHost());
+    if (requestUri.getPort() != 80 && requestUri.getPort() != 443) {
+      host.append(':');
+      host.append(requestUri.getPort());
+    }
+    return host.toString();
   }
 
 }

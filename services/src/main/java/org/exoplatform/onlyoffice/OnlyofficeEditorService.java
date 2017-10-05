@@ -38,11 +38,14 @@ public interface OnlyofficeEditorService {
    * @throws OnlyofficeEditorException
    * @throws RepositoryException
    */
-  Config getEditor(String userId, String workspace, String path) throws OnlyofficeEditorException, RepositoryException;
+  Config getEditor(String userId, String workspace, String path) throws OnlyofficeEditorException,
+                                                                 RepositoryException;
 
   /**
    * Create an editor config for given config node.
-   * 
+   *
+   * @param userSchema the schema
+   * @param userHost the host
    * @param userId {@link String}
    * @param workspace {@link String}
    * @param path {@link String}
@@ -51,7 +54,11 @@ public interface OnlyofficeEditorService {
    * @throws OnlyofficeEditorException if editor exception happened
    * @throws RepositoryException if storage exception happened
    */
-  Config createEditor(String userId, String workspace, String path) throws OnlyofficeEditorException, RepositoryException;
+  Config createEditor(String userSchema,
+                      String userHost,
+                      String userId,
+                      String workspace,
+                      String path) throws OnlyofficeEditorException, RepositoryException;
 
   /**
    * Update a config associated with given editor {@link Config} instance. A {@link Node} from that the
@@ -63,7 +70,8 @@ public interface OnlyofficeEditorService {
    * @throws OnlyofficeEditorException if editor exception happened
    * @throws RepositoryException if storage exception happened
    */
-  void updateDocument(String userId, DocumentStatus status) throws OnlyofficeEditorException, RepositoryException;
+  void updateDocument(String userId, DocumentStatus status) throws OnlyofficeEditorException,
+                                                            RepositoryException;
 
   /**
    * Get file content.
@@ -74,7 +82,8 @@ public interface OnlyofficeEditorService {
    * @throws OnlyofficeEditorException
    * @throws RepositoryException
    */
-  DocumentContent getContent(String userId, String fileKey) throws OnlyofficeEditorException, RepositoryException;
+  DocumentContent getContent(String userId, String fileKey) throws OnlyofficeEditorException,
+                                                            RepositoryException;
 
   /**
    * Check does given host can download document content by this service. It's optional feature, configurable
