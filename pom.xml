@@ -24,11 +24,11 @@
   <parent>
     <artifactId>addons-parent-pom</artifactId>
     <groupId>org.exoplatform.addons</groupId>
-    <version>8-M01</version>
+    <version>7</version>
   </parent>
   
   <artifactId>exo-onlyoffice-editor-parent</artifactId>
-  <version>1.1.0</version>
+  <version>1.1.x-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>eXo OnlyOffice Editor :: Parent</name>
   <description>eXo OnlyOffice Editor for Documents extension</description>
@@ -36,7 +36,7 @@
   <scm>
     <connection>scm:git:git://github.com/exo-addons/onlyoffice.git</connection>
     <developerConnection>scm:git:git@github.com:exo-addons/onlyoffice.git</developerConnection>
-    <tag>1.1.0</tag>
+    <tag>HEAD</tag>
     <url>https://github.com/exo-addons/onlyoffice</url>
   </scm>
 
@@ -47,7 +47,7 @@
     <maven.compiler.target>1.8</maven.compiler.target>
 
     <!-- eXo Modules -->
-    <org.exoplatform.platform.version>5.0.0-M24</org.exoplatform.platform.version>
+    <org.exoplatform.platform.version>4.4.3</org.exoplatform.platform.version>
     
     <!-- Dependencies -->
     <json-simple.version>1.1.1</json-simple.version>
