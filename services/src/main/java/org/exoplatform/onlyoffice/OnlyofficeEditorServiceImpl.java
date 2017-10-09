@@ -1002,9 +1002,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     ConversationState contextState = ConversationState.getCurrent();
     SessionProvider contextProvider = sessionProviders.getSessionProvider(null);
     try {
-      // XXX we want do all the job under actual (last editor) user here
+      // We want do all the job under actual (last editor) user here
       // Notable that some WCM actions (FileUpdateActivityListener) will fail if user will be anonymous
-      // TODO but it seems looks as nasty thing for security, it should be carefully reviewed for production
+      // This will be reverted in finally block
       Identity userIdentity = identityRegistry.getIdentity(userId);
       if (userIdentity != null) {
         ConversationState state = new ConversationState(userIdentity);
@@ -1312,23 +1312,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     } else {
       return false;
     }
-  }
-
-  /**
-   * Checkin.
-   *
-   * @param node the node
-   * @return the version
-   * @throws RepositoryException the repository exception
-   */
-  @Deprecated
-  protected Version checkin(Node node) throws RepositoryException {
-    if (node.isNodeType("mix:versionable")) {
-      if (node.isCheckedOut()) {
-        return node.checkin();
-      }
-    }
-    return null;
   }
 
   /**

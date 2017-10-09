@@ -28,13 +28,17 @@ package org.exoplatform.onlyoffice;
 public class DocumentNotFoundException extends OnlyofficeEditorException {
 
   /**
+   * 
+   */
+  private static final long serialVersionUID = -72048025662144032L;
+
+  /**
    * Instantiates a new document not found exception.
    *
    * @param message the message
    */
   public DocumentNotFoundException(String message) {
     super(message);
-    // TODO Auto-generated constructor stub
   }
 
   /**
@@ -44,7 +48,6 @@ public class DocumentNotFoundException extends OnlyofficeEditorException {
    */
   public DocumentNotFoundException(Throwable cause) {
     super(cause);
-    // TODO Auto-generated constructor stub
   }
 
   /**
@@ -55,7 +58,6 @@ public class DocumentNotFoundException extends OnlyofficeEditorException {
    */
   public DocumentNotFoundException(String message, Throwable cause) {
     super(message, cause);
-    // TODO Auto-generated constructor stub
   }
 
 }

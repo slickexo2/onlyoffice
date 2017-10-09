@@ -118,7 +118,6 @@ public class RefreshViewManagerComponent extends UIAbstractManagerComponent {
    */
   @Override
   public Class<? extends UIAbstractManager> getUIAbstractManagerClass() {
-    // TODO Auto-generated method stub
     return null;
   }
 }

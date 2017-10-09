@@ -55,7 +55,7 @@ public class OnlyofficeCloseManageComponent extends UIAbstractManagerComponent {
 
   /** The Constant FILTERS. */
   private static final List<UIExtensionFilter> FILTERS = Arrays.asList(new UIExtensionFilter[] {
-      // new IsNotLockedFilter()
+      // TODO new IsNotLockedFilter()
       new CanCloseOnlyofficeFilter() });
 
   /**
@@ -78,9 +78,6 @@ public class OnlyofficeCloseManageComponent extends UIAbstractManagerComponent {
       UIJCRExplorer explorer = event.getSource().getAncestorOfType(UIJCRExplorer.class);
       OnlyofficeEditorUIService editorsUI = WCMCoreUtils.getService(OnlyofficeEditorUIService.class);
 
-      // TODO do we need this whole refresh here?
-      // explorer.getSession().refresh(false);
-      // explorer.refreshExplorer();
       String workspace = explorer.getCurrentWorkspace();
       String path = explorer.getCurrentNode().getPath();
       editorsUI.close(context.getRemoteUser(), workspace, path);
@@ -91,43 +88,8 @@ public class OnlyofficeCloseManageComponent extends UIAbstractManagerComponent {
       event.getSource().setRendered(false); // hide this menu, TODO is it required?
 
       // Refresh UI components: only this menu
-      // UIDocumentWorkspace docWorkspace = explorer.findFirstComponentOfType(UIDocumentWorkspace.class);
-      // context.addUIComponentToUpdateByAjax(docWorkspace);
       UIActionBar actionBar = explorer.findFirstComponentOfType(UIActionBar.class);
       context.addUIComponentToUpdateByAjax(actionBar);
-
-      // TODO cleanup
-      // OnlyofficeEditor editor = docWorkspace.findFirstComponentOfType(OnlyofficeEditor.class);
-      // if (editor != null) {
-      // // remove editor and show viewer (PDFViewer assumed)
-      // UIDocumentInfo docInfo = docWorkspace.findComponentById(UIDocumentInfo.class.getSimpleName());
-      // PDFViewer viewer = docInfo.getChild(PDFViewer.class);
-      // if (viewer == null) {
-      // // Show warning
-      // UIApplication uiApp = comp.getAncestorOfType(UIApplication.class);
-      // uiApp.addMessage(new ApplicationMessage("OnlyofficeEditor.message.ViewerNotFound",
-      // null,
-      // ApplicationMessage.WARNING));
-      // event.getRequestContext().addUIComponentToUpdateByAjax(comp);
-      // return;
-      // }
-      //
-      // // hide viewer
-      // viewer.setRendered(true);
-      // // close/hide editor
-      // editor.close();
-      // OnlyofficeEditorContext.close(event.getRequestContext());
-      // // Update doc view here only
-      // event.getRequestContext().addUIComponentToUpdateByAjax(docWorkspace);
-      // } else {
-      // // Show warning - this should not happen due to filter
-      // UIApplication uiApp = comp.getAncestorOfType(UIApplication.class);
-      // uiApp.addMessage(new ApplicationMessage("OnlyofficeEditor.message.EditorNotFound",
-      // null,
-      // ApplicationMessage.WARNING));
-      // event.getRequestContext().addUIComponentToUpdateByAjax(comp);
-      // return;
-      // }
     }
   }
 
@@ -139,21 +101,6 @@ public class OnlyofficeCloseManageComponent extends UIAbstractManagerComponent {
   @UIExtensionFilters
   public List<UIExtensionFilter> getFilters() {
     return FILTERS;
-    // TODO cleanup
-    // List<UIExtensionFilter> filters = new ArrayList<UIExtensionFilter>();
-    // WebuiRequestContext context = WebuiRequestContext.getCurrentInstance();
-    // UIJCRExplorer explorer = context.getUIApplication().findFirstComponentOfType(UIJCRExplorer.class);
-    // OnlyofficeEditorUIService editorsUI = WCMCoreUtils.getService(OnlyofficeEditorUIService.class);
-    //
-    // try {
-    // filters.add(new AcceptFilter(editorsUI.isOpen(context.getRemoteUser(),
-    // explorer.getCurrentWorkspace(),
-    // explorer.getCurrentNode().getPath())));
-    // return filters;
-    // } catch (Exception e) {
-    // LOG.error("Error reading current node in explorer", e);
-    // return null;
-    // }
   }
 
   /**

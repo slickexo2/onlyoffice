@@ -37,7 +37,6 @@ public class BadParameterException extends OnlyofficeEditorException {
    */
   public BadParameterException(String message) {
     super(message);
-    // TODO Auto-generated constructor stub
   }
 
   /**
@@ -47,7 +46,6 @@ public class BadParameterException extends OnlyofficeEditorException {
    */
   public BadParameterException(Throwable cause) {
     super(cause);
-    // TODO Auto-generated constructor stub
   }
 
   /**
@@ -58,7 +56,6 @@ public class BadParameterException extends OnlyofficeEditorException {
    */
   public BadParameterException(String message, Throwable cause) {
     super(message, cause);
-    // TODO Auto-generated constructor stub
   }
 
 }

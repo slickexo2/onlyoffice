@@ -183,8 +183,8 @@ public class EditorService implements ResourceContainer {
         long statusCode = (long) jsonObj.get("status");
         String statusUrl = (String) jsonObj.get("url");
         JSONArray statusUsersArray = (JSONArray) jsonObj.get("users");
-        String[] statusUsers = new String[statusUsersArray.size()];
-        statusUsersArray.toArray(statusUsers);
+        @SuppressWarnings("unchecked")
+        String[] statusUsers = (String[]) statusUsersArray.toArray(new String[statusUsersArray.size()]);
 
         if (key != null && key.length() > 0) {
           if (userId != null && userId.length() > 0) {

@@ -77,8 +77,6 @@ public class OnlyofficeEditor extends UIForm {
       UIJCRExplorer explorer = event.getSource().getAncestorOfType(UIJCRExplorer.class);
 
       explorer.getSession().refresh(false);
-      // TODO do we need this whole refresh here?
-      // explorer.refreshExplorer();
       String workspace = explorer.getCurrentWorkspace();
       String path = explorer.getCurrentNode().getPath();
 
@@ -107,8 +105,6 @@ public class OnlyofficeEditor extends UIForm {
       UIJCRExplorer explorer = event.getSource().getAncestorOfType(UIJCRExplorer.class);
 
       explorer.getSession().refresh(false);
-      // TODO do we need this whole refresh here?
-      // explorer.refreshExplorer();
       String workspace = explorer.getCurrentWorkspace();
       String path = explorer.getCurrentNode().getPath();
 

@@ -535,125 +535,6 @@
 			$("#ECMContextMenu a[exo\\:attr='RefreshView'] i").click();
 		};
 
-		/**
-		 * TODO Deprecated. Not used. 
-		 */
-		var initDocument = function() {
-			var $toolbarViewer = $("#UIDocumentWorkspace #toolbarViewerRight");
-			if ($toolbarViewer.size() > 0) {
-				var $editorAction = $toolbarViewer.find("#onlyofficeEditor");
-				if ($editorAction.size() == 0) {
-					$editorAction = $("<a id='onlyofficeEditor' class='actionIcon' data-placement='bottom' rel='tooltip' data-original-title='Edit' tabindex='11' data-l10n-id='edit'><i class='uiIconLightGray'></i></a>");
-					$toolbarViewer.prepend($editorAction);
-					var $icon = $editorAction.find("i");
-
-					$editorAction.data("original-title", "Edit");
-					$editorAction.data("l10n-id", "edit");
-					$icon.addClass("uiIconEdit");
-
-					var $container = $("#viewerContainer");
-					var $viewer = $container.find("#viewer");
-
-					function showProgress() {
-						var $progress = $container.find("#progress");
-						if ($progress.size() == 0) {
-							// uiLoadingIconXLarge
-							$progress = $("<div id='progress'><div class='waitThrobber'></div></div>");
-							$container.append($progress);
-						}
-
-						$editorAction.attr("disabled", true);
-
-						$container.find("#editor").remove();
-						$viewer.hide("blind");
-						$progress.show("blind");
-					}
-
-					function showEditor(config) {
-						var $editor = $container.find("#editor");
-						if ($editor.size() == 0) {
-							// this will load Onlyoffice JS!
-							$editor = $("<div id='editor'><div id='onlyoffice'></div></div>");
-							$container.append($editor);
-						}
-
-						$editorAction.attr("disabled", false);
-						$editorAction.data("original-title", "Save");
-						$editorAction.data("l10n-id", "save");
-						$icon.removeClass("uiIconEdit");
-						$icon.addClass("uiIconSave");
-
-						$container.find("#progress").hide("blind");
-						$viewer.hide("blind");
-						$editor.show("blind");
-					}
-
-					function showViewer() {
-						$editorAction.attr("disabled", false);
-						$editorAction.data("original-title", "Edit");
-						$editorAction.data("l10n-id", "edit");
-						$icon.removeClass("uiIconSave");
-						$icon.addClass("uiIconEdit");
-
-						$container.find("#progress").hide("blind");
-						$container.find("#progress").remove();
-						$container.find("#editor").remove();
-						$viewer.show("blind");
-
-						// refresh view w/o popup
-						$("#ECMContextMenu a[exo\\:attr='RefreshView'] i").click();
-					}
-
-
-					$editorAction.click(function() {
-						if ($icon.hasClass("uiIconEdit")) {
-							// show loading while upload to editor
-							showProgress();
-
-							// create and start editor
-							var create = editor.create();
-							create.done(function(config) {
-								// XXX timeout mandatory to let DocsAPI load successfully
-								setTimeout(function() {
-									$(function() {
-										docEditor = new DocsAPI.DocEditor("onlyoffice", config);
-									});
-								}, 2000);
-								// show editor
-								showEditor(config);
-							});
-							create.fail(function(error) {
-								log("ERROR: " + JSON.stringify(error));
-								UI.showError("Error creating editor", error.error);
-								showViewer();
-							});
-						} else {
-							// show loading while downloading from editor
-							showProgress();
-
-							// TODO seems this not required
-							docEditor.processSaveResult(true);
-
-							// save the doc and switch to viewer
-							var download = editor.download();
-							download.done(function(state) {
-								showViewer();
-								if (!state.saved) {
-									if (state.users && state.users.length > 1) {
-										UI.showInfo("Document in use by others", "Document will be saved when all users will close it.");
-									}
-								}
-							});
-							download.fail(function(error) {
-								log(JSON.stringify(error));
-								UI.showError("Download error", error.data.errorDescription);
-							});
-						}
-					});
-				}
-			}
-		};
-
 		var initAction = function() {
 			var $actionOpenIcon = $("#uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen");
 			if (!$actionOpenIcon.hasClass("uiIconEdit")) {
@@ -669,8 +550,6 @@
 		 * Init all UI (dialogs, menus, views etc).
 		 */
 		this.init = function() {
-			// init doc view
-			//initDocument();
 			// init action bar menu
 			initAction();
 		};

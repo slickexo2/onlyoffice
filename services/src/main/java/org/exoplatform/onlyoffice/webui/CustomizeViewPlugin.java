@@ -171,12 +171,7 @@ public class CustomizeViewPlugin extends ManageViewPlugin {
             customizeTab(viewNode, tab.getTabName(), tab.getButtons());
           }
         }
-      } else if (object instanceof TemplateConfig) {
-        // TODO not actual in context of this addon
-        // TemplateConfig templateObject = (TemplateConfig) object;
-        // updateTemplate(templateObject, session, warViewPath);
-        // configuredTemplate.add(templateObject.getName());
-      }
+      } // TODO else if (object instanceof TemplateConfig) {
     }
     session.save();
     session.logout();
@@ -199,21 +194,6 @@ public class CustomizeViewPlugin extends ManageViewPlugin {
                                Boolean hideExplorerPanel,
                                String template) throws Exception {
     Node viewNode = viewManager.getNode(viewName);
-    // TODO permissions and template actually have no interest in context of this addon
-    // if (permissions != null) {
-    // viewNode.setProperty("exo:accessPermissions", permissions);
-    // }
-    // if (template != null) {
-    // viewNode.setProperty("exo:template", template);
-    // }
-    // TODO it seems never will be null, but we need it
-    // if (hideExplorerPanel != null) {
-    // if (viewNode.hasProperty("exo:hideExplorerPanel")) {
-    // viewNode.setProperty("exo:hideExplorerPanel", hideExplorerPanel);
-    // }
-    // }
-    // TODO save if changed something
-    // viewManager.save();
     return viewNode;
   }
 
