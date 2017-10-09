@@ -12,9 +12,7 @@ This add-on allow editing office documents directly in eXo Platform using ONLYOF
  
 The Document Server should be [installed](http://helpcenter.onlyoffice.com/server/document.aspx) on reachable network. ONLYOFFICE™ offers native installers for Windows and Linux, they also have [Docker installation](http://helpcenter.onlyoffice.com/server/docker/document/docker-installation.aspx) which will be described below in details. 
 
-<iframe width="420" height="315"
-src="https://www.youtube.com/watch?v=Ifioa0GfG-k">
-</iframe>
+[![Watch demo video](/docs/images/youtube_screen.png =100x)](https://www.youtube.com/watch?v=Ifioa0GfG-k)
 
 ## Usage
 
