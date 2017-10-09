@@ -28,7 +28,7 @@
   </parent>
   
   <artifactId>exo-onlyoffice-editor-parent</artifactId>
-  <version>1.1.x-SNAPSHOT</version>
+  <version>1.2.x-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>eXo OnlyOffice Editor :: Parent</name>
   <description>eXo OnlyOffice Editor for Documents extension</description>
