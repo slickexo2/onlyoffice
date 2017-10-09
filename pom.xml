@@ -67,7 +67,7 @@
         <scope>import</scope>
       </dependency>
       
-      <!-- Online Editor extension -->
+      <!-- Onlyoffice extension -->
       <dependency>
         <groupId>org.exoplatform.addons</groupId>
         <artifactId>exo-onlyoffice-editor-services</artifactId>
