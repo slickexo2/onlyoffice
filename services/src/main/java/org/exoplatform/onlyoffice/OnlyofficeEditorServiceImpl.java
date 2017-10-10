@@ -16,32 +16,6 @@
  */
 package org.exoplatform.onlyoffice;
 
-import org.apache.commons.io.input.AutoCloseInputStream;
-import org.exoplatform.container.PortalContainer;
-import org.exoplatform.container.configuration.ConfigurationException;
-import org.exoplatform.container.xml.InitParams;
-import org.exoplatform.container.xml.PropertiesParam;
-import org.exoplatform.onlyoffice.jcr.NodeFinder;
-import org.exoplatform.portal.Constants;
-import org.exoplatform.services.jcr.RepositoryService;
-import org.exoplatform.services.jcr.ext.app.SessionProviderService;
-import org.exoplatform.services.jcr.ext.common.SessionProvider;
-import org.exoplatform.services.log.ExoLogger;
-import org.exoplatform.services.log.Log;
-import org.exoplatform.services.organization.OrganizationService;
-import org.exoplatform.services.organization.User;
-import org.exoplatform.services.organization.UserProfile;
-import org.exoplatform.services.organization.UserProfileHandler;
-import org.exoplatform.services.security.ConversationState;
-import org.exoplatform.services.security.Identity;
-import org.exoplatform.services.security.IdentityRegistry;
-import org.picocontainer.Startable;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -71,11 +45,37 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
 import javax.jcr.lock.Lock;
-import javax.jcr.version.Version;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+
+import org.apache.commons.io.input.AutoCloseInputStream;
+import org.exoplatform.container.PortalContainer;
+import org.exoplatform.container.configuration.ConfigurationException;
+import org.exoplatform.container.xml.InitParams;
+import org.exoplatform.container.xml.PropertiesParam;
+import org.exoplatform.onlyoffice.jcr.NodeFinder;
+import org.exoplatform.portal.Constants;
+import org.exoplatform.services.jcr.RepositoryService;
+import org.exoplatform.services.jcr.ext.app.SessionProviderService;
+import org.exoplatform.services.jcr.ext.common.SessionProvider;
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
+import org.exoplatform.services.organization.OrganizationService;
+import org.exoplatform.services.organization.User;
+import org.exoplatform.services.organization.UserProfile;
+import org.exoplatform.services.organization.UserProfileHandler;
+import org.exoplatform.services.security.ConversationState;
+import org.exoplatform.services.security.Identity;
+import org.exoplatform.services.security.IdentityRegistry;
+import org.picocontainer.Startable;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 /**
  * Service implementing {@link OnlyofficeEditorService} and {@link Startable}.<br>
@@ -606,7 +606,27 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @throws RepositoryException the repository exception
    */
   protected String nodeTitle(Node node) throws RepositoryException {
-    return node.getProperty("exo:title").getString();
+    String title = null;
+    if (node.hasProperty("exo:title")) {
+      title = node.getProperty("exo:title").getString();
+    } else if (node.hasProperty("jcr:content/dc:title")) {
+      Property dcTitle = node.getProperty("jcr:content/dc:title");
+      if (dcTitle.getDefinition().isMultiple()) {
+        Value[] dctValues = dcTitle.getValues();
+        if (dctValues.length > 0) {
+          title = dctValues[0].getString();
+        }
+      } else {
+        title = dcTitle.getString();
+      }
+    } else if (node.hasProperty("exo:name")) {
+      // FYI exo:name seems the same as node name
+      title = node.getProperty("exo:name").getString();
+    }
+    if (title == null) {
+      title = node.getName();
+    }
+    return title;
   }
 
   /**
@@ -1013,6 +1033,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         ConversationState.setCurrent(state);
         SessionProvider userProvider = new SessionProvider(state);
         sessionProviders.setSessionProvider(null, userProvider);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(">>> download under user " + userIdentity.getUserId() + " (" + nodePath + ", " + config.getDocument().getKey() + ")");
+        }
       } else {
         LOG.warn("User identity not found " + userId + " for downloading " + config.getDocument().getKey() + " " + nodePath);
         throw new OnlyofficeEditorException("User identity not found " + userId);
@@ -1049,13 +1072,15 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           node.setProperty("exo:dateModified", editedTime);
         }
         if (node.hasProperty("exo:lastModifier")) {
-          // node.setProperty("exo:lastModifier", config.getEditorConfig().getUser().getId());
           node.setProperty("exo:lastModifier", userId);
         }
 
         node.save();
         if (checkIn) {
+          // Make a new version from the downloaded state
           node.checkin();
+          // Since 1.2.0-RC01 we check-out the document to let (more) other actions in ECMS appear on it
+          node.checkout();
         }
 
         config.close(); // close for use in listeners
@@ -1229,8 +1254,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     if (users != null && users.length > 0) {
       user = users[0];
     } else {
-      LOG.warn("No user in status from Onlyoffice document editing service for file " + status.getKey() + " (" + nodePath(workspace, path)
-          + ")");
+      LOG.warn("No user in status from Onlyoffice document editing service for file " + status.getKey() + " (" + nodePath(workspace, path) + ")");
       user = null;
     }
     if (contentUrl != null && contentUrl.length() > 0) {
