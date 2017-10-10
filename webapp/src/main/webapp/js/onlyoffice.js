@@ -401,7 +401,7 @@
 
 						currentConfig = config;
 
-						log("currentConfig = " + JSON.stringify(currentConfig));
+						log("ONLYOFFICE editor config: " + JSON.stringify(currentConfig));
 
 						// XXX need let Onlyoffice to know about a host of API end-points,
 						// as we will add their script dynamically to the DOM, the script will not be able to detect an URL
@@ -437,7 +437,8 @@
 									}
 								}, 750);
 							} else {
-								process.reject("Script load timeout " + config.documentserverJsUrl);
+								log("ERROR: ONLYOFFICE script load timeout: " + config.documentserverJsUrl);
+								process.reject("ONLYOFFICE script load timeout. Ensure Document Server is running and accessible.");
 							}
 						}
 
@@ -448,11 +449,12 @@
 						}
 					});
 					get.fail(function(state, status, errorText) {
-						log("ERROR: config request failed : " + status + ". " + state.error);
-						process.reject(state);
+						log("ERROR: editor config request failed : " + status + ". " + state.error);
+						process.reject(state.error);
 					});
 				}
 			} else {
+				log("ERROR: current node not initialized");
 				process.reject("Current node not initialized");
 			}
 			return process.promise();
@@ -696,8 +698,7 @@
 					$editor.show("blind");
 				});
 				create.fail(function(error) {
-					log("ERROR: " + JSON.stringify(error));
-					UI.showError("Error creating editor", error.error);
+					UI.showError("Error creating editor", error);
 					$fileContent.find(".loading>.onError").click();
 				});
 			}
@@ -740,8 +741,7 @@
 							});
 						});
 						create.fail(function(error) {
-							log("ERROR: " + JSON.stringify(error));
-							UI.showError("Error creating editor", error.error);
+							UI.showError("Error creating editor", error);
 							$loading.find(".onError").click();
 						});
 					} else {
