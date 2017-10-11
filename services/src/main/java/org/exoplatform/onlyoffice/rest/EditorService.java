@@ -182,9 +182,10 @@ public class EditorService implements ResourceContainer {
         String statusKey = (String) jsonObj.get("key");
         long statusCode = (long) jsonObj.get("status");
         String statusUrl = (String) jsonObj.get("url");
+        // Oct 2017: When Document server calls with status 4 (user closed w/o modification), the users array will be null 
         JSONArray statusUsersArray = (JSONArray) jsonObj.get("users");
         @SuppressWarnings("unchecked")
-        String[] statusUsers = (String[]) statusUsersArray.toArray(new String[statusUsersArray.size()]);
+        String[] statusUsers = statusUsersArray != null ? (String[]) statusUsersArray.toArray(new String[statusUsersArray.size()]) : new String[0];
 
         if (key != null && key.length() > 0) {
           if (userId != null && userId.length() > 0) {
