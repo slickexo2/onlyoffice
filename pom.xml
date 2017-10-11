@@ -48,6 +48,7 @@
 
     <!-- eXo Modules -->
     <org.exoplatform.platform.version>4.4.3</org.exoplatform.platform.version>
+    <org.exoplatform.jcr-services.version>1.17.3</org.exoplatform.jcr-services.version>
     
     <!-- Dependencies -->
     <json-simple.version>1.1.1</json-simple.version>
@@ -93,7 +94,7 @@
       <dependency>
         <groupId>org.exoplatform</groupId>
         <artifactId>exo-jcr-services</artifactId>
-        <version>${org.exoplatform.platform.version}</version>
+        <version>${org.exoplatform.jcr-services.version}</version>
         <type>jar</type>
       	<scope>test</scope>
       </dependency>
