@@ -82,12 +82,24 @@
 
 	/** For debug logging. */
 	var log = function(msg, e) {
-		if ( typeof console != "undefined" && typeof console.log != "undefined") {
-			console.log(msg);
-			if (e && typeof e.stack != "undefined") {
-				console.log(e.stack);
+		var logPrefix = "[onlyoffice] ";
+    if (typeof console != "undefined" && typeof console.log != "undefined") {
+			var isoTime = " -- " + new Date().toISOString();
+			if (e) {
+				if (e instanceof Error) {
+					console.log(logPrefix + msg + ". " + (e.name && e.message ? e.name + ": " + e.message : e.toString()) + isoTime);
+				} if (e.name && e.message) {
+					console.log(logPrefix + msg + ". " + e.name + ": " + e.message + isoTime);
+				} else {
+					console.log(logPrefix + msg + ". Cause: " + (typeof e == "string" ? e : JSON.stringify(e)) + isoTime);
+				}
+				if (typeof e.stack != "undefined") {
+					console.log(e.stack);
+				}
+			} else {
+				console.log(logPrefix + msg + isoTime);
 			}
-		}
+    }
 	};
 
 	var getPortalUser = function() {

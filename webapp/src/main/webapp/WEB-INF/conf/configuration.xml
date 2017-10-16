@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!--
 
-  Copyright (C) 2016 eXo Platform SAS.
+  Copyright (C) 2017 eXo Platform SAS.
   
   This is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
@@ -43,9 +43,6 @@
     <key>org.exoplatform.onlyoffice.jcr.NodeFinder</key>
     <type>org.exoplatform.onlyoffice.jcr.CMSNodeFinder</type>
   </component>
-  <!-- component>
-    <type>org.exoplatform.onlyoffice.rest.DriveServiceLocator</type>
-  </component -->
   <component>
     <type>org.exoplatform.onlyoffice.rest.EditorService</type>
   </component>
@@ -198,77 +195,6 @@
             </field>
           </object>
         </object-param>
-        <!-- Invisible action used by Editor JS to refresh user session -->
-        <!-- object-param>
-          <name>RefreshView</name>
-          <object type="org.exoplatform.webui.ext.UIExtension">
-            <field name="type">
-              <string>org.exoplatform.ecm.dms.UIWorkingArea</string>
-            </field>
-            <field name="name">
-              <string>RefreshView</string>
-            </field>
-            <field name="component">
-              <string>org.exoplatform.onlyoffice.webui.RefreshViewManagerComponent</string>
-            </field>
-            <field name="category">
-              <string>GroundContextMenu</string>
-            </field>
-            <field name="rank">
-              <int>1</int>
-            </field>
-          </object>
-        </object-param -->
-        <!-- object-param>
-          <name>OnlyofficeEditor</name>
-          <object type="org.exoplatform.webui.ext.UIExtension">
-            <field name="type">
-              <string>org.exoplatform.ecm.dms.FileViewer</string>
-            </field>
-            <field name="name">
-              <string>OnlyofficeEditor</string>
-            </field>
-            <field name="component">
-              <string>org.exoplatform.onlyoffice.webui.PDFViewer</string>
-            </field>
-            <field name="category">
-              <string>FileViewer</string>
-            </field>
-            <field name="rank">
-              <int>40</int>
-            </field>
-            <field name="extendedFilters">
-              <collection type="java.util.ArrayList">
-                <value>
-                  <object type="org.exoplatform.webui.ext.filter.impl.FileFilter">
-                    <field name="mimeTypes">
-                      <collection type="java.util.ArrayList">
-                        <value>
-                          <string>application/vnd.oasis.opendocument.presentation</string>
-                        </value>
-                        <value>
-                          <string>application/vnd.oasis.opendocument.spreadsheet</string>
-                        </value>
-                        <value>
-                          <string>application/vnd.oasis.opendocument.text</string>
-                        </value>
-                        <value>
-                          <string>application/vnd.openxmlformats-officedocument.presentationml.presentation</string>
-                        </value>
-                        <value>
-                          <string>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</string>
-                        </value>
-                        <value>
-                          <string>application/vnd.openxmlformats-officedocument.wordprocessingml.document</string>
-                        </value>
-                      </collection>
-                    </field>
-                  </object>
-                </value>
-              </collection>
-            </field>
-          </object>
-        </object-param -->
       </init-params>
     </component-plugin>
   </external-component-plugins>
@@ -414,22 +340,6 @@
       </init-params>
     </component-plugin>
   </external-component-plugins>
-  
-  <!-- external-component-plugins>
-    <target-component>org.exoplatform.services.jcr.RepositoryService</target-component>
-    <component-plugin>
-      <name>add.gadget.services.nodeType</name>
-      <set-method>addPlugin</set-method>
-      <type>org.exoplatform.services.jcr.impl.AddNodeTypePlugin</type>
-      <init-params>
-        <values-param>
-          <name>autoCreatedInNewRepository</name>
-          <description>Editor node types configuration file</description>
-          <value>jar:/conf/portal/jcr/editor-nodetypes.xml</value>
-        </values-param>
-      </init-params>
-    </component-plugin>
-  </external-component-plugins -->
 
   <external-component-plugins>
     <target-component>org.exoplatform.services.resources.ResourceBundleService</target-component>
