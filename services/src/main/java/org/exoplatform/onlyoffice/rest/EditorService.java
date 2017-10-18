@@ -198,7 +198,7 @@ public class EditorService implements ResourceContainer {
               editors.updateDocument(userId, status);
               resp.entity("{\"error\": 0}");
             } catch (BadParameterException e) {
-              LOG.error("Bad parameter to update status for " + key, e);
+              LOG.warn("Bad parameter to update status for " + key + ". " + e.getMessage());
               resp.error(e.getMessage()).status(Status.BAD_REQUEST);
             } catch (OnlyofficeEditorException e) {
               LOG.error("Error handling status for " + key, e);
@@ -211,14 +211,14 @@ public class EditorService implements ResourceContainer {
               resp.error("Runtime error.").status(Status.INTERNAL_SERVER_ERROR);
             }
           } else {
-            LOG.error("Error processing editor status. User not provided");
+            LOG.warn("Error processing editor status. User not provided");
             resp.error("User not provided").status(Status.BAD_REQUEST);
           }
         } else {
           resp.status(Status.BAD_REQUEST).error("Null or empty file key.");
         }
       } catch (ParseException e) {
-        LOG.error("JSON parse error while handling status for " + key + ". JSON: " + statusText, e);
+        LOG.warn("JSON parse error while handling status for " + key + ". JSON: " + statusText, e);
         resp.error("JSON parse error: " + e.getMessage()).status(Status.BAD_REQUEST);
       }
     } else {
@@ -265,7 +265,7 @@ public class EditorService implements ResourceContainer {
             resp.error("User not provided").status(Status.BAD_REQUEST);
           }
         } catch (BadParameterException e) {
-          LOG.error("Bad parameter to downloading content for " + key, e);
+          LOG.warn("Bad parameter to downloading content for " + key + ". " + e.getMessage());
           resp.error(e.getMessage()).status(Status.BAD_REQUEST);
         } catch (OnlyofficeEditorException e) {
           LOG.error("Error downloading content for " + key, e);
@@ -333,7 +333,7 @@ public class EditorService implements ResourceContainer {
             resp.error("User not authenticated").status(Status.UNAUTHORIZED);
           }
         } catch (BadParameterException e) {
-          LOG.error("Bad parameter for creating editor config " + workspace + ":" + path, e);
+          LOG.warn("Bad parameter for creating editor config " + workspace + ":" + path + ". " + e.getMessage());
           resp.error(e.getMessage()).status(Status.BAD_REQUEST);
         } catch (OnlyofficeEditorException e) {
           LOG.error("Error creating editor config " + workspace + ":" + path, e);
@@ -380,7 +380,7 @@ public class EditorService implements ResourceContainer {
           ChangeState status = editors.getState(userId, key);
           resp.entity(status).ok();
         } catch (BadParameterException e) {
-          LOG.error("Bad parameter for getting document state " + userId + "@" + key, e);
+          LOG.warn("Bad parameter for getting document state " + userId + "@" + key + ". " + e.getMessage());
           resp.error(e.getMessage()).status(Status.BAD_REQUEST);
         } catch (OnlyofficeEditorException e) {
           LOG.error("Error getting document state " + userId + "@" + key, e);
@@ -393,7 +393,7 @@ public class EditorService implements ResourceContainer {
         resp.status(Status.BAD_REQUEST).error("Null or empty file key.");
       }
     } else {
-      LOG.error("Error getting document state. User identity not provided");
+      LOG.warn("Error getting document state. User identity not provided");
       resp.error("User not provided").status(Status.BAD_REQUEST);
     }
 
