@@ -1,56 +1,22 @@
 /*
- * Copyright (C) 2003-2012 eXo Platform SAS.
+ * Copyright (C) 2003-2017 eXo Platform SAS.
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
+ * This software is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 package org.exoplatform.onlyoffice;
-
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.Locale;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-
-import javax.jcr.Item;
-import javax.jcr.Node;
-import javax.jcr.Property;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.Value;
-import javax.jcr.lock.Lock;
-import javax.jcr.version.Version;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.io.input.AutoCloseInputStream;
 import org.exoplatform.container.PortalContainer;
@@ -77,6 +43,44 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Locale;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+import javax.jcr.AccessDeniedException;
+import javax.jcr.Item;
+import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.lock.Lock;
+import javax.jcr.version.Version;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * Service implementing {@link OnlyofficeEditorService} and {@link Startable}.<br>
@@ -120,6 +124,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
   /** The Constant LOCK_WAIT_TIMEOUT. */
   protected static final long                                                  LOCK_WAIT_TIMEOUT     = 250;
+  
+  /** The Constant EMPTY_TEXT. */
+  protected static final String                                                EMPTY_TEXT             = "".intern();
 
   /** The jcr service. */
   protected final RepositoryService                                            jcrService;
@@ -344,7 +351,21 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       builder.author(userId);
       builder.fileType(fileType);
       builder.created(nodeCreated(node));
-      builder.folder(node.getParent().getName());
+      try {
+        builder.folder(node.getParent().getName());
+      } catch (AccessDeniedException e) {
+        // TODO Current user has no permissions to read the document parent - it can be an usecase of shared file
+        // As folder is a text used for "Location" in document info in Onlyoffice, we could guess something
+        // like "John Smith's document" or "Product Team document" for sharing from personal docs and a space respectively.
+        String owner;
+        try {
+          owner = node.getProperty("exo:owner").getString();          
+        } catch(PathNotFoundException oe) {
+          owner = "?";
+        }
+        LOG.warn("Cannot read document parent node: " + nodePath(workspace, node.getPath() + ". Owner: " + owner + ". Error: " + e.getMessage()));
+        builder.folder(EMPTY_TEXT); // can be empty for Onlyoffice, will mean a root folder
+      }
       String lang = getUserLang(userId);
       builder.lang(lang);
       builder.mode("edit");
@@ -1255,7 +1276,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     if (users != null && users.length > 0) {
       user = users[0];
     } else {
-      LOG.warn("No user in status from Onlyoffice document editing service for file " + status.getKey() + " (" + nodePath(workspace, path) + ")");
+      LOG.warn("No user in status from Onlyoffice document editing service for file " + status.getKey() + " (" + nodePath(workspace, path)
+          + ")");
       user = null;
     }
     if (contentUrl != null && contentUrl.length() > 0) {
