@@ -1,21 +1,40 @@
 /*
- * Copyright (C) 2003-2016 eXo Platform SAS.
+ * Copyright (C) 2003-2017 eXo Platform SAS.
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
+ * This software is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 package org.exoplatform.onlyoffice.rest;
 
+import org.exoplatform.onlyoffice.BadParameterException;
+import org.exoplatform.onlyoffice.ChangeState;
+import org.exoplatform.onlyoffice.Config;
+import org.exoplatform.onlyoffice.DocumentContent;
+import org.exoplatform.onlyoffice.DocumentStatus;
+import org.exoplatform.onlyoffice.OnlyofficeEditorException;
+import org.exoplatform.onlyoffice.OnlyofficeEditorService;
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
+import org.exoplatform.services.rest.resource.ResourceContainer;
+import org.exoplatform.services.security.ConversationState;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
+import java.net.InetAddress;
 import java.net.URI;
 import java.util.Map;
 import java.util.UUID;
@@ -35,22 +54,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
-import org.exoplatform.onlyoffice.BadParameterException;
-import org.exoplatform.onlyoffice.ChangeState;
-import org.exoplatform.onlyoffice.Config;
-import org.exoplatform.onlyoffice.DocumentContent;
-import org.exoplatform.onlyoffice.DocumentStatus;
-import org.exoplatform.onlyoffice.OnlyofficeEditorException;
-import org.exoplatform.onlyoffice.OnlyofficeEditorService;
-import org.exoplatform.services.log.ExoLogger;
-import org.exoplatform.services.log.Log;
-import org.exoplatform.services.rest.resource.ResourceContainer;
-import org.exoplatform.services.security.ConversationState;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-
 /**
  * REST service implementing Onlyoffice config storage service. <br>
  * 
@@ -69,7 +72,7 @@ public class EditorService implements ResourceContainer {
    * Response builder for connect and state.
    */
   class EditorResponse extends ServiceResponse {
-    
+
     /** The config. */
     Config config;
 
@@ -114,7 +117,7 @@ public class EditorService implements ResourceContainer {
      * Builds the.
      *
      * @return the response
-     * @inherritDoc 
+     * @inherritDoc
      */
     @Override
     Response build() {
@@ -167,8 +170,7 @@ public class EditorService implements ResourceContainer {
     String clientIp = getClientIpAddr(request);
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("> Onlyoffice document status: " + userId + "@" + key + " " + statusText + " from "
-          + clientHost + "(" + clientIp + ")");
+      LOG.debug("> Onlyoffice document status: " + userId + "@" + key + " " + statusText + " from " + clientHost + "(" + clientIp + ")");
     }
 
     EditorResponse resp = new EditorResponse();
@@ -182,7 +184,8 @@ public class EditorService implements ResourceContainer {
         String statusKey = (String) jsonObj.get("key");
         long statusCode = (long) jsonObj.get("status");
         String statusUrl = (String) jsonObj.get("url");
-        // Oct 2017: When Document server calls with status 4 (user closed w/o modification), the users array will be null 
+        // Oct 2017: When Document server calls with status 4 (user closed w/o modification), the users array
+        // will be null
         JSONArray statusUsersArray = (JSONArray) jsonObj.get("users");
         @SuppressWarnings("unchecked")
         String[] statusUsers = statusUsersArray != null ? (String[]) statusUsersArray.toArray(new String[statusUsersArray.size()]) : new String[0];
@@ -222,7 +225,7 @@ public class EditorService implements ResourceContainer {
         resp.error("JSON parse error: " + e.getMessage()).status(Status.BAD_REQUEST);
       }
     } else {
-      LOG.warn("Attempt to update status by not allowed host: " + clientHost);
+      LOG.warn("Attempt to update status by not allowed host: " + clientHost + "(" + clientIp + ")");
       resp.error("Not a document server").status(Status.UNAUTHORIZED);
     }
     return resp.build();
@@ -249,8 +252,7 @@ public class EditorService implements ResourceContainer {
     String clientIp = getClientIpAddr(request);
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("> Onlyoffice document content: " + userId + "@" + key + " to " + clientHost + "(" + clientIp
-          + ")");
+      LOG.debug("> Onlyoffice document content: " + userId + "@" + key + " to " + clientHost + "(" + clientIp + ")");
     }
 
     EditorResponse resp = new EditorResponse();
@@ -281,7 +283,7 @@ public class EditorService implements ResourceContainer {
         resp.status(Status.BAD_REQUEST).error("Null or empty file key.");
       }
     } else {
-      LOG.warn("Attempt to download content by not allowed host: " + clientHost);
+      LOG.warn("Attempt to download content by not allowed host: " + clientHost + "(" + clientIp + ")");
       resp.error("Not a document server").status(Status.UNAUTHORIZED);
     }
     return resp.build();
@@ -299,9 +301,7 @@ public class EditorService implements ResourceContainer {
   @Path("/config/{workspace}/{path:.*}")
   @RolesAllowed("users")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response config(@Context UriInfo uriInfo,
-                         @PathParam("workspace") String workspace,
-                         @PathParam("path") String path) {
+  public Response config(@Context UriInfo uriInfo, @PathParam("workspace") String workspace, @PathParam("path") String path) {
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("> Onlyoffice config: " + workspace + ":" + path);
@@ -318,14 +318,9 @@ public class EditorService implements ResourceContainer {
           if (convo != null) {
             String username = convo.getIdentity().getUserId();
             URI requestUri = uriInfo.getRequestUri();
-            Config config = editors.createEditor(requestUri.getScheme(),
-                                                 requestHost(requestUri),
-                                                 username,
-                                                 workspace,
-                                                 path);
+            Config config = editors.createEditor(requestUri.getScheme(), requestHost(requestUri), username, workspace, path);
             if (LOG.isDebugEnabled()) {
-              LOG.debug("> Onlyoffice document config: " + workspace + ":" + path + " -> "
-                  + config.getDocument().getKey());
+              LOG.debug("> Onlyoffice document config: " + workspace + ":" + path + " -> " + config.getDocument().getKey());
             }
             resp.config(config).ok();
           } else {
@@ -366,9 +361,7 @@ public class EditorService implements ResourceContainer {
   @Path("/state/{userId}/{key}")
   @RolesAllowed("users")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response localState(@Context UriInfo uriInfo,
-                             @PathParam("userId") String userId,
-                             @PathParam("key") String key) {
+  public Response localState(@Context UriInfo uriInfo, @PathParam("userId") String userId, @PathParam("key") String key) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("> localState: " + userId + "@" + key);
     }
@@ -408,49 +401,49 @@ public class EditorService implements ResourceContainer {
    */
   protected String getClientIpAddr(HttpServletRequest request) {
     String ip = request.getHeader("X-Forwarded-For");
-    if (isValidName(ip)) {
+    if (isValidHost(ip)) {
       return ip;
     }
     ip = request.getHeader("Proxy-Client-IP");
-    if (isValidName(ip)) {
+    if (isValidHost(ip)) {
       return ip;
     }
     ip = request.getHeader("WL-Proxy-Client-IP");
-    if (isValidName(ip)) {
+    if (isValidHost(ip)) {
       return ip;
     }
     ip = request.getHeader("HTTP_CLIENT_IP");
-    if (isValidName(ip)) {
+    if (isValidHost(ip)) {
       return ip;
     }
     ip = request.getHeader("HTTP_X_FORWARDED_FOR");
-    if (isValidName(ip)) {
+    if (isValidHost(ip)) {
       return ip;
     }
     ip = request.getHeader("HTTP_X_FORWARDED");
-    if (isValidName(ip)) {
+    if (isValidHost(ip)) {
       return ip;
     }
     ip = request.getHeader("HTTP_X_CLUSTER_CLIENT_IP");
-    if (isValidName(ip)) {
+    if (isValidHost(ip)) {
       return ip;
     }
     // http://stackoverflow.com/questions/1634782/what-is-the-most-accurate-way-to-retrieve-a-users-correct-ip-address-in-php
     ip = request.getHeader("HTTP_FORWARDED_FOR");
-    if (isValidName(ip)) {
+    if (isValidHost(ip)) {
       return ip;
     }
     ip = request.getHeader("HTTP_FORWARDED");
-    if (isValidName(ip)) {
+    if (isValidHost(ip)) {
       return ip;
     }
     ip = request.getHeader("REMOTE_ADDR");
-    if (isValidName(ip)) {
+    if (isValidHost(ip)) {
       return ip;
     }
     // last chance to get it from Servlet request
     ip = request.getRemoteAddr();
-    if (isValidName(ip)) {
+    if (isValidHost(ip)) {
       return ip;
     }
     return null;
@@ -464,24 +457,59 @@ public class EditorService implements ResourceContainer {
    */
   protected String getClientHost(HttpServletRequest request) {
     String host = request.getHeader("X-Forwarded-Host");
-    if (isValidName(host)) {
+    if (isValidHost(host)) {
       return host;
     }
+    // Solution based on X-Forwarded-For proposed in #3 to work correctly behind reverse proxy (production)
+    String clientIp = request.getHeader("X-Forwarded-For");
+    if (notEmpty(clientIp)) {
+      // In case of several proxies: X-Forwarded-For: client, proxy1, proxy2
+      int commaIdx = clientIp.indexOf(',');
+      if (commaIdx > 0 && commaIdx < clientIp.length() - 1) {
+        // use only client IP
+        clientIp = clientIp.substring(0, commaIdx);
+      }
+    } else {
+      // And a case of nginx, try X-Real-IP
+      clientIp = request.getHeader("X-Real-IP");
+    }
+    if (notEmpty(clientIp)) {
+      try {
+        // XXX For this to work, in server.xml, enableLookups="true"
+        host = InetAddress.getByName(clientIp).getHostName();
+        if (notEmpty(host)) { // host here still may be an IP due to security restriction
+          return host;
+        }
+      } catch (Exception e) {
+        LOG.warn("Cannot obtain client hostname by its IP " + clientIp + ": " + e.getMessage());
+      }
+    }
     host = request.getRemoteHost();
-    if (isValidName(host)) {
+    if (isValidHost(host)) {
       return host;
     }
     return null;
   }
+  
+  /**
+   * Check string is not empty.
+   *
+   * @param str the str
+   * @return true, if not empty, false otherwise
+   */
+  protected boolean notEmpty(String str) {
+    return str != null && str.length() > 0;
+  }
 
   /**
-   * Checks if is valid name.
+   * Checks if is valid host. It's a trivial check for <code>null</code>, non empty string and not "unknown"
+   * text.
    *
-   * @param hostName the host name
-   * @return true, if is valid name
+   * @param host the host name or IP address
+   * @return true, if is valid host
    */
-  protected boolean isValidName(String hostName) {
-    if (hostName != null && hostName.length() > 0 && !"unknown".equalsIgnoreCase(hostName)) {
+  protected boolean isValidHost(String host) {
+    if (host != null && host.length() > 0 && !"unknown".equalsIgnoreCase(host)) {
       return true;
     }
     return false;
