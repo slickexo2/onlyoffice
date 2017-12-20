@@ -460,7 +460,7 @@ public class EditorService implements ResourceContainer {
     if (isValidHost(host)) {
       return host;
     }
-    // Solution based on X-Forwarded-For proposed in #3 to work correctly behind reverse proxy (production)
+    // Oct 19, 2017: Solution based on X-Forwarded-For proposed in #3 to work correctly behind reverse proxy (production)
     String clientIp = request.getHeader("X-Forwarded-For");
     if (notEmpty(clientIp)) {
       // In case of several proxies: X-Forwarded-For: client, proxy1, proxy2
@@ -488,7 +488,7 @@ public class EditorService implements ResourceContainer {
     if (isValidHost(host)) {
       return host;
     }
-    return null;
+    return clientIp; // was null - Dec 20, 2017
   }
   
   /**
