@@ -840,27 +840,23 @@
 	var editor = new Editor();
 	var UI = new UI();
 
-	// Load onlyoffice dependencies only in top window (not in iframes of gadgets).
-	if (window == top) {
-		$(function() {
-			try {
-				// load required styles
-				loadStyle("/onlyoffice/skin/jquery-ui.css");
-				loadStyle("/onlyoffice/skin/jquery.pnotify.default.css");
-				loadStyle("/onlyoffice/skin/jquery.pnotify.default.icons.css");
-				loadStyle("/onlyoffice/skin/onlyoffice.css");
+	$(function() {
+		try {
+			// load required styles
+			loadStyle("/onlyoffice/skin/jquery-ui.css");
+			loadStyle("/onlyoffice/skin/jquery.pnotify.default.css");
+			loadStyle("/onlyoffice/skin/jquery.pnotify.default.icons.css");
+			loadStyle("/onlyoffice/skin/onlyoffice.css");
 
-				// configure Pnotify
-				$.pnotify.defaults.styling = "jqueryui";
-				// use jQuery UI css
-				$.pnotify.defaults.history = false;
-				// no history roller in the
-				// right corner
-			} catch(e) {
-				log("Error configuring Onlyoffice Editor style.", e);
-			}
-		});
-	}
+			// configure Pnotify
+			$.pnotify.defaults.styling = "jqueryui";
+			// use jQuery UI css
+			$.pnotify.defaults.history = false;
+			// no history roller in the right corner
+		} catch(e) {
+			log("Error configuring Onlyoffice Editor style.", e);
+		}
+	});
 
 	return editor;
 })($);
