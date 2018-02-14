@@ -523,9 +523,10 @@ public class EditorService implements ResourceContainer {
    */
   protected String requestHost(URI requestUri) {
     StringBuilder host = new StringBuilder(requestUri.getHost());
-    if (requestUri.getPort() != 80 && requestUri.getPort() != 443) {
+    int port = requestUri.getPort();
+    if (port >= 0 && port != 80 && port != 443) {
       host.append(':');
-      host.append(requestUri.getPort());
+      host.append(port);
     }
     return host.toString();
   }
