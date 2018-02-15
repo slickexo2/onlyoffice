@@ -66,6 +66,9 @@
             <field name="name">
               <string>OnlyofficeOpen</string>
             </field>
+            <field name="rank">
+              <int>10</int>
+            </field>
             <field name="component">
               <string>org.exoplatform.onlyoffice.webui.OnlyofficeOpenManageComponent</string>
             </field>
@@ -109,6 +112,9 @@
             </field>
             <field name="name">
               <string>OnlyofficeClose</string>
+            </field>
+            <field name="rank">
+              <int>10</int>
             </field>
             <field name="component">
               <string>org.exoplatform.onlyoffice.webui.OnlyofficeCloseManageComponent</string>
