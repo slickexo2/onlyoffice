@@ -697,21 +697,22 @@
 					// TODO add full-screen button to the title
 				}
 
-				// show loading while upload to editor - it is already by WebUI side
-
+				// show loading while upload to editor - it is already added by WebUI side
+				var $container = $fileContent.find(".onlyofficeContainer");
+				
 				// create and start editor
 				var create = editor.create();
 				create.done(function(config) {
 					docEditor = new DocsAPI.DocEditor("onlyoffice", config);
 					// show editor
-					var $editor = $fileContent.find(".editor");
-					var $loading = $fileContent.find(".loading");
+					var $editor = $container.find(".editor");
+					var $loading = $container.find(".loading");
 					$loading.hide("blind");
 					$editor.show("blind");
 				});
 				create.fail(function(error) {
 					UI.showError("Error creating editor", error);
-					$fileContent.find(".loading>.onError").click();
+					$container.find(".loading>.onError").click();
 				});
 			}
 		};
@@ -719,16 +720,17 @@
 		this.close = function() {
 			var $fileContent = $("#UIDocumentWorkspace .fileContent");
 			if ($fileContent.size() > 0) {
-				// show loading while download the document - it is already by WebUI side
-
+				// show loading while download the document - it is already added by WebUI side
+				var $container = $fileContent.find(".onlyofficeContainer");
+				
 				// TODO seems this not required
 				if (docEditor) {
 					docEditor.processSaveResult(true);
 					docEditor = null;
 				}
 
-				var $editor = $fileContent.find(".editor");
-				var $loading = $fileContent.find(".loading");
+				var $editor = $container.find(".editor");
+				var $loading = $container.find(".loading");
 				// remove Onlyoffice iframe - this will let Onlyoffice to know the editing is done
 				$editor.empty();
 				// hide/remove editor
