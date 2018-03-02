@@ -90,9 +90,9 @@
             <field name="lifespan">
               <long>${onlyoffice.EditorCache.TimeToLive:259200000}</long>
             </field>
-            <field name="cacheMode">
+            <!-- field name="cacheMode">
               <string>${onlyoffice.EditorCache.cacheMode:replication}</string>
-            </field>
+            </field -->
           </object>
         </object-param>
       </init-params>
