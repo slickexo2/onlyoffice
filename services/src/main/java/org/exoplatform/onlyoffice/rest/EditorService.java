@@ -402,6 +402,16 @@ public class EditorService implements ResourceContainer {
   protected String getClientIpAddr(HttpServletRequest request) {
     String ip = request.getHeader("X-Forwarded-For");
     if (isValidHost(ip)) {
+      // In case of several proxy: X-Forwarded-For: client, proxy1, proxy2
+      int commaIdx = ip.indexOf(',');
+      if (commaIdx > 0 && commaIdx < ip.length() - 1) {
+        // use only client IP
+        ip = ip.substring(0, commaIdx);
+      }
+      return ip;
+    }
+    ip = request.getHeader("X-Real-IP");
+    if (isValidHost(ip)) {
       return ip;
     }
     ip = request.getHeader("Proxy-Client-IP");
@@ -463,7 +473,7 @@ public class EditorService implements ResourceContainer {
     // Oct 19, 2017: Solution based on X-Forwarded-For proposed in #3 to work correctly behind reverse proxy (production)
     String clientIp = request.getHeader("X-Forwarded-For");
     if (notEmpty(clientIp)) {
-      // In case of several proxies: X-Forwarded-For: client, proxy1, proxy2
+      // In case of several proxy: X-Forwarded-For: client, proxy1, proxy2
       int commaIdx = clientIp.indexOf(',');
       if (commaIdx > 0 && commaIdx < clientIp.length() - 1) {
         // use only client IP
@@ -509,7 +519,7 @@ public class EditorService implements ResourceContainer {
    * @return true, if is valid host
    */
   protected boolean isValidHost(String host) {
-    if (host != null && host.length() > 0 && !"unknown".equalsIgnoreCase(host)) {
+    if (notEmpty(host) && !"unknown".equalsIgnoreCase(host)) {
       return true;
     }
     return false;
