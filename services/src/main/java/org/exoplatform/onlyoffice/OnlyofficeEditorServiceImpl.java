@@ -64,6 +64,8 @@ import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.PropertiesParam;
 import org.exoplatform.onlyoffice.jcr.NodeFinder;
 import org.exoplatform.portal.Constants;
+import org.exoplatform.services.cache.CacheListener;
+import org.exoplatform.services.cache.CacheListenerContext;
 import org.exoplatform.services.cache.CacheService;
 import org.exoplatform.services.cache.ExoCache;
 import org.exoplatform.services.jcr.RepositoryService;
@@ -215,6 +217,43 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     this.organization = organization;
 
     this.activeCache = cacheService.getCacheInstance(CACHE_NAME);
+    activeCache.addCacheListener(new CacheListener<String, ConcurrentHashMap<String, Config>>() {
+
+      @Override
+      public void onExpire(CacheListenerContext context, String key, ConcurrentHashMap<String, Config> obj) throws Exception {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(CACHE_NAME + " onExpire: " + obj);
+        }
+      }
+
+      @Override
+      public void onRemove(CacheListenerContext context, String key, ConcurrentHashMap<String, Config> obj) throws Exception {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(CACHE_NAME + " onRemove: " + obj);
+        }
+      }
+
+      @Override
+      public void onPut(CacheListenerContext context, String key, ConcurrentHashMap<String, Config> obj) throws Exception {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(CACHE_NAME + " onPut: " + obj);
+        }
+      }
+
+      @Override
+      public void onGet(CacheListenerContext context, String key, ConcurrentHashMap<String, Config> obj) throws Exception {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(CACHE_NAME + " onGet: " + obj);
+        }
+      }
+
+      @Override
+      public void onClearCache(CacheListenerContext context) throws Exception {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(CACHE_NAME + " onClearCache");
+        } 
+      }
+    });
 
     // predefined file types
     // TODO keep map of type configurations with need of conversion to modern format and back
@@ -430,6 +469,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           activeCache.put(key, configs);
         }
       } finally {
+        try {
+          if (LOG.isDebugEnabled()) {
+            LOG.warn("Waiting for config caching of " + workspace + ":" + path + (config != null ? " -> " + config.getDocument().getKey() : ""));
+          }
+          Thread.sleep(15000);
+        } catch(Throwable e) {
+          LOG.warn("Error waiting for config caching of " + workspace + ":" + path + (config != null ? " -> " + config.getDocument().getKey() : ""), e);;
+        }
         activeLock.unlock();
       }
       // TODO cleanup
