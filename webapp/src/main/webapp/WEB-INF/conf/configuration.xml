@@ -90,7 +90,10 @@
             <field name="lifespan">
               <long>${onlyoffice.EditorCache.TimeToLive:259200000}</long>
             </field>
-            <!-- field name="cacheMode">
+            <field name="replicated">
+              <boolean>true</boolean>
+            </field>
+            <!-- field name="cacheMode"> // TODO It's for PLF 5.0
               <string>${onlyoffice.EditorCache.cacheMode:replication}</string>
             </field -->
           </object>
