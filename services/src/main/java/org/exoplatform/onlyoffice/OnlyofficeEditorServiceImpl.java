@@ -222,28 +222,28 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       @Override
       public void onExpire(CacheListenerContext context, String key, ConcurrentHashMap<String, Config> obj) throws Exception {
         if (LOG.isDebugEnabled()) {
-          LOG.debug(CACHE_NAME + " onExpire: " + obj);
+          LOG.debug(CACHE_NAME + " onExpire > " + key + ": " + obj);
         }
       }
 
       @Override
       public void onRemove(CacheListenerContext context, String key, ConcurrentHashMap<String, Config> obj) throws Exception {
         if (LOG.isDebugEnabled()) {
-          LOG.debug(CACHE_NAME + " onRemove: " + obj);
+          LOG.debug(CACHE_NAME + " onRemove > " + key + ": " + obj);
         }
       }
 
       @Override
       public void onPut(CacheListenerContext context, String key, ConcurrentHashMap<String, Config> obj) throws Exception {
         if (LOG.isDebugEnabled()) {
-          LOG.debug(CACHE_NAME + " onPut: " + obj);
+          LOG.debug(CACHE_NAME + " onPut > " + key + ": " + obj);
         }
       }
 
       @Override
       public void onGet(CacheListenerContext context, String key, ConcurrentHashMap<String, Config> obj) throws Exception {
         if (LOG.isDebugEnabled()) {
-          LOG.debug(CACHE_NAME + " onGet: " + obj);
+          LOG.debug(CACHE_NAME + " onGet > " + key + ": " + obj);
         }
       }
 
