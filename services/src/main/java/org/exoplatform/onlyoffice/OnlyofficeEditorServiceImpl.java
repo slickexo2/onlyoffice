@@ -97,8 +97,7 @@ import org.xml.sax.SAXException;
 public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Startable {
 
   /** The Constant LOG. */
-  protected static final Log                                          LOG                   =
-                                                                          ExoLogger.getLogger(OnlyofficeEditorServiceImpl.class);
+  protected static final Log                                          LOG                   = ExoLogger.getLogger(OnlyofficeEditorServiceImpl.class);
 
   /** The Constant RANDOM. */
   protected static final Random                                       RANDOM                = new Random();
@@ -151,13 +150,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /** The organization. */
   protected final OrganizationService                                 organization;
 
-  /**
-   * Editing documents.
-   */
-  // @Deprecated TODO
-  // protected final ConcurrentHashMap<String, ConcurrentHashMap<String, Config>> active =
-  // new ConcurrentHashMap<String, ConcurrentHashMap<String, Config>>();
-
   /** Cache of Editing documents. */
   protected final ExoCache<String, ConcurrentHashMap<String, Config>> activeCache;
 
@@ -180,16 +172,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   protected final boolean                                             documentserverAccessOnly;
 
   /** The file types. */
-  protected final Map<String, String>                                 fileTypes             =
-                                                                                new ConcurrentHashMap<String, String>();
+  protected final Map<String, String>                                 fileTypes             = new ConcurrentHashMap<String, String>();
 
   /** The upload params. */
   protected final MessageFormat                                       uploadParams          =
                                                                                    new MessageFormat("?url={0}&outputtype={1}&filetype={2}&title={3}&key={4}");
 
   /** The listeners. */
-  protected final ConcurrentLinkedQueue<OnlyofficeEditorListener>     listeners             =
-                                                                                new ConcurrentLinkedQueue<OnlyofficeEditorListener>();
+  protected final ConcurrentLinkedQueue<OnlyofficeEditorListener>     listeners             = new ConcurrentLinkedQueue<OnlyofficeEditorListener>();
 
   /**
    * Cloud Drive service with storage in JCR and with managed features.
@@ -218,43 +208,35 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     this.organization = organization;
 
     this.activeCache = cacheService.getCacheInstance(CACHE_NAME);
-    activeCache.addCacheListener(new CacheListener<String, ConcurrentHashMap<String, Config>>() {
+    if (LOG.isDebugEnabled()) {
+      activeCache.addCacheListener(new CacheListener<String, ConcurrentHashMap<String, Config>>() {
 
-      @Override
-      public void onExpire(CacheListenerContext context, String key, ConcurrentHashMap<String, Config> obj) throws Exception {
-        if (LOG.isDebugEnabled()) {
+        @Override
+        public void onExpire(CacheListenerContext context, String key, ConcurrentHashMap<String, Config> obj) throws Exception {
           LOG.debug(CACHE_NAME + " onExpire > " + key + ": " + obj);
         }
-      }
 
-      @Override
-      public void onRemove(CacheListenerContext context, String key, ConcurrentHashMap<String, Config> obj) throws Exception {
-        if (LOG.isDebugEnabled()) {
+        @Override
+        public void onRemove(CacheListenerContext context, String key, ConcurrentHashMap<String, Config> obj) throws Exception {
           LOG.debug(CACHE_NAME + " onRemove > " + key + ": " + obj);
         }
-      }
 
-      @Override
-      public void onPut(CacheListenerContext context, String key, ConcurrentHashMap<String, Config> obj) throws Exception {
-        if (LOG.isDebugEnabled()) {
+        @Override
+        public void onPut(CacheListenerContext context, String key, ConcurrentHashMap<String, Config> obj) throws Exception {
           LOG.debug(CACHE_NAME + " onPut > " + key + ": " + obj);
         }
-      }
 
-      @Override
-      public void onGet(CacheListenerContext context, String key, ConcurrentHashMap<String, Config> obj) throws Exception {
-        if (LOG.isDebugEnabled()) {
+        @Override
+        public void onGet(CacheListenerContext context, String key, ConcurrentHashMap<String, Config> obj) throws Exception {
           LOG.debug(CACHE_NAME + " onGet > " + key + ": " + obj);
         }
-      }
 
-      @Override
-      public void onClearCache(CacheListenerContext context) throws Exception {
-        if (LOG.isDebugEnabled()) {
+        @Override
+        public void onClearCache(CacheListenerContext context) throws Exception {
           LOG.debug(CACHE_NAME + " onClearCache");
-        } 
-      }
-    });
+        }
+      });
+    }
 
     // predefined file types
     // TODO keep map of type configurations with need of conversion to modern format and back
@@ -387,8 +369,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * {@inheritDoc}
    */
   @Override
-  public Config createEditor(String schema, String host, String userId, String workspace, String path)
-                                                                                                       throws OnlyofficeEditorException,
+  public Config createEditor(String schema, String host, String userId, String workspace, String path) throws OnlyofficeEditorException,
                                                                                                        RepositoryException {
     Node node = node(workspace, path);
     String nodePath = nodePath(workspace, path);
@@ -401,7 +382,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     Config config = getEditor(userId, nodePath);
     if (config == null) {
       // we should care about concurrent calls here
-      // ConcurrentHashMap<String, Config> existing0 = active.putIfAbsent(nodePath, configs); // TODO cleanup
       activeLock.lock();
       try {
         ConcurrentHashMap<String, Config> configs = activeCache.get(nodePath);
@@ -428,19 +408,17 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             builder.folder(node.getParent().getName());
           } catch (AccessDeniedException e) {
             // TODO Current user has no permissions to read the document parent - it can be an usecase of
-            // shared file
+            // shared file.
             // As folder is a text used for "Location" in document info in Onlyoffice, we could guess
-            // something
-            // like "John Smith's document" or "Product Team document" for sharing from personal docs and a
-            // space respectively.
+            // something like "John Smith's document" or "Product Team document" for sharing from personal
+            // docs and a space respectively.
             String owner;
             try {
               owner = node.getProperty("exo:owner").getString();
             } catch (PathNotFoundException oe) {
               owner = "?";
             }
-            LOG.warn("Cannot read document parent node: "
-                + nodePath(workspace, node.getPath() + ". Owner: " + owner + ". Error: " + e.getMessage()));
+            LOG.warn("Cannot read document parent node: " + nodePath(workspace, node.getPath() + ". Owner: " + owner + ". Error: " + e.getMessage()));
             builder.folder(EMPTY_TEXT); // can be empty for Onlyoffice, will mean a root folder
           }
           String lang = getUserLang(userId);
@@ -470,32 +448,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           activeCache.put(key, configs);
         }
       } finally {
-        try {
-          if (LOG.isDebugEnabled()) {
-            LOG.warn("Waiting for config caching of " + workspace + ":" + path + (config != null ? " -> " + config.getDocument().getKey() : ""));
-          }
-          Thread.sleep(15000);
-        } catch(Throwable e) {
-          LOG.warn("Error waiting for config caching of " + workspace + ":" + path + (config != null ? " -> " + config.getDocument().getKey() : ""), e);;
-        }
         activeLock.unlock();
       }
-      // TODO cleanup
-      /*
-       * if (existing != null) {
-       * configs = existing;
-       * config = getEditor(userId, nodePath);
-       * if (config == null) {
-       * // it's unexpected state as existing map SHOULD contain a config and it must be copied for
-       * // given user in getEditor(): client will need to retry the operation
-       * throw new ConflictException("Cannot obtain configuration for already existing editor");
-       * }
-       * // FYI mapping by unique file key should be done by the thread that created this existing map
-       * } else {
-       * // mapping by unique file key for updateDocument(): no concurrent calls (duplicates) expected
-       * active.put(key, configs);
-       * }
-       */
       fireCreated(config);
     }
     return config;
@@ -527,8 +481,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             SessionProvider userProvider = new SessionProvider(state);
             sessionProviders.setSessionProvider(null, userProvider);
           } else {
-            LOG.warn("User identity not found " + userId + " for content of " + config.getDocument().getKey() + " "
-                + config.getPath());
+            LOG.warn("User identity not found " + userId + " for content of " + config.getDocument().getKey() + " " + config.getPath());
             throw new OnlyofficeEditorException("User identity not found " + userId);
           }
 
@@ -623,8 +576,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // Onlyoffice doesn't know about such document: we clean our records and raise an error
           activeCache.remove(key);
           activeCache.remove(nodePath);
-          LOG.warn("Received Onlyoffice status: no document with the key identifier could be found. Key: " + key + ". Document "
-              + nodePath);
+          LOG.warn("Received Onlyoffice status: no document with the key identifier could be found. Key: " + key + ". Document " + nodePath);
           throw new OnlyofficeEditorException("Error editing document: document ID not found");
         } else if (statusCode == 1) {
           // while "document is being edited" (1) will come just before "document is ready for saving"
@@ -658,8 +610,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               // config.close(); // close for use in listeners
               // fireSaved(config);
               fireError(config);
-              LOG.warn("Received Onlyoffice error of saving document. Key: " + key + ". Users: "
-                  + Arrays.toString(status.getUsers()) + ". Last change was successfully saved for " + nodePath);
+              LOG.warn("Received Onlyoffice error of saving document. Key: " + key + ". Users: " + Arrays.toString(status.getUsers())
+                  + ". Last change was successfully saved for " + nodePath);
             } else {
               // if error without content URL and last user: it's error state
               LOG.warn("Received Onlyoffice error of saving document without changes URL. Key: " + key + ". Users: "
@@ -686,8 +638,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           activeCache.remove(nodePath);
         } else {
           // warn unexpected status, wait for next status
-          LOG.warn("Received Onlyoffice unexpected status. Key: " + key + ". URL: " + status.getUrl() + ". Users: "
-              + status.getUsers() + ". Document " + nodePath);
+          LOG.warn("Received Onlyoffice unexpected status. Key: " + key + ". URL: " + status.getUrl() + ". Users: " + status.getUsers()
+              + ". Document " + nodePath);
         }
       } else {
         throw new BadParameterException("User editor not found " + userId);
@@ -702,7 +654,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    */
   @Override
   public void start() {
-    
+
     LOG.info("Onlyoffice Editor service successfuly started");
   }
 
@@ -891,8 +843,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @throws OnlyofficeEditorException the onlyoffice editor exception
    * @throws RepositoryException the repository exception
    */
-  protected String webdavUrl(String schema, String host, String workspace, String path) throws OnlyofficeEditorException,
-                                                                                        RepositoryException {
+  protected String webdavUrl(String schema, String host, String workspace, String path) throws OnlyofficeEditorException, RepositoryException {
     StringBuilder filePath = new StringBuilder();
     try {
       URI baseWebdavUri = webdavUri(schema, host);
@@ -904,13 +855,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       filePath.append(workspace);
       filePath.append(path);
 
-      URI uri = new URI(baseWebdavUri.getScheme(),
-                        null,
-                        baseWebdavUri.getHost(),
-                        baseWebdavUri.getPort(),
-                        filePath.toString(),
-                        null,
-                        null);
+      URI uri = new URI(baseWebdavUri.getScheme(), null, baseWebdavUri.getHost(), baseWebdavUri.getPort(), filePath.toString(), null, null);
       return uri.toASCIIString();
     } catch (URISyntaxException e) {
       throw new OnlyofficeEditorException("Error creating content link (WebDAV) for " + path + " in " + workspace, e);
@@ -929,10 +874,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @throws OnlyofficeEditorException the onlyoffice editor exception
    */
   @Deprecated
-  protected String uploadContent(InputStream localContent,
-                                 String fileKey,
-                                 String mimeType,
-                                 long length) throws IOException, OnlyofficeEditorException {
+  protected String uploadContent(InputStream localContent, String fileKey, String mimeType, long length) throws IOException,
+                                                                                                         OnlyofficeEditorException {
     String urlTostorage = uploadUrl + uploadParams.format(new String[] { "", "", "", "", fileKey });
 
     URL url = new URL(urlTostorage);
@@ -1162,8 +1105,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         SessionProvider userProvider = new SessionProvider(state);
         sessionProviders.setSessionProvider(null, userProvider);
         if (LOG.isDebugEnabled()) {
-          LOG.debug(">>> download under user " + userIdentity.getUserId() + " (" + nodePath + ", " + config.getDocument().getKey()
-              + ")");
+          LOG.debug(">>> download under user " + userIdentity.getUserId() + " (" + nodePath + ", " + config.getDocument().getKey() + ")");
         }
       } else {
         LOG.warn("User identity not found " + userId + " for downloading " + config.getDocument().getKey() + " " + nodePath);
@@ -1373,9 +1315,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @throws RepositoryException the repository exception
    */
   @Deprecated
-  protected void trackChange(Config config, DocumentStatus status) throws BadParameterException,
-                                                                   OnlyofficeEditorException,
-                                                                   RepositoryException {
+  protected void trackChange(Config config, DocumentStatus status) throws BadParameterException, OnlyofficeEditorException, RepositoryException {
     String workspace = config.getWorkspace();
     String path = config.getPath();
 
@@ -1385,8 +1325,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     if (users != null && users.length > 0) {
       user = users[0];
     } else {
-      LOG.warn("No user in status from Onlyoffice document editing service for file " + status.getKey() + " ("
-          + nodePath(workspace, path) + ")");
+      LOG.warn("No user in status from Onlyoffice document editing service for file " + status.getKey() + " (" + nodePath(workspace, path) + ")");
       user = null;
     }
     if (contentUrl != null && contentUrl.length() > 0) {
