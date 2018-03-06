@@ -57,11 +57,11 @@
       <description>The JBoss Cache configuration for the setting service</description>
       <init-params>
         <object-param>
-          <name>IdentityCache</name>
+          <name>onlyoffice.EditorCache</name>
           <description></description>
           <object type="org.exoplatform.services.cache.ExoCacheConfig">
             <field name="name">
-              <string>OnlyofficeEditorCache</string>
+              <string>onlyoffice.EditorCache</string>
             </field>
             <field name="maxSize">
               <int>${onlyoffice.EditorCache.Capacity:5000}</int>
@@ -75,11 +75,11 @@
           </object>
         </object-param>
         <object-param profiles="cluster">
-          <name>OnlyofficeEditorCache</name>
+          <name>onlyoffice.EditorCache</name>
           <description>The JBoss Cache configuration for the IdentityCache</description>
           <object type="org.exoplatform.services.cache.impl.infinispan.generic.GenericExoCacheConfig">
             <field name="name">
-              <string>IdentityCache</string>
+              <string>onlyoffice.EditorCache</string>
             </field>
             <field name="strategy">
               <string>${onlyoffice.EditorCache.strategy:LIRS}</string>
