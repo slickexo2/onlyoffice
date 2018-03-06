@@ -54,7 +54,7 @@
       <name>addExoCacheConfig</name>
       <set-method>addExoCacheConfig</set-method>
       <type>org.exoplatform.services.cache.ExoCacheConfigPlugin</type>
-      <description>The JBoss Cache configuration for the setting service</description>
+      <description>Cache configuration for Onlyoffice service</description>
       <init-params>
         <object-param>
           <name>onlyoffice.EditorCache</name>
@@ -76,7 +76,7 @@
         </object-param>
         <object-param profiles="cluster">
           <name>onlyoffice.EditorCache</name>
-          <description>The JBoss Cache configuration for the IdentityCache</description>
+          <description></description>
           <object type="org.exoplatform.services.cache.impl.infinispan.generic.GenericExoCacheConfig">
             <field name="name">
               <string>onlyoffice.EditorCache</string>
@@ -93,9 +93,6 @@
             <field name="replicated">
               <boolean>true</boolean>
             </field>
-            <!-- field name="cacheMode"> // TODO It's for PLF 5.0
-              <string>${onlyoffice.EditorCache.cacheMode:replication}</string>
-            </field -->
           </object>
         </object-param>
       </init-params>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2017 eXo Platform SAS.
+ * Copyright (C) 2003-2018 eXo Platform SAS.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -134,7 +134,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   protected static final String                                       EMPTY_TEXT            = "".intern();
 
   /** The Constant CACHE_NAME. */
-  public static final String                                          CACHE_NAME            = "OnlyofficeEditorCache".intern();
+  public static final String                                          CACHE_NAME            = "onlyoffice.EditorCache".intern();
 
   /** The jcr service. */
   protected final RepositoryService                                   jcrService;
@@ -199,6 +199,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @param identityRegistry the identity registry
    * @param finder the finder
    * @param organization the organization
+   * @param cacheService the cache service
    * @param params the params
    * @throws ConfigurationException the configuration exception
    */
@@ -701,6 +702,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    */
   @Override
   public void start() {
+    
     LOG.info("Onlyoffice Editor service successfuly started");
   }
 
