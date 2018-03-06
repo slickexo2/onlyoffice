@@ -77,6 +77,7 @@ import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.User;
 import org.exoplatform.services.organization.UserProfile;
 import org.exoplatform.services.organization.UserProfileHandler;
+import org.exoplatform.services.security.Authenticator;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.security.IdentityRegistry;
@@ -150,6 +151,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /** The organization. */
   protected final OrganizationService                                 organization;
 
+  /** The authenticator. */
+  protected final Authenticator                                       authenticator;
+
   /** Cache of Editing documents. */
   protected final ExoCache<String, ConcurrentHashMap<String, Config>> activeCache;
 
@@ -189,6 +193,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @param identityRegistry the identity registry
    * @param finder the finder
    * @param organization the organization
+   * @param authenticator the authenticator
    * @param cacheService the cache service
    * @param params the params
    * @throws ConfigurationException the configuration exception
@@ -198,6 +203,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                      IdentityRegistry identityRegistry,
                                      NodeFinder finder,
                                      OrganizationService organization,
+                                     Authenticator authenticator,
                                      CacheService cacheService,
                                      InitParams params)
       throws ConfigurationException {
@@ -206,6 +212,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     this.identityRegistry = identityRegistry;
     this.finder = finder;
     this.organization = organization;
+    this.authenticator = authenticator;
 
     this.activeCache = cacheService.getCacheInstance(CACHE_NAME);
     if (LOG.isDebugEnabled()) {
@@ -472,7 +479,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         SessionProvider contextProvider = sessionProviders.getSessionProvider(null);
         try {
           // XXX we want do all the job under actual (requester) user here
-          Identity userIdentity = identityRegistry.getIdentity(userId);
+          Identity userIdentity = userIdentity(userId);
           if (userIdentity != null) {
             ConversationState state = new ConversationState(userIdentity);
             // Keep subject as attribute in ConversationState.
@@ -1096,7 +1103,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       // XXX we want do all the job under actual (last editor) user here
       // Notable that some WCM actions (FileUpdateActivityListener) will fail if user will be anonymous
       // TODO but it seems looks as nasty thing for security, it should be carefully reviewed for production
-      Identity userIdentity = identityRegistry.getIdentity(userId);
+      Identity userIdentity = userIdentity(userId);
       if (userIdentity != null) {
         ConversationState state = new ConversationState(userIdentity);
         // Keep subject as attribute in ConversationState.
@@ -1679,5 +1686,26 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         LOG.warn("Error listener error", t);
       }
     }
+  }
+
+  /**
+   * Find or create user identity.
+   *
+   * @return the identity can be null if not found and cannot be created via current authenticator
+   */
+  protected Identity userIdentity(String userId) {
+    Identity userIdentity = identityRegistry.getIdentity(userId);
+    if (userIdentity == null) {
+      // We create user identity by authenticator, but not register it in the registry
+      try {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("User identity not registered, trying to create it for: " + userId);
+        }
+        userIdentity = authenticator.createIdentity(userId);
+      } catch (Exception e) {
+        LOG.warn("Failed to create user identity: " + userId, e);
+      }
+    }
+    return userIdentity;
   }
 }
