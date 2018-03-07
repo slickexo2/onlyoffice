@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2017 eXo Platform SAS.
+ * Copyright (C) 2003-2018 eXo Platform SAS.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -36,6 +36,7 @@ import org.json.simple.parser.ParseException;
 
 import java.net.InetAddress;
 import java.net.URI;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -293,6 +294,7 @@ public class EditorService implements ResourceContainer {
    * Config configuration for Onlyoffice JS.
    *
    * @param uriInfo - request with base URI
+   * @param request the request
    * @param workspace the workspace
    * @param path the path
    * @return response with
@@ -301,7 +303,10 @@ public class EditorService implements ResourceContainer {
   @Path("/config/{workspace}/{path:.*}")
   @RolesAllowed("users")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response config(@Context UriInfo uriInfo, @PathParam("workspace") String workspace, @PathParam("path") String path) {
+  public Response config(@Context UriInfo uriInfo,
+                         @Context HttpServletRequest request,
+                         @PathParam("workspace") String workspace,
+                         @PathParam("path") String path) {
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("> Onlyoffice config: " + workspace + ":" + path);
@@ -319,6 +324,15 @@ public class EditorService implements ResourceContainer {
             String username = convo.getIdentity().getUserId();
             URI requestUri = uriInfo.getRequestUri();
             Config config = editors.createEditor(requestUri.getScheme(), requestHost(requestUri), username, workspace, path);
+            if (config.getEditorConfig().getLang() == null) {
+              if (request.getLocale() != null) {
+                // If user lang not defined use current request one
+                config.getEditorConfig().setLang(request.getLocale().getLanguage());
+              } else {
+                // Otherwise use system default one
+                config.getEditorConfig().setLang(Locale.getDefault().getLanguage());
+              }
+            }
             if (LOG.isDebugEnabled()) {
               LOG.debug("> Onlyoffice document config: " + workspace + ":" + path + " -> " + config.getDocument().getKey());
             }
@@ -468,9 +482,12 @@ public class EditorService implements ResourceContainer {
   protected String getClientHost(HttpServletRequest request) {
     String host = request.getHeader("X-Forwarded-Host");
     if (isValidHost(host)) {
+      // This header contain requested (!) host name, not a client one, but in case of multi-layer infra
+      // (several proxy/firewall) where one of proxy hosts stands in front of actual Document Server and set
+      // this header, it will do the job.
       return host;
     }
-    // Oct 19, 2017: Solution based on X-Forwarded-For proposed in #3 to work correctly behind reverse proxy (production)
+    // Oct 19, 2017: Solution based on X-Forwarded-For proposed in #3 to work correctly behind reverse proxy
     String clientIp = request.getHeader("X-Forwarded-For");
     if (notEmpty(clientIp)) {
       // In case of several proxy: X-Forwarded-For: client, proxy1, proxy2
@@ -485,7 +502,8 @@ public class EditorService implements ResourceContainer {
     }
     if (notEmpty(clientIp)) {
       try {
-        // XXX For this to work, in server.xml, enableLookups="true"
+        // XXX For this to work, in server.xml, enableLookups="true" and it can be resource consumption call
+        // Thus it could be efficient to use the hosts file of the server
         host = InetAddress.getByName(clientIp).getHostName();
         if (notEmpty(host)) { // host here still may be an IP due to security restriction
           return host;
@@ -500,7 +518,7 @@ public class EditorService implements ResourceContainer {
     }
     return clientIp; // was null - Dec 20, 2017
   }
-  
+
   /**
    * Check string is not empty.
    *

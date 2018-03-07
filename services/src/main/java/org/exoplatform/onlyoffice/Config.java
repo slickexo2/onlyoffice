@@ -40,6 +40,9 @@ public class Config implements Externalizable {
 
   /** The Constant DATETIME_FORMAT. */
   protected static final SimpleDateFormat DATETIME_FORMAT = new SimpleDateFormat("MM/dd/yyyy");
+  
+  /** The Constant NO_LANG. */
+  protected static final String NO_LANG = "no_lang".intern(); 
 
   /**
    * The Class Builder.
@@ -602,14 +605,14 @@ public class Config implements Externalizable {
     /** The callback url. */
     protected final String callbackUrl;
 
-    /** The lang. */
-    protected final String lang;
-
     /** The mode. */
     protected final String mode;
 
     /** The user. */
     protected final User   user;
+
+    /** The lang. */
+    protected String       lang;
 
     /**
      * Instantiates a new editor.
@@ -637,12 +640,21 @@ public class Config implements Externalizable {
     }
 
     /**
-     * Gets the lang.
+     * Gets the language of user editor.
      *
-     * @return the lang
+     * @return the lang can be <code>null</code> if unable to define from user profile
      */
     public String getLang() {
       return lang;
+    }
+
+    /**
+     * Sets the lang.
+     *
+     * @param lang the lang to set
+     */
+    public void setLang(String lang) {
+      this.lang = lang;
     }
 
     /**
@@ -759,7 +771,7 @@ public class Config implements Externalizable {
   public Config() {
     // nothing
   }
-  
+
   /**
    * Editor config constructor.
    *
@@ -815,7 +827,8 @@ public class Config implements Externalizable {
 
     // Editor: callbackUrl, lang, mode, user(userId, firstname, lastname)
     out.writeUTF(editorConfig.getCallbackUrl());
-    out.writeUTF(editorConfig.getLang());
+    String elang = editorConfig.getLang();
+    out.writeUTF(elang != null ? elang : NO_LANG);
     out.writeUTF(editorConfig.getMode());
     out.writeUTF(editorConfig.getUser().getId());
     out.writeUTF(editorConfig.getUser().getFirstname());
@@ -850,6 +863,9 @@ public class Config implements Externalizable {
     // Editor: callbackUrl, lang, mode, user(userId, firstname, lastname)
     String ecallbackUrl = in.readUTF();
     String elang = in.readUTF();
+    if (NO_LANG.equals(elang)) {
+      elang = null;
+    }
     String emode = in.readUTF();
     String euid = in.readUTF();
     String eufirstname = in.readUTF();

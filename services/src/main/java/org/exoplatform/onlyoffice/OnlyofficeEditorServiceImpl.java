@@ -345,18 +345,20 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @throws RepositoryException the repository exception
    */
   protected Config getEditor(String userId, String nodePath) throws OnlyofficeEditorException, RepositoryException {
-    // ConcurrentHashMap<String, Config> configs = active.get(nodePath);
     ConcurrentHashMap<String, Config> configs = activeCache.get(nodePath);
     if (configs != null) {
       Config config = configs.get(userId);
       if (config == null) {
         // copy editor for this user from any entry in the configs map
         try {
-          User user = getUser(userId);
-          String lang = getUserLang(userId); // use this user language
-          config = configs.values().iterator().next().forUser(user.getUserName(), user.getFirstName(), user.getLastName(), lang);
+          User user = getUser(userId); // and use this user language
+          config = configs.values().iterator().next().forUser(user.getUserName(), user.getFirstName(), user.getLastName(), getUserLang(userId));
           Config existing = configs.putIfAbsent(userId, config);
-          if (existing != null) {
+          if (existing == null) {
+            // need update the configs in the cache (for replicated cache)
+            activeCache.put(nodePath, configs);
+            activeCache.put(config.getDocument().getKey(), configs);
+          } else {
             config = existing;
           }
           fireGet(config);
@@ -428,8 +430,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             LOG.warn("Cannot read document parent node: " + nodePath(workspace, node.getPath() + ". Owner: " + owner + ". Error: " + e.getMessage()));
             builder.folder(EMPTY_TEXT); // can be empty for Onlyoffice, will mean a root folder
           }
-          String lang = getUserLang(userId);
-          builder.lang(lang);
+          builder.lang(getUserLang(userId));
           builder.mode("edit");
           builder.title(nodeTitle(node));
           builder.userId(user.getUserName());
@@ -592,7 +593,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // here to make a cleanup
           // Sync users from the status to active config: this should close configs of gone users
           String[] users = status.getUsers();
-          syncUsers(configs, users);
+          if (syncUsers(configs, users)) {
+            // Update cached (for replicated cache)
+            activeCache.put(key, configs);
+            activeCache.put(nodePath, configs);
+          }
         } else if (statusCode == 2) {
           // save as "document is ready for saving" (2)
           download(config, status);
@@ -624,17 +629,22 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               LOG.warn("Received Onlyoffice error of saving document without changes URL. Key: " + key + ". Users: "
                   + Arrays.toString(status.getUsers()) + ". Document " + nodePath);
               config.setError("Error in editor. No changes saved");
+              // Update cached (for replicated cache)
+              activeCache.put(key, configs);
+              activeCache.put(nodePath, configs);
               fireError(config);
               // TODO no sense to throw an ex here: it will be caught by the caller (REST) and returned to
               // the Onlyoffice server as 500 response, but it doesn't deal with it and will try send the
               // status again.
-              // throw new OnlyofficeEditorException("Error saving document: no content returned");
             }
           } else {
             // otherwise we assume other user will save it later
             LOG.warn("Received Onlyoffice error of saving document with several editors. Key: " + key + ". Users: "
                 + Arrays.toString(status.getUsers()) + ". Document " + nodePath);
             config.setError("Error in editor. Document still in editing state");
+            // Update cached (for replicated cache)
+            activeCache.put(key, configs);
+            activeCache.put(nodePath, configs);
             fireError(config);
           }
         } else if (statusCode == 4) {
@@ -1014,8 +1024,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    *
    * @param configs the configs
    * @param users the users
+   * @return true, if actually changed editor config user(s)
    */
-  protected void syncUsers(ConcurrentHashMap<String, Config> configs, String[] users) {
+  protected boolean syncUsers(ConcurrentHashMap<String, Config> configs, String[] users) {
     Set<String> editors = new HashSet<String>(Arrays.asList(users));
     // remove gone editors
     for (Iterator<Map.Entry<String, Config>> ceiter = configs.entrySet().iterator(); ceiter.hasNext();) {
@@ -1027,15 +1038,18 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // editor was (re)opened by user
           config.open();
           fireJoined(config);
+          return true;
         }
       } else {
         // editor was closed by user
         if (config.isOpen()) {
           config.close();
           fireLeaved(config);
+          return true;
         }
       }
     }
+    return false;
   }
 
   /**
@@ -1524,7 +1538,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * Gets the user lang.
    *
    * @param userId the user id
-   * @return the user lang
+   * @return the user lang can be <code>null</code> if user has no profile or language in it
    * @throws OnlyofficeEditorException the onlyoffice editor exception
    */
   protected String getUserLang(String userId) throws OnlyofficeEditorException {
@@ -1541,11 +1555,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             lang = lang.substring(0, cci);
           }
         } else {
-          lang = Locale.ENGLISH.getLanguage();
+          lang = null;
         }
         return lang;
       } else {
-        throw new BadParameterException("User profile not found for " + userId);
+        return null;
       }
     } catch (Exception e) {
       throw new OnlyofficeEditorException("Error searching user profile " + userId, e);
