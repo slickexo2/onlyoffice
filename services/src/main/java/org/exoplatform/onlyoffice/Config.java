@@ -42,7 +42,10 @@ public class Config implements Externalizable {
   protected static final SimpleDateFormat DATETIME_FORMAT = new SimpleDateFormat("MM/dd/yyyy");
   
   /** The Constant NO_LANG. */
-  protected static final String NO_LANG = "no_lang".intern(); 
+  protected static final String NO_LANG = "no_lang".intern();
+  
+  /** The Constant EMPTY. */
+  protected static final String EMPTY = "".intern();
 
   /**
    * The Class Builder.
@@ -814,6 +817,8 @@ public class Config implements Externalizable {
     out.writeUTF(documentserverUrl);
     out.writeUTF(documentserverJsUrl);
     out.writeUTF(platformUrl);
+    out.writeUTF(open != null ? open.toString() : EMPTY);
+    out.writeUTF(error != null ? error : EMPTY);
 
     // Objects
     // Document: key, fileType, title, url, info(author, created, folder)
@@ -847,6 +852,18 @@ public class Config implements Externalizable {
     this.documentserverUrl = in.readUTF();
     this.documentserverJsUrl = in.readUTF();
     this.platformUrl = in.readUTF();
+    String openString = in.readUTF();
+    if (EMPTY.equals(openString)) {
+      open = null;
+    } else {
+      open = Boolean.valueOf(openString);
+    }
+    String errorString = in.readUTF();
+    if (EMPTY.equals(errorString)) {
+      error = null;
+    } else {
+      error = errorString;
+    }
 
     // Objects
     // Document: key, fileType, title, url, info(author, created, folder)
@@ -1065,6 +1082,11 @@ public class Config implements Externalizable {
     s.append(workspace);
     s.append(':');
     s.append(path);
+    if (open != null) {
+      s.append(" (");
+      s.append(open.booleanValue() ? "open" : "closed");
+      s.append(')');  
+    }
     return s.toString();
   }
 
