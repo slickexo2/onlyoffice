@@ -48,21 +48,6 @@ public class OnlyofficeEditorUIService {
   /** The Constant LOG. */
   protected static final Log LOG           = ExoLogger.getLogger(OnlyofficeEditorUIService.class);
 
-  // TODO cleanup
-  // /**
-  // * The Enum State.
-  // */
-  // @Deprecated
-  // protected static enum State {
-  //
-  // /** The opening. */
-  // OPENING,
-  // /** The open. */
-  // OPEN,
-  // /** The closing. */
-  // CLOSING
-  // }
-
   /** The Constant STATE_OPENING. */
   public static final String STATE_OPENING = "opening".intern();
 
@@ -139,11 +124,6 @@ public class OnlyofficeEditorUIService {
     }
   }
 
-  /**
-   * Open editors.
-   */
-  // protected final ConcurrentHashMap<String, State> editors = new ConcurrentHashMap<String, State>();
-
   /** Cache of open by user editors (its states). */
   protected final ExoCache<String, String> editorsCache;
 
@@ -204,9 +184,6 @@ public class OnlyofficeEditorUIService {
    */
   public boolean open(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
-    // State state = State.OPENING;
-    // State prev = editors.putIfAbsent(id, state);
-    // return prev != null ? State.OPENING == prev : true;
     String state = editorsCache.get(id);
     if (state == null) {
       editorsLock.lock();
@@ -233,7 +210,6 @@ public class OnlyofficeEditorUIService {
    */
   public boolean opened(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
-    // return editors.replace(id, State.OPENING, State.OPEN);
     String state = editorsCache.get(id);
     if (STATE_OPENING.equals(state)) {
       editorsLock.lock();
@@ -257,12 +233,6 @@ public class OnlyofficeEditorUIService {
    */
   public boolean close(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
-    // if (!editors.replace(id, State.OPEN, State.CLOSING)) {
-    // // if wasn't OPEN but close requested, ensure document also isn't OPENING
-    // return editors.remove(id, State.OPENING);
-    // }
-    // return true;
-    //
     String state = editorsCache.get(id);
     if (STATE_OPEN.equals(state)) {
       editorsLock.lock();
@@ -294,7 +264,6 @@ public class OnlyofficeEditorUIService {
    */
   public boolean closed(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
-    // return editors.remove(id, State.CLOSING);
     String state = editorsCache.get(id);
     if (STATE_CLOSING.equals(state)) {
       editorsLock.lock();
@@ -317,8 +286,6 @@ public class OnlyofficeEditorUIService {
    */
   public boolean reset(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
-    // State state = editors.remove(id);
-    // return state != null;
     return editorsCache.remove(id) != null;
   }
 
@@ -332,7 +299,6 @@ public class OnlyofficeEditorUIService {
    */
   public boolean isOpening(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
-    // return State.OPENING == editors.get(id);
     return STATE_OPENING.equals(editorsCache.get(id));
   }
 
@@ -346,7 +312,6 @@ public class OnlyofficeEditorUIService {
    */
   public boolean isOpen(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
-    // return State.OPEN == editors.get(id);
     return STATE_OPEN.equals(editorsCache.get(id));
   }
 
@@ -360,7 +325,6 @@ public class OnlyofficeEditorUIService {
    */
   public boolean isClosing(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
-    // return State.CLOSING == editors.get(id);
     return STATE_CLOSING.equals(editorsCache.get(id));
   }
 
@@ -374,7 +338,6 @@ public class OnlyofficeEditorUIService {
    */
   public boolean isClosed(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
-    // return !editors.containsKey(id);
     return editorsCache.get(id) == null;
   }
 
@@ -388,8 +351,6 @@ public class OnlyofficeEditorUIService {
    */
   public boolean canShow(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
-    // State state = editors.get(id);
-    // return State.OPENING == state || State.OPEN == state || State.CLOSING == state;
     String state = editorsCache.get(id);
     return STATE_OPENING.equals(state) || STATE_OPEN.equals(state) || STATE_CLOSING.equals(state);
   }
@@ -404,8 +365,6 @@ public class OnlyofficeEditorUIService {
    */
   public boolean canOpen(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
-    // State state = editors.get(id);
-    // return state == null || State.CLOSING == state;
     String state = editorsCache.get(id);
     return state == null || STATE_CLOSING.equals(state);
   }
@@ -420,8 +379,6 @@ public class OnlyofficeEditorUIService {
    */
   public boolean canClose(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
-    // State state = editors.get(id);
-    // return State.OPENING == state || State.OPEN == state;
     String state = editorsCache.get(id);
     return STATE_OPENING.equals(state) || STATE_OPEN.equals(state);
   }

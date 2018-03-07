@@ -671,7 +671,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    */
   @Override
   public void start() {
-
     LOG.info("Onlyoffice Editor service successfuly started");
   }
 
@@ -680,7 +679,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    */
   @Override
   public void stop() {
-    activeCache.clearCache();
     LOG.info("Onlyoffice  Editor service successfuly stopped");
   }
 
