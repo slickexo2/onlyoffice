@@ -19,6 +19,8 @@
  */
 package org.exoplatform.onlyoffice.webui;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 import org.exoplatform.onlyoffice.Config;
 import org.exoplatform.onlyoffice.OnlyofficeEditorListener;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
@@ -28,8 +30,6 @@ import org.exoplatform.services.cache.CacheService;
 import org.exoplatform.services.cache.ExoCache;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
-
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Support for stateful WebUI: keep tracking requests to open/close editor by users on partical file.
@@ -65,8 +65,6 @@ public class OnlyofficeEditorUIService {
    * component's <code>addEditorListener</code> method. When
    * the editor event occurs, that object's appropriate
    * method is invoked.
-   *
-   * @see EditorEvent
    */
   protected class EditorListener implements OnlyofficeEditorListener {
 

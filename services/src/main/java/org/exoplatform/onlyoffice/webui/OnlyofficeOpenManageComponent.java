@@ -16,6 +16,9 @@
  */
 package org.exoplatform.onlyoffice.webui;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.exoplatform.ecm.webui.component.explorer.UIDocumentWorkspace;
 import org.exoplatform.ecm.webui.component.explorer.UIJCRExplorer;
 import org.exoplatform.ecm.webui.component.explorer.control.UIActionBar;
@@ -35,9 +38,6 @@ import org.exoplatform.webui.ext.filter.UIExtensionFilter;
 import org.exoplatform.webui.ext.filter.UIExtensionFilters;
 import org.exoplatform.webui.ext.manager.UIAbstractManager;
 import org.exoplatform.webui.ext.manager.UIAbstractManagerComponent;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Open Onlyoffice editor in file view.
@@ -67,11 +67,9 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
    * component's <code>addOnlyofficeOpenActionListener</code> method. When
    * the onlyofficeOpenAction event occurs, that object's appropriate
    * method is invoked.
-   *
-   * @see OnlyofficeOpenActionEvent
    */
   public static class OnlyofficeOpenActionListener extends EventListener<OnlyofficeOpenManageComponent> {
-    
+
     /**
      * {@inheritDoc}
      */

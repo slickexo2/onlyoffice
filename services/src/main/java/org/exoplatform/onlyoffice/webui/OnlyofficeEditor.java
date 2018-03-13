@@ -19,13 +19,15 @@
  */
 package org.exoplatform.onlyoffice.webui;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.exoplatform.ecm.webui.component.explorer.UIJCRExplorer;
 import org.exoplatform.onlyoffice.webui.OnlyofficeEditor.OnCloseActionListener;
 import org.exoplatform.onlyoffice.webui.OnlyofficeEditor.OnErrorActionListener;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.wcm.utils.WCMCoreUtils;
-import org.exoplatform.web.application.RequestContext;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.EventConfig;
@@ -35,9 +37,6 @@ import org.exoplatform.webui.event.EventListener;
 import org.exoplatform.webui.ext.filter.UIExtensionFilter;
 import org.exoplatform.webui.ext.filter.UIExtensionFilters;
 import org.exoplatform.webui.form.UIForm;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * An UI for Onlyoffice editor in ECMS explorer. This viewer will be shown only for document opened by
@@ -50,9 +49,8 @@ import java.util.List;
  * @version $Id: OnlyofficeEditor.java 00000 Mar 3, 2016 pnedonosko $
  * 
  */
-@ComponentConfig(lifecycle = UIFormLifecycle.class, template = "classpath:groovy/templates/OnlyofficeEditor.gtmpl",
-                 events = { @EventConfig(listeners = OnCloseActionListener.class),
-                     @EventConfig(listeners = OnErrorActionListener.class) })
+@ComponentConfig(lifecycle = UIFormLifecycle.class, template = "classpath:groovy/templates/OnlyofficeEditor.gtmpl", events = {
+    @EventConfig(listeners = OnCloseActionListener.class), @EventConfig(listeners = OnErrorActionListener.class) })
 public class OnlyofficeEditor extends UIForm {
 
   /** The Constant LOG. */
@@ -65,11 +63,9 @@ public class OnlyofficeEditor extends UIForm {
 
   /**
    * Used in UI, by Javascript client after actual download of the edited content. See Javascript UI.close().
-   *
-   * @see OnCloseActionEvent
    */
   public static class OnCloseActionListener extends EventListener<OnlyofficeEditor> {
-    
+
     /**
      * {@inheritDoc}
      */
@@ -94,11 +90,9 @@ public class OnlyofficeEditor extends UIForm {
 
   /**
    * Used in UI, by Javascript client on creation and download errors.
-   *
-   * @see OnErrorActionEvent
    */
   public static class OnErrorActionListener extends EventListener<OnlyofficeEditor> {
-    
+
     /**
      * {@inheritDoc}
      */
@@ -131,30 +125,6 @@ public class OnlyofficeEditor extends UIForm {
   @UIExtensionFilters
   public List<UIExtensionFilter> getFilters() {
     return FILTERS;
-  }
-
-  /**
-   * Inits the context.
-   *
-   * @param context the context
-   * @throws Exception the exception
-   */
-  @Deprecated
-  protected void initContext(RequestContext context) throws Exception {
-    UIJCRExplorer uiExplorer = getAncestorOfType(UIJCRExplorer.class);
-    if (uiExplorer != null) {
-      // we store current node in the context
-      String path = uiExplorer.getCurrentNode().getPath();
-      String workspace = uiExplorer.getCurrentNode().getSession().getWorkspace().getName();
-      OnlyofficeEditorContext.init(context, workspace, path);
-
-      OnlyofficeEditorUIService editorsUI = WCMCoreUtils.getService(OnlyofficeEditorUIService.class);
-      if (editorsUI.isOpen(context.getRemoteUser(), workspace, path)) {
-        OnlyofficeEditorContext.open(context);
-      }
-    } else {
-      LOG.error("Cannot find ancestor of type UIJCRExplorer in component " + this + ", parent: " + this.getParent());
-    }
   }
 
   /**
