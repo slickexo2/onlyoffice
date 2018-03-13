@@ -69,7 +69,7 @@
 			document.createStyleSheet(cssUrl);
 			// IE way
 		} else {
-			if ($("head").find("link[href='" + cssUrl + "']").size() == 0) {
+			if ($("head").find("link[href='" + cssUrl + "']").length == 0) {
 				var headElems = document.getElementsByTagName("head");
 				var style = document.createElement("link");
 				style.type = "text/css";
@@ -581,9 +581,9 @@
 
 		this.open = function() {
 			var $fileContent = $("#UIDocumentWorkspace .fileContent");
-			if ($fileContent.size() > 0) {
+			if ($fileContent.length > 0) {
 				var $title = $fileContent.find(".title");
-				if ($title.size() > 0) {
+				if ($title.length > 0) {
 					// TODO add full-screen button to the title
 				}
 
@@ -609,7 +609,7 @@
 
 		this.close = function() {
 			var $fileContent = $("#UIDocumentWorkspace .fileContent");
-			if ($fileContent.size() > 0) {
+			if ($fileContent.length > 0) {
 				// show loading while download the document - it is already added by WebUI side
 				var $container = $fileContent.find(".onlyofficeContainer");
 				

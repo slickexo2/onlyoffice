@@ -24,7 +24,7 @@
   <parent>
     <artifactId>addons-parent-pom</artifactId>
     <groupId>org.exoplatform.addons</groupId>
-    <version>7</version>
+    <version>8-RC01</version>
   </parent>
   
   <artifactId>exo-onlyoffice-editor-parent</artifactId>
@@ -47,9 +47,8 @@
     <maven.compiler.target>1.8</maven.compiler.target>
 
     <!-- eXo Modules -->
-    <org.exoplatform.platform.version>4.4.3</org.exoplatform.platform.version>
-    <org.exoplatform.jcr-services.version>1.17.3</org.exoplatform.jcr-services.version>
-    
+    <org.exoplatform.platform.version>5.0.0-RC13</org.exoplatform.platform.version>
+
     <!-- Dependencies -->
     <json-simple.version>1.1.1</json-simple.version>
 
@@ -94,7 +93,7 @@
       <dependency>
         <groupId>org.exoplatform</groupId>
         <artifactId>exo-jcr-services</artifactId>
-        <version>${org.exoplatform.jcr-services.version}</version>
+        <version>${org.exoplatform.platform.version}</version>
         <type>jar</type>
       	<scope>test</scope>
       </dependency>
