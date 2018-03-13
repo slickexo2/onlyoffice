@@ -1,21 +1,27 @@
 /*
- * Copyright (C) 2003-2012 eXo Platform SAS.
+ * Copyright (C) 2003-2018 eXo Platform SAS.
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
+ * This software is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 package org.exoplatform.onlyoffice;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
@@ -23,16 +29,23 @@ import javax.jcr.Node;
 
 /**
  * Onlyoffice editor config for its JS API. <br>
+ * This class implements {@link Externalizable} for serialization in eXo cache (actual in cluster).
  * 
  * Created by The eXo Platform SAS.
  * 
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: Editor.java 00000 Feb 12, 2016 pnedonosko $
  */
-public class Config {
+public class Config implements Externalizable {
 
   /** The Constant DATETIME_FORMAT. */
   protected static final SimpleDateFormat DATETIME_FORMAT = new SimpleDateFormat("MM/dd/yyyy");
+  
+  /** The Constant NO_LANG. */
+  protected static final String NO_LANG = "no_lang".intern();
+  
+  /** The Constant EMPTY. */
+  protected static final String EMPTY = "".intern();
 
   /**
    * The Class Builder.
@@ -257,11 +270,7 @@ public class Config {
     public Config build() {
       if (platformUrl != null) {
         this.url = new StringBuilder(platformUrl).append("/content/").append(userId).append("/").append(key).toString();
-        this.callbackUrl = new StringBuilder(platformUrl).append("/status/")
-                                                         .append(userId)
-                                                         .append("/")
-                                                         .append(key)
-                                                         .toString();
+        this.callbackUrl = new StringBuilder(platformUrl).append("/status/").append(userId).append("/").append(key).toString();
       }
 
       Document.Info info = new Document.Info(author, created, folder);
@@ -282,7 +291,7 @@ public class Config {
      * The Class Info.
      */
     public static class Info {
-      
+
       /** The author. */
       protected final String author;
 
@@ -342,7 +351,7 @@ public class Config {
      * The Class Permissions.
      */
     public static abstract class Permissions {
-      
+
       /** The download. */
       protected final boolean download;
 
@@ -509,7 +518,7 @@ public class Config {
      * The Class User.
      */
     public static class User {
-      
+
       /** The id. */
       protected final String     id;
 
@@ -599,14 +608,14 @@ public class Config {
     /** The callback url. */
     protected final String callbackUrl;
 
-    /** The lang. */
-    protected final String lang;
-
     /** The mode. */
     protected final String mode;
 
     /** The user. */
     protected final User   user;
+
+    /** The lang. */
+    protected String       lang;
 
     /**
      * Instantiates a new editor.
@@ -634,12 +643,21 @@ public class Config {
     }
 
     /**
-     * Gets the lang.
+     * Gets the language of user editor.
      *
-     * @return the lang
+     * @return the lang can be <code>null</code> if unable to define from user profile
      */
     public String getLang() {
       return lang;
+    }
+
+    /**
+     * Sets the lang.
+     *
+     * @param lang the lang to set
+     */
+    public void setLang(String lang) {
+      this.lang = lang;
     }
 
     /**
@@ -717,41 +735,48 @@ public class Config {
   }
 
   /** The documentserver js url. */
-  protected final String      documentserverUrl, documentserverJsUrl;
+  private String         documentserverUrl, documentserverJsUrl;
 
   /** The platform url. */
-  protected final String      platformUrl;
+  private String         platformUrl;
 
   /** The workspace. */
-  protected final String      workspace;
+  private String         workspace;
 
   /** The path. */
-  protected final String      path;
+  private String         path;
 
   /** The document type. */
-  protected final String      documentType;
+  private String         documentType;
 
   /** The document. */
-  protected final Document    document;
+  private Document       document;
 
   /** The editor config. */
-  protected final Editor      editorConfig;
+  private Editor         editorConfig;
 
   /** The error. */
-  protected String            error;
+  private String         error;
 
   /** The node. */
-  protected transient Node    node;
+  private transient Node node;
 
   /**
    * Marker of editor state. By default editor state is undefined and will be treated as not open nor not
    * closed. When editor will be open in Onlyoffice it will send a status (1) and then need mark the editor
    * open.
    */
-  protected transient Boolean open;
+  protected Boolean      open;
 
   /**
-   * {@link Config} constructor.
+   * Instantiates a new config for use with {@link Externalizable} methods.
+   */
+  public Config() {
+    // nothing
+  }
+
+  /**
+   * Editor config constructor.
    *
    * @param documentserverUrl the documentserver url
    * @param platformUrl the platform url
@@ -778,6 +803,92 @@ public class Config {
 
     this.document = document;
     this.editorConfig = editor;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void writeExternal(ObjectOutput out) throws IOException {
+    // Strings
+    out.writeUTF(workspace);
+    out.writeUTF(path);
+    out.writeUTF(documentType);
+    out.writeUTF(documentserverUrl);
+    out.writeUTF(documentserverJsUrl);
+    out.writeUTF(platformUrl);
+    out.writeUTF(open != null ? open.toString() : EMPTY);
+    out.writeUTF(error != null ? error : EMPTY);
+
+    // Objects
+    // Document: key, fileType, title, url, info(author, created, folder)
+    out.writeUTF(document.getKey());
+    out.writeUTF(document.getFileType());
+    out.writeUTF(document.getTitle());
+    out.writeUTF(document.getUrl());
+    out.writeUTF(document.getInfo().getAuthor());
+    out.writeUTF(document.getInfo().getCreated());
+    out.writeUTF(document.getInfo().getFolder());
+
+    // Editor: callbackUrl, lang, mode, user(userId, firstname, lastname)
+    out.writeUTF(editorConfig.getCallbackUrl());
+    String elang = editorConfig.getLang();
+    out.writeUTF(elang != null ? elang : NO_LANG);
+    out.writeUTF(editorConfig.getMode());
+    out.writeUTF(editorConfig.getUser().getId());
+    out.writeUTF(editorConfig.getUser().getFirstname());
+    out.writeUTF(editorConfig.getUser().getLastname());
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+    // Strings
+    this.workspace = in.readUTF();
+    this.path = in.readUTF();
+    this.documentType = in.readUTF();
+    this.documentserverUrl = in.readUTF();
+    this.documentserverJsUrl = in.readUTF();
+    this.platformUrl = in.readUTF();
+    String openString = in.readUTF();
+    if (EMPTY.equals(openString)) {
+      open = null;
+    } else {
+      open = Boolean.valueOf(openString);
+    }
+    String errorString = in.readUTF();
+    if (EMPTY.equals(errorString)) {
+      error = null;
+    } else {
+      error = errorString;
+    }
+
+    // Objects
+    // Document: key, fileType, title, url, info(author, created, folder)
+    String dkey = in.readUTF();
+    String dfileType = in.readUTF();
+    String dtitle = in.readUTF();
+    String durl = in.readUTF();
+    String diauthor = in.readUTF();
+    String dicreated = in.readUTF();
+    String difolder = in.readUTF();
+    Document.Info dinfo = new Document.Info(diauthor, dicreated, difolder);
+    this.document = new Document(dkey, dfileType, dtitle, durl, dinfo, new Document.EditPermissions());
+
+    // Editor: callbackUrl, lang, mode, user(userId, firstname, lastname)
+    String ecallbackUrl = in.readUTF();
+    String elang = in.readUTF();
+    if (NO_LANG.equals(elang)) {
+      elang = null;
+    }
+    String emode = in.readUTF();
+    String euid = in.readUTF();
+    String eufirstname = in.readUTF();
+    String eulastname = in.readUTF();
+    Editor.User euser = new Editor.User(euid, eufirstname, eulastname);
+    this.editorConfig = new Editor(ecallbackUrl, elang, emode, euser);
   }
 
   /**
@@ -955,8 +1066,7 @@ public class Config {
   public boolean equals(Object obj) {
     if (obj instanceof Config) {
       Config other = (Config) obj;
-      return this.documentType.equals(other.documentType) && this.workspace.equals(other.workspace)
-          && this.path.equals(other.path);
+      return this.documentType.equals(other.documentType) && this.workspace.equals(other.workspace) && this.path.equals(other.path);
     }
     return false;
   }
@@ -972,6 +1082,11 @@ public class Config {
     s.append(workspace);
     s.append(':');
     s.append(path);
+    if (open != null) {
+      s.append(" (");
+      s.append(open.booleanValue() ? "open" : "closed");
+      s.append(')');  
+    }
     return s.toString();
   }
 

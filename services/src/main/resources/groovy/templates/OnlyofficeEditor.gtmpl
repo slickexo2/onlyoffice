@@ -20,7 +20,7 @@
   */
 %>
 <%uiform.begin()%>	
-<div id="${uicomponent.id}">
+<div id="${uicomponent.id}" class="onlyofficeContainer">
 	<div class="loading">
 		<a class="onClose" onclick="<%=uicomponent.event("OnClose")%>" style="display: none;"></a>
 		<a class="onError" onclick="<%=uicomponent.event("OnError")%>" style="display: none;"></a>

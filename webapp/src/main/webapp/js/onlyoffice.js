@@ -81,13 +81,36 @@
 	};
 
 	/** For debug logging. */
-	var log = function(msg, e) {
-		if ( typeof console != "undefined" && typeof console.log != "undefined") {
-			console.log(msg);
-			if (e && typeof e.stack != "undefined") {
-				console.log(e.stack);
+	var log = function(msg, err) {
+		var logPrefix = "[onlyoffice] ";
+    if (typeof console != "undefined" && typeof console.log != "undefined") {
+			var isoTime = " -- " + new Date().toISOString();
+			var msgLine = msg;
+			if (err) {
+				msgLine += ". Error: ";
+				if (err.name || err.message) {
+					if (err.name) {
+						msgLine += "[" + err.name + "] ";
+					}
+					if (err.message) {
+						msgLine += err.message;
+					}
+				} else {
+					msgLine += (typeof err === "string" ? err : JSON.stringify(err) 
+								+ (err.toString && typeof err.toString === "function" ? "; " + err.toString() : ""));
+				}
+				
+				console.log(logPrefix + msgLine + isoTime);
+				if (typeof err.stack != "undefined") {
+					console.log(err.stack);
+				}
+			} else {
+				if (err !== null && typeof err !== "undefined") {
+					msgLine += ". Error: '" + err + "'";
+				}
+				console.log(logPrefix + msgLine + isoTime);
 			}
-		}
+    }
 	};
 
 	var getPortalUser = function() {
@@ -564,21 +587,22 @@
 					// TODO add full-screen button to the title
 				}
 
-				// show loading while upload to editor - it is already by WebUI side
-
+				// show loading while upload to editor - it is already added by WebUI side
+				var $container = $fileContent.find(".onlyofficeContainer");
+				
 				// create and start editor
 				var create = editor.create();
 				create.done(function(config) {
 					docEditor = new DocsAPI.DocEditor("onlyoffice", config);
 					// show editor
-					var $editor = $fileContent.find(".editor");
-					var $loading = $fileContent.find(".loading");
+					var $editor = $container.find(".editor");
+					var $loading = $container.find(".loading");
 					$loading.hide("blind");
 					$editor.show("blind");
 				});
 				create.fail(function(error) {
 					UI.showError("Error creating editor", error);
-					$fileContent.find(".loading>.onError").click();
+					$container.find(".loading>.onError").click();
 				});
 			}
 		};
@@ -586,16 +610,17 @@
 		this.close = function() {
 			var $fileContent = $("#UIDocumentWorkspace .fileContent");
 			if ($fileContent.size() > 0) {
-				// show loading while download the document - it is already by WebUI side
-
+				// show loading while download the document - it is already added by WebUI side
+				var $container = $fileContent.find(".onlyofficeContainer");
+				
 				// TODO seems this not required
 				if (docEditor) {
 					docEditor.processSaveResult(true);
 					docEditor = null;
 				}
 
-				var $editor = $fileContent.find(".editor");
-				var $loading = $fileContent.find(".loading");
+				var $editor = $container.find(".editor");
+				var $loading = $container.find(".loading");
 				// remove Onlyoffice iframe - this will let Onlyoffice to know the editing is done
 				$editor.empty();
 				// hide/remove editor
@@ -707,27 +732,23 @@
 	var editor = new Editor();
 	var UI = new UI();
 
-	// Load onlyoffice dependencies only in top window (not in iframes of gadgets).
-	if (window == top) {
-		$(function() {
-			try {
-				// load required styles
-				loadStyle("/onlyoffice/skin/jquery-ui.css");
-				loadStyle("/onlyoffice/skin/jquery.pnotify.default.css");
-				loadStyle("/onlyoffice/skin/jquery.pnotify.default.icons.css");
-				loadStyle("/onlyoffice/skin/onlyoffice.css");
+	$(function() {
+		try {
+			// load required styles
+			loadStyle("/onlyoffice/skin/jquery-ui.css");
+			loadStyle("/onlyoffice/skin/jquery.pnotify.default.css");
+			loadStyle("/onlyoffice/skin/jquery.pnotify.default.icons.css");
+			loadStyle("/onlyoffice/skin/onlyoffice.css");
 
-				// configure Pnotify
-				$.pnotify.defaults.styling = "jqueryui";
-				// use jQuery UI css
-				$.pnotify.defaults.history = false;
-				// no history roller in the
-				// right corner
-			} catch(e) {
-				log("Error configuring Onlyoffice Editor style.", e);
-			}
-		});
-	}
+			// configure Pnotify
+			$.pnotify.defaults.styling = "jqueryui";
+			// use jQuery UI css
+			$.pnotify.defaults.history = false;
+			// no history roller in the right corner
+		} catch(e) {
+			log("Error configuring Onlyoffice Editor style.", e);
+		}
+	});
 
 	return editor;
 })($);

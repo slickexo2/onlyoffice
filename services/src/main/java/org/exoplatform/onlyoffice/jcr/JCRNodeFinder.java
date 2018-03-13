@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import javax.jcr.AccessDeniedException;
 import javax.jcr.Item;
 import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
@@ -95,7 +96,7 @@ public class JCRNodeFinder implements NodeFinder {
       for (PropertyIterator piter = target.getReferences(); piter.hasNext();) {
         res.add(piter.nextProperty().getParent());
       }
-    } catch (ItemNotFoundException e) {
+    } catch (ItemNotFoundException | AccessDeniedException e) {
       // nothing
     }
     return res;

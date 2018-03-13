@@ -109,7 +109,6 @@ public abstract class AbstractOnlyofficeFilter extends UIExtensionAbstractFilter
 
       if (contextNode != null) {
         String userId = WebuiRequestContext.getCurrentInstance().getRemoteUser();
-        // String userId = ConversationState.getCurrent().getIdentity().getUserId();
         return accept(userId, contextNode);
       }
     }

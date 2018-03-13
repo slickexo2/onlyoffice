@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import javax.jcr.AccessDeniedException;
 import javax.jcr.Item;
 import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
@@ -114,7 +115,7 @@ public class CMSNodeFinder extends NodeFinderImpl implements NodeFinder {
       for (NodeIterator niter = qr.getNodes(); niter.hasNext();) {
         res.add(niter.nextNode());
       }
-    } catch (ItemNotFoundException e) {
+    } catch (ItemNotFoundException | AccessDeniedException e) {
       // nothing
     }
     return res;
