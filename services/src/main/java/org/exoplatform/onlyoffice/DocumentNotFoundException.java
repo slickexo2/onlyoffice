@@ -27,9 +27,7 @@ package org.exoplatform.onlyoffice;
  */
 public class DocumentNotFoundException extends OnlyofficeEditorException {
 
-  /**
-   * 
-   */
+  /** The Constant serialVersionUID. */
   private static final long serialVersionUID = -72048025662144032L;
 
   /**

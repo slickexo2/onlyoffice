@@ -19,13 +19,12 @@
  */
 package org.exoplatform.onlyoffice.webui;
 
-import org.exoplatform.onlyoffice.OnlyofficeEditorException;
-import org.exoplatform.onlyoffice.OnlyofficeEditorService;
-import org.exoplatform.services.wcm.utils.WCMCoreUtils;
-import org.exoplatform.webui.ext.filter.UIExtensionFilterType;
-
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+
+import org.exoplatform.onlyoffice.OnlyofficeEditorException;
+import org.exoplatform.services.wcm.utils.WCMCoreUtils;
+import org.exoplatform.webui.ext.filter.UIExtensionFilterType;
 
 /**
  * Created by The eXo Platform SAS.
@@ -40,7 +39,7 @@ public class CanShowOnlyofficeFilter extends AbstractOnlyofficeFilter {
    */
   public CanShowOnlyofficeFilter() {
   }
-  
+
   /**
    * Instantiates a new can show onlyoffice filter.
    *

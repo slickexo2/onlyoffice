@@ -18,7 +18,6 @@
  */
 package org.exoplatform.onlyoffice;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -51,9 +50,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.lock.Lock;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.io.input.AutoCloseInputStream;
 import org.exoplatform.container.PortalContainer;
@@ -80,11 +76,6 @@ import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.security.IdentityRegistry;
 import org.picocontainer.Startable;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
 /**
  * Service implementing {@link OnlyofficeEditorService} and {@link Startable}.<br>
@@ -472,6 +463,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /**
    * {@inheritDoc}
    */
+  @SuppressWarnings("deprecation")
   @Override
   public DocumentContent getContent(String userId, String key) throws OnlyofficeEditorException, RepositoryException {
     ConcurrentHashMap<String, Config> configs = activeCache.get(key);
@@ -893,148 +885,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   /**
-   * Upload content.
-   *
-   * @param localContent the local content
-   * @param fileKey the file key
-   * @param mimeType the mime type
-   * @param length the length
-   * @return the string
-   * @throws IOException Signals that an I/O exception has occurred.
-   * @throws OnlyofficeEditorException the onlyoffice editor exception
-   */
-  @Deprecated
-  protected String uploadContent(InputStream localContent,
-                                 String fileKey,
-                                 String mimeType,
-                                 long length) throws IOException, OnlyofficeEditorException {
-    String urlTostorage = uploadUrl + uploadParams.format(new String[] { "", "", "", "", fileKey });
-
-    URL url = new URL(urlTostorage);
-    java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
-
-    connection.setDoOutput(true);
-    connection.setDoInput(true);
-    connection.setInstanceFollowRedirects(false);
-    connection.setRequestMethod("POST");
-    connection.setRequestProperty("Content-Type", mimeType == null ? "application/octet-stream" : mimeType);
-    connection.setRequestProperty("charset", "utf-8");
-    connection.setRequestProperty("Content-Length", Long.toString(length));
-    connection.setUseCaches(false);
-
-    try (DataOutputStream out = new DataOutputStream(connection.getOutputStream())) {
-      int read;
-      final byte[] bytes = new byte[1024];
-      while ((read = localContent.read(bytes)) != -1) {
-        out.write(bytes, 0, read);
-      }
-      out.flush();
-    }
-
-    InputStream uploadXml = connection.getInputStream();
-
-    if (uploadXml == null) {
-      throw new OnlyofficeEditorException("Could not get an answer from Onlyoffice Document Server for " + fileKey);
-    }
-
-    try {
-      DocumentBuilderFactory documentBuildFactory = DocumentBuilderFactory.newInstance();
-      DocumentBuilder doccumentBuilder = documentBuildFactory.newDocumentBuilder();
-      InputSource inputSource = new InputSource(uploadXml);
-      Document document = doccumentBuilder.parse(inputSource);
-
-      Element responceFromConvertService = document.getDocumentElement();
-      if (responceFromConvertService == null) {
-        throw new OnlyofficeEditorException("Invalid answer format from Onlyoffice Document Server for " + fileKey);
-      }
-      NodeList errorElement = responceFromConvertService.getElementsByTagName("Error");
-      if (errorElement != null && errorElement.getLength() > 0) {
-        processConvertServiceResponceError(Integer.parseInt(errorElement.item(0).getTextContent()));
-      }
-      NodeList endConvert = responceFromConvertService.getElementsByTagName("EndConvert");
-      if (endConvert == null || endConvert.getLength() == 0) {
-        throw new OnlyofficeEditorException("Invalid answer format from Onlyoffice Document Server for " + fileKey);
-      }
-      Boolean isEndConvert = Boolean.parseBoolean(endConvert.item(0).getTextContent());
-
-      int resultPercent = 0;
-      String responseUri;
-
-      if (isEndConvert) {
-        NodeList fileUrl = responceFromConvertService.getElementsByTagName("FileUrl");
-        if (fileUrl == null || endConvert.getLength() == 0) {
-          throw new OnlyofficeEditorException("Invalid answer" + "} format from Onlyoffice Document Server for " + fileKey);
-        }
-        resultPercent = 100;
-        responseUri = fileUrl.item(0).getTextContent();
-      } else {
-        NodeList percent = responceFromConvertService.getElementsByTagName("Percent");
-        if (percent != null && percent.getLength() > 0) {
-          resultPercent = Integer.parseInt(percent.item(0).getTextContent());
-        }
-        resultPercent = resultPercent >= 100 ? 99 : resultPercent;
-        if (LOG.isDebugEnabled()) {
-          LOG.debug(">>> File not yet converted " + fileKey + ": " + resultPercent + "%");
-        }
-        responseUri = null;
-      }
-
-      return responseUri;
-    } catch (ParserConfigurationException e) {
-      throw new OnlyofficeEditorException("Error creating XML parser for reading upload response of " + fileKey, e);
-    } catch (SAXException e) {
-      throw new OnlyofficeEditorException("Error parsing answer from Onlyoffice Document Server for " + fileKey, e);
-    } finally {
-      connection.disconnect();
-    }
-  }
-
-  /**
-   * Process convert service responce error.
-   *
-   * @param errorCode the error code
-   * @throws OnlyofficeEditorException the onlyoffice editor exception
-   */
-  private void processConvertServiceResponceError(int errorCode) throws OnlyofficeEditorException {
-    String errorMessage = "";
-    String errorMessageTemplate = "Error occurred in the ConvertService: ";
-
-    switch (errorCode) {
-    case -8:
-      errorMessage = errorMessageTemplate + "Error document VKey";
-      break;
-    case -7:
-      errorMessage = errorMessageTemplate + "Error document request";
-      break;
-    case -6:
-      errorMessage = errorMessageTemplate + "Error database";
-      break;
-    case -5:
-      errorMessage = errorMessageTemplate + "Error unexpected guid";
-      break;
-    case -4:
-      errorMessage = errorMessageTemplate + "Error download error";
-      break;
-    case -3:
-      errorMessage = errorMessageTemplate + "Error convertation error";
-      break;
-    case -2:
-      errorMessage = errorMessageTemplate + "Error convertation timeout";
-      break;
-    case -1:
-      errorMessage = errorMessageTemplate + "Error convertation unknown";
-      break;
-    case 0:
-      break;
-    default:
-      errorMessage = "ErrorCode = " + errorCode;
-      break;
-    }
-
-    throw new OnlyofficeEditorException(errorMessage);
-  }
-
-  /**
    * Sync users.
    *
    * @param configs the configs
@@ -1095,6 +945,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @throws OnlyofficeEditorException the onlyoffice editor exception
    * @throws RepositoryException the repository exception
    */
+  @SuppressWarnings("deprecation")
   protected void download(Config config, DocumentStatus status) throws OnlyofficeEditorException, RepositoryException {
     String workspace = config.getWorkspace();
     String path = config.getPath();
@@ -1227,169 +1078,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   /**
-   * Download change.
-   *
-   * @param config the config
-   * @throws OnlyofficeEditorException the onlyoffice editor exception
-   * @throws RepositoryException the repository exception
-   */
-  @Deprecated
-  protected void downloadChange(Config config) throws OnlyofficeEditorException, RepositoryException {
-    String workspace = config.getWorkspace();
-    String path = config.getPath();
-    String nodePath = nodePath(workspace, path);
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(">> downloadChange(" + nodePath + ", " + config.getDocument().getKey() + ")");
-    }
-
-    Node node = systemNode(workspace, path);
-    Node content = nodeContent(node);
-    if (content.isNodeType("exo:editing")) {
-      // TODO ensure node updated under system account has real user in exo:lastModifier
-
-      Property lastContentUrl = content.getProperty("exo:lastContentUrl");
-      String contentUrl = lastContentUrl.getString();
-      String editor;
-      Property lastEditor = node.getProperty("exo:lastEditor");
-      editor = lastEditor.getString();
-      Property lastEditedTime = content.getProperty("exo:lastEditedTime");
-      Calendar editedTime = lastEditedTime.getDate();
-
-      HttpURLConnection connection;
-      InputStream data;
-      try {
-        URL url = new URL(contentUrl);
-        connection = (HttpURLConnection) url.openConnection();
-        data = connection.getInputStream();
-        if (data == null) {
-          throw new OnlyofficeEditorException("Content stream is null");
-        }
-      } catch (MalformedURLException e) {
-        throw new OnlyofficeEditorException("Error parsing content URL " + contentUrl + " for " + nodePath, e);
-      } catch (IOException e) {
-        throw new OnlyofficeEditorException("Error reading content stream " + contentUrl + " for " + nodePath, e);
-      }
-
-      // lock node first, this also will check if node isn't locked by another user (will throw exception)
-      Lock lock = lock(node, config);
-      if (lock == null) {
-        throw new OnlyofficeEditorException("Document locked " + nodePath);
-      }
-
-      // manage version only if node already mix:versionable
-      boolean checkIn = checkout(node);
-
-      try {
-        // update document
-        content.setProperty("jcr:data", data);
-        // update modified date (this will force PDFViewer to regenerate its images)
-        content.setProperty("jcr:lastModified", editedTime);
-        if (content.hasProperty("exo:dateModified")) {
-          content.setProperty("exo:dateModified", editedTime);
-        }
-        if (content.hasProperty("exo:lastModifiedDate")) {
-          content.setProperty("exo:lastModifiedDate", editedTime);
-        }
-        if (node.hasProperty("exo:lastModifiedDate")) {
-          node.setProperty("exo:lastModifiedDate", editedTime);
-        }
-        if (node.hasProperty("exo:dateModified")) {
-          node.setProperty("exo:dateModified", editedTime);
-        }
-        if (node.hasProperty("exo:lastModifier")) {
-          node.setProperty("exo:lastModifier", editor);
-        }
-
-        // remove exo:editable from content node
-        lastContentUrl.remove();
-        lastEditor.remove();
-        lastEditedTime.remove();
-        content.removeMixin("exo:editing");
-
-        node.save();
-        if (checkIn) {
-          node.checkin();
-        }
-      } catch (RepositoryException e) {
-        try {
-          node.refresh(false); // rollback JCR modifications
-        } catch (Throwable re) {
-          LOG.warn("Error rolling back failed change for " + nodePath, re);
-        }
-        throw e; // let the caller handle it further
-      } finally {
-        try {
-          data.close();
-        } catch (Throwable e) {
-          LOG.warn("Error closing exported content stream for " + nodePath, e);
-        }
-        try {
-          connection.disconnect();
-        } catch (Throwable e) {
-          LOG.warn("Error closing export connection for " + nodePath, e);
-        }
-        try {
-          if (lock != null && node.isLocked()) {
-            node.unlock();
-          }
-        } catch (Throwable e) {
-          LOG.warn("Error unlocking edited document " + nodePath(workspace, path), e);
-        }
-      }
-    } else {
-      throw new OnlyofficeEditorException("Document node was not initialized for editing " + nodePath);
-    }
-  }
-
-  /**
-   * Track change.
-   *
-   * @param config the config
-   * @param status the status
-   * @throws BadParameterException the bad parameter exception
-   * @throws OnlyofficeEditorException the onlyoffice editor exception
-   * @throws RepositoryException the repository exception
-   */
-  @Deprecated
-  protected void trackChange(Config config, DocumentStatus status) throws BadParameterException,
-                                                                   OnlyofficeEditorException,
-                                                                   RepositoryException {
-    String workspace = config.getWorkspace();
-    String path = config.getPath();
-
-    String contentUrl = status.getUrl();
-    String user;
-    String[] users = status.getUsers();
-    if (users != null && users.length > 0) {
-      user = users[0];
-    } else {
-      LOG.warn("No user in status from Onlyoffice document editing service for file " + status.getKey() + " ("
-          + nodePath(workspace, path) + ")");
-      user = null;
-    }
-    if (contentUrl != null && contentUrl.length() > 0) {
-      // TODO ensure node updated under system account has real user in exo:lastModifier
-      Node node = systemNode(workspace, path);
-      // ensure node is not in checked-in state
-      checkout(node);
-
-      Node content = nodeContent(node);
-      if (content.canAddMixin("exo:editing")) {
-        content.addMixin("exo:editing");
-        content.save();
-      }
-      content.setProperty("exo:lastContentUrl", contentUrl);
-      content.setProperty("exo:lastEditor", user);
-      content.setProperty("exo:lastEditedTime", Calendar.getInstance());
-      content.save();
-    } else {
-      throw new OnlyofficeEditorException("Empty link to the edited document from editing service. User " + user + ". Document "
-          + nodePath(workspace, path));
-    }
-  }
-
-  /**
    * Node.
    *
    * @param workspace the workspace
@@ -1495,30 +1183,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       throw new OnlyofficeEditorException("Error waiting for lock of " + nodePath(config.getWorkspace(), config.getPath()), e);
     }
     return lock;
-  }
-
-  /**
-   * Unlock.
-   *
-   * @param node the node
-   * @param config the config
-   * @return true, if successful
-   * @throws OnlyofficeEditorException the onlyoffice editor exception
-   * @throws RepositoryException the repository exception
-   */
-  @Deprecated
-  protected boolean unlock(Node node, Config config) throws OnlyofficeEditorException, RepositoryException {
-    if (node.isLocked()) {
-      Config.Editor.User user = config.getEditorConfig().getUser();
-      String lockToken = user.getLockToken();
-      if (node.getLock().getLockOwner().equals(user.getId()) && lockToken != null) {
-        // already this user lock
-        node.getSession().addLockToken(lockToken);
-        node.unlock();
-        return true;
-      }
-    }
-    return false;
   }
 
   /**

@@ -19,21 +19,6 @@
  */
 package org.exoplatform.onlyoffice.webui;
 
-import org.exoplatform.container.configuration.ConfigurationManager;
-import org.exoplatform.container.xml.InitParams;
-import org.exoplatform.container.xml.ObjectParameter;
-import org.exoplatform.services.cms.BasePath;
-import org.exoplatform.services.cms.impl.DMSConfiguration;
-import org.exoplatform.services.cms.impl.DMSRepositoryConfiguration;
-import org.exoplatform.services.cms.templates.TemplateService;
-import org.exoplatform.services.cms.views.TemplateConfig;
-import org.exoplatform.services.cms.views.ViewConfig;
-import org.exoplatform.services.cms.views.ViewConfig.Tab;
-import org.exoplatform.services.cms.views.impl.ManageViewPlugin;
-import org.exoplatform.services.jcr.RepositoryService;
-import org.exoplatform.services.jcr.core.ManageableRepository;
-import org.exoplatform.services.jcr.ext.hierarchy.NodeHierarchyCreator;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -44,6 +29,20 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+
+import org.exoplatform.container.configuration.ConfigurationManager;
+import org.exoplatform.container.xml.InitParams;
+import org.exoplatform.container.xml.ObjectParameter;
+import org.exoplatform.services.cms.BasePath;
+import org.exoplatform.services.cms.impl.DMSConfiguration;
+import org.exoplatform.services.cms.impl.DMSRepositoryConfiguration;
+import org.exoplatform.services.cms.templates.TemplateService;
+import org.exoplatform.services.cms.views.ViewConfig;
+import org.exoplatform.services.cms.views.ViewConfig.Tab;
+import org.exoplatform.services.cms.views.impl.ManageViewPlugin;
+import org.exoplatform.services.jcr.RepositoryService;
+import org.exoplatform.services.jcr.core.ManageableRepository;
+import org.exoplatform.services.jcr.ext.hierarchy.NodeHierarchyCreator;
 
 /**
  * Customize existing view of ECMS Document Explorer.
@@ -96,7 +95,8 @@ public class CustomizeViewPlugin extends ManageViewPlugin {
                              ConfigurationManager cservice,
                              NodeHierarchyCreator nodeHierarchyCreator,
                              DMSConfiguration dmsConfiguration,
-                             TemplateService templateService) throws Exception {
+                             TemplateService templateService)
+      throws Exception {
     super(repositoryService, params, cservice, nodeHierarchyCreator, dmsConfiguration);
 
     this.params = params;
