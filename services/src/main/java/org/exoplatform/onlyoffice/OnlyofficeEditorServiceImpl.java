@@ -18,45 +18,6 @@
  */
 package org.exoplatform.onlyoffice;
 
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.Locale;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.locks.ReentrantLock;
-
-import javax.jcr.AccessDeniedException;
-import javax.jcr.Item;
-import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
-import javax.jcr.Property;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.Value;
-import javax.jcr.lock.Lock;
-import javax.jcr.version.Version;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.apache.commons.io.input.AutoCloseInputStream;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.configuration.ConfigurationException;
@@ -88,6 +49,44 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.locks.ReentrantLock;
+
+import javax.jcr.AccessDeniedException;
+import javax.jcr.Item;
+import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.lock.Lock;
+import javax.jcr.version.Version;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 /**
  * Service implementing {@link OnlyofficeEditorService} and {@link Startable}.<br>
  * Created by The eXo Platform SAS.
@@ -111,6 +110,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
   /** The Constant CONFIG_DS_ACCESS_ONLY. */
   public static final String                                          CONFIG_DS_ACCESS_ONLY = "documentserver-access-only";
+  
+  /** Configuration key for Document Server's allowed hosts in requests from a DS to eXo side. */
+  public static final String                                          CONFIG_DS_ALLOWEDHOSTS = "documentserver-allowedhosts";
 
   /** The Constant HTTP_PORT_DELIMITER. */
   protected static final char                                         HTTP_PORT_DELIMITER   = ':';
@@ -175,6 +177,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /** The documentserver access only. */
   protected final boolean                                             documentserverAccessOnly;
 
+  /** The documentserver allowed hosts (can be empty if not configured). */
+  protected final Set<String>                                         documentserverAllowedhosts;
+  
   /** The file types. */
   protected final Map<String, String>                                 fileTypes             = new ConcurrentHashMap<String, String>();
 
@@ -299,6 +304,20 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
 
     this.documentserverAccessOnly = Boolean.parseBoolean(config.get(CONFIG_DS_ACCESS_ONLY));
+    
+    String dsAllowedHost = config.get(CONFIG_DS_ALLOWEDHOSTS);
+    if (dsAllowedHost != null && !dsAllowedHost.isEmpty()) {
+      Set<String> allowedhosts = new HashSet<>();
+      for (String ahost : dsAllowedHost.split(",")) {
+        ahost = ahost.trim();
+        if (!ahost.isEmpty()) {
+          allowedhosts.add(lowerCase(ahost));
+        }
+      }
+      this.documentserverAllowedhosts = Collections.unmodifiableSet(allowedhosts);
+    } else {
+      this.documentserverAllowedhosts = Collections.emptySet();
+    }
 
     // base parameters for API
 
@@ -530,7 +549,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   @Override
   public boolean canDownloadBy(String hostName) {
     if (documentserverAccessOnly) {
-      return documentserverHostName.equals(hostName);
+      // #19 support advanced configuration of DS's allowed hosts
+      return documentserverHostName.equalsIgnoreCase(hostName) || documentserverAllowedhosts.contains(lowerCase(hostName));
     }
     return true;
   }
@@ -1719,5 +1739,15 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       }
     }
     return userIdentity;
+  }
+  
+  /**
+   * Get lower case copy of the given string.
+   *
+   * @param str the str
+   * @return the string
+   */
+  protected String lowerCase(String str) {
+    return str.toUpperCase().toLowerCase();
   }
 }
