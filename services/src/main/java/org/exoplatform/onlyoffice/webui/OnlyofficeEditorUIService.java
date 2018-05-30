@@ -70,7 +70,6 @@ public class OnlyofficeEditorUIService {
    * the editor event occurs, that object's appropriate
    * method is invoked.
    *
-   * @see EditorEvent
    */
   protected class EditorListener implements OnlyofficeEditorListener {
 
