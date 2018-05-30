@@ -19,7 +19,6 @@
 package org.exoplatform.onlyoffice.webui;
 
 import org.exoplatform.ecm.webui.component.explorer.UIJCRExplorer;
-import org.exoplatform.ecm.webui.component.explorer.UIWorkingArea;
 import org.exoplatform.ecm.webui.component.explorer.control.UIActionBar;
 import org.exoplatform.onlyoffice.webui.ManageVersionsActionComponent.ManageVersionsActionListener;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
@@ -44,11 +43,10 @@ public class ManageVersionsActionComponent extends org.exoplatform.ecm.webui.com
    * The class that is interested in processing a manageVersionsAction
    * event implements this interface, and the object created
    * with that class is registered with a component using the
-   * component's <code>addManageVersionsActionListener<code> method. When
+   * component's addManageVersionsActionListener method. When
    * the manageVersionsAction event occurs, that object's appropriate
    * method is invoked.
    *
-   * @see ManageVersionsActionEvent
    */
   public static class ManageVersionsActionListener extends
                                                    org.exoplatform.ecm.webui.component.explorer.control.action.ManageVersionsActionComponent.ManageVersionsActionListener {
