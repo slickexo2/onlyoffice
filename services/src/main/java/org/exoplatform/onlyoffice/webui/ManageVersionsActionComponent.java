@@ -47,6 +47,8 @@ public class ManageVersionsActionComponent extends org.exoplatform.ecm.webui.com
    * component's <code>addManageVersionsActionListener<code> method. When
    * the manageVersionsAction event occurs, that object's appropriate
    * method is invoked.
+   *
+   * @see ManageVersionsActionEvent
    */
   public static class ManageVersionsActionListener extends
                                                    org.exoplatform.ecm.webui.component.explorer.control.action.ManageVersionsActionComponent.ManageVersionsActionListener {

@@ -69,6 +69,8 @@ public class OnlyofficeEditorUIService {
    * component's <code>addEditorListener</code> method. When
    * the editor event occurs, that object's appropriate
    * method is invoked.
+   *
+   * @see EditorEvent
    */
   protected class EditorListener implements OnlyofficeEditorListener {
 

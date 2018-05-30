@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2003-2016 eXo Platform SAS.
+ * Copyright (C) 2003-2018 eXo Platform SAS.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -64,6 +64,7 @@ public class OnlyofficeEditor extends UIForm {
   /**
    * Used in UI, by Javascript client after actual download of the edited content. See Javascript UI.close().
    *
+   * @see OnCloseActionEvent
    */
   public static class OnCloseActionListener extends EventListener<OnlyofficeEditor> {
 
@@ -90,6 +91,7 @@ public class OnlyofficeEditor extends UIForm {
   /**
    * Used in UI, by Javascript client on creation and download errors.
    *
+   * @see OnErrorActionEvent
    */
   public static class OnErrorActionListener extends EventListener<OnlyofficeEditor> {
 

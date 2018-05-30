@@ -1556,6 +1556,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /**
    * Find or create user identity.
    *
+   * @param userId the user id
    * @return the identity can be null if not found and cannot be created via current authenticator
    */
   protected Identity userIdentity(String userId) {
