@@ -25,7 +25,6 @@ import org.exoplatform.onlyoffice.webui.OnlyofficeEditor.OnErrorActionListener;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.wcm.utils.WCMCoreUtils;
-import org.exoplatform.web.application.RequestContext;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.EventConfig;
@@ -51,8 +50,7 @@ import java.util.List;
  * 
  */
 @ComponentConfig(lifecycle = UIFormLifecycle.class, template = "classpath:groovy/templates/OnlyofficeEditor.gtmpl",
-                 events = { @EventConfig(listeners = OnCloseActionListener.class),
-                     @EventConfig(listeners = OnErrorActionListener.class) })
+                 events = { @EventConfig(listeners = OnCloseActionListener.class), @EventConfig(listeners = OnErrorActionListener.class) })
 public class OnlyofficeEditor extends UIForm {
 
   /** The Constant LOG. */
@@ -68,7 +66,7 @@ public class OnlyofficeEditor extends UIForm {
    *
    */
   public static class OnCloseActionListener extends EventListener<OnlyofficeEditor> {
-    
+
     /**
      * {@inheritDoc}
      */
@@ -77,8 +75,6 @@ public class OnlyofficeEditor extends UIForm {
       UIJCRExplorer explorer = event.getSource().getAncestorOfType(UIJCRExplorer.class);
 
       explorer.getSession().refresh(false);
-      // TODO do we need this whole refresh here?
-      // explorer.refreshExplorer();
       String workspace = explorer.getCurrentWorkspace();
       String path = explorer.getCurrentNode().getPath();
 
@@ -88,8 +84,6 @@ public class OnlyofficeEditor extends UIForm {
       // places to call closed and reset respectively.
       OnlyofficeEditorUIService editorsUI = WCMCoreUtils.getService(OnlyofficeEditorUIService.class);
       editorsUI.closed(context.getRemoteUser(), workspace, path);
-
-      OnlyofficeEditorContext.init(context, workspace, path);
     }
   }
 
@@ -98,7 +92,7 @@ public class OnlyofficeEditor extends UIForm {
    *
    */
   public static class OnErrorActionListener extends EventListener<OnlyofficeEditor> {
-    
+
     /**
      * {@inheritDoc}
      */
@@ -107,15 +101,11 @@ public class OnlyofficeEditor extends UIForm {
       UIJCRExplorer explorer = event.getSource().getAncestorOfType(UIJCRExplorer.class);
 
       explorer.getSession().refresh(false);
-      // TODO do we need this whole refresh here?
-      // explorer.refreshExplorer();
       String workspace = explorer.getCurrentWorkspace();
       String path = explorer.getCurrentNode().getPath();
 
       OnlyofficeEditorUIService editorsUI = WCMCoreUtils.getService(OnlyofficeEditorUIService.class);
       editorsUI.reset(context.getRemoteUser(), workspace, path);
-
-      OnlyofficeEditorContext.init(context, workspace, path);
     }
   }
 
@@ -136,30 +126,6 @@ public class OnlyofficeEditor extends UIForm {
   }
 
   /**
-   * Inits the context.
-   *
-   * @param context the context
-   * @throws Exception the exception
-   */
-  @Deprecated
-  protected void initContext(RequestContext context) throws Exception {
-    UIJCRExplorer uiExplorer = getAncestorOfType(UIJCRExplorer.class);
-    if (uiExplorer != null) {
-      // we store current node in the context
-      String path = uiExplorer.getCurrentNode().getPath();
-      String workspace = uiExplorer.getCurrentNode().getSession().getWorkspace().getName();
-      OnlyofficeEditorContext.init(context, workspace, path);
-
-      OnlyofficeEditorUIService editorsUI = WCMCoreUtils.getService(OnlyofficeEditorUIService.class);
-      if (editorsUI.isOpen(context.getRemoteUser(), workspace, path)) {
-        OnlyofficeEditorContext.open(context);
-      }
-    } else {
-      LOG.error("Cannot find ancestor of type UIJCRExplorer in component " + this + ", parent: " + this.getParent());
-    }
-  }
-
-  /**
    * {@inheritDoc}
    */
   @Override
@@ -170,4 +136,22 @@ public class OnlyofficeEditor extends UIForm {
     }
     return id;
   }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void processRender(WebuiRequestContext context) throws Exception {
+    UIJCRExplorer explorer = context.getUIApplication().findFirstComponentOfType(UIJCRExplorer.class);
+    if (explorer != null) {
+      String workspace = explorer.getCurrentWorkspace();
+      String path = explorer.getCurrentNode().getPath();
+
+      // Init and show, note that init may be already done by Open/Close UI components
+      OnlyofficeEditorContext.init(context, workspace, path);
+      OnlyofficeEditorContext.show(context);
+    }
+    super.processRender(context);
+  }
+
 }

@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2003-2016 eXo Platform SAS.
+ * Copyright (C) 2003-2018 eXo Platform SAS.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -50,16 +50,6 @@ public class ChangeState {
     this.saved = saved;
     this.users = users;
     this.error = error;
-  }
-
-  /**
-   * Instantiates a new change state.
-   *
-   * @param saved the saved
-   * @param users the users
-   */
-  public ChangeState(boolean saved, String[] users) {
-    this(saved, null, users);
   }
 
   /**

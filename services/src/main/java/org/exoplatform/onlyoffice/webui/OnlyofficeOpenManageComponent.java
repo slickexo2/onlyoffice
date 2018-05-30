@@ -19,22 +19,17 @@ package org.exoplatform.onlyoffice.webui;
 import org.exoplatform.ecm.webui.component.explorer.UIDocumentWorkspace;
 import org.exoplatform.ecm.webui.component.explorer.UIJCRExplorer;
 import org.exoplatform.ecm.webui.component.explorer.control.UIActionBar;
-import org.exoplatform.portal.application.PortalRequestContext;
+import org.exoplatform.ecm.webui.component.explorer.control.listener.UIActionBarActionListener;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.wcm.utils.WCMCoreUtils;
-import org.exoplatform.web.application.Parameter;
-import org.exoplatform.web.application.RequestContext;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.EventConfig;
 import org.exoplatform.webui.core.lifecycle.UIContainerLifecycle;
 import org.exoplatform.webui.event.Event;
-import org.exoplatform.webui.event.EventListener;
 import org.exoplatform.webui.ext.filter.UIExtensionFilter;
 import org.exoplatform.webui.ext.filter.UIExtensionFilters;
-import org.exoplatform.webui.ext.manager.UIAbstractManager;
-import org.exoplatform.webui.ext.manager.UIAbstractManagerComponent;
 
 import java.util.Arrays;
 import java.util.List;
@@ -49,7 +44,7 @@ import java.util.List;
  */
 @ComponentConfig(lifecycle = UIContainerLifecycle.class,
                  events = { @EventConfig(listeners = OnlyofficeOpenManageComponent.OnlyofficeOpenActionListener.class) })
-public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
+public class OnlyofficeOpenManageComponent extends AbstractOnlyofficeManageComponent {
 
   /** The Constant LOG. */
   protected static final Log                   LOG     = ExoLogger.getLogger(OnlyofficeOpenManageComponent.class);
@@ -68,13 +63,12 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
    * the onlyofficeOpenAction event occurs, that object's appropriate
    * method is invoked.
    */
-  public static class OnlyofficeOpenActionListener extends EventListener<OnlyofficeOpenManageComponent> {
-    
+  public static class OnlyofficeOpenActionListener extends UIActionBarActionListener<OnlyofficeOpenManageComponent> {
+
     /**
      * {@inheritDoc}
      */
-    public void execute(Event<OnlyofficeOpenManageComponent> event) throws Exception {
-      // OnlyofficeOpenManageComponent comp = event.getSource();
+    public void processEvent(Event<OnlyofficeOpenManageComponent> event) throws Exception {
       WebuiRequestContext context = event.getRequestContext();
       UIJCRExplorer explorer = event.getSource().getAncestorOfType(UIJCRExplorer.class);
       OnlyofficeEditorUIService editorsUI = WCMCoreUtils.getService(OnlyofficeEditorUIService.class);
@@ -104,41 +98,5 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
   @UIExtensionFilters
   public List<UIExtensionFilter> getFilters() {
     return FILTERS;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public String renderEventURL(boolean ajax, String name, String beanId, Parameter[] params) throws Exception {
-    // init context where this action appears
-    initContext(PortalRequestContext.getCurrentInstance());
-    return super.renderEventURL(ajax, name, beanId, params);
-  }
-
-  /**
-   * Inits the context.
-   *
-   * @param context the context
-   * @throws Exception the exception
-   */
-  protected void initContext(RequestContext context) throws Exception {
-    UIJCRExplorer uiExplorer = getAncestorOfType(UIJCRExplorer.class);
-    if (uiExplorer != null) {
-      // we store current node in the context
-      String path = uiExplorer.getCurrentNode().getPath();
-      String workspace = uiExplorer.getCurrentNode().getSession().getWorkspace().getName();
-      OnlyofficeEditorContext.init(context, workspace, path);
-    } else {
-      LOG.error("Cannot find ancestor of type UIJCRExplorer in component " + this + ", parent: " + this.getParent());
-    }
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public Class<? extends UIAbstractManager> getUIAbstractManagerClass() {
-    return null;
   }
 }

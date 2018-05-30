@@ -82,13 +82,13 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.lock.Lock;
-import javax.jcr.version.Version;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 /**
- * Service implementing {@link OnlyofficeEditorService} and {@link Startable}.<br>
+ * Service implementing {@link OnlyofficeEditorService} and {@link Startable}. This component handles interactions with 
+ * Onlyoffice Document Server and related eXo user states.<br>
  * Created by The eXo Platform SAS.
  * 
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
@@ -97,46 +97,46 @@ import javax.xml.parsers.ParserConfigurationException;
 public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Startable {
 
   /** The Constant LOG. */
-  protected static final Log                                          LOG                   = ExoLogger.getLogger(OnlyofficeEditorServiceImpl.class);
+  protected static final Log                                          LOG                    = ExoLogger.getLogger(OnlyofficeEditorServiceImpl.class);
 
   /** The Constant RANDOM. */
-  protected static final Random                                       RANDOM                = new Random();
+  protected static final Random                                       RANDOM                 = new Random();
 
   /** The Constant CONFIG_DS_HOST. */
-  public static final String                                          CONFIG_DS_HOST        = "documentserver-host";
+  public static final String                                          CONFIG_DS_HOST         = "documentserver-host";
 
   /** The Constant CONFIG_DS_SCHEMA. */
-  public static final String                                          CONFIG_DS_SCHEMA      = "documentserver-schema";
+  public static final String                                          CONFIG_DS_SCHEMA       = "documentserver-schema";
 
   /** The Constant CONFIG_DS_ACCESS_ONLY. */
-  public static final String                                          CONFIG_DS_ACCESS_ONLY = "documentserver-access-only";
-  
+  public static final String                                          CONFIG_DS_ACCESS_ONLY  = "documentserver-access-only";
+
   /** Configuration key for Document Server's allowed hosts in requests from a DS to eXo side. */
   public static final String                                          CONFIG_DS_ALLOWEDHOSTS = "documentserver-allowedhosts";
 
   /** The Constant HTTP_PORT_DELIMITER. */
-  protected static final char                                         HTTP_PORT_DELIMITER   = ':';
+  protected static final char                                         HTTP_PORT_DELIMITER    = ':';
 
   /** The Constant TYPE_TEXT. */
-  protected static final String                                       TYPE_TEXT             = "text";
+  protected static final String                                       TYPE_TEXT              = "text";
 
   /** The Constant TYPE_SPREADSHEET. */
-  protected static final String                                       TYPE_SPREADSHEET      = "spreadsheet";
+  protected static final String                                       TYPE_SPREADSHEET       = "spreadsheet";
 
   /** The Constant TYPE_PRESENTATION. */
-  protected static final String                                       TYPE_PRESENTATION     = "presentation";
+  protected static final String                                       TYPE_PRESENTATION      = "presentation";
 
   /** The Constant LOCK_WAIT_ATTEMTS. */
-  protected static final int                                          LOCK_WAIT_ATTEMTS     = 20;
+  protected static final int                                          LOCK_WAIT_ATTEMTS      = 20;
 
   /** The Constant LOCK_WAIT_TIMEOUT. */
-  protected static final long                                         LOCK_WAIT_TIMEOUT     = 250;
+  protected static final long                                         LOCK_WAIT_TIMEOUT      = 250;
 
   /** The Constant EMPTY_TEXT. */
-  protected static final String                                       EMPTY_TEXT            = "".intern();
+  protected static final String                                       EMPTY_TEXT             = "".intern();
 
   /** The Constant CACHE_NAME. */
-  public static final String                                          CACHE_NAME            = "onlyoffice.EditorCache".intern();
+  public static final String                                          CACHE_NAME             = "onlyoffice.EditorCache".intern();
 
   /** The jcr service. */
   protected final RepositoryService                                   jcrService;
@@ -160,7 +160,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   protected final ExoCache<String, ConcurrentHashMap<String, Config>> activeCache;
 
   /** Lock for updating Editing documents cache. */
-  protected final ReentrantLock                                       activeLock            = new ReentrantLock();
+  protected final ReentrantLock                                       activeLock             = new ReentrantLock();
 
   /** The config. */
   protected final Map<String, String>                                 config;
@@ -179,16 +179,16 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
   /** The documentserver allowed hosts (can be empty if not configured). */
   protected final Set<String>                                         documentserverAllowedhosts;
-  
+
   /** The file types. */
-  protected final Map<String, String>                                 fileTypes             = new ConcurrentHashMap<String, String>();
+  protected final Map<String, String>                                 fileTypes              = new ConcurrentHashMap<String, String>();
 
   /** The upload params. */
-  protected final MessageFormat                                       uploadParams          =
+  protected final MessageFormat                                       uploadParams           =
                                                                                    new MessageFormat("?url={0}&outputtype={1}&filetype={2}&title={3}&key={4}");
 
   /** The listeners. */
-  protected final ConcurrentLinkedQueue<OnlyofficeEditorListener>     listeners             = new ConcurrentLinkedQueue<OnlyofficeEditorListener>();
+  protected final ConcurrentLinkedQueue<OnlyofficeEditorListener>     listeners              = new ConcurrentLinkedQueue<OnlyofficeEditorListener>();
 
   /**
    * Cloud Drive service with storage in JCR and with managed features.
@@ -304,7 +304,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
 
     this.documentserverAccessOnly = Boolean.parseBoolean(config.get(CONFIG_DS_ACCESS_ONLY));
-    
+
     String dsAllowedHost = config.get(CONFIG_DS_ALLOWEDHOSTS);
     if (dsAllowedHost != null && !dsAllowedHost.isEmpty()) {
       Set<String> allowedhosts = new HashSet<>();
@@ -351,7 +351,22 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    */
   @Override
   public Config getEditor(String userId, String workspace, String path) throws OnlyofficeEditorException, RepositoryException {
-    return getEditor(userId, nodePath(workspace, path));
+    return getEditor(userId, nodePath(workspace, path), false);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public Config getEditorByKey(String userId, String key) throws OnlyofficeEditorException, RepositoryException {
+    ConcurrentHashMap<String, Config> configs = activeCache.get(key);
+    if (configs != null) {
+      Config config = configs.get(userId);
+      if (config != null) {
+        validateUser(userId, config);
+        return config;
+      }
+    }
+    return null;
   }
 
   /**
@@ -359,32 +374,40 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    *
    * @param userId the user id
    * @param nodePath the node path
+   * @param createCoEditing if <code>true</code> and has no editor for given user, create a copy for
+   *          co-editing if document already editing by other users
    * @return the editor
    * @throws OnlyofficeEditorException the onlyoffice editor exception
    * @throws RepositoryException the repository exception
    */
-  protected Config getEditor(String userId, String nodePath) throws OnlyofficeEditorException, RepositoryException {
+  protected Config getEditor(String userId, String nodePath, boolean createCoEditing) throws OnlyofficeEditorException, RepositoryException {
     ConcurrentHashMap<String, Config> configs = activeCache.get(nodePath);
     if (configs != null) {
       Config config = configs.get(userId);
-      if (config == null) {
-        // copy editor for this user from any entry in the configs map
+      if (config == null && createCoEditing) {
+        // copy editor for this user from another entry in the configs map
         try {
+          Config another = configs.values().iterator().next();
           User user = getUser(userId); // and use this user language
-          config = configs.values().iterator().next().forUser(user.getUserName(), user.getFirstName(), user.getLastName(), getUserLang(userId));
-          Config existing = configs.putIfAbsent(userId, config);
-          if (existing == null) {
-            // need update the configs in the cache (for replicated cache)
-            activeCache.put(nodePath, configs);
-            activeCache.put(config.getDocument().getKey(), configs);
+          if (user != null) {
+            config = another.forUser(user.getUserName(), user.getFirstName(), user.getLastName(), getUserLang(userId));
+            Config existing = configs.putIfAbsent(userId, config);
+            if (existing == null) {
+              // need update the configs in the cache (for replicated cache)
+              activeCache.put(nodePath, configs);
+              activeCache.put(config.getDocument().getKey(), configs);
+            } else {
+              config = existing;
+            }
+            fireGet(config);
           } else {
-            config = existing;
+            LOG.warn("Attempt to obtain document editor (" + nodePath(another) + ") under not existing user " + userId);
+            throw new BadParameterException("User not found for " + another.getDocument().getTitle());
           }
-          fireGet(config);
         } catch (NoSuchElementException e) { // if configs was cleaned by closing all active editors
           config = null;
         }
-      } else {
+      } else if (createCoEditing) {
         // otherwise: config already obtained
         fireGet(config);
       }
@@ -407,14 +430,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       throw new OnlyofficeEditorException("Only nt:file supported " + nodePath);
     }
 
-    Config config = getEditor(userId, nodePath);
+    Config config = getEditor(userId, nodePath, true);
     if (config == null) {
       // we should care about concurrent calls here
       activeLock.lock();
       try {
         ConcurrentHashMap<String, Config> configs = activeCache.get(nodePath);
         if (configs != null) {
-          config = getEditor(userId, nodePath);
+          config = getEditor(userId, nodePath, true);
           if (config == null) {
             // it's unexpected state as existing map SHOULD contain a config and it must be copied for
             // given user in getEditor(): client will need to retry the operation
@@ -485,6 +508,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /**
    * {@inheritDoc}
    */
+  @SuppressWarnings("deprecation")
   @Override
   public DocumentContent getContent(String userId, String key) throws OnlyofficeEditorException, RepositoryException {
     ConcurrentHashMap<String, Config> configs = activeCache.get(key);
@@ -565,13 +589,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       Config config = configs.get(userId);
       if (config != null) {
         validateUser(userId, config);
+        String[] users = getActiveUsers(configs);
+        return new ChangeState(false, config.getError(), users);
       } else {
         throw new BadParameterException("User editor not found " + userId);
       }
-      String[] users = getCurrentUsers(configs);
-      return new ChangeState(false, config.getError(), users);
     } else {
-      return new ChangeState(true, null); // not found - thus already saved
+      return new ChangeState(true, null, new String[0]); // not found - thus already saved
     }
   }
 
@@ -1047,27 +1071,29 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   protected boolean syncUsers(ConcurrentHashMap<String, Config> configs, String[] users) {
     Set<String> editors = new HashSet<String>(Arrays.asList(users));
     // remove gone editors
+    boolean updated = false;
     for (Iterator<Map.Entry<String, Config>> ceiter = configs.entrySet().iterator(); ceiter.hasNext();) {
       Map.Entry<String, Config> ce = ceiter.next();
-      String cuser = ce.getKey();
+      String user = ce.getKey();
       Config config = ce.getValue();
-      if (editors.contains(cuser)) {
+      if (editors.contains(user)) {
         if (config.isCreated() || config.isClosed()) {
           // editor was (re)opened by user
           config.open();
           fireJoined(config);
-          return true;
+          updated = true;
         }
       } else {
-        // editor was closed by user
-        if (config.isOpen()) {
-          config.close();
+        // editor was closed by user: it will be closing if closed via WebUI of ECMS explorer, open in general case
+        if (config.isClosing() || config.isOpen()) {
+          // closed because user sync happens when someone else still editing or nothing edited
+          config.closed();
           fireLeaved(config);
-          return true;
+          updated = true;
         }
       }
     }
-    return false;
+    return updated;
   }
 
   /**
@@ -1076,10 +1102,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @param configs the configs
    * @return the current users
    */
-  protected String[] getCurrentUsers(ConcurrentHashMap<String, Config> configs) {
+  protected String[] getActiveUsers(ConcurrentHashMap<String, Config> configs) {
     // copy key set to avoid confuses w/ concurrency
     Set<String> userIds = new LinkedHashSet<String>(configs.keySet());
-    // remove not existing locally, not yet open (created) or already closed
+    // remove not existing locally (just removed), not yet open (created) or already closed
     for (Iterator<String> uiter = userIds.iterator(); uiter.hasNext();) {
       String userId = uiter.next();
       Config config = configs.get(userId);
@@ -1098,7 +1124,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @throws OnlyofficeEditorException the onlyoffice editor exception
    * @throws RepositoryException the repository exception
    */
+  @SuppressWarnings("deprecation")
   protected void download(Config config, DocumentStatus status) throws OnlyofficeEditorException, RepositoryException {
+
+    // First mark closing, then do actual download and save in storage. Note: closing state may be already set
+    // by UI layer (OnlyofficeEditorUIService).
+    config.closing();
+
     String workspace = config.getWorkspace();
     String path = config.getPath();
     String nodePath = nodePath(workspace, path);
@@ -1193,7 +1225,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           node.checkout();
         }
 
-        config.close(); // close for use in listeners
+        config.closed(); // reset transient closing state
+
         fireSaved(config);
       } catch (RepositoryException e) {
         try {
@@ -1225,166 +1258,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       // restore context env
       ConversationState.setCurrent(contextState);
       sessionProviders.setSessionProvider(null, contextProvider);
-    }
-  }
-
-  /**
-   * Download change.
-   *
-   * @param config the config
-   * @throws OnlyofficeEditorException the onlyoffice editor exception
-   * @throws RepositoryException the repository exception
-   */
-  @Deprecated
-  protected void downloadChange(Config config) throws OnlyofficeEditorException, RepositoryException {
-    String workspace = config.getWorkspace();
-    String path = config.getPath();
-    String nodePath = nodePath(workspace, path);
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(">> downloadChange(" + nodePath + ", " + config.getDocument().getKey() + ")");
-    }
-
-    Node node = systemNode(workspace, path);
-    Node content = nodeContent(node);
-    if (content.isNodeType("exo:editing")) {
-      // TODO ensure node updated under system account has real user in exo:lastModifier
-
-      Property lastContentUrl = content.getProperty("exo:lastContentUrl");
-      String contentUrl = lastContentUrl.getString();
-      String editor;
-      Property lastEditor = node.getProperty("exo:lastEditor");
-      editor = lastEditor.getString();
-      Property lastEditedTime = content.getProperty("exo:lastEditedTime");
-      Calendar editedTime = lastEditedTime.getDate();
-
-      HttpURLConnection connection;
-      InputStream data;
-      try {
-        URL url = new URL(contentUrl);
-        connection = (HttpURLConnection) url.openConnection();
-        data = connection.getInputStream();
-        if (data == null) {
-          throw new OnlyofficeEditorException("Content stream is null");
-        }
-      } catch (MalformedURLException e) {
-        throw new OnlyofficeEditorException("Error parsing content URL " + contentUrl + " for " + nodePath, e);
-      } catch (IOException e) {
-        throw new OnlyofficeEditorException("Error reading content stream " + contentUrl + " for " + nodePath, e);
-      }
-
-      // lock node first, this also will check if node isn't locked by another user (will throw exception)
-      Lock lock = lock(node, config);
-      if (lock == null) {
-        throw new OnlyofficeEditorException("Document locked " + nodePath);
-      }
-
-      // manage version only if node already mix:versionable
-      boolean checkIn = checkout(node);
-
-      try {
-        // update document
-        content.setProperty("jcr:data", data);
-        // update modified date (this will force PDFViewer to regenerate its images)
-        content.setProperty("jcr:lastModified", editedTime);
-        if (content.hasProperty("exo:dateModified")) {
-          content.setProperty("exo:dateModified", editedTime);
-        }
-        if (content.hasProperty("exo:lastModifiedDate")) {
-          content.setProperty("exo:lastModifiedDate", editedTime);
-        }
-        if (node.hasProperty("exo:lastModifiedDate")) {
-          node.setProperty("exo:lastModifiedDate", editedTime);
-        }
-        if (node.hasProperty("exo:dateModified")) {
-          node.setProperty("exo:dateModified", editedTime);
-        }
-        if (node.hasProperty("exo:lastModifier")) {
-          node.setProperty("exo:lastModifier", editor);
-        }
-
-        // remove exo:editable from content node
-        lastContentUrl.remove();
-        lastEditor.remove();
-        lastEditedTime.remove();
-        content.removeMixin("exo:editing");
-
-        node.save();
-        if (checkIn) {
-          node.checkin();
-        }
-      } catch (RepositoryException e) {
-        try {
-          node.refresh(false); // rollback JCR modifications
-        } catch (Throwable re) {
-          LOG.warn("Error rolling back failed change for " + nodePath, re);
-        }
-        throw e; // let the caller handle it further
-      } finally {
-        try {
-          data.close();
-        } catch (Throwable e) {
-          LOG.warn("Error closing exported content stream for " + nodePath, e);
-        }
-        try {
-          connection.disconnect();
-        } catch (Throwable e) {
-          LOG.warn("Error closing export connection for " + nodePath, e);
-        }
-        try {
-          if (lock != null && node.isLocked()) {
-            node.unlock();
-          }
-        } catch (Throwable e) {
-          LOG.warn("Error unlocking edited document " + nodePath(workspace, path), e);
-        }
-      }
-    } else {
-      throw new OnlyofficeEditorException("Document node was not initialized for editing " + nodePath);
-    }
-  }
-
-  /**
-   * Track change.
-   *
-   * @param config the config
-   * @param status the status
-   * @throws BadParameterException the bad parameter exception
-   * @throws OnlyofficeEditorException the onlyoffice editor exception
-   * @throws RepositoryException the repository exception
-   */
-  @Deprecated
-  protected void trackChange(Config config, DocumentStatus status) throws BadParameterException, OnlyofficeEditorException, RepositoryException {
-    String workspace = config.getWorkspace();
-    String path = config.getPath();
-
-    String contentUrl = status.getUrl();
-    String user;
-    String[] users = status.getUsers();
-    if (users != null && users.length > 0) {
-      user = users[0];
-    } else {
-      LOG.warn("No user in status from Onlyoffice document editing service for file " + status.getKey() + " (" + nodePath(workspace, path) + ")");
-      user = null;
-    }
-    if (contentUrl != null && contentUrl.length() > 0) {
-      // TODO ensure node updated under system account has real user in exo:lastModifier
-      Node node = systemNode(workspace, path);
-      // ensure node is not in checked-in state
-      checkout(node);
-
-      Node content = nodeContent(node);
-      if (content.canAddMixin("exo:editing")) {
-        content.addMixin("exo:editing");
-        content.save();
-      }
-      content.setProperty("exo:lastContentUrl", contentUrl);
-      content.setProperty("exo:lastEditor", user);
-      content.setProperty("exo:lastEditedTime", Calendar.getInstance());
-      content.save();
-    } else {
-      throw new OnlyofficeEditorException("Empty link to the edited document from editing service. User " + user + ". Document "
-          + nodePath(workspace, path));
     }
   }
 
@@ -1449,23 +1322,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   /**
-   * Checkin.
-   *
-   * @param node the node
-   * @return the version
-   * @throws RepositoryException the repository exception
-   */
-  @Deprecated
-  protected Version checkin(Node node) throws RepositoryException {
-    if (node.isNodeType("mix:versionable")) {
-      if (node.isCheckedOut()) {
-        return node.checkin();
-      }
-    }
-    return null;
-  }
-
-  /**
    * Lock by current user of the node. If lock attempts will succeed in predefined time this method will throw
    * {@link OnlyofficeEditorException}. If node isn't mix:versionable it will be added first and node saved.
    *
@@ -1514,37 +1370,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   /**
-   * Unlock.
-   *
-   * @param node the node
-   * @param config the config
-   * @return true, if successful
-   * @throws OnlyofficeEditorException the onlyoffice editor exception
-   * @throws RepositoryException the repository exception
-   */
-  @Deprecated
-  protected boolean unlock(Node node, Config config) throws OnlyofficeEditorException, RepositoryException {
-    if (node.isLocked()) {
-      Config.Editor.User user = config.getEditorConfig().getUser();
-      String lockToken = user.getLockToken();
-      if (node.getLock().getLockOwner().equals(user.getId()) && lockToken != null) {
-        // already this user lock
-        node.getSession().addLockToken(lockToken);
-        node.unlock();
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
    * Validate user.
    *
    * @param userId the user id
    * @param config the config
-   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   * @throws BadParameterException if user not found
+   * @throws OnlyofficeEditorException if error searching user in organization service
    */
-  protected void validateUser(String userId, Config config) throws OnlyofficeEditorException {
+  protected void validateUser(String userId, Config config) throws BadParameterException, OnlyofficeEditorException {
     User user = getUser(userId);
     if (user == null) {
       LOG.warn("Attempt to access editor document (" + nodePath(config) + ") under not existing user " + userId);
@@ -1556,10 +1389,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * Gets the user lang.
    *
    * @param userId the user id
-   * @return the user lang can be <code>null</code> if user has no profile or language in it
-   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   * @return the lang can be <code>null</code> if user has no profile or language in it or user profile error
    */
-  protected String getUserLang(String userId) throws OnlyofficeEditorException {
+  protected String getUserLang(String userId) {
     UserProfileHandler hanlder = organization.getUserProfileHandler();
     try {
       UserProfile userProfile = hanlder.findUserProfileByName(userId);
@@ -1580,7 +1412,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         return null;
       }
     } catch (Exception e) {
-      throw new OnlyofficeEditorException("Error searching user profile " + userId, e);
+      LOG.warn("Error searching user profile " + userId, e);
+      return null;
     }
   }
 
@@ -1740,7 +1573,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
     return userIdentity;
   }
-  
+
   /**
    * Get lower case copy of the given string.
    *

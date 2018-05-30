@@ -21,6 +21,7 @@ package org.exoplatform.onlyoffice.webui;
 
 import org.exoplatform.onlyoffice.OnlyofficeEditorException;
 import org.exoplatform.services.wcm.utils.WCMCoreUtils;
+import org.exoplatform.webui.core.UIContainer;
 import org.exoplatform.webui.ext.filter.UIExtensionFilterType;
 
 import javax.jcr.Node;
@@ -30,9 +31,9 @@ import javax.jcr.RepositoryException;
  * Created by The eXo Platform SAS.
  *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
- * @version $Id: IsEditingOnlyofficeFilter.java 00000 Mar 1, 2016 pnedonosko $
+ * @version $Id: CanCloseOnlyofficeFilter.java 00000 Mar 1, 2016 pnedonosko $
  */
-public class CanCloseOnlyofficeFilter extends AbstractOnlyofficeFilter {
+public class CanCloseOnlyofficeFilter extends FileViewFilter {
 
   /**
    * Instantiates a new can close onlyoffice filter.
@@ -70,9 +71,9 @@ public class CanCloseOnlyofficeFilter extends AbstractOnlyofficeFilter {
    * {@inheritDoc}
    */
   @Override
-  protected boolean accept(String userId, Node node) throws RepositoryException, OnlyofficeEditorException {
+  protected boolean accept(String userId, Node node, UIContainer container) throws RepositoryException, OnlyofficeEditorException {
     OnlyofficeEditorUIService editorsUI = WCMCoreUtils.getService(OnlyofficeEditorUIService.class);
-    return editorsUI.canClose(userId, node.getSession().getWorkspace().getName(), node.getPath());
+    return super.accept(userId, node, container) && editorsUI.canClose(userId, node.getSession().getWorkspace().getName(), node.getPath());
   }
 
 }

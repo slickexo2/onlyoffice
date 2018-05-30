@@ -20,6 +20,7 @@
 package org.exoplatform.onlyoffice.webui;
 
 import org.exoplatform.onlyoffice.Config;
+import org.exoplatform.onlyoffice.OnlyofficeEditorException;
 import org.exoplatform.onlyoffice.OnlyofficeEditorListener;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
 import org.exoplatform.services.cache.CacheListener;
@@ -31,8 +32,11 @@ import org.exoplatform.services.log.Log;
 
 import java.util.concurrent.locks.ReentrantLock;
 
+import javax.jcr.RepositoryException;
+
 /**
- * Support for stateful WebUI: keep tracking requests to open/close editor by users on partical file.
+ * Support for stateful WebUI: keep tracking requests to open/close editor by users on particural document. This component stores
+ * user editor UI states that should be aligned with ones in {@link OnlyofficeEditorService}.<br>
  * 
  * Created by The eXo Platform SAS
  * 
@@ -234,11 +238,12 @@ public class OnlyofficeEditorUIService {
   public boolean close(String userId, String workspace, String path) {
     String id = editorId(userId, workspace, path);
     String state = editorsCache.get(id);
+    boolean closing = false;
     if (STATE_OPEN.equals(state)) {
       editorsLock.lock();
       try {
         editorsCache.put(id, STATE_CLOSING);
-        return true;
+        closing = true;
       } finally {
         editorsLock.unlock();
       }
@@ -246,12 +251,24 @@ public class OnlyofficeEditorUIService {
       // if wasn't OPEN but close requested, ensure document also isn't OPENING
       editorsLock.lock();
       try {
-        return STATE_OPENING.equals(editorsCache.remove(id));
+        closing = STATE_OPENING.equals(editorsCache.remove(id));
       } finally {
         editorsLock.unlock();
       }
     }
-    return true;
+    if (closing) {
+      // Set closing state in the editor config: user closed the UI but before actual data saving from the DS,
+      // when data will be saved the editor state will be set to closed.
+      try {
+        Config config = editorService.getEditor(userId, workspace, path);
+        if (config != null) {
+          config.closing();
+        }
+      } catch (OnlyofficeEditorException | RepositoryException e) {
+        LOG.warn("Error reading editor config for " + id, e);
+      }
+    }
+    return closing;
   }
 
   /**

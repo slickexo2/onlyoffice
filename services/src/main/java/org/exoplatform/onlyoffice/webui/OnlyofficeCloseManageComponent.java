@@ -19,12 +19,9 @@ package org.exoplatform.onlyoffice.webui;
 import org.exoplatform.ecm.webui.component.explorer.UIJCRExplorer;
 import org.exoplatform.ecm.webui.component.explorer.control.UIActionBar;
 import org.exoplatform.ecm.webui.component.explorer.control.listener.UIActionBarActionListener;
-import org.exoplatform.portal.application.PortalRequestContext;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.wcm.utils.WCMCoreUtils;
-import org.exoplatform.web.application.Parameter;
-import org.exoplatform.web.application.RequestContext;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.EventConfig;
@@ -32,8 +29,6 @@ import org.exoplatform.webui.core.lifecycle.UIContainerLifecycle;
 import org.exoplatform.webui.event.Event;
 import org.exoplatform.webui.ext.filter.UIExtensionFilter;
 import org.exoplatform.webui.ext.filter.UIExtensionFilters;
-import org.exoplatform.webui.ext.manager.UIAbstractManager;
-import org.exoplatform.webui.ext.manager.UIAbstractManagerComponent;
 
 import java.util.Arrays;
 import java.util.List;
@@ -48,7 +43,7 @@ import java.util.List;
  */
 @ComponentConfig(lifecycle = UIContainerLifecycle.class, events = {
     @EventConfig(listeners = OnlyofficeCloseManageComponent.OnlyofficeCloseActionListener.class) })
-public class OnlyofficeCloseManageComponent extends UIAbstractManagerComponent {
+public class OnlyofficeCloseManageComponent extends AbstractOnlyofficeManageComponent {
 
   /** The Constant LOG. */
   protected static final Log                   LOG     = ExoLogger.getLogger(OnlyofficeCloseManageComponent.class);
@@ -78,9 +73,6 @@ public class OnlyofficeCloseManageComponent extends UIAbstractManagerComponent {
       UIJCRExplorer explorer = event.getSource().getAncestorOfType(UIJCRExplorer.class);
       OnlyofficeEditorUIService editorsUI = WCMCoreUtils.getService(OnlyofficeEditorUIService.class);
 
-      // TODO do we need this whole refresh here?
-      // explorer.getSession().refresh(false);
-      // explorer.refreshExplorer();
       String workspace = explorer.getCurrentWorkspace();
       String path = explorer.getCurrentNode().getPath();
       editorsUI.close(context.getRemoteUser(), workspace, path);
@@ -91,43 +83,8 @@ public class OnlyofficeCloseManageComponent extends UIAbstractManagerComponent {
       event.getSource().setRendered(false); // hide this menu, TODO is it required?
 
       // Refresh UI components: only this menu
-      // UIDocumentWorkspace docWorkspace = explorer.findFirstComponentOfType(UIDocumentWorkspace.class);
-      // context.addUIComponentToUpdateByAjax(docWorkspace);
       UIActionBar actionBar = explorer.findFirstComponentOfType(UIActionBar.class);
       context.addUIComponentToUpdateByAjax(actionBar);
-
-      // TODO cleanup
-      // OnlyofficeEditor editor = docWorkspace.findFirstComponentOfType(OnlyofficeEditor.class);
-      // if (editor != null) {
-      // // remove editor and show viewer (PDFViewer assumed)
-      // UIDocumentInfo docInfo = docWorkspace.findComponentById(UIDocumentInfo.class.getSimpleName());
-      // PDFViewer viewer = docInfo.getChild(PDFViewer.class);
-      // if (viewer == null) {
-      // // Show warning
-      // UIApplication uiApp = comp.getAncestorOfType(UIApplication.class);
-      // uiApp.addMessage(new ApplicationMessage("OnlyofficeEditor.message.ViewerNotFound",
-      // null,
-      // ApplicationMessage.WARNING));
-      // event.getRequestContext().addUIComponentToUpdateByAjax(comp);
-      // return;
-      // }
-      //
-      // // hide viewer
-      // viewer.setRendered(true);
-      // // close/hide editor
-      // editor.close();
-      // OnlyofficeEditorContext.close(event.getRequestContext());
-      // // Update doc view here only
-      // event.getRequestContext().addUIComponentToUpdateByAjax(docWorkspace);
-      // } else {
-      // // Show warning - this should not happen due to filter
-      // UIApplication uiApp = comp.getAncestorOfType(UIApplication.class);
-      // uiApp.addMessage(new ApplicationMessage("OnlyofficeEditor.message.EditorNotFound",
-      // null,
-      // ApplicationMessage.WARNING));
-      // event.getRequestContext().addUIComponentToUpdateByAjax(comp);
-      // return;
-      // }
     }
   }
 
@@ -139,56 +96,5 @@ public class OnlyofficeCloseManageComponent extends UIAbstractManagerComponent {
   @UIExtensionFilters
   public List<UIExtensionFilter> getFilters() {
     return FILTERS;
-    // TODO cleanup
-    // List<UIExtensionFilter> filters = new ArrayList<UIExtensionFilter>();
-    // WebuiRequestContext context = WebuiRequestContext.getCurrentInstance();
-    // UIJCRExplorer explorer = context.getUIApplication().findFirstComponentOfType(UIJCRExplorer.class);
-    // OnlyofficeEditorUIService editorsUI = WCMCoreUtils.getService(OnlyofficeEditorUIService.class);
-    //
-    // try {
-    // filters.add(new AcceptFilter(editorsUI.isOpen(context.getRemoteUser(),
-    // explorer.getCurrentWorkspace(),
-    // explorer.getCurrentNode().getPath())));
-    // return filters;
-    // } catch (Exception e) {
-    // LOG.error("Error reading current node in explorer", e);
-    // return null;
-    // }
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public String renderEventURL(boolean ajax, String name, String beanId, Parameter[] params) throws Exception {
-    // init context where this action appears
-    initContext(PortalRequestContext.getCurrentInstance());
-    return super.renderEventURL(ajax, name, beanId, params);
-  }
-
-  /**
-   * Inits the context.
-   *
-   * @param context the context
-   * @throws Exception the exception
-   */
-  protected void initContext(RequestContext context) throws Exception {
-    UIJCRExplorer uiExplorer = getAncestorOfType(UIJCRExplorer.class);
-    if (uiExplorer != null) {
-      // we store current node in the context
-      String path = uiExplorer.getCurrentNode().getPath();
-      String workspace = uiExplorer.getCurrentNode().getSession().getWorkspace().getName();
-      OnlyofficeEditorContext.init(context, workspace, path);
-    } else {
-      LOG.error("Cannot find ancestor of type UIJCRExplorer in component " + this + ", parent: " + this.getParent());
-    }
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public Class<? extends UIAbstractManager> getUIAbstractManagerClass() {
-    return null;
   }
 }

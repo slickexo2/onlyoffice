@@ -91,6 +91,24 @@ public class OnlyofficeEditorContext {
       }
     }
   }
+  
+  /**
+   * Show.
+   *
+   * @param requestContext the request context
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   */
+  public static void show(RequestContext requestContext) throws OnlyofficeEditorException {
+    Object obj = requestContext.getAttribute(JAVASCRIPT);
+    if (obj != null) {
+      OnlyofficeEditorContext context = (OnlyofficeEditorContext) obj;
+      context.show();
+    } else {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Request context not initialized");
+      }
+    }
+  }
 
   /**
    * Close.
@@ -177,7 +195,17 @@ public class OnlyofficeEditorContext {
     require.addScripts("onlyoffice.open();");
     return this;
   }
-
+  
+  /**
+   * Show.
+   *
+   * @return the onlyoffice editor context
+   */
+  private OnlyofficeEditorContext show() {
+    require.addScripts("onlyoffice.show();");
+    return this;
+  }
+  
   /**
    * Close.
    *

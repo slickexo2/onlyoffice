@@ -26,6 +26,7 @@ import org.exoplatform.social.webui.activity.UIActivitiesContainer;
 import org.exoplatform.social.webui.composer.PopupContainer;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.core.UIApplication;
+import org.exoplatform.webui.core.UIContainer;
 import org.exoplatform.webui.ext.filter.UIExtensionAbstractFilter;
 import org.exoplatform.webui.ext.filter.UIExtensionFilterType;
 
@@ -75,11 +76,17 @@ public abstract class AbstractOnlyofficeFilter extends UIExtensionAbstractFilter
     if (context != null) {
       Node contextNode = (Node) context.get(Node.class.getName());
 
+      UIContainer contextContainer = null;
+      
+      UIJCRExplorer jcrExplorer = (UIJCRExplorer) context.get(UIJCRExplorer.class.getName());
+      if (jcrExplorer != null) {
+        contextContainer = jcrExplorer;
+      }
+      
       // search in ECMS explorer first
       if (contextNode == null) {
-        UIJCRExplorer uiExplorer = (UIJCRExplorer) context.get(UIJCRExplorer.class.getName());
-        if (uiExplorer != null) {
-          contextNode = uiExplorer.getCurrentNode();
+        if (jcrExplorer != null) {
+          contextNode = jcrExplorer.getCurrentNode();
         }
 
         if (contextNode == null) {
@@ -87,7 +94,7 @@ public abstract class AbstractOnlyofficeFilter extends UIExtensionAbstractFilter
           UIApplication uiApp = reqContext.getUIApplication();
           UIJcrExplorerContainer jcrExplorerContainer = uiApp.getChild(UIJcrExplorerContainer.class);
           if (jcrExplorerContainer != null) {
-            UIJCRExplorer jcrExplorer = jcrExplorerContainer.getChild(UIJCRExplorer.class);
+            contextContainer = jcrExplorer = jcrExplorerContainer.getChild(UIJCRExplorer.class);
             contextNode = jcrExplorer.getCurrentNode();
           }
 
@@ -95,6 +102,7 @@ public abstract class AbstractOnlyofficeFilter extends UIExtensionAbstractFilter
           if (contextNode == null) {
             UIActivitiesContainer uiActivitiesContainer = uiApp.findFirstComponentOfType(UIActivitiesContainer.class);
             if (uiActivitiesContainer != null) {
+              contextContainer = uiActivitiesContainer;
               PopupContainer uiPopupContainer = uiActivitiesContainer.getPopupContainer();
               if (uiPopupContainer != null) {
                 UIBaseNodePresentation docViewer = uiPopupContainer.findComponentById("UIDocViewer");
@@ -109,7 +117,7 @@ public abstract class AbstractOnlyofficeFilter extends UIExtensionAbstractFilter
 
       if (contextNode != null) {
         String userId = WebuiRequestContext.getCurrentInstance().getRemoteUser();
-        return accept(userId, contextNode);
+        return accept(userId, contextNode, contextContainer);
       }
     }
     return false;
@@ -131,6 +139,6 @@ public abstract class AbstractOnlyofficeFilter extends UIExtensionAbstractFilter
    * @throws RepositoryException the repository exception
    * @throws OnlyofficeEditorException the onlyoffice editor exception
    */
-  protected abstract boolean accept(String userId, Node node) throws RepositoryException, OnlyofficeEditorException;
+  protected abstract boolean accept(String userId, Node node, UIContainer container) throws RepositoryException, OnlyofficeEditorException;
 
 }

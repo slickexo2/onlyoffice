@@ -25,6 +25,7 @@ import org.exoplatform.onlyoffice.DocumentContent;
 import org.exoplatform.onlyoffice.DocumentStatus;
 import org.exoplatform.onlyoffice.OnlyofficeEditorException;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
+import org.exoplatform.onlyoffice.webui.OnlyofficeEditorUIService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.rest.resource.ResourceContainer;
@@ -44,6 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.security.RolesAllowed;
 import javax.jcr.RepositoryException;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -125,25 +127,30 @@ public class EditorService implements ResourceContainer {
       if (config != null) {
         super.entity(config);
       } else if (error != null) {
-        super.entity("{\"error\":\"" + error + "\"}");
+        super.entity(new StringBuilder("{\"error\":\"").append(error).append("\"}").toString());
       }
       return super.build();
     }
   }
 
   /** The editors. */
-  protected final OnlyofficeEditorService editors;
+  protected final OnlyofficeEditorService   editors;
+
+  /** The editors UI. */
+  protected final OnlyofficeEditorUIService editorsUI;
 
   /** The initiated. */
-  protected final Map<UUID, Config>       initiated = new ConcurrentHashMap<UUID, Config>();
+  protected final Map<UUID, Config>         initiated = new ConcurrentHashMap<UUID, Config>();
 
   /**
    * REST cloudDrives uses {@link OnlyofficeEditorService} for actual job.
    *
    * @param editors the editors
+   * @param editorsUI the editors UI
    */
-  public EditorService(OnlyofficeEditorService editors) {
+  public EditorService(OnlyofficeEditorService editors, OnlyofficeEditorUIService editorsUI) {
     this.editors = editors;
+    this.editorsUI = editorsUI;
   }
 
   /**
@@ -291,7 +298,7 @@ public class EditorService implements ResourceContainer {
   }
 
   /**
-   * Config configuration for Onlyoffice JS.
+   * Create configuration for Onlyoffice JS.
    *
    * @param uriInfo - request with base URI
    * @param request the request
@@ -299,17 +306,17 @@ public class EditorService implements ResourceContainer {
    * @param path the path
    * @return response with
    */
-  @GET
+  @POST
   @Path("/config/{workspace}/{path:.*}")
   @RolesAllowed("users")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response config(@Context UriInfo uriInfo,
-                         @Context HttpServletRequest request,
-                         @PathParam("workspace") String workspace,
-                         @PathParam("path") String path) {
+  public Response configPost(@Context UriInfo uriInfo,
+                             @Context HttpServletRequest request,
+                             @PathParam("workspace") String workspace,
+                             @PathParam("path") String path) {
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("> Onlyoffice config: " + workspace + ":" + path);
+      LOG.debug("> Onlyoffice configPost: " + workspace + ":" + path);
     }
 
     EditorResponse resp = new EditorResponse();
@@ -364,6 +371,82 @@ public class EditorService implements ResourceContainer {
   }
 
   /**
+   * Read configuration for Onlyoffice JS.
+   *
+   * @param uriInfo - request with base URI
+   * @param request the request
+   * @param workspace the workspace
+   * @param path the path
+   * @return response with
+   */
+  @GET
+  @Path("/config/{workspace}/{path:.*}")
+  @RolesAllowed("users")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response configGet(@Context UriInfo uriInfo,
+                            @Context HttpServletRequest request,
+                            @PathParam("workspace") String workspace,
+                            @PathParam("path") String path) {
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("> Onlyoffice configGet: " + workspace + ":" + path);
+    }
+
+    EditorResponse resp = new EditorResponse();
+    if (workspace != null) {
+      if (path != null) {
+        if (!path.startsWith("/")) {
+          path = "/" + path;
+        }
+        try {
+          ConversationState convo = ConversationState.getCurrent();
+          if (convo != null) {
+            String username = convo.getIdentity().getUserId();
+            Config config = editors.getEditor(username, workspace, path);
+            if (config != null) {
+              if (config.getEditorConfig().getLang() == null) {
+                if (request.getLocale() != null) {
+                  // If user lang not defined use current request one
+                  config.getEditorConfig().setLang(request.getLocale().getLanguage());
+                } else {
+                  // Otherwise use system default one
+                  config.getEditorConfig().setLang(Locale.getDefault().getLanguage());
+                }
+              }
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("> Onlyoffice document config: " + workspace + ":" + path + " -> " + config.getDocument().getKey());
+              }
+              resp.config(config).ok();
+            } else {
+              resp.error("Not found").status(Status.NOT_FOUND);
+            }
+          } else {
+            LOG.warn("ConversationState not set to get editor config");
+            resp.error("User not authenticated").status(Status.UNAUTHORIZED);
+          }
+        } catch (BadParameterException e) {
+          LOG.warn("Bad parameter for getting editor config " + workspace + ":" + path + ". " + e.getMessage());
+          resp.error(e.getMessage()).status(Status.BAD_REQUEST);
+        } catch (OnlyofficeEditorException e) {
+          LOG.error("Error getting editor config " + workspace + ":" + path, e);
+          resp.error("Error getting editor config. " + e.getMessage()).status(Status.INTERNAL_SERVER_ERROR);
+        } catch (RepositoryException e) {
+          LOG.error("Storage error while getting editor config " + workspace + ":" + path, e);
+          resp.error("Storage error.").status(Status.INTERNAL_SERVER_ERROR);
+        } catch (Throwable e) {
+          LOG.error("Runtime error while getting editor config " + workspace + ":" + path, e);
+          resp.error("Error getting editor config.").status(Status.INTERNAL_SERVER_ERROR);
+        }
+      } else {
+        resp.status(Status.BAD_REQUEST).error("Null path.");
+      }
+    } else {
+      resp.status(Status.BAD_REQUEST).error("Null workspace.");
+    }
+    return resp.build();
+  }
+
+  /**
    * Editing document state in local storage.
    *
    * @param uriInfo - request info
@@ -401,6 +484,66 @@ public class EditorService implements ResourceContainer {
       }
     } else {
       LOG.warn("Error getting document state. User identity not provided");
+      resp.error("User not provided").status(Status.BAD_REQUEST);
+    }
+
+    return resp.build();
+  }
+
+  /**
+   * Close UI in OnlyofficeEditorUIService.
+   *
+   * @param uriInfo the uri info
+   * @param userId the user id
+   * @param key the key
+   * @param command the command
+   * @return the response
+   */
+  @POST
+  @Path("/ui/{userId}/{key}")
+  @RolesAllowed("users")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response updateUI(@Context UriInfo uriInfo,
+                           @PathParam("userId") String userId,
+                           @PathParam("key") String key,
+                           @FormParam("command") String command) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("> updateUI: " + userId + "@" + key + " command: " + command);
+    }
+
+    EditorResponse resp = new EditorResponse();
+    if (userId != null) {
+      if (key != null) {
+        try {
+          Config config = editors.getEditorByKey(userId, key);
+          if (config != null) {
+            if ("close".equals(command)) {
+              resp.entity(new StringBuilder("{\"closing\":\"").append(editorsUI.close(userId, config.getWorkspace(), config.getPath()))
+                                                             .append("\"}")
+                                                             .toString())
+                  .ok();
+            } else {
+              LOG.warn("Bad command for editor UI " + userId + "@" + key + " command: " + command);
+              resp.error("Bad command").status(Status.BAD_REQUEST);
+            }
+          } else {
+            resp.error("Editor not found").status(Status.NOT_FOUND);
+          }
+        } catch (BadParameterException e) {
+          LOG.warn("Bad parameter for updating editor UI " + userId + "@" + key + ". " + e.getMessage());
+          resp.error(e.getMessage()).status(Status.BAD_REQUEST);
+        } catch (OnlyofficeEditorException e) {
+          LOG.error("Error updating editor UI " + userId + "@" + key, e);
+          resp.error("Error updating editor UI. " + e.getMessage()).status(Status.INTERNAL_SERVER_ERROR);
+        } catch (Throwable e) {
+          LOG.error("Runtime error while updating editor UI " + userId + "@" + key, e);
+          resp.error("Error updating editor UI.").status(Status.INTERNAL_SERVER_ERROR);
+        }
+      } else {
+        resp.status(Status.BAD_REQUEST).error("Null or empty file key.");
+      }
+    } else {
+      LOG.warn("Error updating editor UI. User identity not provided");
       resp.error("User not provided").status(Status.BAD_REQUEST);
     }
 
