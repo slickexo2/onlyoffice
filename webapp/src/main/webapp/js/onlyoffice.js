@@ -279,6 +279,16 @@
 
 		return initRequest(request);
 	};
+	
+	var configPost = function(workspace, path) {
+		var request = $.ajax({
+			type : "POST",
+			url : prefixUrl + "/portal/rest/onlyoffice/editor/config/" + workspace + path,
+			dataType : "json"
+		});
+
+		return initRequest(request);
+	};
 
 	var stateGet = function(userId, fileKey) {
 		var request = $.ajax({
@@ -289,16 +299,35 @@
 
 		return initRequest(request);
 	};
+	
+	var editorClose = function(userId, fileKey) {
+		var request = $.ajax({
+			type : "POST",
+			url : prefixUrl + "/portal/rest/onlyoffice/editor/ui/" + userId + "/" + fileKey,
+			dataType : "json",
+			data : {
+				command : "close"
+			}
+		});
+
+		return initRequest(request);
+	};
+
 
 	/**
 	 * Editor core class.
 	 */
 	function Editor() {
 
+		// Used by init() and open()/close()
+		var loadingProcess;
+		
+		// Used by download()
 		var downloadProcess;
 
+		// Used by download() and closeUI()
 		var currentConfig;
-
+		
 		var onError = function(event) {
 			log("ONLYOFFICE Document Editor reports an error: " + JSON.stringify(event));
 			if (downloadProcess) {
@@ -319,23 +348,54 @@
 			log("documentChange: " + JSON.stringify(event));
 			if (event.data) {
 				log("ONLYOFFICE The document changed");
+				UI.documentChanged(event);
 			} else {
 				log("ONLYOFFICE Changes are collected on document editing service");
 			}
+		};
+		
+		var waitClosed = function(config) {
+			var process = $.Deferred();
+			// wait a bit (up to ~60sec) to let Onlyoffice post document status
+			var attempts = 20;
+			function checkClosed() {
+				attempts--;
+				stateGet(config.editorConfig.user.id, config.document.key).done(function(state) {
+					log("Editor state: " + JSON.stringify(state));
+					if (state.saved || state.error) {
+						process.resolve(state);
+					} else {
+						if (attempts >= 0 && (state.users.length == 0 || (state.users.length == 1 && state.users[0] == config.editorConfig.user.id))) {
+							log("Continue to wait for editor closing...");
+							setTimeout(checkClosed, 3000);
+						} else {
+							// resolve as-is, this will cover co-editing when others still edit
+							process.resolve(state);
+						}
+					}
+				}).fail(function(error) {
+					log("Editor state error: " + JSON.stringify(error));
+					process.reject(error);
+				});
+			}
+			checkClosed();
+			return process.promise();
 		};
 
 		/**
 		 * Initialize context and UI.
 		 */
 		this.init = function(nodeWorkspace, nodePath) {
-
 			// currently open node in ECMS explorer
+			// FYI we don't touch currentConfig as may contain an editor opened on the page
 			currentNode = {
 				workspace : nodeWorkspace,
 				path : nodePath
 			};
-
-			// and on-page-ready initialization of UI
+			if (loadingProcess) {
+				loadingProcess.reject("init");
+			}
+			loadingProcess = $.Deferred();
 			$(function() {
 				try {
 					UI.init();
@@ -344,8 +404,82 @@
 				}
 			});
 		};
+		
+		/**
+		 * Show existing editor.
+		 */
+		this.show = function() {
+			if (currentNode && UI.isEditorLoaded()) {			
+				var loadingTimeout = setTimeout(function() {
+					loadingProcess.resolve();				
+				}, 750);
+				loadingProcess.done(function() {
+					var closeEditor = function() {
+						setTimeout(function() {
+							UI.closeEditor();
+						}, 1500);
+					};
+					log("Loading without editor command.");
+					// This logic should work only in case of showing editor w/o Open/Close command, thus in case of closing state.
+					// Check if current document hasn't an editor already. Note that at this point we haven't called open() or close(). 
+					// Thus if no config found or already closed then we do nothing,
+					// if editor found in closing state, then keep showing loader (it's already) and wait for editor will gone
+					// (status 404) or become closed (co-editing case) - then we need load docview instead of the editor,
+					// if editor already open we call open() (this can be a case if page reloaded).
+					configGet(currentNode.workspace, currentNode.path).done(function(config) {
+						log("Found existing editor: " + JSON.stringify(config));
+						if (config.closing) {
+							log("Wait for closing editor...");
+							waitClosed(config).done(function(state) {
+								if (state.error) {
+									log("ERROR: editor in erroneous state: " + state.error);
+									UI.showError("Error closing editor", state.error);
+								} else if (state.saved || state.users.length > 0) {
+									closeEditor();
+								}
+							}).fail(function(error) {
+								log("ERROR: getting editor state failed : " + error);
+							});
+						} else if (config.closed) {
+							log("Found closed editor..."); 
+							// we get the status to find number of users for co-editing case, in case of already closed this will reopen the editor
+							waitClosed(config).done(function(state) {
+								if (state.error) {
+									log("ERROR: editor in erroneous state: " + state.error);
+									UI.showError("Error editor", state.error);
+								} else if (state.saved || state.users.length > 0) {
+									log("Automatically re-open closed editor...");
+									UI.open(config);
+								}
+							}).fail(function(error) {
+								log("ERROR: getting editor state failed : " + error);
+							});
+						} else if (config.open) {
+							log("Automatically open editor...");
+							UI.open(config);
+						}
+					}).fail(function(state, status, errorText) {
+						if (status == 404) {
+							closeEditor();
+						} else {
+							log("ERROR: getting editor config failed : " + status + ". " + state.error);
+						}
+					}).always(function(res, status) {
+						// finally do on-page-ready initialization of UI, disable editor menu if in saving or closed state
+						if (status == 200 && res.closing) {
+							UI.disableMenu();
+						}
+					});
+				}).fail(function(command) {
+					clearTimeout(loadingTimeout);
+					log("Loaded editor for '" + command + "' command.");
+				});
+			} else {
+				log("Editor UI not found or not initialized.");
+			}
+		};
 
-		this.create = function() {
+		this.create = function(config) {
 			// TODO for debug only
 			/*var testConfig_ = {
 				"width" : "100%",
@@ -392,90 +526,110 @@
 				"events" : {}
 			};*/
 
-			currentConfig = null;
 			var process = $.Deferred();
 			if (currentNode) {
-				if (currentConfig) {
+				// request config
+				var configReady = $.Deferred();
+				if (config) {
+					configReady.resolve(config);
+				} else {
+					var attempts = 10;
+					function createConfig() {
+						attempts--;
+						if (attempts >= 0) {
+							configPost(currentNode.workspace, currentNode.path).done(function(config) {
+								if (config.closing) {
+									// FYI This should not happen as in init() we use waitClosed() and in UI.init() we disable Edit/Close menu for 
+									// already closing editor. But this may happen if call this method directly - thus we do the below check.
+									// Wait for previous edit session completion (actual if in open editor switch to Version or Doc Properties,
+									// this will close the editor and in seconds the DS will put the state, then if start editing again quicker of the DS
+									// we need wait for downloading of the previous edition and only then use it for a new editor session.
+									setTimeout(createConfig, 2250);
+								} else {
+									configReady.resolve(config);							
+								}
+							}).fail(function(state, status, errorText) {
+								log("ERROR: editor config request failed : " + status + ". " + state.error);
+								configReady.reject(state.error);
+							});
+						} else {
+							log("ERROR: ONLYOFFICE configuration load timeout");
+							process.reject("ONLYOFFICE configuration load timeout. Reload the page and try again please.");
+						}
+					}
+					createConfig();
+				}
+				
+				configReady.done(function(config) {
+					log("ONLYOFFICE editor config: " + JSON.stringify(config));
+					
+					// customize Onlyoffice JS config
+					config.type = "desktop";
+					config.height = "100%";
+					config.width = "100%";
+					config.embedded = {
+						fullscreenUrl : config.document.url,
+						saveUrl : config.document.url,
+						embedUrl : config.document.url,
+						shareUrl : config.document.url,
+						toolbarDocked : "top"
+					};
+					config.events = {
+						"onDocumentStateChange" : onDocumentStateChange,
+						"onError" : onError,
+						"onReady" : onReady,
+						"onBack" : onBack
+					};
+
+					currentConfig = config;
+
+					// XXX need let Onlyoffice to know about a host of API end-points,
+					// as we will add their script dynamically to the DOM, the script will not be able to detect an URL
+					// thus we use "extensionParams" observed in the script code
+					if ("undefined" == typeof (extensionParams) || null == extensionParams) {
+						extensionParams = {};
+					}
+					if ("undefined" == typeof (extensionParams.url) || null == extensionParams.url) {
+						extensionParams.url = config.documentserverUrl;
+					}
+
 					// create new deferred for future download
 					downloadProcess = $.Deferred();
-					process.resolve(currentConfig);
-				} else {
-					// request config
-					var get = configGet(currentNode.workspace, currentNode.path);
-					get.done(function(config) {
-						log("Editor config successfully requested.");
-						// customize Onlyoffice JS config
-						config.type = "desktop";
-						config.height = "100%";
-						config.width = "100%";
-						config.embedded = {
-							fullscreenUrl : config.document.url,
-							saveUrl : config.document.url,
-							embedUrl : config.document.url,
-							shareUrl : config.document.url,
-							toolbarDocked : "top"
-						};
-						config.events = {
-							"onDocumentStateChange" : onDocumentStateChange,
-							"onError" : onError,
-							"onReady" : onReady,
-							"onBack" : onBack
-						};
 
-						currentConfig = config;
+					// load Onlyoffice API script
+					// XXX need load API script to DOM head, Onlyoffice needs a real element in <script> to detect the DS server URL
+					$("<script>").attr("type", "text/javascript").attr("src", config.documentserverJsUrl).appendTo("head");
 
-						log("ONLYOFFICE editor config: " + JSON.stringify(currentConfig));
+					// and wait until it will be loaded
+					function jsReady() {
+						return ( typeof DocsAPI !== "undefined") && ( typeof DocsAPI.DocEditor !== "undefined");
+					}
 
-						// XXX need let Onlyoffice to know about a host of API end-points,
-						// as we will add their script dynamically to the DOM, the script will not be able to detect an URL
-						// thus we use "extensionParams" observed in the script code
-						if ("undefined" == typeof (extensionParams) || null == extensionParams) {
-							extensionParams = {};
-						}
-						if ("undefined" == typeof (extensionParams.url) || null == extensionParams.url) {
-							extensionParams.url = config.documentserverUrl;
-						}
-
-						// create new deferred for future download
-						downloadProcess = $.Deferred();
-
-						// load Onlyoffice API script
-						// XXX need load API script to DOM head, Onlyoffice needs a real element in <script> to detect the DS server URL
-						$("<script>").attr("type", "text/javascript").attr("src", config.documentserverJsUrl).appendTo("head");
-
-						// and wait until it will be loaded
-						function jsReady() {
-							return ( typeof DocsAPI !== "undefined") && ( typeof DocsAPI.DocEditor !== "undefined");
-						}
-
-						var attempts = 40;
-						function waitReady() {
-							attempts--;
-							if (attempts >= 0) {
-								setTimeout(function() {
-									if (jsReady()) {
-										process.resolve(config);
-									} else {
-										waitReady();
-									}
-								}, 750);
-							} else {
-								log("ERROR: ONLYOFFICE script load timeout: " + config.documentserverJsUrl);
-								process.reject("ONLYOFFICE script load timeout. Ensure Document Server is running and accessible.");
-							}
-						}
-
-						if (jsReady()) {
-							process.resolve(config);
+					var attempts = 40;
+					function waitReady() {
+						attempts--;
+						if (attempts >= 0) {
+							setTimeout(function() {
+								if (jsReady()) {
+									process.resolve(config);
+								} else {
+									waitReady();
+								}
+							}, 750);
 						} else {
-							waitReady();
+							log("ERROR: ONLYOFFICE script load timeout: " + config.documentserverJsUrl);
+							process.reject("ONLYOFFICE script load timeout. Ensure Document Server is running and accessible.");
 						}
-					});
-					get.fail(function(state, status, errorText) {
-						log("ERROR: editor config request failed : " + status + ". " + state.error);
-						process.reject(state.error);
-					});
-				}
+					}
+
+					if (jsReady()) {
+						process.resolve(config);
+					} else {
+						waitReady();
+					}
+				}).fail(function(error) {
+					process.reject(error);
+				});
 			} else {
 				log("ERROR: current node not initialized");
 				process.reject("Current node not initialized");
@@ -486,31 +640,11 @@
 		this.download = function() {
 			if (downloadProcess) {
 				if (currentConfig && downloadProcess.state() === "pending") {
-					// wait a bit (up to ~60sec) to let Onlyoffice post document status
-					var attempts = 20;
-					function checkSaved() {
-						attempts--;
-						var get = stateGet(currentConfig.editorConfig.user.id, currentConfig.document.key);
-						get.done(function(state) {
-							if (state.saved || state.error) {
-								downloadProcess.resolve(state);
-							} else {
-								if (attempts >= 0 && state.users && state.users.length == 1 && state.users[0] == currentConfig.editorConfig.user.id) {
-									setTimeout(function() {
-										checkSaved();
-									}, 3000);
-								} else {
-									// resolve as-is, this will cover co-editing when others still edit
-									downloadProcess.resolve(state);
-								}
-							}
-						});
-						get.fail(function(error) {
-							downloadProcess.reject(error);
-						});
-					}
-
-					checkSaved();
+					waitClosed(currentConfig).done(function(state) {
+						downloadProcess.resolve(state);
+					}).fail(function(error) {
+						downloadProcess.reject(error);
+					});
 				}
 				return downloadProcess.promise();
 			} else {
@@ -525,6 +659,9 @@
 		 */
 		this.open = function() {
 			if (currentNode) {
+				if (loadingProcess) {
+					loadingProcess.reject("open");					
+				}
 				UI.open();
 			} else {
 				log("Current node not set");
@@ -536,9 +673,29 @@
 		 */
 		this.close = function() {
 			if (currentNode) {
+				if (loadingProcess) {
+					loadingProcess.reject("close");					
+				}
 				UI.close();
 			} else {
 				log("Current node not set");
+			}
+		};
+		
+		/**
+		 * Close WebUI editor (for proper menu state, when user clicked non-Onlyoffice item).
+		 */
+		this.closeUI = function() {
+			if (currentConfig) {
+				editorClose(currentConfig.editorConfig.user.id, currentConfig.document.key).done(function(res) {
+					if (res.closing) {
+						log("Editor UI closed successfully");
+					} 
+				}).fail(function(error) {
+					log("Error closing editor UI: " + JSON.stringify(error));
+				});
+			} else {
+				log("Current config not set to close UI");
 			}
 		};
 
@@ -555,19 +712,42 @@
 
 		var docEditor;
 
-		var refresh = function() {
-			// refresh view w/o popup
-			$("#ECMContextMenu a[exo\\:attr='RefreshView'] i").click();
-		};
+		var hasDocumentChanged = false;
 
 		var initAction = function() {
+			var init = false;
 			var $actionOpenIcon = $("#uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen");
 			if (!$actionOpenIcon.hasClass("uiIconEdit")) {
 				$actionOpenIcon.addClass("uiIconEdit");
+				init = true;
 			}
 			var $actionCloseIcon = $("#uiActionsBarContainer i.uiIconEcmsOnlyofficeClose");
-			if (!$actionCloseIcon.hasClass("uiIconClose")) {
-				$actionCloseIcon.addClass("uiIconSave"); // uiIconClose
+			if (!$actionCloseIcon.hasClass("uiIconSave")) { // was uiIconClose
+				$actionCloseIcon.addClass("uiIconSave");
+				init = true;
+			}
+			
+			// May 25, 2018: if click Version or Edit Properties, we need close the editor at WebUI side
+			if (init) {
+				var $implicitCloseActions = $("#uiActionsBarContainer").find("i.uiIconEcmsManageVersions, i.uiIconEcmsEditProperty").parent("a.actionIcon").parent("li");
+				$implicitCloseActions.click(function() {
+					saveAndDestroy();
+					editor.closeUI();
+					UI.showInfo("You leaved document editor", "Document will be saved when all users close it.");
+				});				
+			}
+		};
+		
+		var saveAndDestroy = function() {
+			if (docEditor) {
+				try {
+					docEditor.processSaveResult(true);
+					docEditor.destroyEditor();	
+				} catch(e) {
+					log("Error saving and destroying ONLYOFFICE editor", e);
+				} finally {
+					docEditor = null;					
+				}				
 			}
 		};
 
@@ -578,10 +758,34 @@
 			// init action bar menu
 			initAction();
 		};
+		
+		this.isEditorLoaded = function() {
+			return $("#UIDocumentWorkspace .fileContent .onlyofficeContainer").length > 0;
+		};
+		
+		this.closeEditor = function() {
+			saveAndDestroy();
+			// Use Close menu to reload the view with right representation
+			$("#UIDocumentWorkspace .fileContent .onlyofficeContainer .loading .onClose").click();
+		};
+		
+		this.disableMenu = function() {
+			$("#uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen").parent().addClass("editorDisabled").parent().removeAttr("onclick");
+			$("#uiActionsBarContainer i.uiIconEcmsOnlyofficeClose").parent().addClass("editorDisabled").parent().removeAttr("onclick");
+		};
+		
+		this.documentChanged = function(event) {
+			// TODO Can be used for UI messages.
+			hasDocumentChanged = true;
+		};
 
-		this.open = function() {
+		this.open = function(existingConfig) {
 			var $fileContent = $("#UIDocumentWorkspace .fileContent");
+<<<<<<< HEAD
 			if ($fileContent.length > 0) {
+=======
+			if ($fileContent.length > 0 && !docEditor) {
+>>>>>>> stable/1.1.x
 				var $title = $fileContent.find(".title");
 				if ($title.length > 0) {
 					// TODO add full-screen button to the title
@@ -591,16 +795,15 @@
 				var $container = $fileContent.find(".onlyofficeContainer");
 				
 				// create and start editor
-				var create = editor.create();
-				create.done(function(config) {
-					docEditor = new DocsAPI.DocEditor("onlyoffice", config);
+				editor.create(existingConfig).done(function(localConfig) {
+					docEditor = new DocsAPI.DocEditor("onlyoffice", localConfig);
+					hasDocumentChanged = false;
 					// show editor
 					var $editor = $container.find(".editor");
 					var $loading = $container.find(".loading");
 					$loading.hide("blind");
 					$editor.show("blind");
-				});
-				create.fail(function(error) {
+				}).fail(function(error) {
 					UI.showError("Error creating editor", error);
 					$container.find(".loading>.onError").click();
 				});
@@ -609,16 +812,16 @@
 
 		this.close = function() {
 			var $fileContent = $("#UIDocumentWorkspace .fileContent");
+<<<<<<< HEAD
 			if ($fileContent.length > 0) {
+=======
+			if ($fileContent.length > 0 && docEditor) {
+>>>>>>> stable/1.1.x
 				// show loading while download the document - it is already added by WebUI side
 				var $container = $fileContent.find(".onlyofficeContainer");
-				
-				// TODO seems this not required
-				if (docEditor) {
-					docEditor.processSaveResult(true);
-					docEditor = null;
-				}
 
+				saveAndDestroy();
+				
 				var $editor = $container.find(".editor");
 				var $loading = $container.find(".loading");
 				// remove Onlyoffice iframe - this will let Onlyoffice to know the editing is done
@@ -628,37 +831,34 @@
 				$loading.show("blind");
 
 				// save the doc and switch to viewer
-				var download = editor.download();
-				download.done(function(state) {
+				editor.download().done(function(state) {
 					if (state.error) {
 						UI.showError("Document not saved", state.error);
 						// need show editor back: we need add part of DOM here as Onlyoffice JS clean it when creating the editor
 						$editor.append($("<div id='onlyoffice'></div>"));
-						var create = editor.create();
-						create.done(function(config) {
+						editor.create().done(function(config) {
 							docEditor = new DocsAPI.DocEditor("onlyoffice", config);
+							hasDocumentChanged = false;
 							$loading.hide("blind", {
 								"direction" : "down"
 							});
 							$editor.show("blind", {
 								"direction" : "down"
 							});
-						});
-						create.fail(function(error) {
+						}).fail(function(error) {
 							UI.showError("Error creating editor", error);
 							$loading.find(".onError").click();
 						});
 					} else {
 						if (!state.saved) {
-							if (state.users && state.users.length > 0) {
-								UI.showInfo("Document in use by others", "Document will be saved when all users will close it.");
+							if (state.users.length > 0) {
+								UI.showInfo("Document in use by others", "Document will be saved when all users close it.");
 							}
 						}
 						// this will refresh the file view and action bar
 						$loading.find(".onClose").click();
 					}
-				});
-				download.fail(function(error) {
+				}).fail(function(error) {
 					log(JSON.stringify(error));
 					UI.showError("Download error", error.data.errorDescription);
 				});

@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2003-2016 eXo Platform SAS.
+ * Copyright (C) 2003-2018 eXo Platform SAS.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -83,8 +83,6 @@ public class OnlyofficeEditor extends UIForm {
       // places to call closed and reset respectively.
       OnlyofficeEditorUIService editorsUI = WCMCoreUtils.getService(OnlyofficeEditorUIService.class);
       editorsUI.closed(context.getRemoteUser(), workspace, path);
-
-      OnlyofficeEditorContext.init(context, workspace, path);
     }
   }
 
@@ -106,8 +104,6 @@ public class OnlyofficeEditor extends UIForm {
 
       OnlyofficeEditorUIService editorsUI = WCMCoreUtils.getService(OnlyofficeEditorUIService.class);
       editorsUI.reset(context.getRemoteUser(), workspace, path);
-
-      OnlyofficeEditorContext.init(context, workspace, path);
     }
   }
 
@@ -138,4 +134,22 @@ public class OnlyofficeEditor extends UIForm {
     }
     return id;
   }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void processRender(WebuiRequestContext context) throws Exception {
+    UIJCRExplorer explorer = context.getUIApplication().findFirstComponentOfType(UIJCRExplorer.class);
+    if (explorer != null) {
+      String workspace = explorer.getCurrentWorkspace();
+      String path = explorer.getCurrentNode().getPath();
+
+      // Init and show, note that init may be already done by Open/Close UI components
+      OnlyofficeEditorContext.init(context, workspace, path);
+      OnlyofficeEditorContext.show(context);
+    }
+    super.processRender(context);
+  }
+
 }

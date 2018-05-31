@@ -50,6 +50,11 @@
 		right center !important; /* orientation=rt */
 }
 
+/***** Disabled styles *******/
+
+.editorDisabled {
+	opacity: .6
+}
 
 /******** Pnotify icons ********/
 .picon-32.picon-task-complete {

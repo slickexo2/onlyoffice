@@ -19,60 +19,49 @@
  */
 package org.exoplatform.onlyoffice.webui;
 
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-
+import org.exoplatform.ecm.webui.component.explorer.UIDocumentContainer;
+import org.exoplatform.ecm.webui.component.explorer.UIWorkingArea;
 import org.exoplatform.onlyoffice.OnlyofficeEditorException;
-import org.exoplatform.services.wcm.utils.WCMCoreUtils;
 import org.exoplatform.webui.core.UIContainer;
 import org.exoplatform.webui.ext.filter.UIExtensionFilterType;
 
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+
 /**
+ * Allow extension only in file view mode of JCR explorer.
+ * 
  * Created by The eXo Platform SAS.
  *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
- * @version $Id: IsNotEditingOnlyofficeFilter.java 00000 Mar 1, 2016 pnedonosko $
+ * @version $Id: FileViewFilter.java 00000 May 23, 2018 pnedonosko $
  */
-public class CanShowOnlyofficeFilter extends AbstractOnlyofficeFilter {
+public class FileViewFilter extends AbstractOnlyofficeFilter {
 
   /**
-   * Instantiates a new can show onlyoffice filter.
+   * Instantiates a new file view filter.
    */
-  public CanShowOnlyofficeFilter() {
+  public FileViewFilter() {
+    super();
   }
 
   /**
-   * Instantiates a new can show onlyoffice filter.
-   *
-   * @param forceNotEditing the force not editing
-   */
-  public CanShowOnlyofficeFilter(boolean forceNotEditing) {
-  }
-
-  /**
-   * Instantiates a new can show onlyoffice filter.
-   *
-   * @param messageKey the message key
-   */
-  public CanShowOnlyofficeFilter(String messageKey) {
-    super(messageKey);
-  }
-
-  /**
-   * Instantiates a new can show onlyoffice filter.
+   * Instantiates a new file view filter.
    *
    * @param messageKey the message key
    * @param type the type
    */
-  public CanShowOnlyofficeFilter(String messageKey, UIExtensionFilterType type) {
+  public FileViewFilter(String messageKey, UIExtensionFilterType type) {
     super(messageKey, type);
   }
 
   /**
-   * {@inheritDoc}
+   * Instantiates a new file view filter.
+   *
+   * @param messageKey the message key
    */
-  public UIExtensionFilterType getType() {
-    return UIExtensionFilterType.MANDATORY;
+  public FileViewFilter(String messageKey) {
+    super(messageKey);
   }
 
   /**
@@ -80,7 +69,17 @@ public class CanShowOnlyofficeFilter extends AbstractOnlyofficeFilter {
    */
   @Override
   protected boolean accept(String userId, Node node, UIContainer container) throws RepositoryException, OnlyofficeEditorException {
-    OnlyofficeEditorUIService editorsUI = WCMCoreUtils.getService(OnlyofficeEditorUIService.class);
-    return editorsUI.canShow(userId, node.getSession().getWorkspace().getName(), node.getPath());
+    boolean acceptView = false;
+    if (container != null) {
+      // This logic assumes UIJCRExplorer as container
+      UIWorkingArea uiWorkingArea = container.getChild(UIWorkingArea.class);
+      if (uiWorkingArea != null) {
+        UIDocumentContainer uiDocumentContainer = uiWorkingArea.findFirstComponentOfType(UIDocumentContainer.class);
+        if (uiDocumentContainer != null && uiDocumentContainer.isRendered()) {
+          acceptView = true;
+        }
+      }
+    }
+    return acceptView;
   }
 }

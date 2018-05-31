@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2003-2016 eXo Platform SAS.
+ * Copyright (C) 2003-2018 eXo Platform SAS.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -19,6 +19,7 @@
  */
 package org.exoplatform.onlyoffice.webui;
 
+import org.exoplatform.commons.utils.MimeTypeResolver;
 import org.exoplatform.ecm.webui.component.explorer.UIJCRExplorer;
 import org.exoplatform.ecm.webui.component.explorer.UIJcrExplorerContainer;
 import org.exoplatform.ecm.webui.utils.Utils;
@@ -51,11 +52,7 @@ public class FileFilter extends org.exoplatform.webui.ext.filter.impl.FileFilter
     if (context == null) {
       return true;
     }
-    
-    if (mimeTypes == null || mimeTypes.isEmpty()) {
-      return true;
-    }
-    
+
     Node contextNode = (Node) context.get(Node.class.getName());
     if (contextNode == null) {
       UIJCRExplorer uiExplorer = (UIJCRExplorer) context.get(UIJCRExplorer.class.getName());
@@ -71,14 +68,24 @@ public class FileFilter extends org.exoplatform.webui.ext.filter.impl.FileFilter
           contextNode = jcrExplorer.getCurrentNode();
         }
       }
+      context.put(Node.class.getName(), contextNode);
     }
 
-    if (contextNode != null && contextNode.isNodeType(Utils.NT_FILE)) {
-      String mimeType = contextNode.getNode(Utils.JCR_CONTENT).getProperty(Utils.JCR_MIMETYPE).getString();
+    String mimeType = (String) context.get(Utils.MIME_TYPE);
+    if (mimeType == null) {
+      if (contextNode != null) {
+        if (contextNode.isNodeType(Utils.NT_FILE)) {
+          mimeType = contextNode.getNode(Utils.JCR_CONTENT).getProperty(Utils.JCR_MIMETYPE).getString();
+        } else {
+          mimeType = new MimeTypeResolver().getMimeType(contextNode.getName());
+        }
+      } else {
+        mimeType = new MimeTypeResolver().getDefaultMimeType();
+      }
       context.put(Utils.MIME_TYPE, mimeType);
-      return super.accept(context);
     }
-    return false;
+
+    return super.accept(context);
   }
 
 }

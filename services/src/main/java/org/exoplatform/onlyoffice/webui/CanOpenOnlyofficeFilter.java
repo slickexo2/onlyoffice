@@ -1,6 +1,6 @@
 
 /*
- * Copyright (C) 2003-2016 eXo Platform SAS.
+ * Copyright (C) 2003-2018 eXo Platform SAS.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -24,15 +24,16 @@ import javax.jcr.RepositoryException;
 
 import org.exoplatform.onlyoffice.OnlyofficeEditorException;
 import org.exoplatform.services.wcm.utils.WCMCoreUtils;
+import org.exoplatform.webui.core.UIContainer;
 import org.exoplatform.webui.ext.filter.UIExtensionFilterType;
 
 /**
  * Created by The eXo Platform SAS.
  *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
- * @version $Id: IsNotEditingOnlyofficeFilter.java 00000 Mar 1, 2016 pnedonosko $
+ * @version $Id: CanOpenOnlyofficeFilter.java 00000 Mar 1, 2016 pnedonosko $
  */
-public class CanOpenOnlyofficeFilter extends AbstractOnlyofficeFilter {
+public class CanOpenOnlyofficeFilter extends FileViewFilter {
 
   /**
    * Instantiates a new can open onlyoffice filter.
@@ -78,8 +79,8 @@ public class CanOpenOnlyofficeFilter extends AbstractOnlyofficeFilter {
    * {@inheritDoc}
    */
   @Override
-  protected boolean accept(String userId, Node node) throws RepositoryException, OnlyofficeEditorException {
+  protected boolean accept(String userId, Node node, UIContainer container) throws RepositoryException, OnlyofficeEditorException {
     OnlyofficeEditorUIService editorsUI = WCMCoreUtils.getService(OnlyofficeEditorUIService.class);
-    return editorsUI.canOpen(userId, node.getSession().getWorkspace().getName(), node.getPath());
+    return super.accept(userId, node, container) && editorsUI.canOpen(userId, node.getSession().getWorkspace().getName(), node.getPath());
   }
 }

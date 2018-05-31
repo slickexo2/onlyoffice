@@ -18,6 +18,8 @@
  */
 package org.exoplatform.onlyoffice;
 
+import org.exoplatform.onlyoffice.webui.OnlyofficeEditorUIService;
+
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -40,12 +42,12 @@ public class Config implements Externalizable {
 
   /** The Constant DATETIME_FORMAT. */
   protected static final SimpleDateFormat DATETIME_FORMAT = new SimpleDateFormat("MM/dd/yyyy");
-  
+
   /** The Constant NO_LANG. */
-  protected static final String NO_LANG = "no_lang".intern();
-  
+  protected static final String           NO_LANG         = "no_lang".intern();
+
   /** The Constant EMPTY. */
-  protected static final String EMPTY = "".intern();
+  protected static final String           EMPTY           = "".intern();
 
   /**
    * The Class Builder.
@@ -766,7 +768,13 @@ public class Config implements Externalizable {
    * closed. When editor will be open in Onlyoffice it will send a status (1) and then need mark the editor
    * open.
    */
-  protected Boolean      open;
+  private Boolean        open;
+
+  /**
+   * Marker for transient state between an UI closed in eXo and actually saved data submitted from Onlyoffice
+   * DS. This state managed by {@link OnlyofficeEditorUIService} and set here for client information only.
+   */
+  private Boolean        closing;
 
   /**
    * Instantiates a new config for use with {@link Externalizable} methods.
@@ -818,6 +826,7 @@ public class Config implements Externalizable {
     out.writeUTF(documentserverJsUrl);
     out.writeUTF(platformUrl);
     out.writeUTF(open != null ? open.toString() : EMPTY);
+    // Note: closing state isn't replicable
     out.writeUTF(error != null ? error : EMPTY);
 
     // Objects
@@ -853,10 +862,13 @@ public class Config implements Externalizable {
     this.documentserverJsUrl = in.readUTF();
     this.platformUrl = in.readUTF();
     String openString = in.readUTF();
+    // Note: closing state isn't replicable (due to short lifecycle, few seconds max and it's valuable
+    // per-user session only, but in cluster with sticky sessions an user will not call another server).
     if (EMPTY.equals(openString)) {
-      open = null;
+      open = closing = null;
     } else {
       open = Boolean.valueOf(openString);
+      closing = new Boolean(false);
     }
     String errorString = in.readUTF();
     if (EMPTY.equals(errorString)) {
@@ -1001,7 +1013,7 @@ public class Config implements Externalizable {
   }
 
   /**
-   * Checks if is open.
+   * Checks if is editor open.
    *
    * @return true, if is open
    */
@@ -1010,26 +1022,51 @@ public class Config implements Externalizable {
   }
 
   /**
-   * Checks if is closed.
+   * Checks if is editor closed (including closing state).
    *
-   * @return true, if is closed
+   * @return true, if is in closed or closing state
    */
   public boolean isClosed() {
     return open != null ? !open.booleanValue() : false;
   }
 
   /**
-   * Mark this this config as open: user opened this editor.
+   * Checks if is editor currently closing (saving the document). A closing state is a sub-form of closed
+   * state.
+   *
+   * @return true of document in closing (saving) state
    */
-  public void open() {
-    this.open = new Boolean(true);
+  public boolean isClosing() {
+    return closing != null ? closing.booleanValue() : false;
   }
 
   /**
-   * Mark this this config as closed: user already closed this editor.
+   * Mark this config as open: user opened this editor.
    */
-  public void close() {
+  public void open() {
+    this.open = new Boolean(true);
+    this.closing = new Boolean(false);
+  }
+
+  /**
+   * Mark this config as closing: user already closed this editor but document not yet saved in the storage.
+   * This state is actual for last user who will save the document submitted by the DS. Note that only already
+   * open editor can be set to closing state, otherwise this method will have not effect.
+   */
+  public void closing() {
+    if (open != null && open.booleanValue()) {
+      this.open = new Boolean(false);
+      this.closing = new Boolean(true);
+    }
+  }
+
+  /**
+   * Mark this config as closed: the editor closed, if it was last user in the editor, then its document
+   * should be saved in the storage.
+   */
+  public void closed() {
     this.open = new Boolean(false);
+    this.closing = new Boolean(false);
   }
 
   /**
@@ -1084,8 +1121,8 @@ public class Config implements Externalizable {
     s.append(path);
     if (open != null) {
       s.append(" (");
-      s.append(open.booleanValue() ? "open" : "closed");
-      s.append(')');  
+      s.append(open.booleanValue() ? "open" : (closing.booleanValue() ? "closing" : "closed"));
+      s.append(')');
     }
     return s.toString();
   }
