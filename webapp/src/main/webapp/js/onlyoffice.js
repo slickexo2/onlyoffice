@@ -781,11 +781,7 @@
 
 		this.open = function(existingConfig) {
 			var $fileContent = $("#UIDocumentWorkspace .fileContent");
-<<<<<<< HEAD
-			if ($fileContent.length > 0) {
-=======
 			if ($fileContent.length > 0 && !docEditor) {
->>>>>>> stable/1.1.x
 				var $title = $fileContent.find(".title");
 				if ($title.length > 0) {
 					// TODO add full-screen button to the title
@@ -812,11 +808,7 @@
 
 		this.close = function() {
 			var $fileContent = $("#UIDocumentWorkspace .fileContent");
-<<<<<<< HEAD
-			if ($fileContent.length > 0) {
-=======
 			if ($fileContent.length > 0 && docEditor) {
->>>>>>> stable/1.1.x
 				// show loading while download the document - it is already added by WebUI side
 				var $container = $fileContent.find(".onlyofficeContainer");
 
