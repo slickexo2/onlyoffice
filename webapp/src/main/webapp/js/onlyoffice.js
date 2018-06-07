@@ -717,12 +717,11 @@
 		var initAction = function() {
 			var init = false;
 			var $actionOpenIcon = $("#uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen");
-			if (!$actionOpenIcon.hasClass("uiIconEdit")) {
+			if ($actionOpenIcon.length > 0 && !$actionOpenIcon.hasClass("uiIconEdit")) {
 				$actionOpenIcon.addClass("uiIconEdit");
-				init = true;
 			}
 			var $actionCloseIcon = $("#uiActionsBarContainer i.uiIconEcmsOnlyofficeClose");
-			if (!$actionCloseIcon.hasClass("uiIconSave")) { // was uiIconClose
+			if ($actionCloseIcon.length > 0 && !$actionCloseIcon.hasClass("uiIconSave")) { // was uiIconClose
 				$actionCloseIcon.addClass("uiIconSave");
 				init = true;
 			}
@@ -731,9 +730,15 @@
 			if (init) {
 				var $implicitCloseActions = $("#uiActionsBarContainer").find("i.uiIconEcmsManageVersions, i.uiIconEcmsEditProperty").parent("a.actionIcon").parent("li");
 				$implicitCloseActions.click(function() {
-					saveAndDestroy();
-					editor.closeUI();
-					UI.showInfo("You leaved document editor", "Document will be saved when all users close it.");
+					var showLeavedInfo = hasDocumentChanged;
+					try {
+						saveAndDestroy();
+						editor.closeUI();
+					} finally {
+						if (showLeavedInfo) {
+							UI.showInfo("You leaved document editor", "Document will be saved when all users close it.");
+						}
+					}
 				});				
 			}
 		};
@@ -742,7 +747,7 @@
 			if (docEditor) {
 				try {
 					docEditor.processSaveResult(true);
-					docEditor.destroyEditor();	
+					docEditor.destroyEditor();
 				} catch(e) {
 					log("Error saving and destroying ONLYOFFICE editor", e);
 				} finally {
@@ -775,7 +780,7 @@
 		};
 		
 		this.documentChanged = function(event) {
-			// TODO Can be used for UI messages.
+			// Used for UI messages.
 			hasDocumentChanged = true;
 		};
 
