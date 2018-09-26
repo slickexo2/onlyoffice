@@ -9,7 +9,7 @@
      <dependencySet>
        <outputDirectory>webapps</outputDirectory>
        <includes>
-         <include>org.exoplatform.addons:exo-onlyoffice-editor-webapp:war</include>
+         <include>org.exoplatform.addons.onlyoffice:exo-onlyoffice-editor-webapp:war</include>
        </includes>
        <outputFileNameMapping>onlyoffice.war</outputFileNameMapping>
        <scope>provided</scope>
@@ -20,7 +20,7 @@
        <outputDirectory>lib</outputDirectory>
        <useTransitiveDependencies>true</useTransitiveDependencies>
        <includes>
-         <include>org.exoplatform.addons:exo-onlyoffice-editor-*:jar</include>
+         <include>org.exoplatform.addons.onlyoffice:exo-onlyoffice-editor-*:jar</include>
        </includes>
        <scope>provided</scope>
        <fileMode>0644</fileMode>
