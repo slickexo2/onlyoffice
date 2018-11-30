@@ -24,6 +24,7 @@ import java.util.List;
 import org.exoplatform.ecm.webui.component.explorer.UIDocumentWorkspace;
 import org.exoplatform.ecm.webui.component.explorer.UIJCRExplorer;
 import org.exoplatform.ecm.webui.component.explorer.control.UIActionBar;
+import org.exoplatform.ecm.webui.component.explorer.control.filter.CanEditDocFilter;
 import org.exoplatform.ecm.webui.component.explorer.control.listener.UIActionBarActionListener;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
