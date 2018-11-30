@@ -53,6 +53,7 @@ public class OnlyofficeCloseManageComponent extends AbstractOnlyofficeManageComp
   /** The Constant FILTERS. */
   private static final List<UIExtensionFilter> FILTERS = Arrays.asList(new UIExtensionFilter[] {
       // TODO new IsNotLockedFilter()
+      new CanEditDocFilter(),
       new CanCloseOnlyofficeFilter() });
 
   /**

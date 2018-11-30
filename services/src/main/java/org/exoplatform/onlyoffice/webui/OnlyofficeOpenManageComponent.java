@@ -54,6 +54,7 @@ public class OnlyofficeOpenManageComponent extends AbstractOnlyofficeManageCompo
   /** The Constant FILTERS. */
   private static final List<UIExtensionFilter> FILTERS = Arrays.asList(new UIExtensionFilter[] {
       // new IsNotLockedFilter() // TODO should we care?
+      new CanEditDocFilter(),
       new CanOpenOnlyofficeFilter() });
 
   /**
