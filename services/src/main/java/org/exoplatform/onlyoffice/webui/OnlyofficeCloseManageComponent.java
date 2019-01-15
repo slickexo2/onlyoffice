@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.exoplatform.ecm.webui.component.explorer.UIJCRExplorer;
 import org.exoplatform.ecm.webui.component.explorer.control.UIActionBar;
+import org.exoplatform.ecm.webui.component.explorer.control.filter.CanEditDocFilter;
 import org.exoplatform.ecm.webui.component.explorer.control.listener.UIActionBarActionListener;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -53,6 +54,7 @@ public class OnlyofficeCloseManageComponent extends AbstractOnlyofficeManageComp
   /** The Constant FILTERS. */
   private static final List<UIExtensionFilter> FILTERS = Arrays.asList(new UIExtensionFilter[] {
       // TODO new IsNotLockedFilter()
+      new CanEditDocFilter(),
       new CanCloseOnlyofficeFilter() });
 
   /**
