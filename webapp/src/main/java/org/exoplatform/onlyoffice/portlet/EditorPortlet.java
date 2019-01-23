@@ -42,13 +42,20 @@ import org.exoplatform.web.application.RequireJS;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.ws.frameworks.json.impl.JsonException;
 
+/**
+ * The Class EditorPortlet.
+ */
 public class EditorPortlet extends GenericPortlet {
 
   /** The Constant LOG. */
   private static final Log        LOG = ExoLogger.getLogger(EditorPortlet.class);
 
+  /** The onlyoffice. */
   private OnlyofficeEditorService onlyoffice;
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void init() throws PortletException {
     super.init();
@@ -56,6 +63,14 @@ public class EditorPortlet extends GenericPortlet {
     this.onlyoffice = container.getComponentInstanceOfType(OnlyofficeEditorService.class);
   }
 
+  /**
+   * View.
+   *
+   * @param request the request
+   * @param response the response
+   * @throws IOException Signals that an I/O exception has occurred.
+   * @throws PortletException the portlet exception
+   */
   @RenderMode(name = "view")
   public void view(RenderRequest request, RenderResponse response) throws IOException, PortletException {
     RequestContext rqContext = WebuiRequestContext.getCurrentInstance();

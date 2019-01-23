@@ -151,6 +151,7 @@ public class EditorService implements ResourceContainer {
   /** The editors. */
   protected final OnlyofficeEditorService   editors;
 
+  /** The editors UI. */
   protected final OnlyofficeEditorUIService editorsUI;
 
   /** The initiated. */
@@ -160,7 +161,6 @@ public class EditorService implements ResourceContainer {
    * REST cloudDrives uses {@link OnlyofficeEditorService} for actual job.
    *
    * @param editors the editors
-   * @param editorsUI the editors UI
    */
   public EditorService(OnlyofficeEditorService editors) {
     this.editors = editors;
@@ -464,6 +464,15 @@ public class EditorService implements ResourceContainer {
     return resp.build();
   }
 
+  /**
+   * Inits the document.
+   *
+   * @param uriInfo the uri info
+   * @param request the request
+   * @param workspace the workspace
+   * @param path the path
+   * @return the response
+   */
   @POST
   @Path("/document/{workspace}/{path:.*}")
   @RolesAllowed("users")

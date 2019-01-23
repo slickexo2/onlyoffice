@@ -66,6 +66,7 @@ public class OnlyofficeCloseManageComponent extends AbstractOnlyofficeManageComp
    * component's <code>addOnlyofficeCloseActionListener</code> method. When
    * the onlyofficeCloseAction event occurs, that object's appropriate
    * method is invoked.
+   *
    */
   public static class OnlyofficeCloseActionListener extends UIActionBarActionListener<OnlyofficeCloseManageComponent> {
 

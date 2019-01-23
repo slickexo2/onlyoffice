@@ -67,6 +67,7 @@ public class OnlyofficeOpenManageComponent extends AbstractOnlyofficeManageCompo
    * <code>addOnlyofficeOpenActionListener</code> method. When the
    * onlyofficeOpenAction event occurs, that object's appropriate method is
    * invoked.
+   *
    */
   public static class OnlyofficeOpenActionListener extends UIActionBarActionListener<OnlyofficeOpenManageComponent> {
 

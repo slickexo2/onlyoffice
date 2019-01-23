@@ -1595,6 +1595,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     return str.toUpperCase().toLowerCase();
   }
 
+  /**
+   * Editor URL path.
+   *
+   * @param docId the doc id
+   * @return the string
+   */
   protected String editorURLPath(String docId) {
     return new StringBuilder().append('/')
                               .append(CommonsUtils.getCurrentPortalOwner())

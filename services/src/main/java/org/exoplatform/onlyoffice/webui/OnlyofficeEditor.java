@@ -64,6 +64,7 @@ public class OnlyofficeEditor extends UIForm {
   /**
    * Used in UI, by Javascript client after actual download of the edited
    * content. See Javascript UI.close().
+   *
    */
   public static class OnCloseActionListener extends EventListener<OnlyofficeEditor> {
 
@@ -91,6 +92,8 @@ public class OnlyofficeEditor extends UIForm {
 
   /**
    * Used in UI, by Javascript client on creation and download errors.
+   *
+   * @see OnErrorActionEvent
    */
   public static class OnErrorActionListener extends EventListener<OnlyofficeEditor> {
 
