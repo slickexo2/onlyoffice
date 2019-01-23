@@ -33,6 +33,7 @@ import org.exoplatform.webui.ext.filter.UIExtensionFilterType;
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: CanOpenOnlyofficeFilter.java 00000 Mar 1, 2016 pnedonosko $
  */
+@Deprecated
 public class CanOpenOnlyofficeFilter extends FileViewFilter {
 
   /**

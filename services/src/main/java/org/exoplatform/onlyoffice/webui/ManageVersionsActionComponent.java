@@ -35,6 +35,7 @@ import org.exoplatform.webui.event.Event;
  * @version $Id: ManageVersionsActionComponent.java 00000 May 23, 2018 pnedonosko $
  * 
  */
+@Deprecated
 @ComponentConfig(events = { @EventConfig(listeners = ManageVersionsActionListener.class) })
 public class ManageVersionsActionComponent extends org.exoplatform.ecm.webui.component.explorer.control.action.ManageVersionsActionComponent {
 

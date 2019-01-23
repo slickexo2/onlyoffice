@@ -59,7 +59,6 @@ import org.json.simple.parser.ParseException;
 
 /**
  * REST service implementing Onlyoffice config storage service. <br>
- * 
  * Created by The eXo Platform SAS.
  * 
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
@@ -79,6 +78,9 @@ public class EditorService implements ResourceContainer {
     /** The config. */
     Config config;
 
+    /** The editor Url. */
+    String editorUrl;
+
     /** The error. */
     String error;
 
@@ -90,6 +92,17 @@ public class EditorService implements ResourceContainer {
      */
     EditorResponse config(Config config) {
       this.config = config;
+      return this;
+    }
+
+    /**
+     * Document.
+     *
+     * @param editorUrl the editor url
+     * @return the editor response
+     */
+    EditorResponse document(String editorUrl) {
+      this.editorUrl = editorUrl;
       return this;
     }
 
@@ -126,6 +139,8 @@ public class EditorService implements ResourceContainer {
     Response build() {
       if (config != null) {
         super.entity(config);
+      } else if (editorUrl != null) {
+        super.entity(new StringBuilder("{\"editorUrl\":\"").append(editorUrl).append("\"}").toString());
       } else if (error != null) {
         super.entity(new StringBuilder("{\"error\":\"").append(error).append("\"}").toString());
       }
@@ -136,7 +151,6 @@ public class EditorService implements ResourceContainer {
   /** The editors. */
   protected final OnlyofficeEditorService   editors;
 
-  /** The editors UI. */
   protected final OnlyofficeEditorUIService editorsUI;
 
   /** The initiated. */
@@ -148,15 +162,15 @@ public class EditorService implements ResourceContainer {
    * @param editors the editors
    * @param editorsUI the editors UI
    */
-  public EditorService(OnlyofficeEditorService editors, OnlyofficeEditorUIService editorsUI) {
+  public EditorService(OnlyofficeEditorService editors) {
     this.editors = editors;
-    this.editorsUI = editorsUI;
+    this.editorsUI = null;
   }
 
   /**
    * Config status posted from the Document Server. <br>
-   * WARNING! It is publicly accessible service but access from the Documents Server host can be restricted
-   * (by default).
+   * WARNING! It is publicly accessible service but access from the Documents
+   * Server host can be restricted (by default).
    *
    * @param uriInfo - request info
    * @param request the request
@@ -193,7 +207,8 @@ public class EditorService implements ResourceContainer {
         String statusKey = (String) jsonObj.get("key");
         long statusCode = (long) jsonObj.get("status");
         String statusUrl = (String) jsonObj.get("url");
-        // Oct 2017: When Document server calls with status 4 (user closed w/o modification), the users array
+        // Oct 2017: When Document server calls with status 4 (user closed w/o
+        // modification), the users array
         // will be null
         JSONArray statusUsersArray = (JSONArray) jsonObj.get("users");
         @SuppressWarnings("unchecked")
@@ -243,8 +258,8 @@ public class EditorService implements ResourceContainer {
 
   /**
    * Document content download link. <br>
-   * WARNING! It is publicly accessible service but access from the Documents Server host can be restricted
-   * (by default).
+   * WARNING! It is publicly accessible service but access from the Documents
+   * Server host can be restricted (by default).
    *
    * @param uriInfo - request info
    * @param request the request
@@ -385,6 +400,7 @@ public class EditorService implements ResourceContainer {
   @Path("/config/{workspace}/{path:.*}")
   @RolesAllowed("users")
   @Produces(MediaType.APPLICATION_JSON)
+  @Deprecated
   public Response configGet(@Context UriInfo uriInfo,
                             @Context HttpServletRequest request,
                             @PathParam("workspace") String workspace,
@@ -422,6 +438,57 @@ public class EditorService implements ResourceContainer {
             } else {
               resp.error("Not found").status(Status.NOT_FOUND);
             }
+          } else {
+            LOG.warn("ConversationState not set to get editor config");
+            resp.error("User not authenticated").status(Status.UNAUTHORIZED);
+          }
+        } catch (BadParameterException e) {
+          LOG.warn("Bad parameter for getting editor config " + workspace + ":" + path + ". " + e.getMessage());
+          resp.error(e.getMessage()).status(Status.BAD_REQUEST);
+        } catch (OnlyofficeEditorException e) {
+          LOG.error("Error getting editor config " + workspace + ":" + path, e);
+          resp.error("Error getting editor config. " + e.getMessage()).status(Status.INTERNAL_SERVER_ERROR);
+        } catch (RepositoryException e) {
+          LOG.error("Storage error while getting editor config " + workspace + ":" + path, e);
+          resp.error("Storage error.").status(Status.INTERNAL_SERVER_ERROR);
+        } catch (Throwable e) {
+          LOG.error("Runtime error while getting editor config " + workspace + ":" + path, e);
+          resp.error("Error getting editor config.").status(Status.INTERNAL_SERVER_ERROR);
+        }
+      } else {
+        resp.status(Status.BAD_REQUEST).error("Null path.");
+      }
+    } else {
+      resp.status(Status.BAD_REQUEST).error("Null workspace.");
+    }
+    return resp.build();
+  }
+
+  @POST
+  @Path("/document/{workspace}/{path:.*}")
+  @RolesAllowed("users")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response initDocument(@Context UriInfo uriInfo,
+                               @Context HttpServletRequest request,
+                               @PathParam("workspace") String workspace,
+                               @PathParam("path") String path) {
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("> Onlyoffice initDocument: " + workspace + ":" + path);
+    }
+
+    EditorResponse resp = new EditorResponse();
+    if (workspace != null) {
+      if (path != null) {
+        if (!path.startsWith("/")) {
+          path = "/" + path;
+        }
+        try {
+          ConversationState convo = ConversationState.getCurrent();
+          if (convo != null) {
+            String docId = editors.initDocument(workspace, path);
+            URI requestUri = uriInfo.getRequestUri();
+            resp.document(editors.getEditorLink(requestUri.getScheme(), requestHost(requestUri), workspace, docId)).ok();
           } else {
             LOG.warn("ConversationState not set to get editor config");
             resp.error("User not authenticated").status(Status.UNAUTHORIZED);
@@ -501,10 +568,11 @@ public class EditorService implements ResourceContainer {
    * @param command the command
    * @return the response
    */
-  @POST
-  @Path("/ui/{userId}/{key}")
-  @RolesAllowed("users")
-  @Produces(MediaType.APPLICATION_JSON)
+//  @POST
+//  @Path("/ui/{userId}/{key}")
+//  @RolesAllowed("users")
+//  @Produces(MediaType.APPLICATION_JSON)
+  @Deprecated // TODO
   public Response updateUI(@Context UriInfo uriInfo,
                            @PathParam("userId") String userId,
                            @PathParam("key") String key,
@@ -629,12 +697,15 @@ public class EditorService implements ResourceContainer {
   protected String getClientHost(HttpServletRequest request) {
     String host = request.getHeader("X-Forwarded-Host");
     if (isValidHost(host)) {
-      // This header contain requested (!) host name, not a client one, but in case of multi-layer infra
-      // (several proxy/firewall) where one of proxy hosts stands in front of actual Document Server and set
+      // This header contain requested (!) host name, not a client one, but in
+      // case of multi-layer infra
+      // (several proxy/firewall) where one of proxy hosts stands in front of
+      // actual Document Server and set
       // this header, it will do the job.
       return host;
     }
-    // Oct 19, 2017: Solution based on X-Forwarded-For proposed in #3 to work correctly behind reverse proxy
+    // Oct 19, 2017: Solution based on X-Forwarded-For proposed in #3 to work
+    // correctly behind reverse proxy
     String clientIp = request.getHeader("X-Forwarded-For");
     if (notEmpty(clientIp)) {
       // In case of several proxy: X-Forwarded-For: client, proxy1, proxy2
@@ -649,10 +720,12 @@ public class EditorService implements ResourceContainer {
     }
     if (notEmpty(clientIp)) {
       try {
-        // XXX For this to work, in server.xml, enableLookups="true" and it can be resource consumption call
+        // XXX For this to work, in server.xml, enableLookups="true" and it can
+        // be resource consumption call
         // Thus it could be efficient to use the hosts file of the server
         host = InetAddress.getByName(clientIp).getHostName();
-        if (notEmpty(host)) { // host here still may be an IP due to security restriction
+        if (notEmpty(host)) { // host here still may be an IP due to security
+                              // restriction
           return host;
         }
       } catch (Exception e) {
@@ -677,8 +750,8 @@ public class EditorService implements ResourceContainer {
   }
 
   /**
-   * Checks if is valid host. It's a trivial check for <code>null</code>, non empty string and not "unknown"
-   * text.
+   * Checks if is valid host. It's a trivial check for <code>null</code>, non
+   * empty string and not "unknown" text.
    *
    * @param host the host name or IP address
    * @return true, if is valid host

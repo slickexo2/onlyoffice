@@ -21,14 +21,16 @@ package org.exoplatform.onlyoffice.webui;
 import java.util.Arrays;
 import java.util.List;
 
-import org.exoplatform.ecm.webui.component.explorer.UIDocumentWorkspace;
 import org.exoplatform.ecm.webui.component.explorer.UIJCRExplorer;
 import org.exoplatform.ecm.webui.component.explorer.control.UIActionBar;
 import org.exoplatform.ecm.webui.component.explorer.control.filter.CanEditDocFilter;
 import org.exoplatform.ecm.webui.component.explorer.control.listener.UIActionBarActionListener;
+import org.exoplatform.onlyoffice.OnlyofficeEditorService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.wcm.utils.WCMCoreUtils;
+import org.exoplatform.social.core.service.LinkProvider;
+import org.exoplatform.web.application.JavascriptManager;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.EventConfig;
@@ -38,15 +40,13 @@ import org.exoplatform.webui.ext.filter.UIExtensionFilter;
 import org.exoplatform.webui.ext.filter.UIExtensionFilters;
 
 /**
- * Open Onlyoffice editor in file view.
- * 
- * Created by The eXo Platform SAS.
+ * Open Onlyoffice editor in file view. Created by The eXo Platform SAS.
  * 
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: OnlyofficeComponent.java 00000 Mar 01, 2016 pnedonosko $
  */
-@ComponentConfig(lifecycle = UIContainerLifecycle.class,
-                 events = { @EventConfig(listeners = OnlyofficeOpenManageComponent.OnlyofficeOpenActionListener.class) })
+@ComponentConfig(lifecycle = UIContainerLifecycle.class, events = {
+    @EventConfig(listeners = OnlyofficeOpenManageComponent.OnlyofficeOpenActionListener.class) })
 public class OnlyofficeOpenManageComponent extends AbstractOnlyofficeManageComponent {
 
   /** The Constant LOG. */
@@ -55,18 +55,18 @@ public class OnlyofficeOpenManageComponent extends AbstractOnlyofficeManageCompo
   /** The Constant FILTERS. */
   private static final List<UIExtensionFilter> FILTERS = Arrays.asList(new UIExtensionFilter[] {
       // new IsNotLockedFilter() // TODO should we care?
-      new CanEditDocFilter(),
-      new CanOpenOnlyofficeFilter() });
+      new CanEditDocFilter() /*
+                              * , new CanOpenOnlyofficeFilter()
+                              */ });
 
   /**
-   * The listener interface for receiving onlyofficeOpenAction events.
-   * The class that is interested in processing a onlyofficeOpenAction
-   * event implements this interface, and the object created
-   * with that class is registered with a component using the
-   * component's <code>addOnlyofficeOpenActionListener</code> method. When
-   * the onlyofficeOpenAction event occurs, that object's appropriate
-   * method is invoked.
-   *
+   * The listener interface for receiving onlyofficeOpenAction events. The class
+   * that is interested in processing a onlyofficeOpenAction event implements
+   * this interface, and the object created with that class is registered with a
+   * component using the component's
+   * <code>addOnlyofficeOpenActionListener</code> method. When the
+   * onlyofficeOpenAction event occurs, that object's appropriate method is
+   * invoked.
    */
   public static class OnlyofficeOpenActionListener extends UIActionBarActionListener<OnlyofficeOpenManageComponent> {
 
@@ -74,24 +74,42 @@ public class OnlyofficeOpenManageComponent extends AbstractOnlyofficeManageCompo
      * {@inheritDoc}
      */
     public void processEvent(Event<OnlyofficeOpenManageComponent> event) throws Exception {
-      WebuiRequestContext context = event.getRequestContext();
-      UIJCRExplorer explorer = event.getSource().getAncestorOfType(UIJCRExplorer.class);
-      OnlyofficeEditorUIService editorsUI = WCMCoreUtils.getService(OnlyofficeEditorUIService.class);
+      // TODO we don't need anything here as it will never be requested (to do
+      // not harm with interaction state updates and new editor page - we remove
+      // this onclick action in Javascript)
 
-      String workspace = explorer.getCurrentWorkspace();
-      String path = explorer.getCurrentNode().getPath();
-      // call open() explicitly here for UI filter reason (to show Close menu), when document will be loading
-      // to the editor it also will be called by the service's createEditor() invoked via REST service
-      editorsUI.open(context.getRemoteUser(), workspace, path);
+      // WebuiRequestContext context = event.getRequestContext();
+      // UIJCRExplorer explorer =
+      // event.getSource().getAncestorOfType(UIJCRExplorer.class);
 
-      OnlyofficeEditorContext.init(context, workspace, path);
-      OnlyofficeEditorContext.open(context);
+      // String workspace = explorer.getCurrentWorkspace();
+      // String path = explorer.getCurrentNode().getPath();
+      // call open() explicitly here for UI filter reason (to show Close menu),
+      // when document will be loading
+      // to the editor it also will be called by the service's createEditor()
+      // invoked via REST service
+      // editorsUI.open(context.getRemoteUser(), workspace, path);
+
+      // OnlyofficeEditorContext.init(context, workspace, path);
+      // OnlyofficeEditorContext.open(context);
+
+      // JavascriptManager jsMan = context.getJavascriptManager();
+      // String editorLink = LinkProvider.getRedirectUri("oeditor") + "?docId="
+      // + docId;
+      // jsMan.require("SHARED/onlyoffice",
+      // "onlyoffice").addScripts("onlyoffice.openEditor('" + editorLink +
+      // "');");
 
       // Refresh UI components
-      UIDocumentWorkspace docWorkspace = explorer.findFirstComponentOfType(UIDocumentWorkspace.class);
-      context.addUIComponentToUpdateByAjax(docWorkspace);
-      UIActionBar actionBar = explorer.findFirstComponentOfType(UIActionBar.class);
-      context.addUIComponentToUpdateByAjax(actionBar);
+      // UIDocumentWorkspace docWorkspace =
+      // explorer.findFirstComponentOfType(UIDocumentWorkspace.class);
+      // context.addUIComponentToUpdateByAjax(docWorkspace);
+      // TODO in fact we don't need refresh the action bar (no menu items to
+      // show/hide as editor will open in new window and several editors
+      // possible)
+      // UIActionBar actionBar =
+      // explorer.findFirstComponentOfType(UIActionBar.class);
+      // context.addUIComponentToUpdateByAjax(actionBar);
     }
   }
 

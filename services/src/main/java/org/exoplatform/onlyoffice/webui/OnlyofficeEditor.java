@@ -39,16 +39,16 @@ import org.exoplatform.webui.ext.filter.UIExtensionFilters;
 import org.exoplatform.webui.form.UIForm;
 
 /**
- * An UI for Onlyoffice editor in ECMS explorer. This viewer will be shown only for document opened by
- * {@link OnlyofficeEditorUIService#opened(String, String, String)} method - the filter
- * {@link CanShowOnlyofficeFilter} does this check.<br>
- * 
+ * An UI for Onlyoffice editor in ECMS explorer. This viewer will be shown only
+ * for document opened by
+ * {@link OnlyofficeEditorUIService#opened(String, String, String)} method - the
+ * filter {@link CanShowOnlyofficeFilter} does this check.<br>
  * Created by The eXo Platform SAS
  * 
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: OnlyofficeEditor.java 00000 Mar 3, 2016 pnedonosko $
- * 
  */
+@Deprecated
 @ComponentConfig(lifecycle = UIFormLifecycle.class, template = "classpath:groovy/templates/OnlyofficeEditor.gtmpl", events = {
     @EventConfig(listeners = OnCloseActionListener.class), @EventConfig(listeners = OnErrorActionListener.class) })
 public class OnlyofficeEditor extends UIForm {
@@ -62,7 +62,8 @@ public class OnlyofficeEditor extends UIForm {
       new CanShowOnlyofficeFilter() });
 
   /**
-   * Used in UI, by Javascript client after actual download of the edited content. See Javascript UI.close().
+   * Used in UI, by Javascript client after actual download of the edited
+   * content. See Javascript UI.close().
    */
   public static class OnCloseActionListener extends EventListener<OnlyofficeEditor> {
 
@@ -78,8 +79,10 @@ public class OnlyofficeEditor extends UIForm {
       String path = explorer.getCurrentNode().getPath();
 
       // call closed() here for current user in portal,
-      // FYI In case of saving, reset() will be called by OnlyofficeEditorServiceImpl.updateDocument() via
-      // onSaved() listener for last editor user, it may differ to this current portal user, thus need both
+      // FYI In case of saving, reset() will be called by
+      // OnlyofficeEditorServiceImpl.updateDocument() via
+      // onSaved() listener for last editor user, it may differ to this current
+      // portal user, thus need both
       // places to call closed and reset respectively.
       OnlyofficeEditorUIService editorsUI = WCMCoreUtils.getService(OnlyofficeEditorUIService.class);
       editorsUI.closed(context.getRemoteUser(), workspace, path);
@@ -145,7 +148,8 @@ public class OnlyofficeEditor extends UIForm {
       String workspace = explorer.getCurrentWorkspace();
       String path = explorer.getCurrentNode().getPath();
 
-      // Init and show, note that init may be already done by Open/Close UI components
+      // Init and show, note that init may be already done by Open/Close UI
+      // components
       OnlyofficeEditorContext.init(context, workspace, path);
       OnlyofficeEditorContext.show(context);
     }

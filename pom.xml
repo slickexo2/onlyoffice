@@ -48,7 +48,7 @@
     <maven.compiler.target>1.8</maven.compiler.target>
 
     <!-- eXo Modules -->
-    <org.exoplatform.platform.version>5.2.0-M14</org.exoplatform.platform.version>
+    <org.exoplatform.platform.version>5.2.0-M15</org.exoplatform.platform.version>
 
     <!-- Dependencies -->
     <json-simple.version>1.1.1</json-simple.version>

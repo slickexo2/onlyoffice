@@ -21,4 +21,9 @@
       <ViewerNotFound>Office document editor (Onlyoffice) not found</ViewerNotFound>
     </message>
   </OnlyofficeEditor>
+  <portal>
+    <intranet>
+      <oeditor>Onlyoffice Document Editor</oeditor>
+    </intranet>
+  </portal>
 </bundle>

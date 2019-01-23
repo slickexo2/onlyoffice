@@ -33,6 +33,7 @@ import javax.jcr.RepositoryException;
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: CanCloseOnlyofficeFilter.java 00000 Mar 1, 2016 pnedonosko $
  */
+@Deprecated
 public class CanCloseOnlyofficeFilter extends FileViewFilter {
 
   /**

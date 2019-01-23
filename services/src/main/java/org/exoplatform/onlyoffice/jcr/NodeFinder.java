@@ -29,7 +29,7 @@ import javax.jcr.Session;
 
 /**
  * An abstraction for a {@link Node} lookup in JCR repository.<br>
- * We need this to decouple WCM's NodeFinder from dependencies of Cloud Drive core. <br>
+ * We need this to decouple WCM's NodeFinder from dependencies of the add-on. <br>
  * Created by The eXo Platform SAS.
  * 
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>

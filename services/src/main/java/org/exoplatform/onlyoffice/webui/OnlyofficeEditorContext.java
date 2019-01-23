@@ -82,6 +82,7 @@ public class OnlyofficeEditorContext {
    * @param requestContext the request context
    * @throws OnlyofficeEditorException the onlyoffice editor exception
    */
+  @Deprecated
   public static void open(RequestContext requestContext) throws OnlyofficeEditorException {
     Object obj = requestContext.getAttribute(JAVASCRIPT);
     if (obj != null) {
@@ -100,6 +101,7 @@ public class OnlyofficeEditorContext {
    * @param requestContext the request context
    * @throws OnlyofficeEditorException the onlyoffice editor exception
    */
+  @Deprecated
   public static void show(RequestContext requestContext) throws OnlyofficeEditorException {
     Object obj = requestContext.getAttribute(JAVASCRIPT);
     if (obj != null) {
@@ -118,6 +120,7 @@ public class OnlyofficeEditorContext {
    * @param requestContext the request context
    * @throws OnlyofficeEditorException the onlyoffice editor exception
    */
+  @Deprecated
   public static void close(RequestContext requestContext) throws OnlyofficeEditorException {
     Object obj = requestContext.getAttribute(JAVASCRIPT);
     if (obj != null) {
@@ -177,7 +180,7 @@ public class OnlyofficeEditorContext {
   }
 
   /**
-   * Inits the.
+   * Inits the current document for Onlyoffice editor.
    *
    * @param workspace the workspace
    * @param nodePath the node path

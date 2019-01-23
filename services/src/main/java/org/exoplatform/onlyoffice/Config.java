@@ -18,8 +18,6 @@
  */
 package org.exoplatform.onlyoffice;
 
-import org.exoplatform.onlyoffice.webui.OnlyofficeEditorUIService;
-
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -29,11 +27,13 @@ import java.util.Calendar;
 
 import javax.jcr.Node;
 
+import org.exoplatform.ws.frameworks.json.impl.JsonException;
+import org.exoplatform.ws.frameworks.json.impl.JsonGeneratorImpl;
+
 /**
  * Onlyoffice editor config for its JS API. <br>
- * This class implements {@link Externalizable} for serialization in eXo cache (actual in cluster).
- * 
- * Created by The eXo Platform SAS.
+ * This class implements {@link Externalizable} for serialization in eXo cache
+ * (actual in cluster). Created by The eXo Platform SAS.
  * 
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: Editor.java 00000 Feb 12, 2016 pnedonosko $
@@ -54,7 +54,10 @@ public class Config implements Externalizable {
    */
   public static class Builder {
 
-    /** The workspace. */
+    /** The document ID in storage. */
+    protected final String docId;
+
+    /** The workspace of the storage. */
     protected final String workspace;
 
     /** The path. */
@@ -67,11 +70,15 @@ public class Config implements Externalizable {
     // DocumentServer link
     protected final String documentserverUrl;
 
-    /** The platform url. */
-    // if set will be used to generate file and callback URLs, for this config and its copies for other users.
-    protected String       platformUrl;
+    /** The platform REST URL base. */
+    // if set will be used to generate file and callback URLs, for this config
+    // and its copies for other users.
+    protected String       platformRestUrl;
 
-    /** The url. */
+    /** The editor page at platform URL. */
+    protected String       editorUrl;
+
+    /** The document. */
     // Document
     protected String       fileType, key, title, url;
 
@@ -79,42 +86,53 @@ public class Config implements Externalizable {
     // Document.Info
     protected String       author, created, folder;
 
-    /** The mode. */
+    /** The editor. */
     // Editor
     protected String       callbackUrl, lang, mode;
 
-    /** The lastname. */
+    /** The user. */
     // Editor.User
     protected String       userId, firstname, lastname;
 
     /**
      * Instantiates a new builder.
      *
-     * @param documentserverUrl the documentserver url
+     * @param documentserverUrl the document server URL
      * @param documentType the document type
      * @param workspace the workspace
      * @param path the path
+     * @param docId the doc id
      */
-    protected Builder(String documentserverUrl, String documentType, String workspace, String path) {
+    protected Builder(String documentserverUrl, String documentType, String workspace, String path, String docId) {
       this.documentserverUrl = documentserverUrl;
       this.documentType = documentType;
+      this.docId = docId;
       this.workspace = workspace;
       this.path = path;
     }
 
     /**
-     * Generate file and callback URLs using given Platform base URL. This will erase these URLs explicitly
-     * set previously.
+     * Generate file and callback URLs using given Platform base URL. This will
+     * erase these URLs explicitly set previously.
      *
-     * @param platformUrl the platform url
+     * @param platformRestUrl the platform URL
      * @return the builder
      */
-    public Builder generateUrls(String platformUrl) {
-      this.platformUrl = platformUrl;
+    public Builder generateUrls(String platformRestUrl) {
+      this.platformRestUrl = platformRestUrl;
       return this;
     }
 
-    // Document: fileType, key, title, url
+    /**
+     * Editor page URL.
+     *
+     * @param editorUrl the editor url
+     * @return the builder
+     */
+    public Builder editorUrl(String editorUrl) {
+      this.editorUrl = editorUrl;
+      return this;
+    }
 
     /**
      * Title.
@@ -160,8 +178,6 @@ public class Config implements Externalizable {
       return this;
     }
 
-    // Document.info: author, created, folder
-
     /**
      * Author.
      *
@@ -201,7 +217,6 @@ public class Config implements Externalizable {
      * @param callbackUrl the callback url
      * @return the builder
      */
-    // Editor: callbackUrl, lang, mode
     public Builder callbackUrl(String callbackUrl) {
       this.callbackUrl = callbackUrl;
       return this;
@@ -228,8 +243,6 @@ public class Config implements Externalizable {
       this.mode = mode;
       return this;
     }
-
-    // Editor.User: userId, firstname, lastname
 
     /**
      * User id.
@@ -270,9 +283,17 @@ public class Config implements Externalizable {
      * @return the config
      */
     public Config build() {
-      if (platformUrl != null) {
-        this.url = new StringBuilder(platformUrl).append("/content/").append(userId).append("/").append(key).toString();
-        this.callbackUrl = new StringBuilder(platformUrl).append("/status/").append(userId).append("/").append(key).toString();
+      if (platformRestUrl != null) {
+        this.url = new StringBuilder(platformRestUrl).append("/onlyoffice/editor/content/")
+                                                     .append(userId)
+                                                     .append("/")
+                                                     .append(key)
+                                                     .toString();
+        this.callbackUrl = new StringBuilder(platformRestUrl).append("/onlyoffice/editor/status/")
+                                                             .append(userId)
+                                                             .append("/")
+                                                             .append(key)
+                                                             .toString();
       }
 
       Document.Info info = new Document.Info(author, created, folder);
@@ -280,12 +301,12 @@ public class Config implements Externalizable {
       Document document = new Document(key, fileType, title, url, info, permissions);
       Editor.User user = new Editor.User(userId, firstname, lastname);
       Editor editor = new Editor(callbackUrl, lang, mode, user);
-      return new Config(documentserverUrl, platformUrl, workspace, path, documentType, document, editor);
+      return new Config(documentserverUrl, platformRestUrl, editorUrl, documentType, workspace, path, docId, document, editor);
     }
   }
 
   /**
-   * The Class Document.
+   * The Onlyoffice Document.
    */
   public static class Document {
 
@@ -303,7 +324,8 @@ public class Config implements Externalizable {
       /** The folder. */
       protected final String folder;  // 'Example Files'
 
-      // TODO there is also sharingSettings array where we can put users with different access/edit
+      // TODO there is also sharingSettings array where we can put users with
+      // different access/edit
       // permissions: 'Full Access', 'Read Only'
 
       /**
@@ -512,7 +534,7 @@ public class Config implements Externalizable {
   }
 
   /**
-   * The Class Editor.
+   * The Onlyoffice Editor.
    */
   public static class Editor {
 
@@ -647,7 +669,8 @@ public class Config implements Externalizable {
     /**
      * Gets the language of user editor.
      *
-     * @return the lang can be <code>null</code> if unable to define from user profile
+     * @return the lang can be <code>null</code> if unable to define from user
+     *         profile
      */
     public String getLang() {
       return lang;
@@ -693,7 +716,8 @@ public class Config implements Externalizable {
     protected Editor forUser(String id, String firstName, String lastName, String lang, String callbackUrl) {
       User otherUser = new User(id, firstName, lastName);
       // FYI locks maintenance will introduce complex logic
-      // simpler: each user may contain own lock token only, but don't rely on others
+      // simpler: each user may contain own lock token only, but don't rely on
+      // others
       // otherUser.setLockToken(user.getLockToken());
       return new Editor(callbackUrl, lang, mode, otherUser);
     }
@@ -703,50 +727,57 @@ public class Config implements Externalizable {
    * Editor.
    *
    * @param documentserverUrl the documentserver url
+   * @param documentType the document type
    * @param workspace the workspace
    * @param path the path
-   * @param documentType the document type
+   * @param docId the document ID
    * @return the builder
    */
-  protected static Builder editor(String documentserverUrl, String workspace, String path, String documentType) {
-    return new Builder(documentserverUrl, documentType, workspace, path);
+  protected static Builder editor(String documentserverUrl, String documentType, String workspace, String path, String docId) {
+    return new Builder(documentserverUrl, documentType, workspace, path, docId);
   }
 
   /**
    * File url.
    *
-   * @param platformUrl the platform url
+   * @param baseUrl the platform url
    * @param userId the user id
    * @param key the key
    * @return the string
    */
-  protected static String fileUrl(String platformUrl, String userId, String key) {
-    return new StringBuilder(platformUrl).append("/content/").append(userId).append("/").append(key).toString();
+  protected static String fileUrl(CharSequence baseUrl, String userId, String key) {
+    return new StringBuilder(baseUrl).append("/content/").append(userId).append("/").append(key).toString();
   }
 
   /**
    * Callback url.
    *
-   * @param platformUrl the platform url
+   * @param baseUrl the platform url
    * @param userId the user id
    * @param key the key
    * @return the string
    */
-  protected static String callbackUrl(String platformUrl, String userId, String key) {
-    return new StringBuilder(platformUrl).append("/status/").append(userId).append("/").append(key).toString();
+  protected static String callbackUrl(CharSequence baseUrl, String userId, String key) {
+    return new StringBuilder(baseUrl).append("/status/").append(userId).append("/").append(key).toString();
   }
 
-  /** The documentserver js url. */
+  /** The Document Server URL. */
   private String         documentserverUrl, documentserverJsUrl;
 
-  /** The platform url. */
-  private String         platformUrl;
+  /** The Platform REST URL base (to generate file URLs for users). */
+  private String         platformRestUrl;
+
+  /** The editor page URL. */
+  private String         editorUrl;
 
   /** The workspace. */
   private String         workspace;
 
   /** The path. */
   private String         path;
+
+  /** The document ID in storage. */
+  private String         docId;
 
   /** The document type. */
   private String         documentType;
@@ -764,15 +795,15 @@ public class Config implements Externalizable {
   private transient Node node;
 
   /**
-   * Marker of editor state. By default editor state is undefined and will be treated as not open nor not
-   * closed. When editor will be open in Onlyoffice it will send a status (1) and then need mark the editor
-   * open.
+   * Marker of editor state. By default editor state is undefined and will be
+   * treated as not open nor not closed. When editor will be open in Onlyoffice
+   * it will send a status (1) and then need mark the editor open.
    */
   private Boolean        open;
 
   /**
-   * Marker for transient state between an UI closed in eXo and actually saved data submitted from Onlyoffice
-   * DS. This state managed by {@link OnlyofficeEditorUIService} and set here for client information only.
+   * Marker for transient state between an UI closed in eXo and actually saved
+   * data submitted from Onlyoffice DS.
    */
   private Boolean        closing;
 
@@ -786,28 +817,34 @@ public class Config implements Externalizable {
   /**
    * Editor config constructor.
    *
-   * @param documentserverUrl the documentserver url
-   * @param platformUrl the platform url
+   * @param documentserverUrl the documentserver URL
+   * @param platformRestUrl the platform url
+   * @param editorUrl the editor url
+   * @param documentType the document type
    * @param workspace the workspace
    * @param path the path
-   * @param documentType the document type
+   * @param docId the document ID
    * @param document the document
    * @param editor the editor
    */
   protected Config(String documentserverUrl,
-                   String platformUrl,
+                   String platformRestUrl,
+                   String editorUrl,
+                   String documentType,
                    String workspace,
                    String path,
-                   String documentType,
+                   String docId,
                    Document document,
                    Editor editor) {
     this.workspace = workspace;
     this.path = path;
+    this.docId = docId;
     this.documentType = documentType;
     this.documentserverUrl = documentserverUrl;
     this.documentserverJsUrl = new StringBuilder(documentserverUrl).append("apps/api/documents/api.js").toString();
 
-    this.platformUrl = platformUrl;
+    this.platformRestUrl = platformRestUrl;
+    this.editorUrl = editorUrl;
 
     this.document = document;
     this.editorConfig = editor;
@@ -824,7 +861,8 @@ public class Config implements Externalizable {
     out.writeUTF(documentType);
     out.writeUTF(documentserverUrl);
     out.writeUTF(documentserverJsUrl);
-    out.writeUTF(platformUrl);
+    out.writeUTF(platformRestUrl.toString());
+    out.writeUTF(editorUrl);
     out.writeUTF(open != null ? open.toString() : EMPTY);
     // Note: closing state isn't replicable
     out.writeUTF(error != null ? error : EMPTY);
@@ -860,10 +898,13 @@ public class Config implements Externalizable {
     this.documentType = in.readUTF();
     this.documentserverUrl = in.readUTF();
     this.documentserverJsUrl = in.readUTF();
-    this.platformUrl = in.readUTF();
+    this.platformRestUrl = in.readUTF();
+    this.editorUrl = in.readUTF();
     String openString = in.readUTF();
-    // Note: closing state isn't replicable (due to short lifecycle, few seconds max and it's valuable
-    // per-user session only, but in cluster with sticky sessions an user will not call another server).
+    // Note: closing state isn't replicable (due to short lifecycle, few seconds
+    // max and it's valuable
+    // per-user session only, but in cluster with sticky sessions an user will
+    // not call another server).
     if (EMPTY.equals(openString)) {
       open = closing = null;
     } else {
@@ -940,7 +981,7 @@ public class Config implements Externalizable {
   }
 
   /**
-   * Gets the workspace.
+   * Gets a workspace of the storage.
    *
    * @return the workspace
    */
@@ -949,12 +990,30 @@ public class Config implements Externalizable {
   }
 
   /**
-   * Gets the path.
+   * Gets the path in storage.
    *
    * @return the path
    */
   public String getPath() {
     return path;
+  }
+
+  /**
+   * Gets the document ID in storage.
+   *
+   * @return the docId
+   */
+  public String getDocId() {
+    return docId;
+  }
+
+  /**
+   * Gets the editor url.
+   *
+   * @return the editorUrl
+   */
+  public String getEditorUrl() {
+    return editorUrl;
   }
 
   /**
@@ -991,16 +1050,19 @@ public class Config implements Externalizable {
    * @param firstName {@link String}
    * @param lastName {@link String}
    * @param lang {@link String}
-   * @return {@link Config} an instance of config similar to this but with another user in the editor
+   * @return {@link Config} an instance of config similar to this but with
+   *         another user in the editor
    */
   public Config forUser(String id, String firstName, String lastName, String lang) {
     return new Config(documentserverUrl,
-                      platformUrl,
+                      platformRestUrl,
+                      editorUrl,
+                      documentType,
                       workspace,
                       path,
-                      documentType,
-                      document.forUser(id, firstName, lastName, fileUrl(platformUrl, id, document.getKey())),
-                      editorConfig.forUser(id, firstName, lastName, lang, callbackUrl(platformUrl, id, document.getKey())));
+                      docId,
+                      document.forUser(id, firstName, lastName, fileUrl(platformRestUrl, id, document.getKey())),
+                      editorConfig.forUser(id, firstName, lastName, lang, callbackUrl(platformRestUrl, id, document.getKey())));
   }
 
   /**
@@ -1031,8 +1093,8 @@ public class Config implements Externalizable {
   }
 
   /**
-   * Checks if is editor currently closing (saving the document). A closing state is a sub-form of closed
-   * state.
+   * Checks if is editor currently closing (saving the document). A closing
+   * state is a sub-form of closed state.
    *
    * @return true of document in closing (saving) state
    */
@@ -1049,9 +1111,10 @@ public class Config implements Externalizable {
   }
 
   /**
-   * Mark this config as closing: user already closed this editor but document not yet saved in the storage.
-   * This state is actual for last user who will save the document submitted by the DS. Note that only already
-   * open editor can be set to closing state, otherwise this method will have not effect.
+   * Mark this config as closing: user already closed this editor but document
+   * not yet saved in the storage. This state is actual for last user who will
+   * save the document submitted by the DS. Note that only already open editor
+   * can be set to closing state, otherwise this method will have not effect.
    */
   public void closing() {
     if (open != null && open.booleanValue()) {
@@ -1061,8 +1124,8 @@ public class Config implements Externalizable {
   }
 
   /**
-   * Mark this config as closed: the editor closed, if it was last user in the editor, then its document
-   * should be saved in the storage.
+   * Mark this config as closed: the editor closed, if it was last user in the
+   * editor, then its document should be saved in the storage.
    */
   public void closed() {
     this.open = new Boolean(false);
@@ -1103,7 +1166,8 @@ public class Config implements Externalizable {
   public boolean equals(Object obj) {
     if (obj instanceof Config) {
       Config other = (Config) obj;
-      return this.documentType.equals(other.documentType) && this.workspace.equals(other.workspace) && this.path.equals(other.path);
+      return this.documentType.equals(other.documentType) && this.workspace.equals(other.workspace)
+          && this.path.equals(other.path);
     }
     return false;
   }
@@ -1125,6 +1189,17 @@ public class Config implements Externalizable {
       s.append(')');
     }
     return s.toString();
+  }
+
+  /**
+   * Return this config as JSON string.
+   *
+   * @return the string
+   * @throws JsonException the json exception
+   */
+  public String toJSON() throws JsonException {
+    JsonGeneratorImpl gen = new JsonGeneratorImpl();
+    return gen.createJsonObject(this).toString();
   }
 
 }

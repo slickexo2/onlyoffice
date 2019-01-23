@@ -35,7 +35,7 @@ import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
 /**
- * Support for stateful WebUI: keep tracking requests to open/close editor by users on particural document.
+ * Support for stateful WebUI: keep tracking requests to open/close editor by users on particular document.
  * This component stores
  * user editor UI states that should be aligned with ones in {@link OnlyofficeEditorService}.<br>
  * 
@@ -45,6 +45,7 @@ import org.exoplatform.services.log.Log;
  * @version $Id: OnlyofficeEditorUIService.java 00000 Mar 3, 2016 pnedonosko $
  * 
  */
+@Deprecated
 public class OnlyofficeEditorUIService {
 
   /** The Constant CACHE_NAME. */

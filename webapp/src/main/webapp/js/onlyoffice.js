@@ -3,6 +3,41 @@
  */
 (function($) {
 
+  // ******** polyfills ********
+  if (!String.prototype.endsWith) {
+    String.prototype.endsWith = function(search, this_len) {
+      if (this_len === undefined || this_len > this.length) {
+        this_len = this.length;
+      }
+      return this.substring(this_len - search.length, this_len) === search;
+    };
+  }
+  if (!String.prototype.startsWith) {
+    String.prototype.startsWith = function(searchString, position) {
+      position = position || 0;
+      return this.substr(position, searchString.length) === searchString;
+    };
+  }
+  /**
+   * @see http://stackoverflow.com/q/7616461/940217
+   * @return {number}
+   */
+  if (!String.prototype.hashCode) {
+    String.prototype.hashCode = function(){
+      if (Array.prototype.reduce){
+          return this.split("").reduce(function(a,b){a=((a<<5)-a)+b.charCodeAt(0);return a&a},0);              
+      } 
+      var hash = 0;
+      if (this.length === 0) return hash;
+      for (var i = 0; i < this.length; i++) {
+          var character  = this.charCodeAt(i);
+          hash  = ((hash<<5)-hash)+character;
+          hash = hash & hash; // Convert to 32bit integer
+      }
+      return hash;
+    }
+  }
+  
 	// ******** Constants ********
 	var ACCESS_DENIED = "access-denied";
 	var NODE_NOT_FOUND = "node-not-found";
@@ -289,7 +324,26 @@
 
 		return initRequest(request);
 	};
+	
+	var configGetByKey = function(key) {
+    var request = $.ajax({
+       type : "GET",
+       url : prefixUrl + "/portal/rest/onlyoffice/editor/config/" + key,
+       dataType : "json"
+    });
+    return initRequest(request);
+	};
 
+  var documentPost = function(workspace, path) {
+    var request = $.ajax({
+      type : "POST",
+      url : prefixUrl + "/portal/rest/onlyoffice/editor/document/" + workspace + path,
+      dataType : "json"
+    });
+
+    return initRequest(request);
+  };
+  
 	var stateGet = function(userId, fileKey) {
 		var request = $.ajax({
 			type : "GET",
@@ -322,7 +376,7 @@
 		// Used by init() and open()/close()
 		var loadingProcess;
 		
-		// Used by download()
+		// Used by download() TODO deprecated
 		var downloadProcess;
 
 		// Used by download() and closeUI()
@@ -383,7 +437,7 @@
 		};
 
 		/**
-		 * Initialize context and UI.
+		 * Initialize context and UI on Document explorer pages.
 		 */
 		this.init = function(nodeWorkspace, nodePath) {
 			// currently open node in ECMS explorer
@@ -392,7 +446,7 @@
 				workspace : nodeWorkspace,
 				path : nodePath
 			};
-			if (loadingProcess) {
+			if (loadingProcess) { // TODO not required on a new page
 				loadingProcess.reject("init");
 			}
 			loadingProcess = $.Deferred();
@@ -400,13 +454,14 @@
 				try {
 					UI.init();
 				} catch(e) {
-					log("Error initializing Onlyoffice Editor UI " + e, e);
+					log("Error initializing Onlyoffice context: " + e, e);
 				}
 			});
 		};
 		
 		/**
 		 * Show existing editor.
+		 * TODO deprecated
 		 */
 		this.show = function() {
 			if (currentNode && UI.isEditorLoaded()) {			
@@ -479,7 +534,10 @@
 			}
 		};
 
-		this.create = function(config) {
+		/**
+		 * Create an editor configuration (for use to create the editor client UI).
+		 */
+		var create = function(config) {
 			// TODO for debug only
 			/*var testConfig_ = {
 				"width" : "100%",
@@ -539,11 +597,9 @@
 						if (attempts >= 0) {
 							configPost(currentNode.workspace, currentNode.path).done(function(config) {
 								if (config.closing) {
-									// FYI This should not happen as in init() we use waitClosed() and in UI.init() we disable Edit/Close menu for 
-									// already closing editor. But this may happen if call this method directly - thus we do the below check.
-									// Wait for previous edit session completion (actual if in open editor switch to Version or Doc Properties,
-									// this will close the editor and in seconds the DS will put the state, then if start editing again quicker of the DS
-									// we need wait for downloading of the previous edition and only then use it for a new editor session.
+								  // Wait for previous edit session completion (actual if editor was closed and we need wait for 
+			            // the DS state in seconds).
+			            // We need wait for downloading of the previous edition and only then use it for a new editor session.
 									setTimeout(createConfig, 2250);
 								} else {
 									configReady.resolve(config);							
@@ -632,11 +688,15 @@
 				});
 			} else {
 				log("ERROR: current node not initialized");
-				process.reject("Current node not initialized");
+				process.reject("Current document not initialized");
 			}
 			return process.promise();
 		};
+		this.create = create;
 
+		/**
+		 * TODO deprecated
+		 */
 		this.download = function() {
 			if (downloadProcess) {
 				if (currentConfig && downloadProcess.state() === "pending") {
@@ -656,6 +716,7 @@
 
 		/**
 		 * Open Editor on current page using pre-initialized state (see init()).
+		 * TODO deprecated
 		 */
 		this.open = function() {
 			if (currentNode) {
@@ -670,6 +731,7 @@
 
 		/**
 		 * Close Editor on current page using pre-initialized state (see init() and open()).
+		 * TODO deprecated
 		 */
 		this.close = function() {
 			if (currentNode) {
@@ -683,25 +745,70 @@
 		};
 		
 		/**
-		 * Close WebUI editor (for proper menu state, when user clicked non-Onlyoffice item).
-		 */
-		this.closeUI = function() {
-			if (currentConfig) {
-				editorClose(currentConfig.editorConfig.user.id, currentConfig.document.key).done(function(res) {
-					if (res.closing) {
-						log("Editor UI closed successfully");
-					} 
-				}).fail(function(error) {
-					log("Error closing editor UI: " + JSON.stringify(error));
-				});
-			} else {
-				log("Current config not set to close UI");
-			}
-		};
+     * Initialize current node for use within an editor.
+     */
+    this.initDocument = function() {
+      if (currentNode) {
+        return documentPost(currentNode.workspace, currentNode.path);
+      } else {
+        log("ERROR: Current node not set");
+        var process = $.Deferred();
+        process.reject("Document not initialized. Reload page and try again.");
+        return process.promise();
+      }
+    };
+    
+    /**
+     * Initialize an editor page in new browser window.
+     */
+    this.initEditor = function(config) {
+      // TODO Establish a Comet/WebSocket channel from this point.
+      // A new editor page will join the channel and notify when the doc will be saved
+      // so we'll refresh this explorer view to reflect the edited content.
+      currentNode = {
+        workspace : config.workspace,
+        path : config.path
+      };
+      UI.initEditor();
+      create(config).done(function(localConfig) {
+        $(function() {
+          try {
+            UI.create(localConfig);
+          } catch(e) {
+            log("Error initializing Onlyoffice client UI " + e, e);
+          }
+        });        
+      }).fail(function(state, status, errorText) {
+        log("ERROR: editor config failed : " + status + ". " + state.error);
+        UI.showError("Error", "Failed to setup editor configuration");
+      });
+    };
+    
+    /**
+     * Close WebUI editor (for proper menu state, when user clicked non-Onlyoffice item).
+     * TODO Deprecated
+     */
+    this.closeUI = function() {
+    	if (currentConfig) {
+    		editorClose(currentConfig.editorConfig.user.id, currentConfig.document.key).done(function(res) {
+    			if (res.closing) {
+    				log("Editor UI closed successfully");
+    			} 
+    		}).fail(function(error) {
+    			log("Error closing editor UI: " + JSON.stringify(error));
+    		});
+    	} else {
+    		log("Current config not set to close UI");
+    	}
+    };
 
 		this.showInfo = function(title, text) {
 			UI.showInfo(title, text);
 		};
+		
+		this.showError = function(title, text) {
+      UI.showError(title, text);
+    };
 	}
 
 	/**
@@ -713,19 +820,76 @@
 		var docEditor;
 
 		var hasDocumentChanged = false;
-
+		
+		/*
+		var editorWindows = {};
+		
+    var openEditorWindow = function(name) {
+      log(">> openEditorWindow: " + name);
+      var w = editorWindows[name];
+      if (!w || w.closed) {
+        w = window.open("", name);
+        editorWindows[name] = w;
+      }
+      w.focus();
+    };
+		
+    var initEditorWindow = function(name, link) {
+      log(">> initEditorWindow: " + name + " " + link);
+      var w = editorWindows[name];
+      if (w) {
+        //delete editorWindows[name];        
+        if (!w.location.href.endsWith(link)) {
+          log("<< initEditorWindow: w.location = " + link);
+          w.location.href = link;            
+        } else {
+          log("<< initEditorWindow: already " + link);
+        }
+        w.focus(); // this may not work for a tab
+      }
+    };
+    */
+		
+		var contextId = function(currentNode) {
+		  return "oeditor" + (currentNode.workspace + currentNode.path).hashCode();
+		}
+		
 		var initAction = function() {
 			var init = false;
 			var $actionOpenIcon = $("#uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen");
 			if ($actionOpenIcon.length > 0 && !$actionOpenIcon.hasClass("uiIconEdit")) {
 				$actionOpenIcon.addClass("uiIconEdit");
+				// XXX get rid of WebUI action ajaxGet() which will update interaction and will not let to open 
+				// the editor page next time on a new page (it will load current Document explorer instead).
+				$actionOpenIcon.parent().parent().removeAttr("onclick");
+				// Do own click handler to open a new page with the editor
+				$actionOpenIcon.parent().click(function() {
+				  if (currentNode) {
+				    var wId = contextId(currentNode);
+				    var w = window.open("", wId);
+				    editor.initDocument().done(function(info) {
+				      if (!w.location.href.endsWith(info.editorUrl)) {
+			          w.location = info.editorUrl;        
+			        }
+			        w.focus();
+				    }).fail(function(state, status) {
+				      w.close();
+              log("Error initializing document: " + state.error + " [" + status + "]");
+              UI.showError("Error", "Failed to initialize document");
+            });
+				  } else {
+				    log("Current node not set. Cannot open an editor page.");
+				  }
+				});
 			}
+			/*
 			var $actionCloseIcon = $("#uiActionsBarContainer i.uiIconEcmsOnlyofficeClose");
 			if ($actionCloseIcon.length > 0 && !$actionCloseIcon.hasClass("uiIconSave")) { // was uiIconClose
 				$actionCloseIcon.addClass("uiIconSave");
-				init = true;
+				init = true; // Jan 18, 2019 - should not happen
 			}
 			
+			// TODO not required
 			// May 25, 2018: if click Version or Edit Properties, we need close the editor at WebUI side
 			if (init) {
 				var $implicitCloseActions = $("#uiActionsBarContainer").find("i.uiIconEcmsManageVersions, i.uiIconEcmsEditProperty").parent("a.actionIcon").parent("li");
@@ -733,7 +897,7 @@
 					var showLeavedInfo = hasDocumentChanged;
 					try {
 						saveAndDestroy();
-						editor.closeUI();
+						editor.closeUI(); // TODO don't need it 
 					} finally {
 						if (showLeavedInfo) {
 							UI.showInfo("You leaved document editor", "Document will be saved when all users close it.");
@@ -741,6 +905,7 @@
 					}
 				});				
 			}
+			*/
 		};
 		
 		var saveAndDestroy = function() {
@@ -764,8 +929,20 @@
 			initAction();
 		};
 		
+		/**
+		 * Init editor page UI.
+		 */
+		this.initEditor = function() {
+		  $("#LeftNavigation").parent(".LeftNavigationTDContainer").remove();
+		  $("#NavigationPortlet").remove();
+		  $("#SharedLayoutRightBody .RightBodyTDContainer").css("padding-top", "0px");
+		  $("#UIWorkingWorkspace").css("height", "100%");
+		  $("#RightBody").css("min-height", "100vh");
+		  $(".onlyofficeContainer > #editor, .onlyofficeContainer > .editor").css("height", "100vh");
+		};
+		
 		this.isEditorLoaded = function() {
-			return $("#UIDocumentWorkspace .fileContent .onlyofficeContainer").length > 0;
+			return $("#UIPage .onlyofficeContainer").length > 0;
 		};
 		
 		this.closeEditor = function() {
@@ -784,6 +961,9 @@
 			hasDocumentChanged = true;
 		};
 
+		/**
+		 * TODO deprecated
+		 */
 		this.open = function(existingConfig) {
 			var $fileContent = $("#UIDocumentWorkspace .fileContent");
 			if ($fileContent.length > 0 && !docEditor) {
@@ -811,6 +991,9 @@
 			}
 		};
 
+		/**
+     * TODO deprecated
+     */
 		this.close = function() {
 			var $fileContent = $("#UIDocumentWorkspace .fileContent");
 			if ($fileContent.length > 0 && docEditor) {
@@ -862,6 +1045,34 @@
 			}
 		};
 
+		/**
+     * Create an editor client UI on current page.
+     */
+		this.create = function(localConfig) {
+      var $editorPage = $("#OnlyofficeEditorPage");
+      if ($editorPage.length > 0) {
+        if (!docEditor) {
+          // show loading while upload to editor - it is already added by WebUI side
+          var $container = $editorPage.find(".onlyofficeContainer");
+          
+          // create and start editor (this also will re-use an existing editor config from the server)
+          //editor.create(config).done(function(localConfig) {
+          docEditor = new DocsAPI.DocEditor("onlyoffice", localConfig);
+          hasDocumentChanged = false;
+          // show editor
+          $container.find(".editor").show("blind");
+          $container.find(".loading").hide("blind");
+          //}).fail(function(error) {
+          //  UI.showError("Error creating editor", error);
+          //});
+        } else {
+          log("WARN: Editor client already initialized");
+        }
+      } else {
+        log("WARN: Editor element not found");
+      }
+    };
+    
 		/**
 		 * Show notice to user. Options support "icon" class, "hide", "closer" and "nonblock" features.
 		 */

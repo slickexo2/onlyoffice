@@ -44,6 +44,7 @@ import org.exoplatform.webui.ext.filter.UIExtensionFilters;
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: OnlyofficeCloseManageComponent.java 00000 Mar 01, 2016 pnedonosko $
  */
+@Deprecated
 @ComponentConfig(lifecycle = UIContainerLifecycle.class,
                  events = { @EventConfig(listeners = OnlyofficeCloseManageComponent.OnlyofficeCloseActionListener.class) })
 public class OnlyofficeCloseManageComponent extends AbstractOnlyofficeManageComponent {
