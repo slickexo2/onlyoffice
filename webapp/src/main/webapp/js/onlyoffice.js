@@ -935,10 +935,15 @@
 		this.initEditor = function() {
 		  $("#LeftNavigation").parent(".LeftNavigationTDContainer").remove();
 		  $("#NavigationPortlet").remove();
-		  $("#SharedLayoutRightBody .RightBodyTDContainer").css("padding-top", "0px");
-		  $("#UIWorkingWorkspace").css("height", "100%");
-		  $("#RightBody").css("min-height", "100vh");
-		  $(".onlyofficeContainer > #editor, .onlyofficeContainer > .editor").css("height", "100vh");
+		  $("body").addClass("maskLayer");
+		  $("#SharedLayoutRightBody").addClass("onlyofficeEditorBody");
+		  var $editorPage = $("#OnlyofficeEditorPage");
+		  var $exit = $editorPage.find(".exitWindow");
+		  $exit.prependTo($("body"));
+		  $exit.find(".uiIconClose").click(function() {
+		    window.close();
+		  });
+		  $exit.show();
 		};
 		
 		this.isEditorLoaded = function() {
