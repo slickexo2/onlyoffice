@@ -93,7 +93,6 @@ public class OnlyofficeEditor extends UIForm {
   /**
    * Used in UI, by Javascript client on creation and download errors.
    *
-   * @see OnErrorActionEvent
    */
   public static class OnErrorActionListener extends EventListener<OnlyofficeEditor> {
 
