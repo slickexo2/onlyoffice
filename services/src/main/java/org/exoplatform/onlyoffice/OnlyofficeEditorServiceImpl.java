@@ -61,6 +61,7 @@ import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.configuration.ConfigurationException;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.PropertiesParam;
+import org.exoplatform.ecm.utils.lock.LockUtil;
 import org.exoplatform.onlyoffice.jcr.NodeFinder;
 import org.exoplatform.portal.Constants;
 import org.exoplatform.services.cache.CacheListener;
@@ -68,6 +69,7 @@ import org.exoplatform.services.cache.CacheListenerContext;
 import org.exoplatform.services.cache.CacheService;
 import org.exoplatform.services.cache.ExoCache;
 import org.exoplatform.services.cms.documents.DocumentService;
+import org.exoplatform.services.cms.lock.LockService;
 import org.exoplatform.services.jcr.RepositoryService;
 import org.exoplatform.services.jcr.ext.app.SessionProviderService;
 import org.exoplatform.services.jcr.ext.common.SessionProvider;
@@ -95,50 +97,91 @@ import org.exoplatform.services.security.IdentityRegistry;
 public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Startable {
 
   /** The Constant LOG. */
-  protected static final Log                                      LOG                    =
-                                                                      ExoLogger.getLogger(OnlyofficeEditorServiceImpl.class);
+  protected static final Log    LOG                    = ExoLogger.getLogger(OnlyofficeEditorServiceImpl.class);
 
   /** The Constant RANDOM. */
-  protected static final Random                                   RANDOM                 = new Random();
+  protected static final Random RANDOM                 = new Random();
 
   /** The Constant CONFIG_DS_HOST. */
-  public static final String                                      CONFIG_DS_HOST         = "documentserver-host";
+  public static final String    CONFIG_DS_HOST         = "documentserver-host";
 
   /** The Constant CONFIG_DS_SCHEMA. */
-  public static final String                                      CONFIG_DS_SCHEMA       = "documentserver-schema";
+  public static final String    CONFIG_DS_SCHEMA       = "documentserver-schema";
 
   /** The Constant CONFIG_DS_ACCESS_ONLY. */
-  public static final String                                      CONFIG_DS_ACCESS_ONLY  = "documentserver-access-only";
+  public static final String    CONFIG_DS_ACCESS_ONLY  = "documentserver-access-only";
 
   /**
    * Configuration key for Document Server's allowed hosts in requests from a DS
    * to eXo side.
    */
-  public static final String                                      CONFIG_DS_ALLOWEDHOSTS = "documentserver-allowedhosts";
+  public static final String    CONFIG_DS_ALLOWEDHOSTS = "documentserver-allowedhosts";
 
   /** The Constant HTTP_PORT_DELIMITER. */
-  protected static final char                                     HTTP_PORT_DELIMITER    = ':';
+  protected static final char   HTTP_PORT_DELIMITER    = ':';
 
   /** The Constant TYPE_TEXT. */
-  protected static final String                                   TYPE_TEXT              = "text";
+  protected static final String TYPE_TEXT              = "text";
 
   /** The Constant TYPE_SPREADSHEET. */
-  protected static final String                                   TYPE_SPREADSHEET       = "spreadsheet";
+  protected static final String TYPE_SPREADSHEET       = "spreadsheet";
 
   /** The Constant TYPE_PRESENTATION. */
-  protected static final String                                   TYPE_PRESENTATION      = "presentation";
+  protected static final String TYPE_PRESENTATION      = "presentation";
 
   /** The Constant LOCK_WAIT_ATTEMTS. */
-  protected static final int                                      LOCK_WAIT_ATTEMTS      = 20;
+  protected static final int    LOCK_WAIT_ATTEMTS      = 20;
 
   /** The Constant LOCK_WAIT_TIMEOUT. */
-  protected static final long                                     LOCK_WAIT_TIMEOUT      = 250;
+  protected static final long   LOCK_WAIT_TIMEOUT      = 250;
 
   /** The Constant EMPTY_TEXT. */
-  protected static final String                                   EMPTY_TEXT             = "".intern();
+  protected static final String EMPTY_TEXT             = "".intern();
 
   /** The Constant CACHE_NAME. */
-  public static final String                                      CACHE_NAME             = "onlyoffice.EditorCache".intern();
+  public static final String    CACHE_NAME             = "onlyoffice.EditorCache".intern();
+
+  class LockState {
+    final String lockToken;
+
+    final Lock   lock;
+
+    LockState(String lockToken) {
+      super();
+      this.lockToken = lockToken;
+      this.lock = null;
+    }
+
+    LockState(Lock lock) {
+      super();
+      this.lockToken = null;
+      this.lock = lock;
+    }
+
+    LockState() {
+      super();
+      this.lockToken = null;
+      this.lock = null;
+    }
+
+    /**
+     * Check if was locked by this editor service.
+     *
+     * @return true, if successful
+     */
+    boolean wasLocked() {
+      return lock != null;
+    }
+
+    /**
+     * Check can edit a document associated with this lock.
+     *
+     * @return true, if successful
+     */
+    boolean canEdit() {
+      return lock != null || lockToken != null;
+    }
+  }
 
   /** The jcr service. */
   protected final RepositoryService                               jcrService;
@@ -161,11 +204,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /** The document service. */
   protected final DocumentService                                 documentService;
 
+  /** The lock service. */
+  protected final LockService                                     lockService;
+
   /** Cache of Editing documents. */
   protected final ExoCache<String, ConcurrentMap<String, Config>> activeCache;
 
   /** Lock for updating Editing documents cache. */
-  protected final ReentrantLock                                   activeLock             = new ReentrantLock();
+  protected final ReentrantLock                                   activeLock   = new ReentrantLock();
 
   /** The config. */
   protected final Map<String, String>                             config;
@@ -186,15 +232,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   protected final Set<String>                                     documentserverAllowedhosts;
 
   /** The file types. */
-  protected final Map<String, String>                             fileTypes              =
-                                                                            new ConcurrentHashMap<String, String>();
+  protected final Map<String, String>                             fileTypes    = new ConcurrentHashMap<String, String>();
 
   /** The upload params. */
-  protected final MessageFormat                                   uploadParams           =
+  protected final MessageFormat                                   uploadParams =
                                                                                new MessageFormat("?url={0}&outputtype={1}&filetype={2}&title={3}&key={4}");
 
   /** The listeners. */
-  protected final ConcurrentLinkedQueue<OnlyofficeEditorListener> listeners              =
+  protected final ConcurrentLinkedQueue<OnlyofficeEditorListener> listeners    =
                                                                             new ConcurrentLinkedQueue<OnlyofficeEditorListener>();
 
   /**
@@ -219,6 +264,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                      Authenticator authenticator,
                                      CacheService cacheService,
                                      DocumentService documentService,
+                                     LockService lockService,
                                      InitParams params)
       throws ConfigurationException {
     this.jcrService = jcrService;
@@ -228,6 +274,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     this.organization = organization;
     this.authenticator = authenticator;
     this.documentService = documentService;
+    this.lockService = lockService;
 
     this.activeCache = cacheService.getCacheInstance(CACHE_NAME);
     if (LOG.isDebugEnabled()) {
@@ -1172,73 +1219,73 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
       // lock node first, this also will check if node isn't locked by another
       // user (will throw exception)
-      Lock lock = lock(node, config);
-      if (lock == null) {
-        throw new OnlyofficeEditorException("Document locked " + nodePath);
-      }
+      final LockState lock = lock(node, config);
+      if (lock.canEdit()) {
+        // manage version only if node already mix:versionable
+        boolean checkIn = checkout(node);
 
-      // manage version only if node already mix:versionable
-      boolean checkIn = checkout(node);
-
-      try {
-        // update document
-        content.setProperty("jcr:data", data);
-        // update modified date (this will force PDFViewer to regenerate its
-        // images)
-        content.setProperty("jcr:lastModified", editedTime);
-        if (content.hasProperty("exo:dateModified")) {
-          content.setProperty("exo:dateModified", editedTime);
-        }
-        if (content.hasProperty("exo:lastModifiedDate")) {
-          content.setProperty("exo:lastModifiedDate", editedTime);
-        }
-        if (node.hasProperty("exo:lastModifiedDate")) {
-          node.setProperty("exo:lastModifiedDate", editedTime);
-        }
-        if (node.hasProperty("exo:dateModified")) {
-          node.setProperty("exo:dateModified", editedTime);
-        }
-        if (node.hasProperty("exo:lastModifier")) {
-          node.setProperty("exo:lastModifier", userId);
-        }
-
-        node.save();
-        if (checkIn) {
-          // Make a new version from the downloaded state
-          node.checkin();
-          // Since 1.2.0-RC01 we check-out the document to let (more) other
-          // actions in ECMS appear on it
-          node.checkout();
-        }
-
-        config.closed(); // reset transient closing state
-
-        fireSaved(config);
-      } catch (RepositoryException e) {
         try {
-          node.refresh(false); // rollback JCR modifications
-        } catch (Throwable re) {
-          LOG.warn("Error rolling back failed change for " + nodePath, re);
-        }
-        throw e; // let the caller handle it further
-      } finally {
-        try {
-          data.close();
-        } catch (Throwable e) {
-          LOG.warn("Error closing exported content stream for " + nodePath, e);
-        }
-        try {
-          connection.disconnect();
-        } catch (Throwable e) {
-          LOG.warn("Error closing export connection for " + nodePath, e);
-        }
-        try {
-          if (lock != null && node.isLocked()) {
-            node.unlock();
+          // update document
+          content.setProperty("jcr:data", data);
+          // update modified date (this will force PDFViewer to regenerate its
+          // images)
+          content.setProperty("jcr:lastModified", editedTime);
+          if (content.hasProperty("exo:dateModified")) {
+            content.setProperty("exo:dateModified", editedTime);
           }
-        } catch (Throwable e) {
-          LOG.warn("Error unlocking edited document " + nodePath(workspace, path), e);
+          if (content.hasProperty("exo:lastModifiedDate")) {
+            content.setProperty("exo:lastModifiedDate", editedTime);
+          }
+          if (node.hasProperty("exo:lastModifiedDate")) {
+            node.setProperty("exo:lastModifiedDate", editedTime);
+          }
+          if (node.hasProperty("exo:dateModified")) {
+            node.setProperty("exo:dateModified", editedTime);
+          }
+          if (node.hasProperty("exo:lastModifier")) {
+            node.setProperty("exo:lastModifier", userId);
+          }
+
+          node.save();
+          if (checkIn) {
+            // Make a new version from the downloaded state
+            node.checkin();
+            // Since 1.2.0-RC01 we check-out the document to let (more) other
+            // actions in ECMS appear on it
+            node.checkout();
+          }
+
+          config.closed(); // reset transient closing state
+
+          fireSaved(config);
+        } catch (RepositoryException e) {
+          try {
+            node.refresh(false); // rollback JCR modifications
+          } catch (Throwable re) {
+            LOG.warn("Error rolling back failed change for " + nodePath, re);
+          }
+          throw e; // let the caller handle it further
+        } finally {
+          try {
+            data.close();
+          } catch (Throwable e) {
+            LOG.warn("Error closing exported content stream for " + nodePath, e);
+          }
+          try {
+            connection.disconnect();
+          } catch (Throwable e) {
+            LOG.warn("Error closing export connection for " + nodePath, e);
+          }
+          try {
+            if (node.isLocked() && lock.wasLocked()) {
+              unlock(node, lock);
+            }
+          } catch (Throwable e) {
+            LOG.warn("Error unlocking edited document " + nodePath(workspace, path), e);
+          }
         }
+      } else {
+        throw new OnlyofficeEditorException("Document locked " + nodePath);
       }
     } finally {
       // restore context env
@@ -1322,9 +1369,30 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   /**
-   * Lock by current user of the node. If lock attempts will succeed in
-   * predefined time this method will throw {@link OnlyofficeEditorException}.
-   * If node isn't mix:versionable it will be added first and node saved.
+   * Unlock given node.
+   *
+   * @param node the node
+   * @param lock the lock
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   * @throws RepositoryException the repository exception
+   */
+  protected void unlock(Node node, LockState lock) throws OnlyofficeEditorException, RepositoryException {
+    node.unlock();
+    try {
+      LockUtil.removeLock(node);
+    } catch (Exception e) {
+      if (RepositoryException.class.isAssignableFrom(e.getClass())) {
+        throw RepositoryException.class.cast(e);
+      } else {
+        throw new OnlyofficeEditorException("Error removing document lock", e);
+      }
+    }
+  }
+
+  /**
+   * Lock the node by current user. If lock attempts will succeed in predefined
+   * time this method will throw {@link OnlyofficeEditorException}. If node
+   * isn't mix:lockable it will be added first and node saved.
    *
    * @param node {@link Node}
    * @param config {@link Config}
@@ -1332,7 +1400,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @throws OnlyofficeEditorException the onlyoffice editor exception
    * @throws RepositoryException the repository exception
    */
-  protected Lock lock(Node node, Config config) throws OnlyofficeEditorException, RepositoryException {
+  protected LockState lock(Node node, Config config) throws OnlyofficeEditorException, RepositoryException {
     if (!node.isNodeType("mix:lockable")) {
       if (!node.isCheckedOut() && node.isNodeType("mix:versionable")) {
         node.checkout();
@@ -1342,33 +1410,52 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
 
     Config.Editor.User user = config.getEditorConfig().getUser();
-    Lock lock;
+    LockState lock;
     int attempts = 0;
     try {
       do {
         attempts++;
         if (node.isLocked()) {
-          String lockToken = user.getLockToken();
+          String lockToken;
+          try {
+            lockToken = LockUtil.getLockToken(node);
+          } catch (Exception e) {
+            if (RepositoryException.class.isAssignableFrom(e.getClass())) {
+              throw RepositoryException.class.cast(e);
+            } else {
+              throw new OnlyofficeEditorException("Error reading document lock", e);
+            }
+          }
           if (node.getLock().getLockOwner().equals(user.getId()) && lockToken != null) {
             // already this user lock
             node.getSession().addLockToken(lockToken);
-            lock = node.getLock();
+            lock = new LockState(lockToken);
           } else {
             // need wait for unlock
             Thread.sleep(LOCK_WAIT_TIMEOUT);
             lock = null;
           }
         } else {
-          lock = node.lock(true, false); // TODO deep vs only file node lock?
-          user.setLockToken(lock.getLockToken()); // keep own token for crossing
-                                                  // sessions
+          Lock jcrLock = node.lock(true, false); // TODO deep vs only file node
+                                                 // lock?
+          // keep lock token for other sessions of same user
+          try {
+            LockUtil.keepLock(jcrLock, user.getId(), jcrLock.getLockToken());
+          } catch (Exception e) {
+            if (RepositoryException.class.isAssignableFrom(e.getClass())) {
+              throw RepositoryException.class.cast(e);
+            } else {
+              throw new OnlyofficeEditorException("Error saving document lock", e);
+            }
+          }
+          lock = new LockState(jcrLock);
         }
       } while (lock == null && attempts <= LOCK_WAIT_ATTEMTS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new OnlyofficeEditorException("Error waiting for lock of " + nodePath(config.getWorkspace(), config.getPath()), e);
     }
-    return lock;
+    return lock == null ? new LockState() : lock;
   }
 
   /**

@@ -579,6 +579,7 @@ public class Config implements Externalizable {
       protected final String     username;
 
       /** The lock token. */
+      @Deprecated
       protected transient String lockToken;
 
       /**
@@ -637,6 +638,7 @@ public class Config implements Externalizable {
        *
        * @return the lockToken
        */
+      @Deprecated
       protected String getLockToken() {
         return lockToken;
       }
@@ -646,6 +648,7 @@ public class Config implements Externalizable {
        *
        * @param lockToken the lockToken to set
        */
+      @Deprecated
       protected void setLockToken(String lockToken) {
         this.lockToken = lockToken;
       }

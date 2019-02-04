@@ -21,17 +21,11 @@ package org.exoplatform.onlyoffice.webui;
 import java.util.Arrays;
 import java.util.List;
 
-import org.exoplatform.ecm.webui.component.explorer.UIJCRExplorer;
-import org.exoplatform.ecm.webui.component.explorer.control.UIActionBar;
 import org.exoplatform.ecm.webui.component.explorer.control.filter.CanEditDocFilter;
+import org.exoplatform.ecm.webui.component.explorer.control.filter.IsNotLockedFilter;
 import org.exoplatform.ecm.webui.component.explorer.control.listener.UIActionBarActionListener;
-import org.exoplatform.onlyoffice.OnlyofficeEditorService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
-import org.exoplatform.services.wcm.utils.WCMCoreUtils;
-import org.exoplatform.social.core.service.LinkProvider;
-import org.exoplatform.web.application.JavascriptManager;
-import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.EventConfig;
 import org.exoplatform.webui.core.lifecycle.UIContainerLifecycle;
@@ -54,7 +48,7 @@ public class OnlyofficeOpenManageComponent extends AbstractOnlyofficeManageCompo
 
   /** The Constant FILTERS. */
   private static final List<UIExtensionFilter> FILTERS = Arrays.asList(new UIExtensionFilter[] {
-      // new IsNotLockedFilter() // TODO should we care?
+      new IsNotLockedFilter(),
       new CanEditDocFilter() /*
                               * , new CanOpenOnlyofficeFilter()
                               */ });
