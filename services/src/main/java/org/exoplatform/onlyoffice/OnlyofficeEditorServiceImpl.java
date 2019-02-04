@@ -1151,9 +1151,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   @SuppressWarnings("deprecation")
   protected void download(Config config, DocumentStatus status) throws OnlyofficeEditorException, RepositoryException {
 
-    // First mark closing, then do actual download and save in storage. Note:
-    // closing state may be already set
-    // by UI layer (OnlyofficeEditorUIService).
+    // First mark closing, then do actual download and save in storage
     config.closing();
 
     String workspace = config.getWorkspace();

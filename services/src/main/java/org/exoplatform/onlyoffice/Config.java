@@ -772,7 +772,7 @@ public class Config implements Externalizable {
    * @return the string
    */
   protected static String fileUrl(CharSequence baseUrl, String userId, String key) {
-    return new StringBuilder(baseUrl).append("/content/").append(userId).append("/").append(key).toString();
+    return new StringBuilder(baseUrl).append("/onlyoffice/editor/content/").append(userId).append("/").append(key).toString();
   }
 
   /**
@@ -784,7 +784,7 @@ public class Config implements Externalizable {
    * @return the string
    */
   protected static String callbackUrl(CharSequence baseUrl, String userId, String key) {
-    return new StringBuilder(baseUrl).append("/status/").append(userId).append("/").append(key).toString();
+    return new StringBuilder(baseUrl).append("/onlyoffice/editor/status/").append(userId).append("/").append(key).toString();
   }
 
   /** The Document Server URL. */

@@ -36,9 +36,9 @@
       </properties-param>
     </init-params>
   </component>
-  <component>
+  <!-- component>
     <type>org.exoplatform.onlyoffice.webui.OnlyofficeEditorUIService</type>
-  </component>
+  </component -->
   <component>
     <key>org.exoplatform.onlyoffice.jcr.NodeFinder</key>
     <type>org.exoplatform.onlyoffice.jcr.CMSNodeFinder</type>
