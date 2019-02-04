@@ -1,21 +1,13 @@
-/* -- styles required for Edit/Save menu inside PDFViewer toolbar
-#UIDocumentWorkspace #toolbarViewerRight {
-	width: 108px !important;
-}
-
-#UIDocumentWorkspace .outerCenter {
-	margin-right: 110px !important;
-}*/
 
 .onlyofficeEditorBody {
-  margin-top: 30px !important;
+  margin-top: 10px !important;
   margin-bottom: 10px !important;
   margin-left: 10px !important;
   margin-right: 10px !important;
 }
 
 .onlyofficeEditorBody #RightBody, .onlyofficeEditorBody .onlyofficeContainer > .editor {
-  height : calc(100vh - 40px);
+  height : calc(100vh - 20px);
 }
 
 .onlyofficeEditorBody .RightBodyTDContainer {

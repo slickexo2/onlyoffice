@@ -3,27 +3,26 @@
   <!-- For menu caption in Action Bar -->
   <UIActionBar>
     <tooltip>
-      <OnlyofficeOpen>Edit in Onlyoffice</OnlyofficeOpen>
-      <OnlyofficeClose>Close Onlyoffice</OnlyofficeClose>
+      <OnlyofficeOpen>Edit Online</OnlyofficeOpen>
+      <OnlyofficeClose>Close Online Editor</OnlyofficeClose>
     </tooltip>
   </UIActionBar>
   <!-- Used in Administration-Content-Explorer in Views settings a popup with actions list -->
   <UITabForm>
     <label>
-      <onlyofficeOpen>Edit in Onlyoffice</onlyofficeOpen>
-      <onlyofficeClose>Close Onlyoffice</onlyofficeClose>
+      <onlyofficeOpen>Edit Online</onlyofficeOpen>
+      <onlyofficeClose>Close Online Editor</onlyofficeClose>
     </label>
   </UITabForm>
   <!-- Messages -->
   <OnlyofficeEditor>
     <message>
-      <ViewerNotFound>Office document viewer (PDF) not found</ViewerNotFound>
-      <ViewerNotFound>Office document editor (Onlyoffice) not found</ViewerNotFound>
+      <ViewerNotFound>Online document editor not found</ViewerNotFound>
     </message>
   </OnlyofficeEditor>
   <portal>
     <intranet>
-      <oeditor>Onlyoffice Document Editor</oeditor>
+      <oeditor>Online Document Editor</oeditor>
     </intranet>
   </portal>
 </bundle>

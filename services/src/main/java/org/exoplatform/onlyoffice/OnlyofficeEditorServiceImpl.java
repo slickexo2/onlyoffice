@@ -67,6 +67,7 @@ import org.exoplatform.services.cache.CacheListener;
 import org.exoplatform.services.cache.CacheListenerContext;
 import org.exoplatform.services.cache.CacheService;
 import org.exoplatform.services.cache.ExoCache;
+import org.exoplatform.services.cms.documents.DocumentService;
 import org.exoplatform.services.jcr.RepositoryService;
 import org.exoplatform.services.jcr.ext.app.SessionProviderService;
 import org.exoplatform.services.jcr.ext.common.SessionProvider;
@@ -80,7 +81,6 @@ import org.exoplatform.services.security.Authenticator;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.security.IdentityRegistry;
-import org.exoplatform.social.core.service.LinkProvider;
 
 /**
  * Service implementing {@link OnlyofficeEditorService} and {@link Startable}.
@@ -158,6 +158,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /** The authenticator. */
   protected final Authenticator                                   authenticator;
 
+  /** The document service. */
+  protected final DocumentService                                 documentService;
+
   /** Cache of Editing documents. */
   protected final ExoCache<String, ConcurrentMap<String, Config>> activeCache;
 
@@ -204,6 +207,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @param organization the organization
    * @param authenticator the authenticator
    * @param cacheService the cache service
+   * @param documentService the document service (ECMS)
    * @param params the params
    * @throws ConfigurationException the configuration exception
    */
@@ -214,6 +218,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                      OrganizationService organization,
                                      Authenticator authenticator,
                                      CacheService cacheService,
+                                     DocumentService documentService,
                                      InitParams params)
       throws ConfigurationException {
     this.jcrService = jcrService;
@@ -222,6 +227,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     this.finder = finder;
     this.organization = organization;
     this.authenticator = authenticator;
+    this.documentService = documentService;
 
     this.activeCache = cacheService.getCacheInstance(CACHE_NAME);
     if (LOG.isDebugEnabled()) {
@@ -519,7 +525,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                                              .append(PortalContainer.getCurrentRestContextName())
                                                              .toString());
           // editor page URL
-          builder.editorUrl(platformUrl.append(editorURLPath(docId)).toString());
+          builder.editorUrl(new StringBuilder(platformUrl).append(editorURLPath(docId)).toString());
+
+          // ECMS explorer page URL
+          builder.explorerUrl(explorerUrl(schema, host, path).toString());
 
           config = builder.build();
 
@@ -651,13 +660,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
         String nodePath = nodePath(config.getWorkspace(), config.getPath());
 
-        // status of the document. Can have the following values: 0 - no
-        // document with the key identifier
-        // could be found, 1 - document is being edited (user opened an editor),
-        // 2 - document is ready for
-        // saving (last user closed it), 3 - document saving error has occurred,
-        // 4 - document is closed with
-        // no changes.
+        // status of the document. Can have the following values:
+        // 0 - no document with the key identifier could be found,
+        // 1 - document is being edited (user opened an editor),
+        // 2 - document is ready for saving (last user closed it),
+        // 3 - document saving error has occurred,
+        // 4 - document is closed with no changes.
         long statusCode = status.getStatus();
 
         if (LOG.isDebugEnabled()) {
@@ -1430,6 +1438,31 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     platformUrl.append(PortalContainer.getCurrentPortalContainerName());
 
     return platformUrl;
+  }
+
+  /**
+   * ECMS explorer page URL.
+   *
+   * @param schema the schema
+   * @param host the host
+   * @param jcrPath the JCR path of the document node
+   * @return the string builder
+   */
+  protected StringBuilder explorerUrl(String schema, String host, String jcrPath) {
+    StringBuilder explorerUrl = new StringBuilder();
+    explorerUrl.append(schema);
+    explorerUrl.append("://");
+    explorerUrl.append(host);
+
+    try {
+      String documentLink = documentService.getLinkInDocumentsApp(jcrPath);
+      explorerUrl.append(documentLink);
+    } catch (Exception e) {
+      LOG.warn("Error creating document link for " + jcrPath, e);
+      explorerUrl.append('/').append(PortalContainer.getCurrentPortalContainerName());
+    }
+
+    return explorerUrl;
   }
 
   /**

@@ -636,6 +636,32 @@
 						"onReady" : onReady,
 						"onBack" : onBack
 					};
+					config.editorConfig.customization =  {
+					    "chat": false,
+					    "compactToolbar" : true,
+					    "goback": {
+                "blank": true,
+                "text": "Go to Document",
+                "url": config.explorerUrl
+              },
+              "help": true,
+              "logo": {
+                  "image": prefixUrl + "/onlyoffice/images/exo-icone.png",
+                  "imageEmbedded": prefixUrl + "/eXoSkin/skin/images/themes/default/platform/skin/ToolbarContainer/HomeIcon.png",
+                  "url": prefixUrl + "/portal"
+              },
+              "customer": {
+                "info": "eXo Platform",
+                "logo": prefixUrl + "/eXoSkin/skin/images/themes/default/platform/skin/ToolbarContainer/HomeIcon.png",
+                "mail": "support@exoplatform.com",
+                "name": "Support",
+                "www": "exoplatform.com"
+              }
+					};
+					config.editorConfig.plugins = {
+            "autostart": [],
+            "pluginsData": []
+					};
 
 					currentConfig = config;
 
@@ -821,35 +847,6 @@
 
 		var hasDocumentChanged = false;
 		
-		/*
-		var editorWindows = {};
-		
-    var openEditorWindow = function(name) {
-      log(">> openEditorWindow: " + name);
-      var w = editorWindows[name];
-      if (!w || w.closed) {
-        w = window.open("", name);
-        editorWindows[name] = w;
-      }
-      w.focus();
-    };
-		
-    var initEditorWindow = function(name, link) {
-      log(">> initEditorWindow: " + name + " " + link);
-      var w = editorWindows[name];
-      if (w) {
-        //delete editorWindows[name];        
-        if (!w.location.href.endsWith(link)) {
-          log("<< initEditorWindow: w.location = " + link);
-          w.location.href = link;            
-        } else {
-          log("<< initEditorWindow: already " + link);
-        }
-        w.focus(); // this may not work for a tab
-      }
-    };
-    */
-		
 		var contextId = function(currentNode) {
 		  return "oeditor" + (currentNode.workspace + currentNode.path).hashCode();
 		}
@@ -882,30 +879,6 @@
 				  }
 				});
 			}
-			/*
-			var $actionCloseIcon = $("#uiActionsBarContainer i.uiIconEcmsOnlyofficeClose");
-			if ($actionCloseIcon.length > 0 && !$actionCloseIcon.hasClass("uiIconSave")) { // was uiIconClose
-				$actionCloseIcon.addClass("uiIconSave");
-				init = true; // Jan 18, 2019 - should not happen
-			}
-			
-			// TODO not required
-			// May 25, 2018: if click Version or Edit Properties, we need close the editor at WebUI side
-			if (init) {
-				var $implicitCloseActions = $("#uiActionsBarContainer").find("i.uiIconEcmsManageVersions, i.uiIconEcmsEditProperty").parent("a.actionIcon").parent("li");
-				$implicitCloseActions.click(function() {
-					var showLeavedInfo = hasDocumentChanged;
-					try {
-						saveAndDestroy();
-						editor.closeUI(); // TODO don't need it 
-					} finally {
-						if (showLeavedInfo) {
-							UI.showInfo("You leaved document editor", "Document will be saved when all users close it.");
-						}
-					}
-				});				
-			}
-			*/
 		};
 		
 		var saveAndDestroy = function() {
@@ -937,13 +910,6 @@
 		  $("#NavigationPortlet").remove();
 		  $("body").addClass("maskLayer");
 		  $("#SharedLayoutRightBody").addClass("onlyofficeEditorBody");
-		  var $editorPage = $("#OnlyofficeEditorPage");
-		  var $exit = $editorPage.find(".exitWindow");
-		  $exit.prependTo($("body"));
-		  $exit.find(".uiIconClose").click(function() {
-		    window.close();
-		  });
-		  $exit.show();
 		};
 		
 		this.isEditorLoaded = function() {
@@ -1061,15 +1027,11 @@
           var $container = $editorPage.find(".onlyofficeContainer");
           
           // create and start editor (this also will re-use an existing editor config from the server)
-          //editor.create(config).done(function(localConfig) {
           docEditor = new DocsAPI.DocEditor("onlyoffice", localConfig);
           hasDocumentChanged = false;
           // show editor
           $container.find(".editor").show("blind");
           $container.find(".loading").hide("blind");
-          //}).fail(function(error) {
-          //  UI.showError("Error creating editor", error);
-          //});
         } else {
           log("WARN: Editor client already initialized");
         }

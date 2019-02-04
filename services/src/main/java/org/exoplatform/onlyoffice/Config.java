@@ -78,6 +78,9 @@ public class Config implements Externalizable {
     /** The editor page at platform URL. */
     protected String       editorUrl;
 
+    /** The ECMS explorer page URL. */
+    protected String       explorerUrl;
+
     /** The document. */
     // Document
     protected String       fileType, key, title, url;
@@ -131,6 +134,17 @@ public class Config implements Externalizable {
      */
     public Builder editorUrl(String editorUrl) {
       this.editorUrl = editorUrl;
+      return this;
+    }
+
+    /**
+     * Explorer url.
+     *
+     * @param explorerUrl the explorer url
+     * @return the builder
+     */
+    public Builder explorerUrl(String explorerUrl) {
+      this.explorerUrl = explorerUrl;
       return this;
     }
 
@@ -301,7 +315,16 @@ public class Config implements Externalizable {
       Document document = new Document(key, fileType, title, url, info, permissions);
       Editor.User user = new Editor.User(userId, firstname, lastname);
       Editor editor = new Editor(callbackUrl, lang, mode, user);
-      return new Config(documentserverUrl, platformRestUrl, editorUrl, documentType, workspace, path, docId, document, editor);
+      return new Config(documentserverUrl,
+                        platformRestUrl,
+                        editorUrl,
+                        explorerUrl,
+                        documentType,
+                        workspace,
+                        path,
+                        docId,
+                        document,
+                        editor);
     }
   }
 
@@ -770,6 +793,9 @@ public class Config implements Externalizable {
   /** The editor page URL. */
   private String         editorUrl;
 
+  /** The explorer page URL (ECMS Explorer page). */
+  private String         explorerUrl;
+
   /** The workspace. */
   private String         workspace;
 
@@ -808,7 +834,8 @@ public class Config implements Externalizable {
   private Boolean        closing;
 
   /**
-   * Instantiates a new config for use with {@link Externalizable} methods.
+   * Instantiates a new config for use with {@link Externalizable} methods. User
+   * by serialization.
    */
   public Config() {
     // nothing
@@ -820,6 +847,7 @@ public class Config implements Externalizable {
    * @param documentserverUrl the documentserver URL
    * @param platformRestUrl the platform url
    * @param editorUrl the editor url
+   * @param explorerUrl the explorer url
    * @param documentType the document type
    * @param workspace the workspace
    * @param path the path
@@ -830,6 +858,7 @@ public class Config implements Externalizable {
   protected Config(String documentserverUrl,
                    String platformRestUrl,
                    String editorUrl,
+                   String explorerUrl,
                    String documentType,
                    String workspace,
                    String path,
@@ -845,6 +874,7 @@ public class Config implements Externalizable {
 
     this.platformRestUrl = platformRestUrl;
     this.editorUrl = editorUrl;
+    this.explorerUrl = explorerUrl;
 
     this.document = document;
     this.editorConfig = editor;
@@ -863,6 +893,7 @@ public class Config implements Externalizable {
     out.writeUTF(documentserverJsUrl);
     out.writeUTF(platformRestUrl.toString());
     out.writeUTF(editorUrl);
+    out.writeUTF(explorerUrl);
     out.writeUTF(open != null ? open.toString() : EMPTY);
     // Note: closing state isn't replicable
     out.writeUTF(error != null ? error : EMPTY);
@@ -900,6 +931,7 @@ public class Config implements Externalizable {
     this.documentserverJsUrl = in.readUTF();
     this.platformRestUrl = in.readUTF();
     this.editorUrl = in.readUTF();
+    this.explorerUrl = in.readUTF();
     String openString = in.readUTF();
     // Note: closing state isn't replicable (due to short lifecycle, few seconds
     // max and it's valuable
@@ -1017,6 +1049,15 @@ public class Config implements Externalizable {
   }
 
   /**
+   * Gets the explorer url.
+   *
+   * @return the explorerUrl
+   */
+  public String getExplorerUrl() {
+    return explorerUrl;
+  }
+
+  /**
    * Gets the document type.
    *
    * @return the documentType
@@ -1057,6 +1098,7 @@ public class Config implements Externalizable {
     return new Config(documentserverUrl,
                       platformRestUrl,
                       editorUrl,
+                      explorerUrl,
                       documentType,
                       workspace,
                       path,
