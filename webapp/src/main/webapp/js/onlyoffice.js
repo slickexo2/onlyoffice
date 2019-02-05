@@ -908,7 +908,7 @@
 		this.initEditor = function() {
 		  $("#LeftNavigation").parent(".LeftNavigationTDContainer").remove();
 		  $("#NavigationPortlet").remove();
-		  $("body").addClass("maskLayer");
+		  //$("body").addClass("maskLayer");
 		  $("#SharedLayoutRightBody").addClass("onlyofficeEditorBody");
 		};
 		

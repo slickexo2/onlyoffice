@@ -1,13 +1,13 @@
 
 .onlyofficeEditorBody {
-  margin-top: 10px !important;
-  margin-bottom: 10px !important;
-  margin-left: 10px !important;
-  margin-right: 10px !important;
+  margin-top: 0px !important;
+  margin-bottom: 0px !important;
+  margin-left: 0px !important;
+  margin-right: 0px !important;
 }
 
 .onlyofficeEditorBody #RightBody, .onlyofficeEditorBody .onlyofficeContainer > .editor {
-  height : calc(100vh - 20px);
+  height : 100vh;
 }
 
 .onlyofficeEditorBody .RightBodyTDContainer {
