@@ -40,6 +40,11 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
 import org.exoplatform.onlyoffice.BadParameterException;
 import org.exoplatform.onlyoffice.ChangeState;
 import org.exoplatform.onlyoffice.Config;
@@ -52,10 +57,6 @@ import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.rest.resource.ResourceContainer;
 import org.exoplatform.services.security.ConversationState;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 /**
  * REST service implementing Onlyoffice config storage service. <br>
@@ -190,7 +191,7 @@ public class EditorService implements ResourceContainer {
 
     String clientHost = getClientHost(request);
     String clientIp = getClientIpAddr(request);
-
+    
     if (LOG.isDebugEnabled()) {
       LOG.debug("> Onlyoffice document status: " + userId + "@" + key + " " + statusText + " from " + clientHost + "(" + clientIp
           + ")");
@@ -485,7 +486,7 @@ public class EditorService implements ResourceContainer {
     if (LOG.isDebugEnabled()) {
       LOG.debug("> Onlyoffice initDocument: " + workspace + ":" + path);
     }
-
+    
     EditorResponse resp = new EditorResponse();
     if (workspace != null) {
       if (path != null) {

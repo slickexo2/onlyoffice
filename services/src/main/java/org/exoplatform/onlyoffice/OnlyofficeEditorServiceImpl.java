@@ -52,6 +52,8 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.lock.Lock;
+import javax.portlet.RenderRequest;
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.io.input.AutoCloseInputStream;
 import org.picocontainer.Startable;
@@ -83,6 +85,8 @@ import org.exoplatform.services.security.Authenticator;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.security.IdentityRegistry;
+import org.exoplatform.webui.application.WebuiRequestContext;
+import org.exoplatform.webui.application.portlet.PortletRequestContext;
 
 /**
  * Service implementing {@link OnlyofficeEditorService} and {@link Startable}.
@@ -837,6 +841,45 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   public String initDocument(String workspace, String path) throws OnlyofficeEditorException, RepositoryException {
     Node node = node(workspace, path);
     return initDocument(node);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public boolean canEdit(Node node) {
+    try {
+      return !node.isLocked() && !node.getParent().isLocked();
+    } catch (RepositoryException e) {
+      LOG.warn("Cannot check node locks: ", e);
+      return false;
+    }
+    // TODO: check the permissions. The code below throws NPE
+    /*
+    boolean permit = true;
+    ConversationState convo = ConversationState.getCurrent();
+    try {
+      String userId = convo.getIdentity().getUserId();
+      Config conf = getEditor(userId, node.getPath(), false);
+      permit = conf.getDocument().getPermissions().isEdit();
+      return !node.isLocked() && !node.getParent().isLocked() && permit;
+    } catch (Exception e) {
+      LOG.warn(e);
+      return false;
+    }*/
+  }
+
+  /**
+   * {@inheritDoc}}
+   */
+  @Override
+  public String getEditorLink(String workspace, String docId) {
+
+    PortletRequestContext pcontext = (PortletRequestContext) WebuiRequestContext.getCurrentInstance();
+    int port = pcontext.getRequest().getServerPort();
+    String host = pcontext.getRequest().getServerName();
+    host = port >= 0 && port != 80 && port != 443 ? host + ":" + port : host;
+    return getEditorLink(pcontext.getRequest().getScheme(), host, workspace, docId);
   }
 
   /**

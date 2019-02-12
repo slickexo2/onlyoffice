@@ -18,6 +18,8 @@
  */
 package org.exoplatform.onlyoffice;
 
+import java.net.URI;
+
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
@@ -112,6 +114,14 @@ public interface OnlyofficeEditorService {
   String initDocument(String workspace, String path) throws OnlyofficeEditorException, RepositoryException;
   
   /**
+   * Gets the editor page URL for opening at Platform server relatively to the current PortalRequest
+   * @param workspace
+   * @param docId
+   * @return the editor link
+   */
+  String getEditorLink(String workspace, String docId);
+  
+  /**
    * Gets the editor page URL for opening at Platform server.
    *
    * @param schema the schema
@@ -178,4 +188,11 @@ public interface OnlyofficeEditorService {
    * @param listener the listener
    */
   void removeListener(OnlyofficeEditorListener listener);
+  
+  /**
+   * Checks if the current user can edit a node
+   * @param node
+   * @return true if the user can edit the node
+   */
+  boolean canEdit(Node node);
 }
