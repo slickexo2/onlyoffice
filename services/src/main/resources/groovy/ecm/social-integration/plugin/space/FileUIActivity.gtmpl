@@ -617,12 +617,10 @@ for(def index = 0; index < uicomponent.getFilesCount(); index++) {
                         
   						<%
   							def onlyOfficeService = WCMCoreUtils.getService(OnlyofficeEditorService.class);
-  							if(onlyOfficeService.canEdit(currentNode)){
-  								def docId = onlyOfficeService.initDocument(currentNode);
-  								def preferenceWS  = currentNode.getSession().getWorkspace().getName();
-  								def editorLink = onlyOfficeService.getEditorLink(preferenceWS, docId);
+  							def editorLink = onlyOfficeService.getEditorLink(currentNode);
+  							if(editorLink != null){
   						%>
-  								<li><a href="$editorLink"><i class="uiIconDownload uiIconLightGray"></i>Edit Online</a></li>
+  								<li><a href="$editorLink"><i class="uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit"></i>Edit Online</a></li>
   						<% } %>
 
                         <li><a href="$downloadAllUrl"><i class="uiIconDownload uiIconLightGray"></i>&nbsp;<%=_ctx.appRes("SocialIntegration.download");%></a></li>

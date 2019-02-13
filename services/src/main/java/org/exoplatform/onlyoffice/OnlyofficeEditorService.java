@@ -115,11 +115,10 @@ public interface OnlyofficeEditorService {
   
   /**
    * Gets the editor page URL for opening at Platform server relatively to the current PortalRequest
-   * @param workspace
-   * @param docId
+   * @param node
    * @return the editor link
    */
-  String getEditorLink(String workspace, String docId);
+  String getEditorLink(Node node) throws OnlyofficeEditorException, RepositoryException;
   
   /**
    * Gets the editor page URL for opening at Platform server.
@@ -188,11 +187,5 @@ public interface OnlyofficeEditorService {
    * @param listener the listener
    */
   void removeListener(OnlyofficeEditorListener listener);
-  
-  /**
-   * Checks if the current user can edit a node
-   * @param node
-   * @return true if the user can edit the node
-   */
-  boolean canEdit(Node node);
+
 }

@@ -52,8 +52,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.lock.Lock;
-import javax.portlet.RenderRequest;
-import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.io.input.AutoCloseInputStream;
 import org.picocontainer.Startable;
@@ -64,6 +62,7 @@ import org.exoplatform.container.configuration.ConfigurationException;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.PropertiesParam;
 import org.exoplatform.ecm.utils.lock.LockUtil;
+import org.exoplatform.ecm.webui.utils.PermissionUtil;
 import org.exoplatform.onlyoffice.jcr.NodeFinder;
 import org.exoplatform.portal.Constants;
 import org.exoplatform.services.cache.CacheListener;
@@ -85,6 +84,7 @@ import org.exoplatform.services.security.Authenticator;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.security.IdentityRegistry;
+import org.exoplatform.services.wcm.utils.WCMCoreUtils;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.application.portlet.PortletRequestContext;
 
@@ -844,43 +844,26 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   /**
-   * {@inheritDoc}
-   */
-  @Override
-  public boolean canEdit(Node node) {
-    try {
-      return !node.isLocked() && !node.getParent().isLocked();
-    } catch (RepositoryException e) {
-      LOG.warn("Cannot check node locks: ", e);
-      return false;
-    }
-    // TODO: check the permissions. The code below throws NPE
-    /*
-    boolean permit = true;
-    ConversationState convo = ConversationState.getCurrent();
-    try {
-      String userId = convo.getIdentity().getUserId();
-      Config conf = getEditor(userId, node.getPath(), false);
-      permit = conf.getDocument().getPermissions().isEdit();
-      return !node.isLocked() && !node.getParent().isLocked() && permit;
-    } catch (Exception e) {
-      LOG.warn(e);
-      return false;
-    }*/
-  }
-
-  /**
    * {@inheritDoc}}
+   * @throws OnlyofficeEditorException 
+   * @throws RepositoryException 
+   * @throws Exception 
    */
   @Override
-  public String getEditorLink(String workspace, String docId) {
-
-    PortletRequestContext pcontext = (PortletRequestContext) WebuiRequestContext.getCurrentInstance();
-    int port = pcontext.getRequest().getServerPort();
-    String host = pcontext.getRequest().getServerName();
-    host = port >= 0 && port != 80 && port != 443 ? host + ":" + port : host;
-    return getEditorLink(pcontext.getRequest().getScheme(), host, workspace, docId);
+  public String getEditorLink(Node node) throws RepositoryException, OnlyofficeEditorException {
+    if (canEditDocument(node)) {
+      String workspace = node.getSession().getWorkspace().getName();
+      String docId = initDocument(node);
+      PortletRequestContext pcontext = (PortletRequestContext) WebuiRequestContext.getCurrentInstance();
+      int port = pcontext.getRequest().getServerPort();
+      String host = pcontext.getRequest().getServerName();
+      host = port >= 0 && port != 80 && port != 443 ? host + ":" + port : host;
+      return getEditorLink(pcontext.getRequest().getScheme(), host, workspace, docId);
+    }
+    return null;
   }
+
+  
 
   /**
    * {@inheritDoc}
@@ -1768,5 +1751,22 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                               .append("/oeditor?docId=")
                               .append(docId)
                               .toString();
+  }
+  
+  /**
+   * Checks if the node isn't locked and can be edited by the current user
+   * @param node
+   * @return true, if the current user can edit the node
+   * @throws RepositoryException
+   */
+  protected boolean canEditDocument(Node node) throws RepositoryException {
+    String remoteUser = WCMCoreUtils.getRemoteUser();
+    String superUser = WCMCoreUtils.getSuperUser();
+    boolean locked = node.isLocked();
+    if (locked && (remoteUser.equalsIgnoreCase(superUser) || node.getLock().getLockOwner().equals(remoteUser))) {
+      locked = false;
+    }
+    boolean permit = WCMCoreUtils.canAccessParentNode(node) && PermissionUtil.canAddNode(node.getParent());
+    return !locked && permit;
   }
 }
