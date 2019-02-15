@@ -18,10 +18,10 @@
  */
 package org.exoplatform.onlyoffice;
 
-import java.net.URI;
-
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+
+import org.exoplatform.container.component.ComponentPlugin;
 
 /**
  * Created by The eXo Platform SAS.
@@ -112,14 +112,14 @@ public interface OnlyofficeEditorService {
    * @throws RepositoryException the repository exception
    */
   String initDocument(String workspace, String path) throws OnlyofficeEditorException, RepositoryException;
-  
+
   /**
    * Gets the editor page URL for opening at Platform server relatively to the current PortalRequest
    * @param node
    * @return the editor link
    */
   String getEditorLink(Node node) throws OnlyofficeEditorException, RepositoryException;
-  
+
   /**
    * Gets the editor page URL for opening at Platform server.
    *
@@ -187,5 +187,11 @@ public interface OnlyofficeEditorService {
    * @param listener the listener
    */
   void removeListener(OnlyofficeEditorListener listener);
+
+  /**
+   * Adds DocumentTypePlugin to the service to check mimetypes of documents.
+   * @param plugin - the plugin to be added
+   */
+  void addTypePlugin(ComponentPlugin plugin);
 
 }

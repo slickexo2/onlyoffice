@@ -621,8 +621,8 @@ for(def index = 0; index < uicomponent.getFilesCount(); index++) {
   							def editorLink = onlyOfficeService.getEditorLink(currentNode);
   							if(editorLink != null){
   						%>
-  						<li><a href="$editorLink"><i class="uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit"></i>Edit Online</a></li>
-  						<% } %>
+  								<li><a href="$editorLink"><i class="uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit"></i>Edit Online</a></li>
+  							<% } %>
                     <% } else if(uicomponent.getFilesCount() > 1) { %>
     		            <li><a href="$downloadAllUrl"><i class="uiIconDownload uiIconLightGray"></i>&nbsp;<%=_ctx.appRes("SocialIntegration.downloadAll");%></a></li>
                     <% } %>
