@@ -341,7 +341,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
     // configuration
     PropertiesParam param = params.getPropertiesParam("editor-configuration");
-
+    
     if (param != null) {
       config = Collections.unmodifiableMap(param.getProperties());
     } else {
