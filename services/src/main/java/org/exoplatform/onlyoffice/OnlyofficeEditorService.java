@@ -18,8 +18,6 @@
  */
 package org.exoplatform.onlyoffice;
 
-import java.net.URI;
-
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
@@ -112,14 +110,18 @@ public interface OnlyofficeEditorService {
    * @throws RepositoryException the repository exception
    */
   String initDocument(String workspace, String path) throws OnlyofficeEditorException, RepositoryException;
-  
+
   /**
-   * Gets the editor page URL for opening at Platform server relatively to the current PortalRequest
-   * @param node
+   * Gets the editor page URL for opening at Platform server relatively to the
+   * current PortalRequest.
+   *
+   * @param node the node
    * @return the editor link
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   * @throws RepositoryException the repository exception
    */
   String getEditorLink(Node node) throws OnlyofficeEditorException, RepositoryException;
-  
+
   /**
    * Gets the editor page URL for opening at Platform server.
    *
