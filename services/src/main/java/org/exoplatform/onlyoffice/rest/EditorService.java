@@ -487,7 +487,7 @@ public class EditorService implements ResourceContainer {
     String clientIp = getClientIpAddr(request);
     return Response.ok()
                    .entity("{\"user\": \"" + request.getRemoteUser() + "\",\n\"requestIP\": \"" + clientIp
-                       + "\",\n\"requestHost\": \"" + clientHost + "\",\n\"product\":{ \"name:\": \"" + title
+                       + "\",\n\"requestHost\": \"" + clientHost + "\",\n\"product\":{ \"name\": \"" + title
                        + "\",\n\"version\": \"" + version + "\"},\n\"version\": \"" + API_VERSION + "\"}")
                    .build();
   }
