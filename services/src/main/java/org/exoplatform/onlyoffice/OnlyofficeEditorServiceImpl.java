@@ -165,23 +165,42 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * The Class LockState
+   */
   class LockState {
+
+    /** The lock token. */
     final String lockToken;
 
+    /** The lock. */
     final Lock   lock;
 
+    /**
+     * Instantiates a new lock state.
+     *
+     * @param lockToken the lock token
+     */
     LockState(String lockToken) {
       super();
       this.lockToken = lockToken;
       this.lock = null;
     }
 
+    /**
+     * Instantiates a new lock state.
+     *
+     * @param lock the lock
+     */
     LockState(Lock lock) {
       super();
       this.lockToken = null;
       this.lock = lock;
     }
 
+    /**
+     * Instantiates a new lock state.
+     */
     LockState() {
       super();
       this.lockToken = null;
@@ -279,6 +298,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @param authenticator the authenticator
    * @param cacheService the cache service
    * @param documentService the document service (ECMS)
+   * @param lockService the lock service
    * @param params the params
    * @throws ConfigurationException the configuration exception
    */
@@ -866,10 +886,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   /**
-   * {@inheritDoc}}
-   * @throws OnlyofficeEditorException 
-   * @throws RepositoryException 
-   * @throws Exception 
+   * {@inheritDoc}
    */
   @Override
   public String getEditorLink(Node node) throws RepositoryException, OnlyofficeEditorException {
@@ -1791,7 +1808,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
   /**
    * Checks if the node isn't locked and can be edited by the current user
-   * @param node
+   * 
+   * @param node the node
    * @return true, if the current user can edit the node
    * @throws RepositoryException the repository exeption
    */
