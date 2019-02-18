@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Random;
@@ -57,12 +58,15 @@ import org.apache.commons.io.input.AutoCloseInputStream;
 import org.picocontainer.Startable;
 
 import org.exoplatform.commons.utils.CommonsUtils;
+import org.exoplatform.commons.utils.MimeTypeResolver;
 import org.exoplatform.container.PortalContainer;
+import org.exoplatform.container.component.ComponentPlugin;
 import org.exoplatform.container.configuration.ConfigurationException;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.PropertiesParam;
 import org.exoplatform.ecm.utils.lock.LockUtil;
 import org.exoplatform.ecm.webui.utils.PermissionUtil;
+import org.exoplatform.ecm.webui.utils.Utils;
 import org.exoplatform.onlyoffice.jcr.NodeFinder;
 import org.exoplatform.portal.Constants;
 import org.exoplatform.services.cache.CacheListener;
@@ -146,10 +150,26 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   public static final String    CACHE_NAME             = "onlyoffice.EditorCache".intern();
 
   /**
-   * The Class LockState.
+   * DocumentTypesConfig
+   *
+   */
+  public static class DocumentTypesConfig {
+    protected List<String> mimeTypes;
+
+    public List<String> getMimeTypes() {
+      return mimeTypes;
+    }
+
+    public void setMimeTypes(List<String> mimeTypes) {
+      this.mimeTypes = mimeTypes;
+    }
+  }
+
+  /**
+   * The Class LockState
    */
   class LockState {
-    
+
     /** The lock token. */
     final String lockToken;
 
@@ -264,6 +284,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /** The listeners. */
   protected final ConcurrentLinkedQueue<OnlyofficeEditorListener> listeners    =
                                                                             new ConcurrentLinkedQueue<OnlyofficeEditorListener>();
+
+  protected DocumentTypePlugin                                    documentTypePlugin;
 
   /**
    * Cloud Drive service with storage in JCR and with managed features.
@@ -864,7 +886,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   /**
-   * {@inheritDoc}}
+   * {@inheritDoc}
    */
   @Override
   public String getEditorLink(Node node) throws RepositoryException, OnlyofficeEditorException {
@@ -879,8 +901,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
     return null;
   }
-
-  
 
   /**
    * {@inheritDoc}
@@ -919,6 +939,51 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   @Override
   public void stop() {
     LOG.info("Onlyoffice  Editor service successfuly stopped");
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void addTypePlugin(ComponentPlugin plugin) {
+    Class<DocumentTypePlugin> pclass = DocumentTypePlugin.class;
+    if (pclass.isAssignableFrom(plugin.getClass())) {
+      documentTypePlugin = pclass.cast(plugin);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Set documentTypePlugin instance of {}", plugin.getClass().getName());
+      }
+    } else {
+      LOG.error("The documentTypePlugin plugin is not an instance of " + pclass.getName());
+    }
+  }
+
+  /**
+  * {@inheritDoc}
+  */
+  @Override
+  public boolean canEditDocument(Node node) throws RepositoryException {
+    if (node == null) {
+      return false;
+    }
+
+    String mimeType;
+    if (node.isNodeType(Utils.NT_FILE)) {
+      mimeType = node.getNode(Utils.JCR_CONTENT).getProperty(Utils.JCR_MIMETYPE).getString();
+    } else {
+      mimeType = new MimeTypeResolver().getMimeType(node.getName());
+    }
+
+    if (documentTypePlugin.getMimeTypes().contains(mimeType)) {
+      String remoteUser = WCMCoreUtils.getRemoteUser();
+      String superUser = WCMCoreUtils.getSuperUser();
+      boolean locked = node.isLocked();
+      if (locked && (remoteUser.equalsIgnoreCase(superUser) || node.getLock().getLockOwner().equals(remoteUser))) {
+        locked = false;
+      }
+      boolean permit = WCMCoreUtils.canAccessParentNode(node) && PermissionUtil.canAddNode(node.getParent());
+      return !locked && permit;
+    }
+    return false;
   }
 
   // *********************** implementation level ***************
@@ -1768,23 +1833,5 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                               .append("/oeditor?docId=")
                               .append(docId)
                               .toString();
-  }
-  
-  /**
-   * Checks if the node isn't locked and can be edited by the current user.
-   *
-   * @param node the node
-   * @return true, if the current user can edit the node
-   * @throws RepositoryException the repository exception
-   */
-  protected boolean canEditDocument(Node node) throws RepositoryException {
-    String remoteUser = WCMCoreUtils.getRemoteUser();
-    String superUser = WCMCoreUtils.getSuperUser();
-    boolean locked = node.isLocked();
-    if (locked && (remoteUser.equalsIgnoreCase(superUser) || node.getLock().getLockOwner().equals(remoteUser))) {
-      locked = false;
-    }
-    boolean permit = WCMCoreUtils.canAccessParentNode(node) && PermissionUtil.canAddNode(node.getParent());
-    return !locked && permit;
   }
 }

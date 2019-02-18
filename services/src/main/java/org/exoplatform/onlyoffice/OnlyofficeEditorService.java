@@ -21,6 +21,8 @@ package org.exoplatform.onlyoffice;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
+import org.exoplatform.container.component.ComponentPlugin;
+
 /**
  * Created by The eXo Platform SAS.
  *
@@ -189,5 +191,21 @@ public interface OnlyofficeEditorService {
    * @param listener the listener
    */
   void removeListener(OnlyofficeEditorListener listener);
+
+  /**
+   * Adds DocumentTypePlugin to the service to check mimetypes of documents.
+   * 
+   * @param plugin - the plugin to be added
+   */
+  void addTypePlugin(ComponentPlugin plugin);
+
+  /**
+   * Checks if the node isn't locked and can be edited by the current user
+   * 
+   * @param node the node
+   * @return true, if the current user can edit the node
+   * @throws RepositoryException the repository exeption
+   */
+  boolean canEditDocument(Node node) throws RepositoryException;
 
 }
