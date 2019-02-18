@@ -20,9 +20,12 @@
 package org.exoplatform.onlyoffice.webui;
 
 import org.exoplatform.commons.utils.MimeTypeResolver;
+import org.exoplatform.container.PortalContainer;
 import org.exoplatform.ecm.webui.component.explorer.UIJCRExplorer;
 import org.exoplatform.ecm.webui.component.explorer.UIJcrExplorerContainer;
 import org.exoplatform.ecm.webui.utils.Utils;
+import org.exoplatform.onlyoffice.OnlyofficeEditorService;
+import org.exoplatform.services.wcm.utils.WCMCoreUtils;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.core.UIApplication;
 
@@ -40,6 +43,7 @@ public class FileFilter extends org.exoplatform.webui.ext.filter.impl.FileFilter
 
   /**
    * Instantiates a new file filter.
+   * 
    */
   public FileFilter() {
   }
@@ -59,33 +63,9 @@ public class FileFilter extends org.exoplatform.webui.ext.filter.impl.FileFilter
       if (uiExplorer != null) {
         contextNode = uiExplorer.getCurrentNode();
       }
-      if (contextNode == null) {
-        WebuiRequestContext reqContext = WebuiRequestContext.getCurrentInstance();
-        UIApplication uiApp = reqContext.getUIApplication();
-        UIJcrExplorerContainer jcrExplorerContainer = uiApp.getChild(UIJcrExplorerContainer.class);
-        if (jcrExplorerContainer != null) {
-          UIJCRExplorer jcrExplorer = jcrExplorerContainer.getChild(UIJCRExplorer.class);
-          contextNode = jcrExplorer.getCurrentNode();
-        }
-      }
-      context.put(Node.class.getName(), contextNode);
     }
-
-    String mimeType = (String) context.get(Utils.MIME_TYPE);
-    if (mimeType == null) {
-      if (contextNode != null) {
-        if (contextNode.isNodeType(Utils.NT_FILE)) {
-          mimeType = contextNode.getNode(Utils.JCR_CONTENT).getProperty(Utils.JCR_MIMETYPE).getString();
-        } else {
-          mimeType = new MimeTypeResolver().getMimeType(contextNode.getName());
-        }
-      } else {
-        mimeType = new MimeTypeResolver().getDefaultMimeType();
-      }
-      context.put(Utils.MIME_TYPE, mimeType);
-    }
-
-    return super.accept(context);
+    
+    OnlyofficeEditorService onlyofficeEditorService = WCMCoreUtils.getService(OnlyofficeEditorService.class);
+    return onlyofficeEditorService.canEditDocument(contextNode);
   }
-
 }

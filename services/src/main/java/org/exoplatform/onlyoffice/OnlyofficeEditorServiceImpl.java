@@ -957,6 +957,35 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+  * {@inheritDoc}
+  */
+  @Override
+  public boolean canEditDocument(Node node) throws RepositoryException {
+    if (node == null) {
+      return false;
+    }
+
+    String mimeType;
+    if (node.isNodeType(Utils.NT_FILE)) {
+      mimeType = node.getNode(Utils.JCR_CONTENT).getProperty(Utils.JCR_MIMETYPE).getString();
+    } else {
+      mimeType = new MimeTypeResolver().getMimeType(node.getName());
+    }
+
+    if (documentTypePlugin.getMimeTypes().contains(mimeType)) {
+      String remoteUser = WCMCoreUtils.getRemoteUser();
+      String superUser = WCMCoreUtils.getSuperUser();
+      boolean locked = node.isLocked();
+      if (locked && (remoteUser.equalsIgnoreCase(superUser) || node.getLock().getLockOwner().equals(remoteUser))) {
+        locked = false;
+      }
+      boolean permit = WCMCoreUtils.canAccessParentNode(node) && PermissionUtil.canAddNode(node.getParent());
+      return !locked && permit;
+    }
+    return false;
+  }
+
   // *********************** implementation level ***************
 
   /**
@@ -1804,34 +1833,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                               .append("/oeditor?docId=")
                               .append(docId)
                               .toString();
-  }
-
-  /**
-   * Checks if the node isn't locked and can be edited by the current user
-   * 
-   * @param node the node
-   * @return true, if the current user can edit the node
-   * @throws RepositoryException the repository exeption
-   */
-  protected boolean canEditDocument(Node node) throws RepositoryException {
-    String mimeType;
-    if (node.isNodeType(Utils.NT_FILE)) {
-      mimeType = node.getNode(Utils.JCR_CONTENT).getProperty(Utils.JCR_MIMETYPE).getString();
-    } else {
-      mimeType = new MimeTypeResolver().getMimeType(node.getName());
-    }
-
-    if (documentTypePlugin.getMimeTypes().contains(mimeType)) {
-      String remoteUser = WCMCoreUtils.getRemoteUser();
-      String superUser = WCMCoreUtils.getSuperUser();
-      boolean locked = node.isLocked();
-      if (locked && (remoteUser.equalsIgnoreCase(superUser) || node.getLock().getLockOwner().equals(remoteUser))) {
-        locked = false;
-      }
-      boolean permit = WCMCoreUtils.canAccessParentNode(node) && PermissionUtil.canAddNode(node.getParent());
-      return !locked && permit;
-    }
-    return false;
   }
 
 }
