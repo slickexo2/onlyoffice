@@ -473,8 +473,6 @@ public class EditorService implements ResourceContainer {
    *
    * @param uriInfo - request with base URI
    * @param request the request
-   * @param workspace the workspace
-   * @param path the path
    * @return response with
    */
   @GET
