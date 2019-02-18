@@ -459,7 +459,7 @@ for(def index = 0; index < uicomponent.getFilesCount(); index++) {
     // END ECMS
 %>
 
-<div id="Preview${activity.id}-$index" class="clearfix isPreviewable previewable${filesToDisplay}${index}" onclick="$docPreviewUri">
+<div id="Preview${activity.id}-$index" class="thisIsTestClass clearfix isPreviewable previewable${filesToDisplay}${index}" onclick="$docPreviewUri">
 <%
         if (index >= maxToDisplay) { %>
          </div>
