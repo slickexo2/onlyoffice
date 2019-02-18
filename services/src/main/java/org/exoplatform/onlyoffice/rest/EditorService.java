@@ -68,8 +68,11 @@ import org.exoplatform.services.security.ConversationState;
 @Path("/onlyoffice/editor")
 public class EditorService implements ResourceContainer {
 
+  /** The Constant API_VERSION. */
+  public static final String API_VERSION = "1.1";
+
   /** The Constant LOG. */
-  protected static final Log LOG = ExoLogger.getLogger(EditorService.class);
+  protected static final Log LOG         = ExoLogger.getLogger(EditorService.class);
 
   /**
    * Response builder for connect and state.
@@ -191,7 +194,7 @@ public class EditorService implements ResourceContainer {
 
     String clientHost = getClientHost(request);
     String clientIp = getClientIpAddr(request);
-    
+
     if (LOG.isDebugEnabled()) {
       LOG.debug("> Onlyoffice document status: " + userId + "@" + key + " " + statusText + " from " + clientHost + "(" + clientIp
           + ")");
@@ -466,6 +469,32 @@ public class EditorService implements ResourceContainer {
   }
 
   /**
+   * Return Onlyoffice REST API version.
+   *
+   * @param uriInfo - request with base URI
+   * @param request the request
+   * @param workspace the workspace
+   * @param path the path
+   * @return response with
+   */
+  @GET
+  @Path("/api/version")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response versionGet(@Context UriInfo uriInfo, @Context HttpServletRequest request) {
+
+    String title = this.getClass().getPackage().getImplementationTitle();
+    String version = this.getClass().getPackage().getImplementationVersion();
+
+    String clientHost = getClientHost(request);
+    String clientIp = getClientIpAddr(request);
+    return Response.ok()
+                   .entity("{\"user\": \"" + request.getRemoteUser() + "\",\n\"requestIP\": \"" + clientIp
+                       + "\",\n\"requestHost\": \"" + clientHost + "\",\n\"product\":{ \"name:\": \"" + title
+                       + "\",\n\"version\": \"" + version + "\"},\n\"version\": \"" + API_VERSION + "\"}")
+                   .build();
+  }
+
+  /**
    * Inits the document.
    *
    * @param uriInfo the uri info
@@ -486,7 +515,7 @@ public class EditorService implements ResourceContainer {
     if (LOG.isDebugEnabled()) {
       LOG.debug("> Onlyoffice initDocument: " + workspace + ":" + path);
     }
-    
+
     EditorResponse resp = new EditorResponse();
     if (workspace != null) {
       if (path != null) {
