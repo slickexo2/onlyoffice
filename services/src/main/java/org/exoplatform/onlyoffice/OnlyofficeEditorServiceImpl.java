@@ -151,7 +151,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
   /**
    * DocumentTypesConfig
-   *
    */
   public static class DocumentTypesConfig {
     protected List<String> mimeTypes;
@@ -383,7 +382,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
     // configuration
     PropertiesParam param = params.getPropertiesParam("editor-configuration");
-    
+
     if (param != null) {
       config = Collections.unmodifiableMap(param.getProperties());
     } else {
@@ -897,8 +896,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       int port = pcontext.getRequest().getServerPort();
       String host = pcontext.getRequest().getServerName();
       host = port >= 0 && port != 80 && port != 443 ? host + ":" + port : host;
-      return getEditorLink(pcontext.getRequest().getScheme(), host, workspace, docId);
+      String link = getEditorLink(pcontext.getRequest().getScheme(), host, workspace, docId);
+      LOG.info("DEBUG >>> Editor link {}: {}", node.getPath(), link);
+      return link;
     }
+    LOG.info("DEBUG >>> Editor link NOT FOUND for {}", node.getPath());
     return null;
   }
 
@@ -958,32 +960,34 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   /**
-  * {@inheritDoc}
-  */
+   * {@inheritDoc}
+   */
   @Override
   public boolean canEditDocument(Node node) throws RepositoryException {
-    if (node == null) {
-      return false;
-    }
-
-    String mimeType;
-    if (node.isNodeType(Utils.NT_FILE)) {
-      mimeType = node.getNode(Utils.JCR_CONTENT).getProperty(Utils.JCR_MIMETYPE).getString();
-    } else {
-      mimeType = new MimeTypeResolver().getMimeType(node.getName());
-    }
-
-    if (documentTypePlugin.getMimeTypes().contains(mimeType)) {
-      String remoteUser = WCMCoreUtils.getRemoteUser();
-      String superUser = WCMCoreUtils.getSuperUser();
-      boolean locked = node.isLocked();
-      if (locked && (remoteUser.equalsIgnoreCase(superUser) || node.getLock().getLockOwner().equals(remoteUser))) {
-        locked = false;
+    boolean res = false;
+    if (node != null) {
+      String mimeType;
+      if (node.isNodeType(Utils.NT_FILE)) {
+        mimeType = node.getNode(Utils.JCR_CONTENT).getProperty(Utils.JCR_MIMETYPE).getString();
+      } else {
+        mimeType = new MimeTypeResolver().getMimeType(node.getName());
       }
-      boolean permit = WCMCoreUtils.canAccessParentNode(node) && PermissionUtil.canAddNode(node.getParent());
-      return !locked && permit;
+
+      if (documentTypePlugin.getMimeTypes().contains(mimeType)) {
+        String remoteUser = WCMCoreUtils.getRemoteUser();
+        String superUser = WCMCoreUtils.getSuperUser();
+        boolean locked = node.isLocked();
+        if (locked && (remoteUser.equalsIgnoreCase(superUser) || node.getLock().getLockOwner().equals(remoteUser))) {
+          locked = false;
+        }
+        boolean permit = WCMCoreUtils.canAccessParentNode(node) && PermissionUtil.canAddNode(node.getParent());
+        res = !locked && permit;
+      }
     }
-    return false;
+    if (!res) {
+      LOG.info("DEBUG >>> Cannot edit: {}", node.getPath());
+    }
+    return res;
   }
 
   // *********************** implementation level ***************
