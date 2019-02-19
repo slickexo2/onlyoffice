@@ -614,7 +614,6 @@ for(def index = 0; index < uicomponent.getFilesCount(); index++) {
                     %>
                         <li class="hidden-tabletL" style="display:none;" ><a href="<%=uicomponent.event("OpenFile")%>"><i class="uiIcon16x16FileDefault uiIconEcmsOpenDocument_$activity.id $remoteEditClass" ></i>&nbsp;$remoteEditTitle</a></li>
                         <%  } %>
-           
                         <li><a href="$downloadAllUrl"><i class="uiIconDownload uiIconLightGray"></i>&nbsp;<%=_ctx.appRes("SocialIntegration.download");%></a></li>
                         <%
   							def onlyOfficeService = WCMCoreUtils.getService(OnlyofficeEditorService.class)
