@@ -21,8 +21,6 @@ package org.exoplatform.onlyoffice.webui;
 import java.util.Arrays;
 import java.util.List;
 
-import org.exoplatform.ecm.webui.component.explorer.control.filter.CanEditDocFilter;
-import org.exoplatform.ecm.webui.component.explorer.control.filter.IsNotLockedFilter;
 import org.exoplatform.ecm.webui.component.explorer.control.listener.UIActionBarActionListener;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -47,11 +45,8 @@ public class OnlyofficeOpenManageComponent extends AbstractOnlyofficeManageCompo
   protected static final Log                   LOG     = ExoLogger.getLogger(OnlyofficeOpenManageComponent.class);
 
   /** The Constant FILTERS. */
-  private static final List<UIExtensionFilter> FILTERS = Arrays.asList(new UIExtensionFilter[] {
-      new IsNotLockedFilter(),
-      new CanEditDocFilter() /*
-                              * , new CanOpenOnlyofficeFilter()
-                              */ });
+  // TODO was new IsNotLockedFilter(), new CanEditDocFilter()
+  private static final List<UIExtensionFilter> FILTERS = Arrays.asList(new UIExtensionFilter[] { new FileFilter() });
 
   /**
    * The listener interface for receiving onlyofficeOpenAction events. The class
@@ -61,7 +56,6 @@ public class OnlyofficeOpenManageComponent extends AbstractOnlyofficeManageCompo
    * <code>addOnlyofficeOpenActionListener</code> method. When the
    * onlyofficeOpenAction event occurs, that object's appropriate method is
    * invoked.
-   *
    */
   public static class OnlyofficeOpenActionListener extends UIActionBarActionListener<OnlyofficeOpenManageComponent> {
 

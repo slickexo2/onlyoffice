@@ -73,10 +73,10 @@ public class EditorPortlet extends GenericPortlet {
    */
   @RenderMode(name = "view")
   public void view(RenderRequest request, RenderResponse response) throws IOException, PortletException {
-    RequestContext rqContext = WebuiRequestContext.getCurrentInstance();
-    RequireJS js = ((WebuiRequestContext) rqContext).getJavascriptManager().require("SHARED/onlyoffice", "onlyoffice");
+    WebuiRequestContext webuiContext = (WebuiRequestContext) WebuiRequestContext.getCurrentInstance();
+    RequireJS js = webuiContext.getJavascriptManager().require("SHARED/onlyoffice", "onlyoffice");
 
-    String docId = rqContext.getRequestParameter("docId");
+    String docId = webuiContext.getRequestParameter("docId");
     if (docId != null) {
       try {
         Config config = onlyoffice.createEditor(request.getScheme(), requestHost(request), request.getRemoteUser(), null, docId);
@@ -95,14 +95,14 @@ public class EditorPortlet extends GenericPortlet {
           js.addScripts("onlyoffice.showError('Error','Editor cannot be created. Please retry.');");
         }
       } catch (RepositoryException e) {
-        LOG.error("Error reading document node by ID: " + docId, e);
+        LOG.error("Error reading document node by ID: {}", docId, e);
         js.addScripts("onlyoffice.showError('Error','Cannot read the document. Please retry.');");
       } catch (OnlyofficeEditorException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.error("Error creating document editor for node by ID: {}", docId, e);
+        js.addScripts("onlyoffice.showError('Error','Cannot create editor. Please retry.');");
       } catch (JsonException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        LOG.error("Error converting editor configuration to JSON for node by ID: {}", docId, e);
+        js.addScripts("onlyoffice.showError('Error','Cannot send editor configuration. Please retry.');");
       }
     } else {
       js.addScripts("onlyoffice.showError('Error','Wrong request: document ID required.');");

@@ -36,6 +36,7 @@ import javax.jcr.RepositoryException;
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: FileViewFilter.java 00000 May 23, 2018 pnedonosko $
  */
+@Deprecated
 public class FileViewFilter extends AbstractOnlyofficeFilter {
 
   /**

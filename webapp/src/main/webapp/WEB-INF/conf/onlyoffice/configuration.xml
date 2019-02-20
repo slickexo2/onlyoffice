@@ -187,6 +187,23 @@
       <type>org.exoplatform.webui.ext.UIExtensionPlugin</type>
       <init-params>
         <object-param>
+          <name>File Activity</name>
+          <object type="org.exoplatform.social.webui.activity.UIActivityExtension">
+            <field name="type">
+              <string>org.exoplatform.social.webui.activity.BaseUIActivity</string>
+            </field>
+            <field name="name">
+              <string>files:spaces</string>
+            </field>
+            <field name="component">
+              <string>org.exoplatform.onlyoffice.webui.FileUIActivity</string>
+            </field>
+            <field name="activityBuiderClass">
+              <string>org.exoplatform.wcm.ext.component.activity.FileUIActivityBuilder</string>
+            </field>
+          </object>
+        </object-param>
+        <object-param>
           <name>OnlyofficeOpen</name>
           <object type="org.exoplatform.webui.ext.UIExtension">
             <field name="type">
@@ -200,13 +217,6 @@
             </field>
             <field name="component">
               <string>org.exoplatform.onlyoffice.webui.OnlyofficeOpenManageComponent</string>
-            </field>
-            <field name="extendedFilters">
-              <collection type="java.util.ArrayList">
-                <value>
-                  <object type="org.exoplatform.onlyoffice.webui.FileFilter" />
-                </value>
-              </collection>
             </field>
           </object>
         </object-param>
