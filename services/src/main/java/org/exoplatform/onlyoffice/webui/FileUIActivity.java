@@ -22,6 +22,8 @@ import javax.jcr.Node;
 
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
 import org.exoplatform.social.webui.activity.BaseUIActivity;
+import org.exoplatform.web.application.JavascriptManager;
+import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.ComponentConfigs;
 import org.exoplatform.webui.config.annotation.EventConfig;
@@ -67,19 +69,15 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
    */
   @Override
   public void end() throws Exception {
-    // In Javascript we can work on DOM element with this ID (see in
-    // FileUIActivity.gtmpl), use it in jQuery: #activityContainer${activity.id}
-
-    // TODO add javascript/markup to initialize this activity Edit Online
-    // button and preview at end of the activity form rendering (see end of
-    // integration's FileUIActivity.gtmpl)
+    JavascriptManager js = ((WebuiRequestContext) WebuiRequestContext.getCurrentInstance()).getJavascriptManager();
+    
     if (getFilesCount() == 1) {
       Node node = getContentNode(0);
       if (node != null) {
         String editorLink = editorService.getEditorLink(node);
         if (editorLink != null) {
-          // TODO init Edit Online button for this activity in .statusAction of
-          // activity elem
+          js.require("SHARED/onlyofficeButtons", "onlyofficeButtons")
+          .addScripts("onlyofficeButtons.addButtonToActivity('" + getActivity().getId() + "','" + editorLink + "');");
         }
       }
     }
@@ -92,6 +90,10 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
       if (node != null) {
         String editorLink = editorService.getEditorLink(node);
         if (editorLink != null) {
+          
+          js.require("SHARED/onlyofficeButtons", "onlyofficeButtons")
+          .addScripts("onlyofficeButtons.addButtonToPreview('" + getActivity().getId() + "','" + editorLink + "','" + index + "');");
+          
           // TODO init the preview onclick to add Edit Online button for this
           // doc preview when the preview will be clicked by user.
           // This click handler should wait until the preview will load and

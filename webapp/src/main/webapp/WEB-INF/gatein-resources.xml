@@ -64,9 +64,9 @@
     </depends>
   </module>
   <module>
-    <name>onlyofficePreview</name>
+    <name>onlyofficeButtons</name>
     <script>
-      <path>/js/onlyoffice-preview.js</path>
+      <path>/js/onlyoffice-buttons.js</path>
     </script>
     <depends>
       <module>jquery</module>
