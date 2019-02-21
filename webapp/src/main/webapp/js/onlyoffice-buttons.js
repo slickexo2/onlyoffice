@@ -3,33 +3,46 @@
  */
 (function($) {
 
-  function getHtmlLink(link) {
-    return '<li><a href="' + link + '" target="_blank"><i class="uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit"></i> Edit Online</a></li>'
-  };
+  function getHtmlLink(link, label) {
+    return '<li><a href="' + link + '" target="_blank"><i class="uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit"></i> '
+        + label + '</a></li>';
+  }
+
+  function addPreviewButton(link, label, attempts, delay) {
+    var $elem = $(".previewBtn");
+    if ($elem.length == 0 || !$elem.is(":visible")) {
+      if (attempts > 0) {
+        setTimeout(function() {
+          addPreviewButton(link, label, attempts - 1, delay);
+        }, delay);
+
+      } else {
+        console.log("Cannot find element " + $elem);
+      }
+    } else {
+      $(".previewBtn").append('<div class="onlyOfficeEditBtn">' + getHtmlLink(link, label) + '</div>');
+    }
+  }
 
   function OnlyOfficeButtons() {
     var self = this;
 
-    this.addButtonToActivity = function(activityId, link) {
-      $("#activityContainer" + activityId).find(".statusAction.pull-left").append(getHtmlLink(link));
+    this.addButtonToActivity = function(activityId, link, label) {
+      $("#activityContainer" + activityId).find("div[id^='ActivityContextBox'] > .actionBar .statusAction.pull-left").append(
+          getHtmlLink(link, label));
     };
 
-    this.addButtonToPreview = function(activityId, link, index) {
+    this.addButtonToPreview = function(activityId, link, index, label) {
       $("#Preview" + activityId + "-" + index).click(function() {
+        // We set timeout here to avoid the case when the element is rendered but is going to be updated soon
         setTimeout(function() {
-          var previewBtn = $(".previewBtn");
-          previewBtn.find(".remoteEditBtn").css({
-            "float" : "right",
-            "padding-left" : "15px"
-          });
-          previewBtn.append('<div style="float:right; padding-left:15px;">' + getHtmlLink(link) + '</div>');
-        }, 500);
+          addPreviewButton(link, label, 100, 100);
+        }, 100);
+
       });
 
     };
-
   }
-
   return new OnlyOfficeButtons();
 
 })($);

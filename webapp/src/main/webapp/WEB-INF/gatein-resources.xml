@@ -72,4 +72,20 @@
       <module>jquery</module>
     </depends>
   </module>
+
+  <portlet-skin>
+    <application-name>onlyoffice</application-name>
+    <portlet-name>OnlyofficeStreamPortlet</portlet-name>
+    <skin-name>Enterprise</skin-name>
+    <css-path>/skin/onlyoffice-stream.css</css-path>
+    <overwrite>true</overwrite>
+  </portlet-skin>
+  
+    <portlet-skin>
+    <application-name>onlyoffice</application-name>
+    <portlet-name>OnlyofficeStreamPortlet</portlet-name>
+    <skin-name>Default</skin-name>
+    <css-path>/skin/onlyoffice-stream.css</css-path>
+    <overwrite>true</overwrite>
+  </portlet-skin>
 </gatein-resources>

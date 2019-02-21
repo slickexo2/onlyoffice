@@ -1,0 +1,9 @@
+.maskLayer .uiDocumentPreview .previewBtn .remoteEditBtn, .maskLayer .uiDocumentPreview .previewBtn .onlyOfficeEditBtn {
+  float: right;
+  padding-left: 15px;
+}
+
+.maskLayer .uiDocumentPreview .previewBtn .onlyOfficeEditBtn .uiIconEcmsOnlyofficeOpen,
+.maskLayer .uiDocumentPreview .previewBtn .remoteEditBtn li {
+  color: #ffffff;
+}

@@ -35,4 +35,17 @@
       <short-title>Onlyoffice editor</short-title>
     </portlet-info>
   </portlet>
+  
+  <portlet>
+    <portlet-name>OnlyofficeStreamPortlet</portlet-name>
+    <display-name xml:lang="EN">Onlyoffice Stream Portlet</display-name>
+    <portlet-class>org.exoplatform.onlyoffice.portlet.ActivityStreamPortlet</portlet-class>
+    <supports>
+      <mime-type>text/html</mime-type>
+    </supports>
+    <portlet-info>
+      <title>Onlyoffice stream portlet</title>
+      <short-title>Onlyoffice stream</short-title>
+    </portlet-info>
+  </portlet>
 </portlet-app>
