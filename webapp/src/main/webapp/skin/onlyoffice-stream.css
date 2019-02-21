@@ -3,7 +3,6 @@
   padding-left: 15px;
 }
 
-.maskLayer .uiDocumentPreview .previewBtn .onlyOfficeEditBtn .uiIconEcmsOnlyofficeOpen,
-.maskLayer .uiDocumentPreview .previewBtn .remoteEditBtn li {
+.maskLayer .uiDocumentPreview .previewBtn .onlyOfficeEditBtn .uiIconEcmsOnlyofficeOpen {
   color: #ffffff;
 }
