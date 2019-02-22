@@ -18,6 +18,8 @@
  */
 package org.exoplatform.onlyoffice.webui;
 
+import java.util.ResourceBundle;
+
 import javax.jcr.Node;
 
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
@@ -70,34 +72,33 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
   @Override
   public void end() throws Exception {
     JavascriptManager js = ((WebuiRequestContext) WebuiRequestContext.getCurrentInstance()).getJavascriptManager();
+    WebuiRequestContext requestContext = WebuiRequestContext.getCurrentInstance();
+    ResourceBundle resourceBundle = requestContext.getApplicationResourceBundle();
     
+    String editLabel = resourceBundle.getString("UIActionBar.tooltip.OnlyofficeOpen");
+
     if (getFilesCount() == 1) {
       Node node = getContentNode(0);
       if (node != null) {
         String editorLink = editorService.getEditorLink(node);
         if (editorLink != null) {
           js.require("SHARED/onlyofficeButtons", "onlyofficeButtons")
-          .addScripts("onlyofficeButtons.addButtonToActivity('" + getActivity().getId() + "','" + editorLink + "');");
+            .addScripts("onlyofficeButtons.addButtonToActivity('" + getActivity().getId() + "','" + editorLink + "', '"
+                + editLabel + "');");
         }
       }
     }
 
     // Init preview links for each of file
     for (int index = 0; index < getFilesCount(); index++) {
-      // TODO We want init all preview links that template render as:
-      // #Preview${activity.id}-$index",
+
       Node node = getContentNode(index);
       if (node != null) {
         String editorLink = editorService.getEditorLink(node);
         if (editorLink != null) {
-          
           js.require("SHARED/onlyofficeButtons", "onlyofficeButtons")
-          .addScripts("onlyofficeButtons.addButtonToPreview('" + getActivity().getId() + "','" + editorLink + "','" + index + "');");
-          
-          // TODO init the preview onclick to add Edit Online button for this
-          // doc preview when the preview will be clicked by user.
-          // This click handler should wait until the preview will load and
-          // render the DOM itself, only then add the button
+            .addScripts("onlyofficeButtons.addButtonToPreview('" + getActivity().getId() + "','" + editorLink + "','" + index
+                + "', '" + editLabel + "');");
         }
       }
     }
