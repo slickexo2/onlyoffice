@@ -52,7 +52,6 @@ import org.exoplatform.onlyoffice.DocumentContent;
 import org.exoplatform.onlyoffice.DocumentStatus;
 import org.exoplatform.onlyoffice.OnlyofficeEditorException;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
-import org.exoplatform.onlyoffice.webui.OnlyofficeEditorUIService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.rest.resource.ResourceContainer;
@@ -155,8 +154,6 @@ public class EditorService implements ResourceContainer {
   /** The editors. */
   protected final OnlyofficeEditorService   editors;
 
-  /** The editors UI. */
-  protected final OnlyofficeEditorUIService editorsUI;
 
   /** The initiated. */
   protected final Map<UUID, Config>         initiated = new ConcurrentHashMap<UUID, Config>();
@@ -168,7 +165,6 @@ public class EditorService implements ResourceContainer {
    */
   public EditorService(OnlyofficeEditorService editors) {
     this.editors = editors;
-    this.editorsUI = null;
   }
 
   /**
@@ -626,12 +622,12 @@ public class EditorService implements ResourceContainer {
           Config config = editors.getEditorByKey(userId, key);
           if (config != null) {
             if ("close".equals(command)) {
-              resp.entity(new StringBuilder("{\"closing\":\"").append(editorsUI.close(userId,
-                                                                                      config.getWorkspace(),
-                                                                                      config.getPath()))
-                                                              .append("\"}")
-                                                              .toString())
-                  .ok();
+//              resp.entity(new StringBuilder("{\"closing\":\"").append(editorsUI.close(userId,
+//                                                                                      config.getWorkspace(),
+//                                                                                      config.getPath()))
+//                                                              .append("\"}")
+//                                                              .toString())
+//                  .ok();
             } else {
               LOG.warn("Bad command for editor UI " + userId + "@" + key + " command: " + command);
               resp.error("Bad command").status(Status.BAD_REQUEST);

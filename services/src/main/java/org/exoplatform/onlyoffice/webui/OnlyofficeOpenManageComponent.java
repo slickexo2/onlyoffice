@@ -127,23 +127,24 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
   @Override
   public String renderEventURL(boolean ajax, String name, String beanId, Parameter[] params) throws Exception {
     // init context where this action appears
-    UIJCRExplorer uiExplorer = getAncestorOfType(UIJCRExplorer.class);
-    if (uiExplorer != null) {
-      // we store current node in the context
-      OnlyofficeEditorService editorService = this.getApplicationComponent(OnlyofficeEditorService.class);
-      String editroLink = editorService.getEditorLink(uiExplorer.getCurrentNode());
+    if (name.equals("OnlyofficeOpen")) {
+      UIJCRExplorer uiExplorer = getAncestorOfType(UIJCRExplorer.class);
+      if (uiExplorer != null) {
+        // we store current node in the context
+        OnlyofficeEditorService editorService = this.getApplicationComponent(OnlyofficeEditorService.class);
+        String editorLink = editorService.getEditorLink(uiExplorer.getCurrentNode());
 
-//      WebuiRequestContext requestContext = WebuiRequestContext.getCurrentInstance();
-//      JavascriptManager js = requestContext.getJavascriptManager();
-//      js.require("SHARED/onlyoffice", "onlyoffice")
-//        .addScripts("onlyoffice.initExplorer('" + editorLink + "');");
-      if (editroLink != null && !editroLink.isEmpty()) {
-        return editroLink;
+//        WebuiRequestContext requestContext = WebuiRequestContext.getCurrentInstance();
+//        JavascriptManager js = requestContext.getJavascriptManager();
+//        js.require("SHARED/onlyoffice", "onlyoffice")
+//          .addScripts("onlyoffice.initExplorer('" + editorLink + "');");
+        if (editorLink != null && !editorLink.isEmpty()) {
+          return "javascript:window.open('" + editorLink + "');";
+        }
+      } else {
+        LOG.warn("Cannot find ancestor of type UIJCRExplorer in component " + this + ", parent: " + this.getParent());
       }
-    } else {
-      LOG.warn("Cannot find ancestor of type UIJCRExplorer in component " + this + ", parent: " + this.getParent());
     }
-
     return super.renderEventURL(ajax, name, beanId, params);
   }
 
