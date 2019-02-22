@@ -71,8 +71,8 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
    */
   @Override
   public void end() throws Exception {
-    JavascriptManager js = ((WebuiRequestContext) WebuiRequestContext.getCurrentInstance()).getJavascriptManager();
     WebuiRequestContext requestContext = WebuiRequestContext.getCurrentInstance();
+    JavascriptManager js = requestContext.getJavascriptManager();
     ResourceBundle resourceBundle = requestContext.getApplicationResourceBundle();
     
     String editLabel = resourceBundle.getString("UIActionBar.tooltip.OnlyofficeOpen");
@@ -91,7 +91,6 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
 
     // Init preview links for each of file
     for (int index = 0; index < getFilesCount(); index++) {
-
       Node node = getContentNode(index);
       if (node != null) {
         String editorLink = editorService.getEditorLink(node);

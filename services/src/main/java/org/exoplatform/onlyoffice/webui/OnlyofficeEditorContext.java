@@ -19,6 +19,11 @@
 
 package org.exoplatform.onlyoffice.webui;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import javax.jcr.RepositoryException;
+
 import org.exoplatform.onlyoffice.OnlyofficeEditorException;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -27,14 +32,8 @@ import org.exoplatform.web.application.RequestContext;
 import org.exoplatform.web.application.RequireJS;
 import org.exoplatform.webui.application.WebuiRequestContext;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
-import javax.jcr.RepositoryException;
-
 /**
  * Initialize Onlyoffice support in portal request.<br>
- * 
  * Created by The eXo Platform SAS.
  * 
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
@@ -50,85 +49,24 @@ public class OnlyofficeEditorContext {
 
   /**
    * Initialize request with Onlyoffice support for given JCR location.
-   * 
+   *
    * @param requestContext {@link RequestContext}
-   * @param workspace {@link String}
-   * @param nodePath {@link String}
+   * @param editorLink the editor link
    * @throws OnlyofficeEditorException if cannot auth url from the provider
    */
-  public static void init(RequestContext requestContext, String workspace, String nodePath) throws OnlyofficeEditorException {
+  public static void init(RequestContext requestContext, String editorLink) throws OnlyofficeEditorException {
 
     Object obj = requestContext.getAttribute(JAVASCRIPT);
     if (obj == null) {
       OnlyofficeEditorContext context = new OnlyofficeEditorContext(requestContext);
-
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Init Onlyoffice editor for " + workspace + ":" + nodePath);
+        LOG.debug("Init Onlyoffice editor for " + editorLink);
       }
-
-      context.init(workspace, nodePath);
-
+      context.init(editorLink);
       requestContext.setAttribute(JAVASCRIPT, context);
     } else {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Request context already initialized");
-      }
-    }
-  }
-
-  /**
-   * Open.
-   *
-   * @param requestContext the request context
-   * @throws OnlyofficeEditorException the onlyoffice editor exception
-   */
-  @Deprecated
-  public static void open(RequestContext requestContext) throws OnlyofficeEditorException {
-    Object obj = requestContext.getAttribute(JAVASCRIPT);
-    if (obj != null) {
-      OnlyofficeEditorContext context = (OnlyofficeEditorContext) obj;
-      context.open();
-    } else {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Request context not initialized");
-      }
-    }
-  }
-  
-  /**
-   * Show.
-   *
-   * @param requestContext the request context
-   * @throws OnlyofficeEditorException the onlyoffice editor exception
-   */
-  @Deprecated
-  public static void show(RequestContext requestContext) throws OnlyofficeEditorException {
-    Object obj = requestContext.getAttribute(JAVASCRIPT);
-    if (obj != null) {
-      OnlyofficeEditorContext context = (OnlyofficeEditorContext) obj;
-      context.show();
-    } else {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Request context not initialized");
-      }
-    }
-  }
-
-  /**
-   * Close.
-   *
-   * @param requestContext the request context
-   * @throws OnlyofficeEditorException the onlyoffice editor exception
-   */
-  @Deprecated
-  public static void close(RequestContext requestContext) throws OnlyofficeEditorException {
-    Object obj = requestContext.getAttribute(JAVASCRIPT);
-    if (obj != null) {
-      OnlyofficeEditorContext context = (OnlyofficeEditorContext) obj;
-      context.close();
-    } else {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Request context not initialized");
       }
     }
   }
@@ -182,42 +120,11 @@ public class OnlyofficeEditorContext {
   /**
    * Inits the current document for Onlyoffice editor.
    *
-   * @param workspace the workspace
-   * @param nodePath the node path
+   * @param editorLink the editor link
    * @return the onlyoffice editor context
    */
-  private OnlyofficeEditorContext init(String workspace, String nodePath) {
-    require.addScripts("onlyoffice.init('" + workspace + "','" + nodePath + "');");
-    return this;
-  }
-
-  /**
-   * Open.
-   *
-   * @return the onlyoffice editor context
-   */
-  private OnlyofficeEditorContext open() {
-    require.addScripts("onlyoffice.open();");
-    return this;
-  }
-  
-  /**
-   * Show.
-   *
-   * @return the onlyoffice editor context
-   */
-  private OnlyofficeEditorContext show() {
-    require.addScripts("onlyoffice.show();");
-    return this;
-  }
-  
-  /**
-   * Close.
-   *
-   * @return the onlyoffice editor context
-   */
-  private OnlyofficeEditorContext close() {
-    require.addScripts("onlyoffice.close();");
+  private OnlyofficeEditorContext init(String editorLink) {
+    require.addScripts("onlyoffice.initExplorer('" + editorLink + "');");
     return this;
   }
 
@@ -229,7 +136,8 @@ public class OnlyofficeEditorContext {
    * @return the onlyoffice editor context
    */
   private OnlyofficeEditorContext showInfo(String title, String text) {
-    // require.addScripts("onlyoffice.showInfo('" + title + "','" + text + "');");
+    // require.addScripts("onlyoffice.showInfo('" + title + "','" + text +
+    // "');");
     return this;
   }
 }

@@ -36,9 +36,6 @@
       </properties-param>
     </init-params>
   </component>
-  <!-- component>
-    <type>org.exoplatform.onlyoffice.webui.OnlyofficeEditorUIService</type>
-  </component -->
   <component>
     <key>org.exoplatform.onlyoffice.jcr.NodeFinder</key>
     <type>org.exoplatform.onlyoffice.jcr.CMSNodeFinder</type>
@@ -220,151 +217,6 @@
             </field>
           </object>
         </object-param>
-        <!-- object-param>
-          <name>OnlyofficeClose</name>
-          <object type="org.exoplatform.webui.ext.UIExtension">
-            <field name="type">
-              <string>org.exoplatform.ecm.dms.UIActionBar</string>
-            </field>
-            <field name="name">
-              <string>OnlyofficeClose</string>
-            </field>
-            <field name="rank">
-              <int>10</int>
-            </field>
-            <field name="component">
-              <string>org.exoplatform.onlyoffice.webui.OnlyofficeCloseManageComponent</string>
-            </field>
-            <field name="extendedFilters">
-              <collection type="java.util.ArrayList">
-                <value>
-                  <object type="org.exoplatform.onlyoffice.webui.FileFilter">
-                    <field name="mimeTypes">
-                      <collection type="java.util.ArrayList">
-                        <value>
-                          <string>application/vnd.oasis.opendocument.presentation</string>
-                        </value>
-                        <value>
-                          <string>application/vnd.oasis.opendocument.spreadsheet</string>
-                        </value>
-                        <value>
-                          <string>application/vnd.oasis.opendocument.text</string>
-                        </value>
-                        <value>
-                          <string>application/vnd.openxmlformats-officedocument.presentationml.presentation</string>
-                        </value>
-                        <value>
-                          <string>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</string>
-                        </value>
-                        <value>
-                          <string>application/vnd.openxmlformats-officedocument.wordprocessingml.document</string>
-                        </value>
-                      </collection>
-                    </field>
-                  </object>
-                </value>
-              </collection>
-            </field>
-          </object>
-        </object-param>
-        <object-param>
-          <name>OnlyofficeEditor</name>
-          <object type="org.exoplatform.webui.ext.UIExtension">
-            <field name="type">
-              <string>org.exoplatform.ecm.dms.FileViewer</string>
-            </field>
-            <field name="name">
-              <string>OnlyofficeEditor</string>
-            </field>
-            <field name="component">
-              <string>org.exoplatform.onlyoffice.webui.OnlyofficeEditor</string>
-            </field>
-            <field name="category">
-              <string>FileViewer</string>
-            </field>
-            <field name="rank">
-              <int>40</int>
-            </field>
-            <field name="extendedFilters">
-              <collection type="java.util.ArrayList">
-                <value>
-                  <object type="org.exoplatform.onlyoffice.webui.FileFilter">
-                    <field name="mimeTypes">
-                      <collection type="java.util.ArrayList">
-                        <value>
-                          <string>application/vnd.oasis.opendocument.presentation</string>
-                        </value>
-                        <value>
-                          <string>application/vnd.oasis.opendocument.spreadsheet</string>
-                        </value>
-                        <value>
-                          <string>application/vnd.oasis.opendocument.text</string>
-                        </value>
-                        <value>
-                          <string>application/vnd.openxmlformats-officedocument.presentationml.presentation</string>
-                        </value>
-                        <value>
-                          <string>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</string>
-                        </value>
-                        <value>
-                          <string>application/vnd.openxmlformats-officedocument.wordprocessingml.document</string>
-                        </value>
-                      </collection>
-                    </field>
-                  </object>
-                </value>
-              </collection>
-            </field>
-          </object>
-        </object-param -->
-        <!-- Override ECMS actions that require special handling for Onlyoffice: ManageVersions -->
-        <!-- object-param>
-          <name>ManageVersions</name>
-          <object type="org.exoplatform.webui.ext.UIExtension">
-            <field name="type">
-              <string>org.exoplatform.ecm.dms.UIActionBar</string>
-            </field>
-            <field name="name">
-              <string>ManageVersions</string>
-            </field>
-            <field name="rank">
-              <int>60</int>// Note: CloudDrive's similar override has rank 65, PLF's is 70 - we want win with ours one
-            </field>
-            <field name="component">
-              <string>org.exoplatform.onlyoffice.webui.ManageVersionsActionComponent</string>
-            </field>
-            <field name="extendedFilters">
-              <collection type="java.util.ArrayList">
-                <value>
-                  <object type="org.exoplatform.onlyoffice.webui.FileFilter">
-                    <field name="mimeTypes">
-                      <collection type="java.util.ArrayList">
-                        <value>
-                          <string>application/vnd.oasis.opendocument.presentation</string>
-                        </value>
-                        <value>
-                          <string>application/vnd.oasis.opendocument.spreadsheet</string>
-                        </value>
-                        <value>
-                          <string>application/vnd.oasis.opendocument.text</string>
-                        </value>
-                        <value>
-                          <string>application/vnd.openxmlformats-officedocument.presentationml.presentation</string>
-                        </value>
-                        <value>
-                          <string>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</string>
-                        </value>
-                        <value>
-                          <string>application/vnd.openxmlformats-officedocument.wordprocessingml.document</string>
-                        </value>
-                      </collection>
-                    </field>
-                  </object>
-                </value>
-              </collection>
-            </field>
-          </object>
-        </object-param -->
       </init-params>
     </component-plugin>
   </external-component-plugins>
@@ -392,7 +244,7 @@
                     <field name="tabName">
                       <string>Admin</string>
                     </field>
-                    <field name="buttons"><!-- ; onlyofficeClose -->
+                    <field name="buttons">
                       <string>
                         onlyofficeOpen
                       </string>
@@ -417,7 +269,7 @@
                     <field name="tabName">
                       <string>Icons</string>
                     </field>
-                    <field name="buttons"><!-- ; onlyofficeClose -->
+                    <field name="buttons">
                       <string>
                         onlyofficeOpen
                       </string>
@@ -442,7 +294,7 @@
                     <field name="tabName">
                       <string>List</string>
                     </field>
-                    <field name="buttons"><!-- ; onlyofficeClose -->
+                    <field name="buttons">
                       <string>
                         onlyofficeOpen
                       </string>
@@ -467,7 +319,7 @@
                     <field name="tabName">
                       <string>Authoring</string>
                     </field>
-                    <field name="buttons"><!-- ; onlyofficeClose -->
+                    <field name="buttons">
                       <string>
                         onlyofficeOpen
                       </string>

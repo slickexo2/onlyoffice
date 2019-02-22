@@ -21,15 +21,24 @@ package org.exoplatform.onlyoffice.webui;
 import java.util.Arrays;
 import java.util.List;
 
+import org.exoplatform.ecm.webui.component.explorer.UIJCRExplorer;
 import org.exoplatform.ecm.webui.component.explorer.control.listener.UIActionBarActionListener;
+import org.exoplatform.onlyoffice.OnlyofficeEditorService;
+import org.exoplatform.portal.application.PortalRequestContext;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.web.application.JavascriptManager;
+import org.exoplatform.web.application.Parameter;
+import org.exoplatform.web.application.RequestContext;
+import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.EventConfig;
 import org.exoplatform.webui.core.lifecycle.UIContainerLifecycle;
 import org.exoplatform.webui.event.Event;
 import org.exoplatform.webui.ext.filter.UIExtensionFilter;
 import org.exoplatform.webui.ext.filter.UIExtensionFilters;
+import org.exoplatform.webui.ext.manager.UIAbstractManager;
+import org.exoplatform.webui.ext.manager.UIAbstractManagerComponent;
 
 /**
  * Open Onlyoffice editor in file view. Created by The eXo Platform SAS.
@@ -39,13 +48,12 @@ import org.exoplatform.webui.ext.filter.UIExtensionFilters;
  */
 @ComponentConfig(lifecycle = UIContainerLifecycle.class, events = {
     @EventConfig(listeners = OnlyofficeOpenManageComponent.OnlyofficeOpenActionListener.class) })
-public class OnlyofficeOpenManageComponent extends AbstractOnlyofficeManageComponent {
+public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
 
   /** The Constant LOG. */
   protected static final Log                   LOG     = ExoLogger.getLogger(OnlyofficeOpenManageComponent.class);
 
   /** The Constant FILTERS. */
-  // TODO was new IsNotLockedFilter(), new CanEditDocFilter()
   private static final List<UIExtensionFilter> FILTERS = Arrays.asList(new UIExtensionFilter[] { new FileFilter() });
 
   /**
@@ -63,7 +71,13 @@ public class OnlyofficeOpenManageComponent extends AbstractOnlyofficeManageCompo
      * {@inheritDoc}
      */
     public void processEvent(Event<OnlyofficeOpenManageComponent> event) throws Exception {
-      // TODO we don't need anything here as it will never be requested (to do
+      // TODO This code will be invoked by portal's handler on "Edit Online"
+      // button -
+      // if we'll remove that link, this will never be called.
+      // Indeed, we must ensure that portal state is correct
+      // see in
+
+      // We don't need anything here as it will never be requested (to do
       // not harm with interaction state updates and new editor page - we remove
       // this onclick action in Javascript)
 
@@ -73,21 +87,6 @@ public class OnlyofficeOpenManageComponent extends AbstractOnlyofficeManageCompo
 
       // String workspace = explorer.getCurrentWorkspace();
       // String path = explorer.getCurrentNode().getPath();
-      // call open() explicitly here for UI filter reason (to show Close menu),
-      // when document will be loading
-      // to the editor it also will be called by the service's createEditor()
-      // invoked via REST service
-      // editorsUI.open(context.getRemoteUser(), workspace, path);
-
-      // OnlyofficeEditorContext.init(context, workspace, path);
-      // OnlyofficeEditorContext.open(context);
-
-      // JavascriptManager jsMan = context.getJavascriptManager();
-      // String editorLink = LinkProvider.getRedirectUri("oeditor") + "?docId="
-      // + docId;
-      // jsMan.require("SHARED/onlyoffice",
-      // "onlyoffice").addScripts("onlyoffice.openEditor('" + editorLink +
-      // "');");
 
       // Refresh UI components
       // UIDocumentWorkspace docWorkspace =
@@ -111,4 +110,49 @@ public class OnlyofficeOpenManageComponent extends AbstractOnlyofficeManageCompo
   public List<UIExtensionFilter> getFilters() {
     return FILTERS;
   }
+
+  /**
+   * Inits the context.
+   *
+   * @param context the context
+   * @throws Exception the exception
+   */
+  protected void initContext(RequestContext context) throws Exception {
+
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public String renderEventURL(boolean ajax, String name, String beanId, Parameter[] params) throws Exception {
+    // init context where this action appears
+    UIJCRExplorer uiExplorer = getAncestorOfType(UIJCRExplorer.class);
+    if (uiExplorer != null) {
+      // we store current node in the context
+      OnlyofficeEditorService editorService = this.getApplicationComponent(OnlyofficeEditorService.class);
+      String editroLink = editorService.getEditorLink(uiExplorer.getCurrentNode());
+
+//      WebuiRequestContext requestContext = WebuiRequestContext.getCurrentInstance();
+//      JavascriptManager js = requestContext.getJavascriptManager();
+//      js.require("SHARED/onlyoffice", "onlyoffice")
+//        .addScripts("onlyoffice.initExplorer('" + editorLink + "');");
+      if (editroLink != null && !editroLink.isEmpty()) {
+        return editroLink;
+      }
+    } else {
+      LOG.warn("Cannot find ancestor of type UIJCRExplorer in component " + this + ", parent: " + this.getParent());
+    }
+
+    return super.renderEventURL(ajax, name, beanId, params);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Class<? extends UIAbstractManager> getUIAbstractManagerClass() {
+    return null;
+  }
+
 }

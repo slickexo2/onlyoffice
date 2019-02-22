@@ -505,6 +505,7 @@ public class EditorService implements ResourceContainer {
   @Path("/document/{workspace}/{path:.*}")
   @RolesAllowed("users")
   @Produces(MediaType.APPLICATION_JSON)
+  @Deprecated // TODO not reqired
   public Response initDocument(@Context UriInfo uriInfo,
                                @Context HttpServletRequest request,
                                @PathParam("workspace") String workspace,

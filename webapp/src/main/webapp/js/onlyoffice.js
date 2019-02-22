@@ -42,10 +42,6 @@
 	var ACCESS_DENIED = "access-denied";
 	var NODE_NOT_FOUND = "node-not-found";
 
-	// ******** Context ********
-	// Node workspace and path currently open in ECMS explorer view
-	var currentNode;
-
 	// ******** Utils ********
 	/**
 	 * Stuff grabbed from CW's commons.js
@@ -64,38 +60,7 @@
 
 		return theLocation.protocol + "//" + theHostName;
 	};
-
-	/** Set cookie */
-	var setCookie = function(name, value, millis, toDocument, toPath, toDomain) {
-		var expires;
-		if (millis) {
-			var date = new Date();
-			date.setTime(date.getTime() + millis);
-			expires = "; expires=" + date.toGMTString();
-		} else {
-			expires = "";
-		}
-		( toDocument ? toDocument : document).cookie = name + "=" + encodeURIComponent(value) + expires + "; path=" + ( toPath ? toPath : "/") + ( toDomain ? "; domain=" + toDomain : "");
-	};
-
-	/** Read cookie */
-	var getCookie = function(name, fromDocument) {
-		var nameEQ = name + "=";
-		var ca = ( fromDocument ? fromDocument : document).cookie.split(';');
-		for (var i = 0; i < ca.length; i++) {
-			var c = ca[i];
-			while (c.charAt(0) == ' ') {
-				c = c.substring(1, c.length);
-			}
-			if (c.indexOf(nameEQ) == 0) {
-				var v = c.substring(nameEQ.length, c.length);
-				// clean value from leading quotes (actual if set via eXo WS)
-				return decodeURIComponent(v.match(/([^\"]+)/g));
-			}
-		}
-		return null;
-	};
-
+	
 	/**
 	 * Add style to current document (to the end of head).
 	 */
@@ -150,94 +115,6 @@
 
 	var getPortalUser = function() {
 		return eXo.env.portal.userName;
-	};
-
-	var getIEVersion = function()
-	// Returns the version of Windows Internet Explorer or a -1
-	// (indicating the use of another browser).
-	{
-		var rv = -1;
-		// Return value assumes failure.
-		if (navigator.appName == "Microsoft Internet Explorer") {
-			var ua = navigator.userAgent;
-			var re = new RegExp("MSIE ([0-9]{1,}[\.0-9]{0,})");
-			if (re.exec(ua) != null)
-				rv = parseFloat(RegExp.$1);
-		}
-		return rv;
-	};
-
-	var decodeString = function(str) {
-		if (str) {
-			try {
-				str = str.replace(/\+/g, " ");
-				str = decodeURIComponent(str);
-				return str;
-			} catch(e) {
-				log("WARN: error decoding string " + str + ". " + e, e);
-			}
-		}
-		return null;
-	};
-
-	var encodeString = function(str) {
-		if (str) {
-			try {
-				str = encodeURIComponent(str);
-				return str;
-			} catch(e) {
-				log("WARN: error decoding string " + str + ". " + e, e);
-			}
-		}
-		return null;
-	};
-
-	/**
-	 * Method adapted from org.exoplatform.services.cms.impl.Utils.refine().
-	 */
-	var refineSize = function(size) {
-		if (!size || size == 0) {
-			return "";
-		}
-		var strSize = size.toFixed(2);
-		return "," + Math.round(parseInt(strSize) / 100.0);
-	};
-
-	/**
-	 * Method adapted from org.exoplatform.services.cms.impl.Utils.fileSize().
-	 */
-	var sizeString = function(size) {
-		var byteSize = size % 1024;
-		var kbSize = (size % 1048576) / 1024;
-		var mbSize = (size % 1073741824) / 1048576;
-		var gbSize = size / 1073741824;
-
-		if (gbSize >= 1) {
-			return gbSize.toFixed(2) + " GB";
-		} else if (mbSize >= 1) {
-			return mbSize.toFixed(2) + " MB";
-		} else if (kbSize > 1) {
-			return kbSize.toFixed(2) + " KB";
-		}
-		if (byteSize > 0) {
-			return byteSize + " B";
-		} else {
-			return "";
-			// return empty not 1 KB as ECMS does
-		}
-	};
-
-	// ******** UI utils **********
-
-	/**
-	 * Open pop-up.
-	 */
-	var popupWindow = function(url) {
-		var w = 850;
-		var h = 600;
-		var left = (screen.width / 2) - (w / 2);
-		var top = (screen.height / 2) - (h / 2);
-		return window.open(url, 'contacts', 'width=' + w + ',height=' + h + ',top=' + top + ',left=' + left);
 	};
 
 	// ******** REST services ********
@@ -305,7 +182,7 @@
 		return process.promise(processTarget);
 	};
 
-	var configGet = function(workspace, path) {
+	/*var configGet = function(workspace, path) {
 		var request = $.ajax({
 			type : "GET",
 			url : prefixUrl + "/portal/rest/onlyoffice/editor/config/" + workspace + path,
@@ -313,7 +190,7 @@
 		});
 
 		return initRequest(request);
-	};
+	};*/
 	
 	var configPost = function(workspace, path) {
 		var request = $.ajax({
@@ -325,14 +202,14 @@
 		return initRequest(request);
 	};
 	
-	var configGetByKey = function(key) {
+	/*var configGetByKey = function(key) {
     var request = $.ajax({
        type : "GET",
        url : prefixUrl + "/portal/rest/onlyoffice/editor/config/" + key,
        dataType : "json"
     });
     return initRequest(request);
-	};
+	};*/
 
   var documentPost = function(workspace, path) {
     var request = $.ajax({
@@ -372,22 +249,11 @@
 	 * Editor core class.
 	 */
 	function Editor() {
-
-		// Used by init() and open()/close()
-		var loadingProcess;
-		
-		// Used by download() TODO deprecated
-		var downloadProcess;
-
 		// Used by download() and closeUI()
 		var currentConfig;
 		
 		var onError = function(event) {
 			log("ONLYOFFICE Document Editor reports an error: " + JSON.stringify(event));
-			if (downloadProcess) {
-				// TODO is it correct to reject download at this kind of error?
-				downloadProcess.reject(event);
-			}
 		};
 
 		var onReady = function() {
@@ -438,363 +304,127 @@
 
 		/**
 		 * Initialize context and UI on Document explorer pages.
+		 * TODO this may be not required if OnlyofficeOpenManageComponent.renderEventURL(boolean, String, String, Parameter[])
+		 * will return a link to editor page, thus we'll need only ensure it will open in a new window.   
 		 */
-		this.init = function(nodeWorkspace, nodePath) {
-			// currently open node in ECMS explorer
-			// FYI we don't touch currentConfig as may contain an editor opened on the page
-			currentNode = {
-				workspace : nodeWorkspace,
-				path : nodePath
-			};
-			if (loadingProcess) { // TODO not required on a new page
-				loadingProcess.reject("init");
-			}
-			loadingProcess = $.Deferred();
+		this.initExplorer = function(editorLink) {
 			$(function() {
 				try {
-					UI.init();
+					UI.initExplorer(editorLink);
 				} catch(e) {
 					log("Error initializing Onlyoffice context: " + e, e);
 				}
 			});
-		};
-		
-		/**
-		 * Show existing editor.
-		 * TODO deprecated
-		 */
-		this.show = function() {
-			if (currentNode && UI.isEditorLoaded()) {			
-				var loadingTimeout = setTimeout(function() {
-					loadingProcess.resolve();				
-				}, 750);
-				loadingProcess.done(function() {
-					var closeEditor = function() {
-						setTimeout(function() {
-							UI.closeEditor();
-						}, 1500);
-					};
-					log("Loading without editor command.");
-					// This logic should work only in case of showing editor w/o Open/Close command, thus in case of closing state.
-					// Check if current document hasn't an editor already. Note that at this point we haven't called open() or close(). 
-					// Thus if no config found or already closed then we do nothing,
-					// if editor found in closing state, then keep showing loader (it's already) and wait for editor will gone
-					// (status 404) or become closed (co-editing case) - then we need load docview instead of the editor,
-					// if editor already open we call open() (this can be a case if page reloaded).
-					configGet(currentNode.workspace, currentNode.path).done(function(config) {
-						log("Found existing editor: " + JSON.stringify(config));
-						if (config.closing) {
-							log("Wait for closing editor...");
-							waitClosed(config).done(function(state) {
-								if (state.error) {
-									log("ERROR: editor in erroneous state: " + state.error);
-									UI.showError("Error closing editor", state.error);
-								} else if (state.saved || state.users.length > 0) {
-									closeEditor();
-								}
-							}).fail(function(error) {
-								log("ERROR: getting editor state failed : " + error);
-							});
-						} else if (config.closed) {
-							log("Found closed editor..."); 
-							// we get the status to find number of users for co-editing case, in case of already closed this will reopen the editor
-							waitClosed(config).done(function(state) {
-								if (state.error) {
-									log("ERROR: editor in erroneous state: " + state.error);
-									UI.showError("Error editor", state.error);
-								} else if (state.saved || state.users.length > 0) {
-									log("Automatically re-open closed editor...");
-									UI.open(config);
-								}
-							}).fail(function(error) {
-								log("ERROR: getting editor state failed : " + error);
-							});
-						} else if (config.open) {
-							log("Automatically open editor...");
-							UI.open(config);
-						}
-					}).fail(function(state, status, errorText) {
-						if (status == 404) {
-							closeEditor();
-						} else {
-							log("ERROR: getting editor config failed : " + status + ". " + state.error);
-						}
-					}).always(function(res, status) {
-						// finally do on-page-ready initialization of UI, disable editor menu if in saving or closed state
-						if (status == 200 && res.closing) {
-							UI.disableMenu();
-						}
-					});
-				}).fail(function(command) {
-					clearTimeout(loadingTimeout);
-					log("Loaded editor for '" + command + "' command.");
-				});
-			} else {
-				log("Editor UI not found or not initialized.");
-			}
 		};
 
 		/**
 		 * Create an editor configuration (for use to create the editor client UI).
 		 */
 		var create = function(config) {
-			// TODO for debug only
-			/*var testConfig_ = {
-				"width" : "100%",
-				"height" : "100%",
-				"type" : "desktop",
-				"documentType" : "text",
-				"document" : {
-					"title" : "Simple_Document.docx",
-					"url" : "http://192.168.1.101:8080/onlysample/app_data/192.168.1.101/Simple_Document.docx",
-					"fileType" : "docx",
-					"key" : "-1598705153",
-					"info" : {
-						"author" : "Me",
-						"created" : "02/25/2016"
-					},
-					"permissions" : {
-						"edit" : true,
-						"download" : true
-					}
-				},
-				"editorConfig" : {
-					"mode" : "edit",
-					"lang" : "en",
-					"callbackUrl" : "http://192.168.1.101:8080/onlysample/IndexServlet?type=track&userAddress=192.168.1.101&fileName=Simple_Document.docx",
-					"user" : {
-						"id" : "192.168.1.101",
-						"firstname" : "John",
-						"lastname" : "Smith"
-					},
-					"embedded" : {
-						"saveUrl" : "http://192.168.1.101:8080/onlysample/app_data/192.168.1.101/Simple_Document.docx",
-						"embedUrl" : "http://192.168.1.101:8080/onlysample/app_data/192.168.1.101/Simple_Document.docx",
-						"shareUrl" : "http://192.168.1.101:8080/onlysample/app_data/192.168.1.101/Simple_Document.docx",
-						"toolbarDocked" : "top"
-					},
-					"customization" : {
-						"about" : true,
-						"feedback" : true,
-						"goback" : {
-							"url" : "http://192.168.1.101:8080/onlysample/IndexServlet"
-						}
-					}
-				},
-				"events" : {}
-			};*/
-
 			var process = $.Deferred();
-			if (currentNode) {
-				// request config
-				var configReady = $.Deferred();
-				if (config) {
-					configReady.resolve(config);
-				} else {
-					var attempts = 10;
-					function createConfig() {
-						attempts--;
-						if (attempts >= 0) {
-							configPost(currentNode.workspace, currentNode.path).done(function(config) {
-								if (config.closing) {
-								  // Wait for previous edit session completion (actual if editor was closed and we need wait for 
-			            // the DS state in seconds).
-			            // We need wait for downloading of the previous edition and only then use it for a new editor session.
-									setTimeout(createConfig, 2250);
-								} else {
-									configReady.resolve(config);							
-								}
-							}).fail(function(state, status, errorText) {
-								log("ERROR: editor config request failed : " + status + ". " + state.error);
-								configReady.reject(state.error);
-							});
-						} else {
-							log("ERROR: ONLYOFFICE configuration load timeout");
-							process.reject("ONLYOFFICE configuration load timeout. Reload the page and try again please.");
-						}
-					}
-					createConfig();
-				}
+			if (config) {
+				// prepare config
+				log("ONLYOFFICE editor config: " + JSON.stringify(config));
 				
-				configReady.done(function(config) {
-					log("ONLYOFFICE editor config: " + JSON.stringify(config));
-					
-					// customize Onlyoffice JS config
-					config.type = "desktop";
-					config.height = "100%";
-					config.width = "100%";
-					config.embedded = {
-						fullscreenUrl : config.document.url,
-						saveUrl : config.document.url,
-						embedUrl : config.document.url,
-						shareUrl : config.document.url,
-						toolbarDocked : "top"
-					};
-					config.events = {
-						"onDocumentStateChange" : onDocumentStateChange,
-						"onError" : onError,
-						"onReady" : onReady,
-						"onBack" : onBack
-					};
-					config.editorConfig.customization =  {
-					    "chat": false,
-					    "compactToolbar" : true,
-					    "goback": {
-                "blank": true,
-                "text": "Go to Document",
-                "url": config.explorerUrl
-              },
-              "help": true,
-              "logo": {
-                  "image": prefixUrl + "/onlyoffice/images/exo-icone.png",
-                  "imageEmbedded": prefixUrl + "/eXoSkin/skin/images/themes/default/platform/skin/ToolbarContainer/HomeIcon.png",
-                  "url": prefixUrl + "/portal"
-              },
-              "customer": {
-                "info": "eXo Platform",
-                "logo": prefixUrl + "/eXoSkin/skin/images/themes/default/platform/skin/ToolbarContainer/HomeIcon.png",
-                "mail": "support@exoplatform.com",
-                "name": "Support",
-                "www": "exoplatform.com"
-              }
-					};
-					config.editorConfig.plugins = {
-            "autostart": [],
-            "pluginsData": []
-					};
+				// customize Onlyoffice JS config
+				config.type = "desktop";
+				config.height = "100%";
+				config.width = "100%";
+				config.embedded = {
+					fullscreenUrl : config.document.url,
+					saveUrl : config.document.url,
+					embedUrl : config.document.url,
+					shareUrl : config.document.url,
+					toolbarDocked : "top"
+				};
+				config.events = {
+					"onDocumentStateChange" : onDocumentStateChange,
+					"onError" : onError,
+					"onReady" : onReady,
+					"onBack" : onBack
+				};
+				config.editorConfig.customization =  {
+				    "chat": false,
+				    "compactToolbar" : true,
+				    "goback": {
+              "blank": true,
+              "text": "Go to Document",
+              "url": config.explorerUrl
+            },
+            "help": true,
+            "logo": {
+                "image": prefixUrl + "/onlyoffice/images/exo-icone.png",
+                "imageEmbedded": prefixUrl + "/eXoSkin/skin/images/themes/default/platform/skin/ToolbarContainer/HomeIcon.png",
+                "url": prefixUrl + "/portal"
+            },
+            "customer": {
+              "info": "eXo Platform",
+              "logo": prefixUrl + "/eXoSkin/skin/images/themes/default/platform/skin/ToolbarContainer/HomeIcon.png",
+              "mail": "support@exoplatform.com",
+              "name": "Support",
+              "www": "exoplatform.com"
+            }
+				};
+				config.editorConfig.plugins = {
+          "autostart": [],
+          "pluginsData": []
+				};
 
-					currentConfig = config;
+				// XXX need let Onlyoffice to know about a host of API end-points,
+				// as we will add their script dynamically to the DOM, the script will not be able to detect an URL
+				// thus we use "extensionParams" observed in the script code
+				if ("undefined" == typeof (extensionParams) || null == extensionParams) {
+					extensionParams = {};
+				}
+				if ("undefined" == typeof (extensionParams.url) || null == extensionParams.url) {
+					extensionParams.url = config.documentserverUrl;
+				}
 
-					// XXX need let Onlyoffice to know about a host of API end-points,
-					// as we will add their script dynamically to the DOM, the script will not be able to detect an URL
-					// thus we use "extensionParams" observed in the script code
-					if ("undefined" == typeof (extensionParams) || null == extensionParams) {
-						extensionParams = {};
-					}
-					if ("undefined" == typeof (extensionParams.url) || null == extensionParams.url) {
-						extensionParams.url = config.documentserverUrl;
-					}
+				// load Onlyoffice API script
+				// XXX need load API script to DOM head, Onlyoffice needs a real element in <script> to detect the DS server URL
+				$("<script>").attr("type", "text/javascript").attr("src", config.documentserverJsUrl).appendTo("head");
 
-					// create new deferred for future download
-					downloadProcess = $.Deferred();
+				// and wait until it will be loaded
+				function jsReady() {
+					return ( typeof DocsAPI !== "undefined") && ( typeof DocsAPI.DocEditor !== "undefined");
+				}
 
-					// load Onlyoffice API script
-					// XXX need load API script to DOM head, Onlyoffice needs a real element in <script> to detect the DS server URL
-					$("<script>").attr("type", "text/javascript").attr("src", config.documentserverJsUrl).appendTo("head");
-
-					// and wait until it will be loaded
-					function jsReady() {
-						return ( typeof DocsAPI !== "undefined") && ( typeof DocsAPI.DocEditor !== "undefined");
-					}
-
-					var attempts = 40;
-					function waitReady() {
-						attempts--;
-						if (attempts >= 0) {
-							setTimeout(function() {
-								if (jsReady()) {
-									process.resolve(config);
-								} else {
-									waitReady();
-								}
-							}, 750);
-						} else {
-							log("ERROR: ONLYOFFICE script load timeout: " + config.documentserverJsUrl);
-							process.reject("ONLYOFFICE script load timeout. Ensure Document Server is running and accessible.");
-						}
-					}
-
-					if (jsReady()) {
-						process.resolve(config);
+				var attempts = 40;
+				function waitReady() {
+					attempts--;
+					if (attempts >= 0) {
+						setTimeout(function() {
+							if (jsReady()) {
+								process.resolve(config);
+							} else {
+								waitReady();
+							}
+						}, 750);
 					} else {
-						waitReady();
+						log("ERROR: ONLYOFFICE script load timeout: " + config.documentserverJsUrl);
+						process.reject("ONLYOFFICE script load timeout. Ensure Document Server is running and accessible.");
 					}
-				}).fail(function(error) {
-					process.reject(error);
-				});
+				}
+
+				if (jsReady()) {
+					process.resolve(config);
+				} else {
+					waitReady();
+				}
 			} else {
-				log("ERROR: current node not initialized");
-				process.reject("Current document not initialized");
-			}
+				process.reject("Editor config not found");
+			};
 			return process.promise();
 		};
 		this.create = create;
-
-		/**
-		 * TODO deprecated
-		 */
-		this.download = function() {
-			if (downloadProcess) {
-				if (currentConfig && downloadProcess.state() === "pending") {
-					waitClosed(currentConfig).done(function(state) {
-						downloadProcess.resolve(state);
-					}).fail(function(error) {
-						downloadProcess.reject(error);
-					});
-				}
-				return downloadProcess.promise();
-			} else {
-				var rejected = $.Deferred();
-				rejected.reject("Editor was not created");
-				return rejected.promise();
-			}
-		};
-
-		/**
-		 * Open Editor on current page using pre-initialized state (see init()).
-		 * TODO deprecated
-		 */
-		this.open = function() {
-			if (currentNode) {
-				if (loadingProcess) {
-					loadingProcess.reject("open");					
-				}
-				UI.open();
-			} else {
-				log("Current node not set");
-			}
-		};
-
-		/**
-		 * Close Editor on current page using pre-initialized state (see init() and open()).
-		 * TODO deprecated
-		 */
-		this.close = function() {
-			if (currentNode) {
-				if (loadingProcess) {
-					loadingProcess.reject("close");					
-				}
-				UI.close();
-			} else {
-				log("Current node not set");
-			}
-		};
-		
-		/**
-     * Initialize current node for use within an editor.
-     */
-    this.initDocument = function() {
-      if (currentNode) {
-        return documentPost(currentNode.workspace, currentNode.path);
-      } else {
-        log("ERROR: Current node not set");
-        var process = $.Deferred();
-        process.reject("Document not initialized. Reload page and try again.");
-        return process.promise();
-      }
-    };
-    
+		    
     /**
-     * Initialize an editor page in new browser window.
+     * Initialize an editor page at a new browser window.
      */
     this.initEditor = function(config) {
       // TODO Establish a Comet/WebSocket channel from this point.
       // A new editor page will join the channel and notify when the doc will be saved
       // so we'll refresh this explorer view to reflect the edited content.
-      currentNode = {
-        workspace : config.workspace,
-        path : config.path
-      };
       UI.initEditor();
       create(config).done(function(localConfig) {
         $(function() {
@@ -804,30 +434,12 @@
             log("Error initializing Onlyoffice client UI " + e, e);
           }
         });        
-      }).fail(function(state, status, errorText) {
-        log("ERROR: editor config failed : " + status + ". " + state.error);
+      }).fail(function(error) {
+        log("ERROR: editor config failed : " + error);
         UI.showError("Error", "Failed to setup editor configuration");
       });
     };
     
-    /**
-     * Close WebUI editor (for proper menu state, when user clicked non-Onlyoffice item).
-     * TODO Deprecated
-     */
-    this.closeUI = function() {
-    	if (currentConfig) {
-    		editorClose(currentConfig.editorConfig.user.id, currentConfig.document.key).done(function(res) {
-    			if (res.closing) {
-    				log("Editor UI closed successfully");
-    			} 
-    		}).fail(function(error) {
-    			log("Error closing editor UI: " + JSON.stringify(error));
-    		});
-    	} else {
-    		log("Current config not set to close UI");
-    	}
-    };
-
 		this.showInfo = function(title, text) {
 			UI.showInfo(title, text);
 		};
@@ -847,11 +459,7 @@
 
 		var hasDocumentChanged = false;
 		
-		var contextId = function(currentNode) {
-		  return "oeditor" + (currentNode.workspace + currentNode.path).hashCode();
-		}
-		
-		var initAction = function() {
+		var initAction = function(editorLink) {
 			var init = false;
 			var $actionOpenIcon = $("#uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen");
 			if ($actionOpenIcon.length > 0 && !$actionOpenIcon.hasClass("uiIconEdit")) {
@@ -860,27 +468,14 @@
 				// the editor page next time on a new page (it will load current Document explorer instead).
 				$actionOpenIcon.parent().parent().removeAttr("onclick");
 				// Do own click handler to open a new page with the editor
+				// Instead of parent click - open editor link in new window 
 				$actionOpenIcon.parent().click(function() {
-				  if (currentNode) {
-				    var wId = contextId(currentNode);
-				    var w = window.open("", wId);
-				    editor.initDocument().done(function(info) {
-				      if (!w.location.href.endsWith(info.editorUrl)) {
-			          w.location = info.editorUrl;        
-			        }
-			        w.focus();
-				    }).fail(function(state, status) {
-				      w.close();
-              log("Error initializing document: " + state.error + " [" + status + "]");
-              UI.showError("Error", "Failed to initialize document");
-            });
-				  } else {
-				    log("Current node not set. Cannot open an editor page.");
-				  }
+				  window.open(editorLink);
 				});
 			}
 		};
 		
+		// TODO Use this in on-close window handler
 		var saveAndDestroy = function() {
 			if (docEditor) {
 				try {
@@ -897,9 +492,9 @@
 		/**
 		 * Init all UI (dialogs, menus, views etc).
 		 */
-		this.init = function() {
+		this.initExplorer = function(editorLink) {
 			// init action bar menu
-			initAction();
+			initAction(editorLink);
 		};
 		
 		/**
@@ -930,90 +525,6 @@
 		this.documentChanged = function(event) {
 			// Used for UI messages.
 			hasDocumentChanged = true;
-		};
-
-		/**
-		 * TODO deprecated
-		 */
-		this.open = function(existingConfig) {
-			var $fileContent = $("#UIDocumentWorkspace .fileContent");
-			if ($fileContent.length > 0 && !docEditor) {
-				var $title = $fileContent.find(".title");
-				if ($title.length > 0) {
-					// TODO add full-screen button to the title
-				}
-
-				// show loading while upload to editor - it is already added by WebUI side
-				var $container = $fileContent.find(".onlyofficeContainer");
-				
-				// create and start editor
-				editor.create(existingConfig).done(function(localConfig) {
-					docEditor = new DocsAPI.DocEditor("onlyoffice", localConfig);
-					hasDocumentChanged = false;
-					// show editor
-					var $editor = $container.find(".editor");
-					var $loading = $container.find(".loading");
-					$loading.hide("blind");
-					$editor.show("blind");
-				}).fail(function(error) {
-					UI.showError("Error creating editor", error);
-					$container.find(".loading>.onError").click();
-				});
-			}
-		};
-
-		/**
-     * TODO deprecated
-     */
-		this.close = function() {
-			var $fileContent = $("#UIDocumentWorkspace .fileContent");
-			if ($fileContent.length > 0 && docEditor) {
-				// show loading while download the document - it is already added by WebUI side
-				var $container = $fileContent.find(".onlyofficeContainer");
-
-				saveAndDestroy();
-				
-				var $editor = $container.find(".editor");
-				var $loading = $container.find(".loading");
-				// remove Onlyoffice iframe - this will let Onlyoffice to know the editing is done
-				$editor.empty();
-				// hide/remove editor
-				$editor.hide("blind");
-				$loading.show("blind");
-
-				// save the doc and switch to viewer
-				editor.download().done(function(state) {
-					if (state.error) {
-						UI.showError("Document not saved", state.error);
-						// need show editor back: we need add part of DOM here as Onlyoffice JS clean it when creating the editor
-						$editor.append($("<div id='onlyoffice'></div>"));
-						editor.create().done(function(config) {
-							docEditor = new DocsAPI.DocEditor("onlyoffice", config);
-							hasDocumentChanged = false;
-							$loading.hide("blind", {
-								"direction" : "down"
-							});
-							$editor.show("blind", {
-								"direction" : "down"
-							});
-						}).fail(function(error) {
-							UI.showError("Error creating editor", error);
-							$loading.find(".onError").click();
-						});
-					} else {
-						if (!state.saved) {
-							if (state.users.length > 0) {
-								UI.showInfo("Document in use by others", "Document will be saved when all users close it.");
-							}
-						}
-						// this will refresh the file view and action bar
-						$loading.find(".onClose").click();
-					}
-				}).fail(function(error) {
-					log(JSON.stringify(error));
-					UI.showError("Download error", error.data.errorDescription);
-				});
-			}
 		};
 
 		/**
