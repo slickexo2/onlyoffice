@@ -63,15 +63,6 @@
       <module>onlyofficeJqueryUI</module>
     </depends>
   </module>
-  <module>
-    <name>onlyofficeButtons</name>
-    <script>
-      <path>/js/onlyoffice-buttons.js</path>
-    </script>
-    <depends>
-      <module>jquery</module>
-    </depends>
-  </module>
 
   <portlet-skin>
     <application-name>onlyoffice</application-name>

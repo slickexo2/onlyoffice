@@ -82,8 +82,8 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
       if (node != null) {
         String editorLink = editorService.getEditorLink(node);
         if (editorLink != null) {
-          js.require("SHARED/onlyofficeButtons", "onlyofficeButtons")
-            .addScripts("onlyofficeButtons.addButtonToActivity('" + getActivity().getId() + "','" + editorLink + "', '"
+          js.require("SHARED/onlyoffice", "onlyoffice")
+            .addScripts("onlyoffice.addButtonToActivity('" + getActivity().getId() + "','" + editorLink + "', '"
                 + editLabel + "');");
         }
       }
@@ -95,8 +95,8 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
       if (node != null) {
         String editorLink = editorService.getEditorLink(node);
         if (editorLink != null) {
-          js.require("SHARED/onlyofficeButtons", "onlyofficeButtons")
-            .addScripts("onlyofficeButtons.addButtonToPreview('" + getActivity().getId() + "','" + editorLink + "','" + index
+          js.require("SHARED/onlyoffice", "onlyofficeButtons")
+            .addScripts("onlyoffice.addButtonToPreview('" + getActivity().getId() + "','" + editorLink + "','" + index
                 + "', '" + editLabel + "');");
         }
       }
