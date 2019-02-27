@@ -21,12 +21,16 @@ package org.exoplatform.onlyoffice.webui;
 import java.util.Arrays;
 import java.util.List;
 
+import org.exoplatform.container.ExoContainer;
+import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.ecm.webui.component.explorer.UIJCRExplorer;
 import org.exoplatform.ecm.webui.component.explorer.control.listener.UIActionBarActionListener;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
+import org.exoplatform.onlyoffice.cometd.CometdOnlyofficeService;
 import org.exoplatform.portal.application.PortalRequestContext;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.web.application.JavascriptManager;
 import org.exoplatform.web.application.Parameter;
 import org.exoplatform.web.application.RequestContext;
@@ -126,18 +130,28 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
    */
   @Override
   public String renderEventURL(boolean ajax, String name, String beanId, Parameter[] params) throws Exception {
+
     // init context where this action appears
     if (name.equals("OnlyofficeOpen")) {
       UIJCRExplorer uiExplorer = getAncestorOfType(UIJCRExplorer.class);
       if (uiExplorer != null) {
         // we store current node in the context
         OnlyofficeEditorService editorService = this.getApplicationComponent(OnlyofficeEditorService.class);
+        CometdOnlyofficeService cometdService = this.getApplicationComponent(CometdOnlyofficeService.class);
         String editorLink = editorService.getEditorLink(uiExplorer.getCurrentNode());
+        ConversationState convo = ConversationState.getCurrent();
+        String userId = null;
+        if (convo != null && convo.getIdentity() != null) {
+          userId = convo.getIdentity().getUserId();
+        }
+        String cometdPath = cometdService.getCometdServerPath();
+        String userToken = cometdService.getUserToken(userId);
+        String docId = editorService.initDocument(uiExplorer.getCurrentNode());
+        JavascriptManager js = ((WebuiRequestContext) WebuiRequestContext.getCurrentInstance()).getJavascriptManager();
+        js.require("SHARED/onlyoffice", "onlyoffice")
+          .addScripts("onlyoffice.initExplorer(" + userId + ", " + userToken + ", "
+              + cometdPath + ", " + docId + ");");
 
-//        WebuiRequestContext requestContext = WebuiRequestContext.getCurrentInstance();
-//        JavascriptManager js = requestContext.getJavascriptManager();
-//        js.require("SHARED/onlyoffice", "onlyoffice")
-//          .addScripts("onlyoffice.initExplorer('" + editorLink + "');");
         if (editorLink != null && !editorLink.isEmpty()) {
           return "javascript:window.open('" + editorLink + "');";
         }

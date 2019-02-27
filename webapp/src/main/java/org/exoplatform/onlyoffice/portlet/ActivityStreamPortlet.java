@@ -11,6 +11,6 @@ public class ActivityStreamPortlet extends GenericPortlet {
    */
   @Override
   protected void doView(final RenderRequest request, final RenderResponse response) {
-    // Nothing
+  
   }
 }

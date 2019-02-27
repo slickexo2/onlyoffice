@@ -1,7 +1,7 @@
 /**
  * Onlyoffice Editor client.
  */
-(function($) {
+(function($, cCometD) {
 
   // ******** polyfills ********
   if (!String.prototype.endsWith) {
@@ -50,6 +50,20 @@
   /**
    * Stuff grabbed from CW's commons.js
    */
+  var tryParseJson = function(message) {
+    var src = message.data ? message.data : (message.error ? message.error : message.failure); 
+    if (src) {
+      try {
+        if (typeof src === "string" && (src.startsWith("{") || src.startsWith("["))) {
+          return JSON.parse(src);         
+        }
+      } catch(e) {
+        log.debug("Error parsing '" + src + "' as JSON: " + e, e);
+      }       
+    }
+    return src;
+  };
+  
   var pageBaseUrl = function(theLocation) {
     if (!theLocation) {
       theLocation = window.location;
@@ -615,6 +629,41 @@
         onInit : onInit
       });
     };
+    
+    this.initExplorer = function(userId, userToken, cometdPath, docId){
+      var JCRPreview = $("#UIJCRExplorer");
+      if(JCRPreview.length > 0){
+        cCometD.configure({
+          "url": prefixUrl  + cometdPath,
+          "exoId": userId,
+          "exoToken": userToken,
+          "maxNetworkDelay" : 30000,
+          "connectTimeout": 60000
+        });
+        cometd = cCometD;
+        // TODO : get this params from the server
+        cometdContext = {
+            "exoContainerName" : context.containerName,
+            "exoClientId" : currentUser.clientId
+          };
+        
+        var subscription = cometd.subscribe("/eXo/Application/Onlyoffice/editor/" + docId, function(message) {
+          // Channel message handler
+          var result = tryParseJson(message);
+          console.log(resut);
+        }, cometdContext, function(subscribeReply) {
+          // Subscription status callback
+          if (subscribeReply.successful) {
+            // The server successfully subscribed this client to the channel.
+            console.log("Document updates subscribed successfully: " + JSON.stringify(subscribeReply));
+            
+          } else {
+            var err = subscribeReply.error ? subscribeReply.error : (subscribeReply.failure ? subscribeReply.failure.reason : "Undefined");
+            console.log("Document updates subscription failed for " + userId, err);
+          }
+        });
+      }
+    }
   }
 
   var editor = new Editor();
@@ -639,4 +688,4 @@
   });
 
   return editor;
-})($);
+})($, cCometD);

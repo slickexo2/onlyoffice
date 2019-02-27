@@ -16,8 +16,8 @@ import org.cometd.bayeux.server.ServerChannel;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
 import org.eclipse.jetty.util.component.LifeCycle;
-import org.hibernate.service.spi.Startable;
 import org.mortbay.cometd.continuation.EXoContinuationBayeux;
+import org.picocontainer.Startable;
 
 import org.exoplatform.commons.utils.PropertyManager;
 import org.exoplatform.onlyoffice.Config;
@@ -46,12 +46,10 @@ public class CometdOnlyofficeService implements Startable {
     this.exoBayeux = exoBayeux;
     this.onlyofficeService = onlyofficeService;
     this.service = new CometdService();
-    LOG.error("COMETD SERVICE CREATED");
   }
 
   @Override
   public void start() {
-    LOG.error("COMETD SERVICE START");
     // instantiate processor after the eXo container start, to let
     // start-dependent logic worked before us
     final AtomicReference<ServerAnnotationProcessor> processor = new AtomicReference<>();
@@ -139,7 +137,10 @@ public class CometdOnlyofficeService implements Startable {
           data.append(docId);
           data.append("\"");
           data.append('}');
-          bayeux.getChannel(CHANNEL_NAME + "/" + docId).publish(localSession, data.toString());
+          ServerChannel channel = bayeux.getChannel(CHANNEL_NAME + "/" + docId);
+          if(channel != null) {
+           channel.publish(localSession, data.toString());
+          }
         }
 
         @Override
@@ -179,6 +180,30 @@ public class CometdOnlyofficeService implements Startable {
    */
   protected String channelsAsString(Set<ServerChannel> channels) {
     return channels.stream().map(c -> c.getId()).collect(Collectors.joining(", "));
+  }
+
+  @Override
+  public void stop() {
+    // TODO Auto-generated method stub
+    
+  }
+  
+  /**
+   * Gets the cometd server path.
+   *
+   * @return the cometd server path
+   */
+  public String getCometdServerPath() {
+    return new StringBuilder("/").append(exoBayeux.getCometdContextName()).append("/cometd").toString();
+  }
+  
+  /**
+   * Gets the cometd server path.
+   *
+   * @return the cometd server path
+   */
+  public String getUserToken(String userId) {
+    return exoBayeux.getUserToken(userId);
   }
 
 }

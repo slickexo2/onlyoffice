@@ -95,7 +95,7 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
       if (node != null) {
         String editorLink = editorService.getEditorLink(node);
         if (editorLink != null) {
-          js.require("SHARED/onlyoffice", "onlyofficeButtons")
+          js.require("SHARED/onlyoffice", "onlyoffice")
             .addScripts("onlyoffice.addButtonToPreview('" + getActivity().getId() + "','" + editorLink + "','" + index
                 + "', '" + editLabel + "');");
         }
