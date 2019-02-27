@@ -44,6 +44,10 @@
     <type>org.exoplatform.onlyoffice.rest.EditorService</type>
   </component>
 
+  <component>
+    <type>org.exoplatform.onlyoffice.cometd.CometdOnlyofficeService</type>
+  </component>
+
   <!-- DocumentTypePlugin -->
   <external-component-plugins>
     <target-component>org.exoplatform.onlyoffice.OnlyofficeEditorService</target-component>
