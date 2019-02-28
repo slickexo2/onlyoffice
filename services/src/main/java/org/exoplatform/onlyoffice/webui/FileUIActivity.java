@@ -18,11 +18,17 @@
  */
 package org.exoplatform.onlyoffice.webui;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 import javax.jcr.Node;
+import javax.jcr.RepositoryException;
 
+import org.exoplatform.onlyoffice.OnlyofficeEditorException;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
 import org.exoplatform.social.webui.activity.BaseUIActivity;
 import org.exoplatform.web.application.JavascriptManager;
 import org.exoplatform.webui.application.WebuiRequestContext;
@@ -53,6 +59,9 @@ import org.exoplatform.webui.core.lifecycle.UIFormLifecycle;
         @EventConfig(listeners = BaseUIActivity.EditCommentActionListener.class) }), })
 public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.FileUIActivity {
 
+  /** The Constant LOG. */
+  private static final Log                LOG = ExoLogger.getLogger(FileUIActivity.class);
+
   protected final OnlyofficeEditorService editorService;
 
   /**
@@ -74,17 +83,27 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
     WebuiRequestContext requestContext = WebuiRequestContext.getCurrentInstance();
     JavascriptManager js = requestContext.getJavascriptManager();
     ResourceBundle resourceBundle = requestContext.getApplicationResourceBundle();
-    
+
     String editLabel = resourceBundle.getString("UIActionBar.tooltip.OnlyofficeOpen");
+
+    Map<Node, String> editorLinks = new HashMap<>();
 
     if (getFilesCount() == 1) {
       Node node = getContentNode(0);
       if (node != null) {
-        String editorLink = editorService.getEditorLink(node);
+        editorLinks.computeIfAbsent(node, n -> {
+          try {
+            return editorService.getEditorLink(n);
+          } catch (OnlyofficeEditorException | RepositoryException e) {
+            LOG.error(e);
+            return null;
+          }
+        });
+        String editorLink = editorLinks.get(node);
         if (editorLink != null) {
           js.require("SHARED/onlyoffice", "onlyoffice")
-            .addScripts("onlyoffice.addButtonToActivity('" + getActivity().getId() + "','" + editorLink + "', '"
-                + editLabel + "');");
+            .addScripts("onlyoffice.addButtonToActivity('" + getActivity().getId() + "','" + editorLink + "', '" + editLabel
+                + "');");
         }
       }
     }
@@ -93,11 +112,19 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
     for (int index = 0; index < getFilesCount(); index++) {
       Node node = getContentNode(index);
       if (node != null) {
-        String editorLink = editorService.getEditorLink(node);
+        editorLinks.computeIfAbsent(node, n -> {
+          try {
+            return editorService.getEditorLink(n);
+          } catch (OnlyofficeEditorException | RepositoryException e) {
+            LOG.error(e);
+            return null;
+          }
+        });
+        String editorLink = editorLinks.get(node);
         if (editorLink != null) {
           js.require("SHARED/onlyoffice", "onlyoffice")
-            .addScripts("onlyoffice.addButtonToPreview('" + getActivity().getId() + "','" + editorLink + "','" + index
-                + "', '" + editLabel + "');");
+            .addScripts("onlyoffice.addButtonToPreview('" + getActivity().getId() + "','" + editorLink + "','" + index + "', '"
+                + editLabel + "');");
         }
       }
     }

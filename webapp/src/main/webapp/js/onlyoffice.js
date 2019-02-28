@@ -58,7 +58,7 @@
           return JSON.parse(src);         
         }
       } catch(e) {
-        log.debug("Error parsing '" + src + "' as JSON: " + e, e);
+        console.log("Error parsing '" + src + "' as JSON: " + e, e);
       }       
     }
     return src;
@@ -487,6 +487,45 @@
         }, 100);
       });
     };
+    
+    
+    this.initExplorer = function(userId, userToken, cometdPath, container, docId){
+      var JCRPreview = $("#UIJCRExplorer");
+      if(JCRPreview.length > 0){
+        
+        // UI icon for Edit Online button
+        $("#uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen").addClass("uiIconEdit");
+        
+        cCometD.configure({
+          "url": prefixUrl  + cometdPath,
+          "exoId": userId,
+          "exoToken": userToken,
+          "maxNetworkDelay" : 30000,
+          "connectTimeout": 60000
+        });
+        
+        cometd = cCometD;
+        cometdContext = {
+            "exoContainerName" : container
+          };
+        
+        var subscription = cometd.subscribe("/eXo/Application/Onlyoffice/editor/" + docId, function(message) {
+          // Channel message handler
+          var result = tryParseJson(message);
+          console.log(result);
+        }, cometdContext, function(subscribeReply) {
+          // Subscription status callback
+          if (subscribeReply.successful) {
+            // The server successfully subscribed this client to the channel.
+            console.log("Document updates subscribed successfully: " + JSON.stringify(subscribeReply));
+            
+          } else {
+            var err = subscribeReply.error ? subscribeReply.error : (subscribeReply.failure ? subscribeReply.failure.reason : "Undefined");
+            console.log("Document updates subscription failed for " + userId, err);
+          }
+        });
+      }
+    };
   }
 
   /**
@@ -629,41 +668,7 @@
         onInit : onInit
       });
     };
-    
-    this.initExplorer = function(userId, userToken, cometdPath, docId){
-      var JCRPreview = $("#UIJCRExplorer");
-      if(JCRPreview.length > 0){
-        cCometD.configure({
-          "url": prefixUrl  + cometdPath,
-          "exoId": userId,
-          "exoToken": userToken,
-          "maxNetworkDelay" : 30000,
-          "connectTimeout": 60000
-        });
-        cometd = cCometD;
-        // TODO : get this params from the server
-        cometdContext = {
-            "exoContainerName" : context.containerName,
-            "exoClientId" : currentUser.clientId
-          };
-        
-        var subscription = cometd.subscribe("/eXo/Application/Onlyoffice/editor/" + docId, function(message) {
-          // Channel message handler
-          var result = tryParseJson(message);
-          console.log(resut);
-        }, cometdContext, function(subscribeReply) {
-          // Subscription status callback
-          if (subscribeReply.successful) {
-            // The server successfully subscribed this client to the channel.
-            console.log("Document updates subscribed successfully: " + JSON.stringify(subscribeReply));
-            
-          } else {
-            var err = subscribeReply.error ? subscribeReply.error : (subscribeReply.failure ? subscribeReply.failure.reason : "Undefined");
-            console.log("Document updates subscription failed for " + userId, err);
-          }
-        });
-      }
-    }
+
   }
 
   var editor = new Editor();

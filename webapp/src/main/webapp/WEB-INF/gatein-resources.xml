@@ -57,6 +57,9 @@
       <module>jquery</module>
     </depends>
     <depends>
+      <module>commons-cometd3</module>
+    </depends>
+    <depends>
       <module>onlyofficeJqueryPnotify</module>
     </depends>
     <depends>
@@ -71,8 +74,8 @@
     <css-path>/skin/onlyoffice-stream.css</css-path>
     <overwrite>true</overwrite>
   </portlet-skin>
-  
-    <portlet-skin>
+
+  <portlet-skin>
     <application-name>onlyoffice</application-name>
     <portlet-name>OnlyofficeStreamPortlet</portlet-name>
     <skin-name>Default</skin-name>

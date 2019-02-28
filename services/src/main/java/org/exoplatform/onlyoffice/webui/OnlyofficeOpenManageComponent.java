@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
+import org.exoplatform.container.PortalContainer;
 import org.exoplatform.ecm.webui.component.explorer.UIJCRExplorer;
 import org.exoplatform.ecm.webui.component.explorer.control.listener.UIActionBarActionListener;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
@@ -146,11 +147,12 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
         }
         String cometdPath = cometdService.getCometdServerPath();
         String userToken = cometdService.getUserToken(userId);
+        String containerName = PortalContainer.getCurrentPortalContainerName();
         String docId = editorService.initDocument(uiExplorer.getCurrentNode());
         JavascriptManager js = ((WebuiRequestContext) WebuiRequestContext.getCurrentInstance()).getJavascriptManager();
         js.require("SHARED/onlyoffice", "onlyoffice")
-          .addScripts("onlyoffice.initExplorer(" + userId + ", " + userToken + ", "
-              + cometdPath + ", " + docId + ");");
+          .addScripts("onlyoffice.initExplorer('" + userId + "', '" + userToken + "', '"
+              + cometdPath + "', '" + containerName + "', '" + docId + "');");
 
         if (editorLink != null && !editorLink.isEmpty()) {
           return "javascript:window.open('" + editorLink + "');";
