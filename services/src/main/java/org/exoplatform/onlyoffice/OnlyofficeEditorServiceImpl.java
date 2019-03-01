@@ -67,6 +67,7 @@ import org.exoplatform.container.xml.PropertiesParam;
 import org.exoplatform.ecm.utils.lock.LockUtil;
 import org.exoplatform.ecm.webui.utils.PermissionUtil;
 import org.exoplatform.ecm.webui.utils.Utils;
+import org.exoplatform.onlyoffice.cometd.CometdOnlyofficeService;
 import org.exoplatform.onlyoffice.jcr.NodeFinder;
 import org.exoplatform.portal.Constants;
 import org.exoplatform.services.cache.CacheListener;
@@ -246,6 +247,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /** The document service. */
   protected final DocumentService                                 documentService;
 
+  /** The cometd service */
+  protected final CometdOnlyofficeService                         cometdService;
+
   /** The lock service. */
   protected final LockService                                     lockService;
 
@@ -310,6 +314,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                      CacheService cacheService,
                                      DocumentService documentService,
                                      LockService lockService,
+                                     CometdOnlyofficeService cometdService,
                                      InitParams params)
       throws ConfigurationException {
     this.jcrService = jcrService;
@@ -320,6 +325,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     this.authenticator = authenticator;
     this.documentService = documentService;
     this.lockService = lockService;
+    this.cometdService = cometdService;
 
     this.activeCache = cacheService.getCacheInstance(CACHE_NAME);
     if (LOG.isDebugEnabled()) {
@@ -792,6 +798,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         } else if (statusCode == 2) {
           // save as "document is ready for saving" (2)
           download(config, status);
+          cometdService.publishSaveEvent(config.getDocId(),status.getUsers()[0]);
           activeCache.remove(key);
           activeCache.remove(nodePath);
         } else if (statusCode == 3) {

@@ -35,7 +35,7 @@ public class DocumentStatus {
   protected String   key;
 
   /** The status. */
-  protected Long  status;
+  protected Long     status;
 
   /** The url. */
   protected String   url;

@@ -51,19 +51,19 @@
    * Stuff grabbed from CW's commons.js
    */
   var tryParseJson = function(message) {
-    var src = message.data ? message.data : (message.error ? message.error : message.failure); 
+    var src = message.data ? message.data : (message.error ? message.error : message.failure);
     if (src) {
       try {
         if (typeof src === "string" && (src.startsWith("{") || src.startsWith("["))) {
-          return JSON.parse(src);         
+          return JSON.parse(src);
         }
-      } catch(e) {
+      } catch (e) {
         console.log("Error parsing '" + src + "' as JSON: " + e, e);
-      }       
+      }
     }
     return src;
   };
-  
+
   var pageBaseUrl = function(theLocation) {
     if (!theLocation) {
       theLocation = window.location;
@@ -248,19 +248,6 @@
     return initRequest(request);
   };
 
-  var editorClose = function(userId, fileKey) {
-    var request = $.ajax({
-      type : "POST",
-      url : prefixUrl + "/portal/rest/onlyoffice/editor/ui/" + userId + "/" + fileKey,
-      dataType : "json",
-      data : {
-        command : "close"
-      }
-    });
-
-    return initRequest(request);
-  };
-  
   var getHtmlLink = function(link, label) {
     return '<li><a href="' + link + '" target="_blank"><i class="uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit"></i> '
         + label + '</a></li>';
@@ -281,7 +268,6 @@
       $(".previewBtn").append('<div class="onlyOfficeEditBtn">' + getHtmlLink(link, label) + '</div>');
     }
   }
-
 
   /**
    * Editor core class.
@@ -487,40 +473,51 @@
         }, 100);
       });
     };
-    
-    
-    this.initExplorer = function(userId, userToken, cometdPath, container, docId){
+
+    this.initExplorer = function(userId, userToken, cometdPath, container, docId) {
       var JCRPreview = $("#UIJCRExplorer");
-      if(JCRPreview.length > 0){
-        
+      if (JCRPreview.length > 0) {
+
         // UI icon for Edit Online button
         $("#uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen").addClass("uiIconEdit");
-        
+
         cCometD.configure({
-          "url": prefixUrl  + cometdPath,
-          "exoId": userId,
-          "exoToken": userToken,
+          "url" : prefixUrl + cometdPath,
+          "exoId" : userId,
+          "exoToken" : userToken,
           "maxNetworkDelay" : 30000,
-          "connectTimeout": 60000
+          "connectTimeout" : 60000
         });
-        
+
         cometd = cCometD;
         cometdContext = {
-            "exoContainerName" : container
-          };
-        
+          "exoContainerName" : container
+        };
+
         var subscription = cometd.subscribe("/eXo/Application/Onlyoffice/editor/" + docId, function(message) {
           // Channel message handler
           var result = tryParseJson(message);
           console.log(result);
+          if (result.user === userId) {
+            // update preview
+            var $vieverScript = $(".document-preview-content-file script[src$='/viewer.js']")
+            var viewerSrc = $vieverScript.attr('src');
+            $vieverScript.remove();
+            $(".document-preview-content-file").append('<script src="' + viewerSrc + '"></script>');
+          }
+          else {
+            // TODO: Add banner to preview
+          }
+
         }, cometdContext, function(subscribeReply) {
           // Subscription status callback
           if (subscribeReply.successful) {
             // The server successfully subscribed this client to the channel.
             console.log("Document updates subscribed successfully: " + JSON.stringify(subscribeReply));
-            
+
           } else {
-            var err = subscribeReply.error ? subscribeReply.error : (subscribeReply.failure ? subscribeReply.failure.reason : "Undefined");
+            var err = subscribeReply.error ? subscribeReply.error : (subscribeReply.failure ? subscribeReply.failure.reason
+                : "Undefined");
             console.log("Document updates subscription failed for " + userId, err);
           }
         });
@@ -691,6 +688,5 @@
       log("Error configuring Onlyoffice Editor style.", e);
     }
   });
-
   return editor;
 })($, cCometD);
