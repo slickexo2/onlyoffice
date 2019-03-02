@@ -18,7 +18,7 @@
       return this.substr(position, searchString.length) === searchString;
     };
   }
-  
+
   // ******** Constants ********
   var ACCESS_DENIED = "access-denied";
   var NODE_NOT_FOUND = "node-not-found";
@@ -27,19 +27,6 @@
   /**
    * Stuff grabbed from CW's commons.js
    */
-  var tryParseJson = function(message) {
-    var src = message.data ? message.data : (message.error ? message.error : message.failure);
-    if (src) {
-      try {
-        if (typeof src === "string" && (src.startsWith("{") || src.startsWith("["))) {
-          return JSON.parse(src);
-        }
-      } catch (e) {
-        console.log("Error parsing '" + src + "' as JSON: " + e, e);
-      }
-    }
-    return src;
-  };
 
   var pageBaseUrl = function(theLocation) {
     if (!theLocation) {
@@ -112,6 +99,20 @@
     return eXo.env.portal.userName;
   };
 
+  var tryParseJson = function(message) {
+    var src = message.data ? message.data : (message.error ? message.error : message.failure);
+    if (src) {
+      try {
+        if (typeof src === "string" && (src.startsWith("{") || src.startsWith("["))) {
+          return JSON.parse(src);
+        }
+      } catch (e) {
+        log("Error parsing '" + src + "' as JSON: " + e, e);
+      }
+    }
+    return src;
+  };
+
   // ******** REST services ********
   var prefixUrl = pageBaseUrl(location);
 
@@ -177,14 +178,16 @@
     return process.promise(processTarget);
   };
 
-  /*var configGet = function(workspace, path) {
+  /*
+  var configGet = function(workspace, path) {
     var request = $.ajax({
       type : "GET",
       url : prefixUrl + "/portal/rest/onlyoffice/editor/config/" + workspace + path,
       dataType : "json"
     });
     return initRequest(request);
-  };*/
+  };
+  */
 
   var configPost = function(workspace, path) {
     var request = $.ajax({
@@ -195,16 +198,18 @@
 
     return initRequest(request);
   };
-
-  /*var configGetByKey = function(key) {
+  
+  /*
+  var configGetByKey = function(key) {
     var request = $.ajax({
-       type : "GET",
-       url : prefixUrl + "/portal/rest/onlyoffice/editor/config/" + key,
-       dataType : "json"
+      type : "GET",
+      url : prefixUrl + "/portal/rest/onlyoffice/editor/config/" + key,
+      dataType : "json"
     });
     return initRequest(request);
-  };*/
-
+  };
+  */
+  
   var documentPost = function(workspace, path) {
     var request = $.ajax({
       type : "POST",
@@ -239,7 +244,7 @@
         }, delay);
 
       } else {
-        console.log("Cannot find element " + $elem);
+        log("Cannot find element " + $elem);
       }
     } else {
       $(".previewBtn").append('<div class="onlyOfficeEditBtn">' + getHtmlLink(link, label) + '</div>');
@@ -474,28 +479,38 @@
         var subscription = cometd.subscribe("/eXo/Application/Onlyoffice/editor/" + docId, function(message) {
           // Channel message handler
           var result = tryParseJson(message);
-          console.log(result);
+          log(result);
           if (result.user === userId) {
             // update preview
             var $vieverScript = $(".document-preview-content-file script[src$='/viewer.js']")
             var viewerSrc = $vieverScript.attr('src');
             $vieverScript.remove();
             $(".document-preview-content-file").append('<script src="' + viewerSrc + '"></script>');
-          }
-          else {
-            // TODO: Add banner to preview
+          } else {
+            // TODO: Add banner to the preview
+             /*
+              $("<div>The refresh link is here</div>").css({
+                position : "absolute",
+                width : "100%",
+                height : "30px",
+                top : 35,
+                left : 0,
+                opacity : 0.8,
+                background : "yellow"
+              }).appendTo($(".document-preview-content-file .toolbar").css("position", "relative"));
+              */
           }
 
         }, cometdContext, function(subscribeReply) {
           // Subscription status callback
           if (subscribeReply.successful) {
             // The server successfully subscribed this client to the channel.
-            console.log("Document updates subscribed successfully: " + JSON.stringify(subscribeReply));
+            log("Document updates subscribed successfully: " + JSON.stringify(subscribeReply));
 
           } else {
             var err = subscribeReply.error ? subscribeReply.error : (subscribeReply.failure ? subscribeReply.failure.reason
                 : "Undefined");
-            console.log("Document updates subscription failed for " + userId, err);
+            log("Document updates subscription failed for " + userId, err);
           }
         });
       }
@@ -532,7 +547,7 @@
     this.initEditor = function() {
       $("#LeftNavigation").parent(".LeftNavigationTDContainer").remove();
       $("#NavigationPortlet").remove();
-      //$("body").addClass("maskLayer");
+      // $("body").addClass("maskLayer");
       $("#SharedLayoutRightBody").addClass("onlyofficeEditorBody");
     };
 
@@ -665,5 +680,6 @@
       log("Error configuring Onlyoffice Editor style.", e);
     }
   });
+
   return editor;
 })($, cCometD);

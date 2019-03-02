@@ -247,9 +247,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /** The document service. */
   protected final DocumentService                                 documentService;
 
-  /** The cometd service */
-  protected final CometdOnlyofficeService                         cometdService;
-
   /** The lock service. */
   protected final LockService                                     lockService;
 
@@ -314,7 +311,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                      CacheService cacheService,
                                      DocumentService documentService,
                                      LockService lockService,
-                                     CometdOnlyofficeService cometdService,
                                      InitParams params)
       throws ConfigurationException {
     this.jcrService = jcrService;
@@ -325,7 +321,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     this.authenticator = authenticator;
     this.documentService = documentService;
     this.lockService = lockService;
-    this.cometdService = cometdService;
 
     this.activeCache = cacheService.getCacheInstance(CACHE_NAME);
     if (LOG.isDebugEnabled()) {
@@ -798,7 +793,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         } else if (statusCode == 2) {
           // save as "document is ready for saving" (2)
           download(config, status);
-          cometdService.publishSaveEvent(config.getDocId(),status.getUsers()[0]);
           activeCache.remove(key);
           activeCache.remove(nodePath);
         } else if (statusCode == 3) {
@@ -1374,7 +1368,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
           config.closed(); // reset transient closing state
 
-          fireSaved(config);
+          fireSaved(config, userId);
         } catch (RepositoryException e) {
           try {
             node.refresh(false); // rollback JCR modifications
@@ -1773,10 +1767,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    *
    * @param config the config
    */
-  protected void fireSaved(Config config) {
+  protected void fireSaved(Config config, String userId) {
     for (OnlyofficeEditorListener l : listeners) {
       try {
-        l.onSaved(config);
+        l.onSaved(config, userId);
       } catch (Throwable t) {
         LOG.warn("Saving listener error", t);
       }

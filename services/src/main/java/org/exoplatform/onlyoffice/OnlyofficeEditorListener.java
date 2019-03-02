@@ -59,8 +59,9 @@ public interface OnlyofficeEditorListener {
    * Document was saved and editor released.
    *
    * @param config the config
+   * @param userId the userId
    */
-  void onSaved(Config config);
+  void onSaved(Config config, String userId);
   
   /**
    * Error saving document in editor. Error message if found, will be set in the {@link Config#getError()}.

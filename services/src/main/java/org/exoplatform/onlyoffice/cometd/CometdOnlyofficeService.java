@@ -26,23 +26,39 @@ import org.exoplatform.onlyoffice.OnlyofficeEditorService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
+/**
+ * The CometdOnlyofficeService
+ *
+ */
 public class CometdOnlyofficeService implements Startable {
 
   /** The Constant LOG. */
-  private static final Log              LOG                    = ExoLogger.getLogger(CometdOnlyofficeService.class);
+  private static final Log                LOG                  = ExoLogger.getLogger(CometdOnlyofficeService.class);
 
-  public static final String            CHANNEL_NAME           = "/eXo/Application/Onlyoffice/editor/";
+  /** The channel name */
+  public static final String              CHANNEL_NAME         = "/eXo/Application/Onlyoffice/editor/";
 
-  public static final String            DOCUMENT_SAVED_EVENT = "document_saved";
+  /** The document saved event */
+  public static final String              DOCUMENT_SAVED_EVENT = "document_saved";
+
+  /** The Onlyoffice editor service */
+  protected final OnlyofficeEditorService onlyofficeEditorService;
 
   /** The exo bayeux. */
-  protected final EXoContinuationBayeux exoBayeux;
+  protected final EXoContinuationBayeux   exoBayeux;
 
   /** The service. */
-  protected final CometdService         service;
+  protected final CometdService           service;
 
-  public CometdOnlyofficeService(EXoContinuationBayeux exoBayeux) {
+  /**
+   * Instantiates the CometdOnlyofficeService
+   * 
+   * @param exoBayeux the exoBayeux
+   * @param onlyofficeEditorService the OnlyofficeEditorService
+   */
+  public CometdOnlyofficeService(EXoContinuationBayeux exoBayeux, OnlyofficeEditorService onlyofficeEditorService) {
     this.exoBayeux = exoBayeux;
+    this.onlyofficeEditorService = onlyofficeEditorService;
     this.service = new CometdService();
   }
 
@@ -107,9 +123,11 @@ public class CometdOnlyofficeService implements Startable {
 
   /**
    * The CometService is responsible for sending messages to Cometd channels when a document is saved
+   * 
    */
   @Service("onlyoffice")
   public class CometdService {
+
     /** The bayeux. */
     @Inject
     private BayeuxServer  bayeux;
@@ -122,31 +140,57 @@ public class CometdOnlyofficeService implements Startable {
     @Session
     private ServerSession serverSession;
 
-    /**
-     * Publishes save event to the cometd channel of the document
-     * 
-     * @param docId the document id
-     * @param userId the user id
-     */
-    public void publishSaveEvent(String docId, String userId) {
-      ServerChannel channel = bayeux.getChannel(CHANNEL_NAME + docId);
+    @PostConstruct
+    public void postConstruct() {
+      onlyofficeEditorService.addListener(new OnlyofficeEditorListener() {
 
-      if (channel != null) {
-        LOG.info("Document {} saved. Sending message to cometd channel", docId);
-        StringBuilder data = new StringBuilder();
-        data.append('{');
-        data.append("\"eventType\": \"");
-        data.append(DOCUMENT_SAVED_EVENT);
-        data.append("\", ");
-        data.append("\"documentId\": \"");
-        data.append(docId);
-        data.append("\", ");
-        data.append("\"user\": \"");
-        data.append(userId);
-        data.append("\"");
-        data.append('}');
-        channel.publish(localSession, data.toString());
-      }
+        @Override
+        public void onSaved(Config config, String userId) {
+          String docId = config.getDocId();
+          ServerChannel channel = bayeux.getChannel(CHANNEL_NAME + docId);
+          if (channel != null) {
+            LOG.info("Document {} saved. Sending message to cometd channel", docId);
+            StringBuilder data = new StringBuilder();
+            data.append('{');
+            data.append("\"eventType\": \"");
+            data.append(DOCUMENT_SAVED_EVENT);
+            data.append("\", ");
+            data.append("\"documentId\": \"");
+            data.append(docId);
+            data.append("\", ");
+            data.append("\"user\": \"");
+            data.append(userId);
+            data.append("\"");
+            data.append('}');
+            channel.publish(localSession, data.toString());
+          }
+        }
+
+        @Override
+        public void onLeaved(Config config) {
+          // Nothing
+        }
+
+        @Override
+        public void onJoined(Config config) {
+          // Nothing
+        }
+
+        @Override
+        public void onGet(Config config) {
+          // Nothing
+        }
+
+        @Override
+        public void onError(Config config) {
+          // Nothing
+        }
+
+        @Override
+        public void onCreate(Config config) {
+          // Nothing
+        }
+      });
     }
 
   }
@@ -163,8 +207,7 @@ public class CometdOnlyofficeService implements Startable {
 
   @Override
   public void stop() {
-    // TODO Auto-generated method stub
-
+    // Nothing
   }
 
   /**
@@ -177,22 +220,13 @@ public class CometdOnlyofficeService implements Startable {
   }
 
   /**
-   * Gets the cometd server path.
-   *
-   * @return the cometd server path
+   * Gets the user token
+   * 
+   * @param userId the userId
+   * @return the token
    */
   public String getUserToken(String userId) {
     return exoBayeux.getUserToken(userId);
-  }
-
-  /**
-   * Publishes document saved event to cometd channel
-   * 
-   * @param docId the document id
-   * @param userId the user id
-   */
-  public void publishSaveEvent(String docId, String userId) {
-    service.publishSaveEvent(docId, userId);
   }
 
 }
