@@ -425,14 +425,11 @@
     };
 
     this.initExplorer = function(userId, userToken, cometdPath, container, docId) {
-      // TODO use $prefix for jQuery objects
-      var JCRPreview = $("#UIJCRExplorer"); // it is not a doc view, it's whole explorer
-      if (JCRPreview.length > 0) {
-        // TODO do further jQuery selectors relatively the explorer (use find() method)
-        
+    
+      var $JCRFileContent = $("#UIJCRExplorer .fileContent"); 
+      if ($JCRFileContent.length > 0) {
         // UI icon for Edit Online button
-        // TODO limit scope to explroer's action bar only (to avoid possible conflicts in other parts of the portal page) 
-        $("#uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen").addClass("uiIconEdit");
+        $JCRFileContent.closest("#UIJCRExplorer").find("#uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen").addClass("uiIconEdit");
 
         cCometD.configure({
           "url" : prefixUrl + cometdPath,
