@@ -1770,6 +1770,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   protected void fireSaved(Config config, String userId) {
     for (OnlyofficeEditorListener l : listeners) {
       try {
+        // TODO user already available in config.getEditorConfig().getUser()
         l.onSaved(config, userId);
       } catch (Throwable t) {
         LOG.warn("Saving listener error", t);

@@ -255,8 +255,6 @@
    * Editor core class.
    */
   function Editor() {
-    // Used by download() and closeUI()
-    var currentConfig;
     var self = this;
     var onError = function(event) {
       log("ONLYOFFICE Document Editor reports an error: " + JSON.stringify(event));
@@ -278,36 +276,6 @@
       } else {
         log("ONLYOFFICE Changes are collected on document editing service");
       }
-    };
-
-    var waitClosed = function(config) {
-      var process = $.Deferred();
-      // wait a bit (up to ~60sec) to let Onlyoffice post document status
-      var attempts = 20;
-      function checkClosed() {
-        attempts--;
-        stateGet(config.editorConfig.user.id, config.document.key).done(
-            function(state) {
-              log("Editor state: " + JSON.stringify(state));
-              if (state.saved || state.error) {
-                process.resolve(state);
-              } else {
-                if (attempts >= 0
-                    && (state.users.length == 0 || (state.users.length == 1 && state.users[0] == config.editorConfig.user.id))) {
-                  log("Continue to wait for editor closing...");
-                  setTimeout(checkClosed, 3000);
-                } else {
-                  // resolve as-is, this will cover co-editing when others still edit
-                  process.resolve(state);
-                }
-              }
-            }).fail(function(error) {
-          log("Editor state error: " + JSON.stringify(error));
-          process.reject(error);
-        });
-      }
-      checkClosed();
-      return process.promise();
     };
 
     /**
@@ -413,7 +381,7 @@
     this.create = create;
 
     /**
-     * Initialize an editor page at a new browser window.
+     * Initialize an editor page in current browser window.
      */
     this.initEditor = function(config) {
       // TODO Establish a Comet/WebSocket channel from this point.
@@ -457,10 +425,13 @@
     };
 
     this.initExplorer = function(userId, userToken, cometdPath, container, docId) {
-      var JCRPreview = $("#UIJCRExplorer");
+      // TODO use $prefix for jQuery objects
+      var JCRPreview = $("#UIJCRExplorer"); // it is not a doc view, it's whole explorer
       if (JCRPreview.length > 0) {
-
+        // TODO do further jQuery selectors relatively the explorer (use find() method)
+        
         // UI icon for Edit Online button
+        // TODO limit scope to explroer's action bar only (to avoid possible conflicts in other parts of the portal page) 
         $("#uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen").addClass("uiIconEdit");
 
         cCometD.configure({
@@ -506,7 +477,6 @@
           if (subscribeReply.successful) {
             // The server successfully subscribed this client to the channel.
             log("Document updates subscribed successfully: " + JSON.stringify(subscribeReply));
-
           } else {
             var err = subscribeReply.error ? subscribeReply.error : (subscribeReply.failure ? subscribeReply.failure.reason
                 : "Undefined");
