@@ -490,6 +490,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     ConcurrentMap<String, Config> configs = activeCache.get(nodePath);
     if (configs != null) {
       Config config = configs.get(userId);
+      DocumentStatus status = new DocumentStatus();
+      status.setUsers(new String[] { userId });
       if (config == null && createCoEditing) {
         // copy editor for this user from another entry in the configs map
         try {
@@ -505,7 +507,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             } else {
               config = existing;
             }
-            fireGet(config);
+            status.setConfig(config);
+            status.setUrl(config.getEditorUrl());
+            status.setKey(config.getDocument().getKey());
+            fireGet(status);
           } else {
             LOG.warn("Attempt to obtain document editor (" + nodePath(another) + ") under not existing user " + userId);
             throw new BadParameterException("User not found for " + another.getDocument().getTitle());
@@ -516,7 +521,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         }
       } else if (createCoEditing) {
         // otherwise: config already obtained
-        fireGet(config);
+        status.setConfig(config);
+        status.setUrl(config.getEditorUrl());
+        status.setKey(config.getDocument().getKey());
+        fireGet(status);
       }
       return config; // can be null
     }
@@ -637,7 +645,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       } finally {
         activeLock.unlock();
       }
-      fireCreated(config);
+      DocumentStatus status = new DocumentStatus();
+      status.setConfig(config);
+      status.setUsers(new String[] { userId });
+      status.setUrl(config.getEditorUrl());
+      status.setKey(config.getDocument().getKey());
+      fireCreated(status);
     }
     return config;
   }
@@ -749,6 +762,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     if (configs != null) {
       Config config = configs.get(userId);
       if (config != null) {
+        status.setConfig(config);
         validateUser(userId, config);
 
         String nodePath = nodePath(config.getWorkspace(), config.getPath());
@@ -816,7 +830,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               // manually from Onlyoffice)
               // config.close(); // close for use in listeners
               // fireSaved(config);
-              fireError(config);
+              
+              fireError(status);
               LOG.warn("Received Onlyoffice error of saving document. Key: " + key + ". Users: "
                   + Arrays.toString(status.getUsers()) + ". Last change was successfully saved for " + nodePath);
             } else {
@@ -827,7 +842,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               // Update cached (for replicated cache)
               activeCache.put(key, configs);
               activeCache.put(nodePath, configs);
-              fireError(config);
+              fireError(status);
               // TODO no sense to throw an ex here: it will be caught by the
               // caller (REST) and returned to
               // the Onlyoffice server as 500 response, but it doesn't deal with
@@ -842,7 +857,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             // Update cached (for replicated cache)
             activeCache.put(key, configs);
             activeCache.put(nodePath, configs);
-            fireError(config);
+            fireError(status);
           }
         } else if (statusCode == 4) {
           // user(s) haven't changed the document but closed it: sync users to
@@ -1210,11 +1225,16 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       Map.Entry<String, Config> ce = ceiter.next();
       String user = ce.getKey();
       Config config = ce.getValue();
+      DocumentStatus status = new DocumentStatus();
+      status.setConfig(config);
+      status.setKey(config.getDocument().getKey());
+      status.setUrl(config.getEditorUrl());
+      status.setUsers(users);
       if (editors.contains(user)) {
         if (config.isCreated() || config.isClosed()) {
           // editor was (re)opened by user
           config.open();
-          fireJoined(config);
+          fireJoined(status);
           updated = true;
         }
       } else {
@@ -1224,7 +1244,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // closed because user sync happens when someone else still editing or
           // nothing edited
           config.closed();
-          fireLeaved(config);
+          fireLeaved(status);
           updated = true;
         }
       }
@@ -1275,7 +1295,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       LOG.debug(">> download(" + nodePath + ", " + config.getDocument().getKey() + ")");
     }
 
-    String userId = status.getUsers()[0]; // assuming a single user here (last
+    String userId = status.getLastUser(); // assuming a single user here (last
                                           // editor)
     validateUser(userId, config);
 
@@ -1367,7 +1387,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           }
 
           config.closed(); // reset transient closing state
-          fireSaved(config, userId);
+          status.setConfig(config);
+          fireSaved(status);
         } catch (RepositoryException e) {
           try {
             node.refresh(false); // rollback JCR modifications
@@ -1706,10 +1727,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    *
    * @param config the config
    */
-  protected void fireCreated(Config config) {
+  protected void fireCreated(DocumentStatus status) {
     for (OnlyofficeEditorListener l : listeners) {
       try {
-        l.onCreate(config);
+        l.onCreate(status);
       } catch (Throwable t) {
         LOG.warn("Creation listener error", t);
       }
@@ -1721,10 +1742,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    *
    * @param config the config
    */
-  protected void fireGet(Config config) {
+  protected void fireGet(DocumentStatus status) {
     for (OnlyofficeEditorListener l : listeners) {
       try {
-        l.onGet(config);
+        l.onGet(status);
       } catch (Throwable t) {
         LOG.warn("Read (Get) listener error", t);
       }
@@ -1736,10 +1757,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    *
    * @param config the config
    */
-  protected void fireJoined(Config config) {
+  protected void fireJoined(DocumentStatus status) {
     for (OnlyofficeEditorListener l : listeners) {
       try {
-        l.onJoined(config);
+        l.onJoined(status);
       } catch (Throwable t) {
         LOG.warn("User joining listener error", t);
       }
@@ -1751,10 +1772,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    *
    * @param config the config
    */
-  protected void fireLeaved(Config config) {
+  protected void fireLeaved(DocumentStatus status) {
     for (OnlyofficeEditorListener l : listeners) {
       try {
-        l.onLeaved(config);
+        l.onLeaved(status);
       } catch (Throwable t) {
         LOG.warn("User leaving listener error", t);
       }
@@ -1766,10 +1787,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    *
    * @param config the config
    */
-  protected void fireSaved(Config config, String userId) {
+  protected void fireSaved(DocumentStatus status) {
     for (OnlyofficeEditorListener l : listeners) {
       try {
-        l.onSaved(config, userId);
+        l.onSaved(status);
       } catch (Throwable t) {
         LOG.warn("Saving listener error", t);
       }
@@ -1781,10 +1802,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    *
    * @param config the config
    */
-  protected void fireError(Config config) {
+  protected void fireError(DocumentStatus status) {
     for (OnlyofficeEditorListener l : listeners) {
       try {
-        l.onError(config);
+        l.onError(status);
       } catch (Throwable t) {
         LOG.warn("Error listener error", t);
       }

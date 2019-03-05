@@ -21,6 +21,7 @@ import org.picocontainer.Startable;
 
 import org.exoplatform.commons.utils.PropertyManager;
 import org.exoplatform.onlyoffice.Config;
+import org.exoplatform.onlyoffice.DocumentStatus;
 import org.exoplatform.onlyoffice.OnlyofficeEditorListener;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
 import org.exoplatform.services.log.ExoLogger;
@@ -145,8 +146,8 @@ public class CometdOnlyofficeService implements Startable {
       onlyofficeEditorService.addListener(new OnlyofficeEditorListener() {
 
         @Override
-        public void onSaved(Config config, String userId) {
-          String docId = config.getDocId();
+        public void onSaved(DocumentStatus status) {
+          String docId = status.getConfig().getDocId();
           ServerChannel channel = bayeux.getChannel(CHANNEL_NAME + docId);
           if (channel != null) {
             LOG.info("Document {} saved. Sending message to cometd channel", docId);
@@ -159,7 +160,7 @@ public class CometdOnlyofficeService implements Startable {
             data.append(docId);
             data.append("\", ");
             data.append("\"user\": \"");
-            data.append(userId);
+            data.append(status.getLastUser());
             data.append("\"");
             data.append('}');
             channel.publish(localSession, data.toString());
@@ -167,27 +168,27 @@ public class CometdOnlyofficeService implements Startable {
         }
 
         @Override
-        public void onLeaved(Config config) {
+        public void onLeaved(DocumentStatus status) {
           // Nothing
         }
 
         @Override
-        public void onJoined(Config config) {
+        public void onJoined(DocumentStatus status) {
           // Nothing
         }
 
         @Override
-        public void onGet(Config config) {
+        public void onGet(DocumentStatus status) {
           // Nothing
         }
 
         @Override
-        public void onError(Config config) {
+        public void onError(DocumentStatus status) {
           // Nothing
         }
 
         @Override
-        public void onCreate(Config config) {
+        public void onCreate(DocumentStatus status) {
           // Nothing
         }
       });

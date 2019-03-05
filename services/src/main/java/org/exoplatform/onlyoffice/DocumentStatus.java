@@ -42,6 +42,9 @@ public class DocumentStatus {
 
   /** The users. */
   protected String[] users;
+  
+  /** The config. */
+  protected Config config;
 
   /**
    * Gets the key.
@@ -113,6 +116,33 @@ public class DocumentStatus {
    */
   public void setUsers(String[] users) {
     this.users = users;
+  }
+  
+  /**
+   * Gets the config.
+   * 
+   * @return the config
+   */
+  public Config getConfig() {
+    return config;
+  }
+
+  /**
+   * Sets the config.
+   * 
+   * @param config the config to set
+   */
+  public void setConfig(Config config) {
+    this.config = config;
+  }
+
+  /**
+   * Gets the last user (editor)
+   * 
+   * @return the last user (editor)
+   */
+  public String getLastUser() {
+    return users.length > 0 ? users[0] : null;
   }
 
 }

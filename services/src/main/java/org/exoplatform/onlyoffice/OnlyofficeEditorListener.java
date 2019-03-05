@@ -30,44 +30,43 @@ public interface OnlyofficeEditorListener {
   /**
    * New editor just created.
    *
-   * @param config the config
+   * @param status the status
    */
-  void onCreate(Config config);
+  void onCreate(DocumentStatus status);
   
   /**
    * Existing editor obtained by user.
    *
-   * @param config the config
+   * @param status the status
    */
-  void onGet(Config config);
+  void onGet(DocumentStatus status);
   
   /**
    * User joined co-editing document (it's second or more user). 
    *
-   * @param config the config
+   * @param status the status
    */
-  void onJoined(Config config);
+  void onJoined(DocumentStatus status);
   
   /**
    * User leaved co-editing document (it's at least second user gone). 
    *
-   * @param config the config
+   * @param status the status
    */
-  void onLeaved(Config config);
+  void onLeaved(DocumentStatus status);
   
   /**
    * Document was saved and editor released.
    *
-   * @param config the config
-   * @param userId the userId
+   * @param status the status
    */
-  void onSaved(Config config, String userId);
+  void onSaved(DocumentStatus status);
   
   /**
    * Error saving document in editor. Error message if found, will be set in the {@link Config#getError()}.
    *
-   * @param config the config
+   * @param status the status
    */
-  void onError(Config config);
+  void onError(DocumentStatus status);
 
 }
