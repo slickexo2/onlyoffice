@@ -48,6 +48,17 @@
     </depends>
   </module>
   <module>
+    <name>onlyofficeRedux</name>
+    <load-group>onlyofficeGRP</load-group>
+    <script>
+      <path>/js/redux.min.js</path>
+    </script>
+    <depends>
+      <module>redux</module>
+      <as>Redux</as>
+    </depends>
+  </module>
+  <module>
     <name>onlyoffice</name>
     <load-group>onlyofficeGRP</load-group>
     <script>
@@ -64,6 +75,9 @@
     </depends>
     <depends>
       <module>onlyofficeJqueryUI</module>
+    </depends>
+        <depends>
+      <module>onlyofficeRedux</module>
     </depends>
   </module>
 
