@@ -257,26 +257,24 @@
    */
   function Editor() {
 
-
-   var docActionsReducer = function(state = {}, action){
-          switch(action.type){
-              // TODO: Think about how to prohibit refreshing preview when it's on activity stream
-              case 'DOCUMENT_SAVED':
-                if(action.payload.userId === eXo.env.portal.userName){
-                  return {
-                    status: 'REFRESH_PREVIEW'
-                  }
-                }
-                return {
-                  status: 'ADD_BANNER'
-                }
-            }
-            return state;
-    };
-
     var self = this;
-    // Init store
     var store;
+    
+    var docActionsReducer = function(state = {}, action){
+     switch(action.type){
+         // TODO: Think about how to prohibit refreshing preview when it's on activity stream
+       case 'DOCUMENT_SAVED':
+         if(action.payload.userId === eXo.env.portal.userName){
+           return {
+             status: 'REFRESH_PREVIEW'
+           }
+         }
+         return {
+           status: 'ADD_BANNER'
+           }
+       }
+       return state;
+    };
 
     // Generates DOCUMENT SAVED action with userId
     var docSavedAction = function(userId){
