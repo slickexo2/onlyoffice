@@ -126,7 +126,7 @@
 }
 
 .document-preview-content-file #toolbarContainer .documentPreviewBanner {
-	position : absolute;
+    position : absolute;
     width : 100%;
     opacity : 0.9;
     background : #FFEB3B;
