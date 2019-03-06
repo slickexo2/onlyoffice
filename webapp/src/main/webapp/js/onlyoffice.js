@@ -649,6 +649,10 @@
     };
 
     this.refreshPreview = function(){
+      var $banner = $(".document-preview-content-file #toolbarContainer .documentPreviewBanner");
+      if($banner.length !== 0){
+        $banner.remove();
+      }
       var $vieverScript = $(".document-preview-content-file script[src$='/viewer.js']")
       var viewerSrc = $vieverScript.attr('src');
       $vieverScript.remove();
@@ -656,21 +660,19 @@
     };
 
     this.addBannerPreview = function(){
-      $("<div>The refresh link is here</div>").css({
-        position : "absolute",
-        width : "100%",
-        height : "30px",
-        top : 35,
-        left : 0,
-        opacity : 0.8,
-        background : "yellow"
-      }).appendTo($(".document-preview-content-file .toolbar").css("position", "relative"));
-      
+      var $toolbarContainer = $(".document-preview-content-file #toolbarContainer");
+      if($toolbarContainer.find('.documentPreviewBanner').length === 0){
+        $toolbarContainer.append('<div class="documentPreviewBanner"><div class="previewBannerContent">The document has been updated. <span class="previewBannerLink">Update</span></div></div>');
+        $(".documentPreviewBanner .previewBannerLink").on('click', function(){
+          UI.refreshPreview();
+        });
+      }
     };
     
     this.addEditButtonJCRExplorer = function(){
       $("#UIJCRExplorer .fileContent").closest("#UIJCRExplorer").find("#uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen").addClass("uiIconEdit");         
     }
+
   }
 
   var editor = new Editor();
