@@ -261,19 +261,14 @@
     var store;
     
     var docActionsReducer = function(state = {}, action){
-     switch(action.type){
-         // TODO: Think about how to prohibit refreshing preview when it's on activity stream
-       case 'DOCUMENT_SAVED':
-         if(action.payload.userId === eXo.env.portal.userName){
-           return {
-             status: 'REFRESH_PREVIEW'
-           }
-         }
-         return {
-           status: 'ADD_BANNER'
-           }
-       }
-       return state;
+      if(action.type === 'DOCUMENT_SAVED'){
+        return {
+          status: 'DOCUMENT_SAVED',
+          userId: action.payload.userId
+          }
+      }
+      log("Unknown action type:" + action.type);
+      return state;
     };
 
     // Generates DOCUMENT SAVED action with userId
@@ -284,21 +279,6 @@
             userId: userId
           }
       }
-    };
-
-    var initStore = function(){
-       store = redux.createStore(docActionsReducer);
-       store.subscribe(() => {
-          switch(store.getState().status){
-            case 'REFRESH_PREVIEW':
-              UI.refreshPreview();
-              break;
-            case 'ADD_BANNER':
-              UI.addBannerPreview();   
-              break; 
-          }
-        });
-
     };
 
     var onError = function(event) {
@@ -474,7 +454,19 @@
       var $JCRFileContent = $("#UIJCRExplorer .fileContent"); 
       if ($JCRFileContent.length > 0) {
         // Init redux store
-        initStore();
+        store = redux.createStore(docActionsReducer);
+        store.subscribe(() => {
+            var state = store.getState();
+            if(state.status === 'DOCUMENT_SAVED'){
+             if(state.userId === currentUser){
+               UI.refreshPreview();
+             }
+             else {
+               UI.addBannerPreview();
+             }
+            }
+         });
+        
         UI.addEditButtonJCRExplorer();
        
         cCometD.configure({
@@ -664,8 +656,6 @@
     };
 
     this.addBannerPreview = function(){
-      // TODO: Check if it's activity stream or explorer and add a banner
-      
       $("<div>The refresh link is here</div>").css({
         position : "absolute",
         width : "100%",
