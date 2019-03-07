@@ -51,7 +51,7 @@
     <name>onlyofficeRedux</name>
     <load-group>onlyofficeGRP</load-group>
     <script>
-      <path>/js/redux.min.js</path>
+      <path>/js/redux.js</path>
     </script>
     <depends>
       <module>redux</module>
