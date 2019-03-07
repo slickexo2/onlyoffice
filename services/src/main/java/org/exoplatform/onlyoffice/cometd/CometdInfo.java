@@ -28,12 +28,18 @@ public class CometdInfo {
    * @param docId the docId
    */
   public CometdInfo(String user, String userToken, String cometdPath, String container, String docId) {
-    super();
     this.user = user;
     this.userToken = userToken;
     this.cometdPath = cometdPath;
     this.container = container;
     this.docId = docId;
+  }
+  
+  /**
+   * Instantiates a CometdInfo object
+   */
+  public CometdInfo() {
+    
   }
 
   /**

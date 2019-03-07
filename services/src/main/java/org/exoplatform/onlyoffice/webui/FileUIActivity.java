@@ -25,10 +25,17 @@ import java.util.ResourceBundle;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+
+import org.exoplatform.container.PortalContainer;
 import org.exoplatform.onlyoffice.OnlyofficeEditorException;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
+import org.exoplatform.onlyoffice.cometd.CometdInfo;
+import org.exoplatform.onlyoffice.cometd.CometdOnlyofficeService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.social.webui.Utils;
 import org.exoplatform.social.webui.activity.BaseUIActivity;
 import org.exoplatform.web.application.JavascriptManager;
 import org.exoplatform.webui.application.WebuiRequestContext;
@@ -80,6 +87,16 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
    */
   @Override
   public void end() throws Exception {
+    CometdOnlyofficeService cometdService = this.getApplicationComponent(CometdOnlyofficeService.class);
+    String userId = Utils.getViewerIdentity().getId();
+    
+    CometdInfo cometdInfo = new CometdInfo();
+    cometdInfo.setUser(userId);
+    cometdInfo.setCometdPath(cometdService.getCometdServerPath());
+    cometdInfo.setUserToken(cometdService.getUserToken(userId));
+    cometdInfo.setContainer(PortalContainer.getCurrentPortalContainerName());
+    ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+    
     WebuiRequestContext requestContext = WebuiRequestContext.getCurrentInstance();
     JavascriptManager js = requestContext.getJavascriptManager();
     ResourceBundle resourceBundle = requestContext.getApplicationResourceBundle();
@@ -100,11 +117,12 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
           }
         });
         String editorLink = editorLinks.get(node);
-        if (editorLink != null) {
-          js.require("SHARED/onlyoffice", "onlyoffice")
-            .addScripts("onlyoffice.initActivity('" + getActivity().getId() + "','" + editorLink + "', '" + editLabel
+        cometdInfo.setDocId(node.getUUID());
+        String cometdInfoJson = ow.writeValueAsString(cometdInfo);
+        js.require("SHARED/onlyoffice", "onlyoffice")
+          .addScripts("onlyoffice.initActivity(" + cometdInfoJson + ", '" + getActivity().getId() + "','" + editorLink + "', '" + editLabel
                 + "');");
-        }
+        
       }
     }
 
