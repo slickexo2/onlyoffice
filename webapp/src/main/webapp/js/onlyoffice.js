@@ -231,27 +231,6 @@
     return initRequest(request);
   };
 
-  var getHtmlLink = function(link, label) {
-    return '<li><a href="' + link + '" target="_blank"><i class="uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit"></i> '
-        + label + '</a></li>';
-  }
-
-  var addPreviewButton = function(link, label, attempts, delay) {
-    var $elem = $(".previewBtn");
-    if ($elem.length == 0 || !$elem.is(":visible")) {
-      if (attempts > 0) {
-        setTimeout(function() {
-          addPreviewButton(link, label, attempts - 1, delay);
-        }, delay);
-
-      } else {
-        log("Cannot find element " + $elem);
-      }
-    } else {
-      $(".previewBtn").append('<div class="onlyOfficeEditBtn">' + getHtmlLink(link, label) + '</div>');
-    }
-  }
-
   /**
    * Editor core class.
    */
@@ -435,20 +414,19 @@
       UI.showError(title, text);
     };
 
-    this.addButtonToActivity = function(activityId, link, label) {
-      $("#activityContainer" + activityId).find("div[id^='ActivityContextBox'] > .actionBar .statusAction.pull-left").append(
-          getHtmlLink(link, label));
-    };
+    // File activity in the activity stream
+    this.initActivity = function(activityId, editorLink, editorLabel){
+      UI.addEditorButtonToActivity(activityId, editorLink, editorLabel);
 
-    this.addButtonToPreview = function(activityId, link, index, label) {
-      $("#Preview" + activityId + "-" + index).click(function() {
-        // We set timeout here to avoid the case when the element is rendered but is going to be updated soon
-        setTimeout(function() {
-          addPreviewButton(link, label, 100, 100);
-        }, 100);
-      });
     };
-
+    
+    // File preview in the activity stream
+    this.initPreview = function(activityId, editorLink, previewIndex, editorLabel) {
+      UI.addEditorButtonToPreview(activityId, editorLink, previewIndex, editorLabel);
+     
+    };
+    
+    // File explorer
     this.initExplorer = function(currentUser, userToken, cometdPath, container, docId) {
     
       var $JCRFileContent = $("#UIJCRExplorer .fileContent"); 
@@ -459,10 +437,10 @@
             var state = store.getState();
             if(state.status === 'DOCUMENT_SAVED'){
              if(state.userId === currentUser){
-               UI.refreshPreview();
+               UI.refreshExplorerPreview();
              }
              else {
-               UI.addBannerPreview();
+               UI.addRefreshBannerExplorer();
              }
             }
          });
@@ -516,6 +494,27 @@
     var docEditor;
 
     var hasDocumentChanged = false;
+    
+    var getEditorButton = function(editorLink, editorLabel) {
+      return '<li><a href="' + editorLink + '" target="_blank"><i class="uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit"></i> '
+          + editorLabel + '</a></li>';
+    }
+    
+    var tryAddEditorButtonToPreview = function(editorLink, editorLabel, attempts, delay) {
+      var $elem = $(".previewBtn");
+      if ($elem.length == 0 || !$elem.is(":visible")) {
+        if (attempts > 0) {
+          setTimeout(function() {
+            tryAddEditorButtonToPreview(editorLink, editorLabel, attempts - 1, delay);
+          }, delay);
+
+        } else {
+          log("Cannot find element " + $elem);
+        }
+      } else {
+        $(".previewBtn").append('<div class="onlyOfficeEditBtn">' + getEditorButton(editorLink, editorLabel) + '</div>');
+      }
+    };
 
     // TODO Use this in on-close window handler
     var saveAndDestroy = function() {
@@ -648,7 +647,7 @@
       });
     };
 
-    this.refreshPreview = function(){
+    this.refreshExplorerPreview = function(){
       var $banner = $(".document-preview-content-file #toolbarContainer .documentPreviewBanner");
       if($banner.length !== 0){
         $banner.remove();
@@ -659,7 +658,7 @@
       $(".document-preview-content-file").append('<script src="' + viewerSrc + '"></script>');
     };
 
-    this.addBannerPreview = function(){
+    this.addRefreshBannerExplorer = function(){
       var $toolbarContainer = $(".document-preview-content-file #toolbarContainer");
       if($toolbarContainer.find('.documentPreviewBanner').length === 0){
         $toolbarContainer.append('<div class="documentPreviewBanner"><div class="previewBannerContent">The document has been updated. <span class="previewBannerLink">Update</span></div></div>');
@@ -671,8 +670,22 @@
     
     this.addEditButtonJCRExplorer = function(){
       $("#UIJCRExplorer .fileContent").closest("#UIJCRExplorer").find("#uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen").addClass("uiIconEdit");         
-    }
-
+    };
+    
+    this.addEditorButtonToActivity = function(activityId, editorLink, editorLabel){
+      $("#activityContainer" + activityId).find("div[id^='ActivityContextBox'] > .actionBar .statusAction.pull-left").append(
+          getEditorButton(editorLink, editorLabel));
+    };
+    
+    this.addEditorButtonToPreview = function(activityId, editorLink, previewIndex, editorLabel){
+      $("#Preview" + activityId + "-" + previewIndex).click(function() {
+        // We set timeout here to avoid the case when the element is rendered but is going to be updated soon
+        setTimeout(function() {
+          tryAddEditorButtonToPreview(editorLink, editorLabel, 100, 100);
+        }, 100);
+      });
+    };
+    
   }
 
   var editor = new Editor();
