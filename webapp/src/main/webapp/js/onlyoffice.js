@@ -417,7 +417,7 @@
     // File activity in the activity stream
     this.initActivity = function(activityId, editorLink, editorLabel){
       UI.addEditorButtonToActivity(activityId, editorLink, editorLabel);
-
+        
     };
     
     // File preview in the activity stream
@@ -427,8 +427,8 @@
     };
     
     // File explorer
-    this.initExplorer = function(currentUser, userToken, cometdPath, container, docId) {
-    
+    this.initExplorer = function(cometdInfo) {
+      console.log(cometdInfo);
       var $JCRFileContent = $("#UIJCRExplorer .fileContent"); 
       if ($JCRFileContent.length > 0) {
         // Init redux store
@@ -436,7 +436,7 @@
         store.subscribe(() => {
             var state = store.getState();
             if(state.status === 'DOCUMENT_SAVED'){
-             if(state.userId === currentUser){
+             if(state.userId === cometdInfo.user){
                UI.refreshExplorerPreview();
              }
              else {
@@ -448,19 +448,18 @@
         UI.addEditButtonJCRExplorer();
        
         cCometD.configure({
-          "url" : prefixUrl + cometdPath,
-          "exoId" : currentUser,
-          "exoToken" : userToken,
+          "url" : prefixUrl + cometdInfo.cometdPath,
+          "exoId" : cometdInfo.user,
+          "exoToken" : cometdInfo.userToken,
           "maxNetworkDelay" : 30000,
           "connectTimeout" : 60000
         });
 
         cometd = cCometD;
         cometdContext = {
-          "exoContainerName" : container
+          "exoContainerName" : cometdInfo.container
         };
-
-        var subscription = cometd.subscribe("/eXo/Application/Onlyoffice/editor/" + docId, function(message) {
+        var subscription = cometd.subscribe("/eXo/Application/Onlyoffice/editor/" + cometdInfo.docId, function(message) {
           // Channel message handler
           var result = tryParseJson(message);
           log(result);
@@ -476,7 +475,7 @@
           } else {
             var err = subscribeReply.error ? subscribeReply.error : (subscribeReply.failure ? subscribeReply.failure.reason
                 : "Undefined");
-            log("Document updates subscription failed for " + currentUser, err);
+            log("Document updates subscription failed for " + cometdInfo.user, err);
           }
         });
       }
@@ -494,6 +493,8 @@
     var docEditor;
 
     var hasDocumentChanged = false;
+
+    var self = this;
     
     var getEditorButton = function(editorLink, editorLabel) {
       return '<li><a href="' + editorLink + '" target="_blank"><i class="uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit"></i> '
@@ -529,6 +530,19 @@
         }
       }
     };
+    
+    var refreshExplorerPreview = function(){
+      var $banner = $(".document-preview-content-file #toolbarContainer .documentPreviewBanner");
+      if($banner.length !== 0){
+        $banner.remove();
+      }
+      var $vieverScript = $(".document-preview-content-file script[src$='/viewer.js']")
+      var viewerSrc = $vieverScript.attr('src');
+      $vieverScript.remove();
+      $(".document-preview-content-file").append('<script src="' + viewerSrc + '"></script>');
+    };
+
+    this.refreshExplorerPreview = refreshExplorerPreview;
 
     /**
      * Init editor page UI.
@@ -647,23 +661,13 @@
       });
     };
 
-    this.refreshExplorerPreview = function(){
-      var $banner = $(".document-preview-content-file #toolbarContainer .documentPreviewBanner");
-      if($banner.length !== 0){
-        $banner.remove();
-      }
-      var $vieverScript = $(".document-preview-content-file script[src$='/viewer.js']")
-      var viewerSrc = $vieverScript.attr('src');
-      $vieverScript.remove();
-      $(".document-preview-content-file").append('<script src="' + viewerSrc + '"></script>');
-    };
 
     this.addRefreshBannerExplorer = function(){
       var $toolbarContainer = $(".document-preview-content-file #toolbarContainer");
       if($toolbarContainer.find('.documentPreviewBanner').length === 0){
         $toolbarContainer.append('<div class="documentPreviewBanner"><div class="previewBannerContent">The document has been updated. <span class="previewBannerLink">Update</span></div></div>');
         $(".documentPreviewBanner .previewBannerLink").on('click', function(){
-          UI.refreshPreview();
+          refreshExplorerPreview();
         });
       }
     };

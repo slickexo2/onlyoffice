@@ -21,14 +21,15 @@ package org.exoplatform.onlyoffice.webui;
 import java.util.Arrays;
 import java.util.List;
 
-import org.exoplatform.container.ExoContainer;
-import org.exoplatform.container.ExoContainerContext;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.ecm.webui.component.explorer.UIJCRExplorer;
 import org.exoplatform.ecm.webui.component.explorer.control.listener.UIActionBarActionListener;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
+import org.exoplatform.onlyoffice.cometd.CometdInfo;
 import org.exoplatform.onlyoffice.cometd.CometdOnlyofficeService;
-import org.exoplatform.portal.application.PortalRequestContext;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.security.ConversationState;
@@ -149,11 +150,18 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
         String userToken = cometdService.getUserToken(userId);
         String containerName = PortalContainer.getCurrentPortalContainerName();
         String docId = editorService.initDocument(uiExplorer.getCurrentNode());
+        
+        CometdInfo cometdInfo = new CometdInfo(userId, userToken, cometdPath, containerName, docId);
+        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+        String cometdInfoJson = ow.writeValueAsString(cometdInfo);
+        
         JavascriptManager js = ((WebuiRequestContext) WebuiRequestContext.getCurrentInstance()).getJavascriptManager();
         js.require("SHARED/onlyoffice", "onlyoffice")
-          .addScripts("onlyoffice.initExplorer('" + userId + "', '" + userToken + "', '"
-              + cometdPath + "', '" + containerName + "', '" + docId + "');");
-
+         // .addScripts("onlyoffice.initExplorer('" + userId + "', '" + userToken + "', '"
+          //    + cometdPath + "', '" + containerName + "', '" + docId + "');");
+        
+         .addScripts("onlyoffice.initExplorer(" + cometdInfoJson + ");");
+        
         if (editorLink != null && !editorLink.isEmpty()) {
           return "javascript:window.open('" + editorLink + "');";
         }
