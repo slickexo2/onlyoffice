@@ -156,11 +156,7 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
         String cometdInfoJson = ow.writeValueAsString(cometdInfo);
         
         JavascriptManager js = ((WebuiRequestContext) WebuiRequestContext.getCurrentInstance()).getJavascriptManager();
-        js.require("SHARED/onlyoffice", "onlyoffice")
-         // .addScripts("onlyoffice.initExplorer('" + userId + "', '" + userToken + "', '"
-          //    + cometdPath + "', '" + containerName + "', '" + docId + "');");
-        
-         .addScripts("onlyoffice.initExplorer(" + cometdInfoJson + ");");
+        js.require("SHARED/onlyoffice", "onlyoffice").addScripts("onlyoffice.initExplorer(" + cometdInfoJson + ");");
         
         if (editorLink != null && !editorLink.isEmpty()) {
           return "javascript:window.open('" + editorLink + "');";

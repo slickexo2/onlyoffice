@@ -428,7 +428,6 @@
     
     // File explorer
     this.initExplorer = function(cometdInfo) {
-      console.log(cometdInfo);
       var $JCRFileContent = $("#UIJCRExplorer .fileContent"); 
       if ($JCRFileContent.length > 0) {
         // Init redux store
