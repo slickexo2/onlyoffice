@@ -49,7 +49,7 @@
   </module>
   <module>
     <name>onlyofficeRedux</name>
-    <load-group>onlyofficeGRP</load-group>
+    <load-group>onlyofficeReduxGRP</load-group>
     <script>
       <path>/js/redux.js</path>
     </script>

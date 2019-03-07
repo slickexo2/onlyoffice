@@ -18,10 +18,6 @@
     };
   }
 
-  // ******** Constants ********
-  var ACCESS_DENIED = "access-denied";
-  var NODE_NOT_FOUND = "node-not-found";
-
   // ******** Utils ********
   /**
    * Stuff grabbed from CW's commons.js
@@ -239,25 +235,25 @@
     var self = this;
     var store;
     
-    var docActionsReducer = function(state = {}, action){
-      if(action.type === 'DOCUMENT_SAVED'){
+    var docActionsReducer = function(state, action) {
+      if (action.type === "DOCUMENT_SAVED") {
         return {
-          status: 'DOCUMENT_SAVED',
+          status: "DOCUMENT_SAVED",
           userId: action.payload.userId
-          }
+        };
       }
       log("Unknown action type:" + action.type);
-      return state;
+      return state ? state : {}; // TODO is it OK?
     };
 
     // Generates DOCUMENT SAVED action with userId
-    var docSavedAction = function(userId){
+    var docSavedAction = function(userId) {
       return {
-        type: 'DOCUMENT_SAVED',
+        type: "DOCUMENT_SAVED",
         payload: {
-            userId: userId
-          }
-      }
+          userId: userId
+        }
+      };
     };
     
     var subscribeDocumentUpdates = function(cometdInfo){
@@ -277,7 +273,7 @@
         // Channel message handler
         var result = tryParseJson(message);
         log(result);
-        if(result.eventType === 'document_saved'){
+        if (result.eventType === "document_saved") {
           store.dispatch(docSavedAction(result.user));
         }
         
@@ -454,16 +450,15 @@
       subscribeDocumentUpdates(cometdInfo);
       // Init redux store
       store = redux.createStore(docActionsReducer);
-      store.subscribe(() => {
-          var state = store.getState();
-          if(state.status === 'DOCUMENT_SAVED'){
-            UI.addRefreshBannerActivity(activityId);  
-          }
-       });
-      if(editorLink !== 'null'){
+      store.subscribe(function() {
+        var state = store.getState();
+        if (state.status === "DOCUMENT_SAVED") {
+          UI.addRefreshBannerActivity(activityId);
+        }
+      });
+      if (editorLink !== "null") {
         UI.addEditorButtonToActivity(activityId, editorLink, editorLabel);
       }
- 
     };
     
     // File preview in the activity stream
@@ -479,22 +474,19 @@
         subscribeDocumentUpdates(cometdInfo);
         // Init redux store
         store = redux.createStore(docActionsReducer);
-        store.subscribe(() => {
-            var state = store.getState();
-            if(state.status === 'DOCUMENT_SAVED'){
-             if(state.userId === cometdInfo.user){
-               UI.refreshExplorerPreview();
-             }
-             else {
-               UI.addRefreshBannerExplorer();
-             }
+        store.subscribe(function() {
+          var state = store.getState();
+          if (state.status === "DOCUMENT_SAVED") {
+            if (state.userId === cometdInfo.user) {
+              UI.refreshExplorerPreview();
+            } else {
+              UI.addRefreshBannerExplorer();
             }
-         });
-        
+          }
+        });
         UI.addEditButtonJCRExplorer();
       }
     };
-    
   }
 
   /**
@@ -510,8 +502,8 @@
     var self = this;
     
     var getEditorButton = function(editorLink, editorLabel) {
-      return '<li><a href="' + editorLink + '" target="_blank"><i class="uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit"></i> '
-          + editorLabel + '</a></li>';
+      return "<li><a href='" + editorLink + "' target='_blank'><i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i> "
+          + editorLabel + "</a></li>";
     }
     
     var tryAddEditorButtonToPreview = function(editorLink, editorLabel, attempts, delay) {
@@ -521,12 +513,11 @@
           setTimeout(function() {
             tryAddEditorButtonToPreview(editorLink, editorLabel, attempts - 1, delay);
           }, delay);
-
         } else {
           log("Cannot find element " + $elem);
         }
       } else {
-        $(".previewBtn").append('<div class="onlyOfficeEditBtn">' + getEditorButton(editorLink, editorLabel) + '</div>');
+        $(".previewBtn").append("<div class='onlyOfficeEditBtn'>" + getEditorButton(editorLink, editorLabel) + "</div>");
       }
     };
 
@@ -544,17 +535,16 @@
       }
     };
     
-    var refreshExplorerPreview = function(){
+    var refreshExplorerPreview = function () {
       var $banner = $(".document-preview-content-file #toolbarContainer .documentPreviewBanner");
-      if($banner.length !== 0){
+      if ($banner.length !== 0) {
         $banner.remove();
       }
       var $vieverScript = $(".document-preview-content-file script[src$='/viewer.js']")
       var viewerSrc = $vieverScript.attr('src');
       $vieverScript.remove();
-      $(".document-preview-content-file").append('<script src="' + viewerSrc + '"></script>');
+      $(".document-preview-content-file").append("<script src='" + viewerSrc + "'></script>");
     };
-
     this.refreshExplorerPreview = refreshExplorerPreview;
 
     /**
