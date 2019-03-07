@@ -200,8 +200,8 @@ public interface OnlyofficeEditorService {
   void addTypePlugin(ComponentPlugin plugin);
 
   /**
-   * Checks if the node isn't locked and can be edited by the current user
-   * 
+   * Checks if the node isn't locked and can be edited by the current user.
+   *
    * @param node the node
    * @return true, if the current user can edit the node
    * @throws RepositoryException the repository exeption

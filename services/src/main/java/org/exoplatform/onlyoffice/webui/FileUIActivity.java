@@ -45,8 +45,8 @@ import org.exoplatform.webui.config.annotation.EventConfig;
 import org.exoplatform.webui.core.lifecycle.UIFormLifecycle;
 
 /**
- * Created by The eXo Platform SAS
- * 
+ * Created by The eXo Platform SAS.
+ *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: FileUIActivity.java 00000 Feb 20, 2019 pnedonosko $
  */
@@ -69,6 +69,7 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
   /** The Constant LOG. */
   private static final Log                LOG = ExoLogger.getLogger(FileUIActivity.class);
 
+  /** The editor service. */
   protected final OnlyofficeEditorService editorService;
 
   /**
@@ -122,7 +123,6 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
         js.require("SHARED/onlyoffice", "onlyoffice")
           .addScripts("onlyoffice.initActivity(" + cometdInfoJson + ", '" + getActivity().getId() + "','" + editorLink + "', '" + editLabel
                 + "');");
-        
       }
     }
 

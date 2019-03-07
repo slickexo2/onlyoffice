@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2003-2019 eXo Platform SAS.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.exoplatform.onlyoffice.cometd;
 
 import java.util.Set;
@@ -28,21 +46,20 @@ import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
 /**
- * The CometdOnlyofficeService
- *
+ * The CometdOnlyofficeService.
  */
 public class CometdOnlyofficeService implements Startable {
 
   /** The Constant LOG. */
   private static final Log                LOG                  = ExoLogger.getLogger(CometdOnlyofficeService.class);
 
-  /** The channel name */
+  /**  The channel name. */
   public static final String              CHANNEL_NAME         = "/eXo/Application/Onlyoffice/editor/";
 
-  /** The document saved event */
+  /**  The document saved event. */
   public static final String              DOCUMENT_SAVED_EVENT = "document_saved";
 
-  /** The Onlyoffice editor service */
+  /**  The Onlyoffice editor service. */
   protected final OnlyofficeEditorService onlyofficeEditorService;
 
   /** The exo bayeux. */
@@ -52,8 +69,8 @@ public class CometdOnlyofficeService implements Startable {
   protected final CometdService           service;
 
   /**
-   * Instantiates the CometdOnlyofficeService
-   * 
+   * Instantiates the CometdOnlyofficeService.
+   *
    * @param exoBayeux the exoBayeux
    * @param onlyofficeEditorService the OnlyofficeEditorService
    */
@@ -63,6 +80,9 @@ public class CometdOnlyofficeService implements Startable {
     this.service = new CometdService();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void start() {
     // instantiate processor after the eXo container start, to let
@@ -123,8 +143,7 @@ public class CometdOnlyofficeService implements Startable {
   }
 
   /**
-   * The CometService is responsible for sending messages to Cometd channels when a document is saved
-   * 
+   * The CometService is responsible for sending messages to Cometd channels when a document is saved.
    */
   @Service("onlyoffice")
   public class CometdService {
@@ -141,6 +160,9 @@ public class CometdOnlyofficeService implements Startable {
     @Session
     private ServerSession serverSession;
 
+    /**
+     * Post construct.
+     */
     @PostConstruct
     public void postConstruct() {
       onlyofficeEditorService.addListener(new OnlyofficeEditorListener() {
@@ -206,6 +228,9 @@ public class CometdOnlyofficeService implements Startable {
     return channels.stream().map(c -> c.getId()).collect(Collectors.joining(", "));
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void stop() {
     // Nothing
@@ -221,8 +246,8 @@ public class CometdOnlyofficeService implements Startable {
   }
 
   /**
-   * Gets the user token
-   * 
+   * Gets the user token.
+   *
    * @param userId the userId
    * @return the token
    */

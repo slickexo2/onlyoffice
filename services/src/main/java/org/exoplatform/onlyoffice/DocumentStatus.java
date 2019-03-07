@@ -137,8 +137,8 @@ public class DocumentStatus {
   }
 
   /**
-   * Gets the last user (editor)
-   * 
+   * Gets the last user (editor).
+   *
    * @return the last user (editor)
    */
   public String getLastUser() {

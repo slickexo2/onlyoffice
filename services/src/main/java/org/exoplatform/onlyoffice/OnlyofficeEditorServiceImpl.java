@@ -1725,7 +1725,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /**
    * Fire created.
    *
-   * @param config the config
+   * @param status the status
    */
   protected void fireCreated(DocumentStatus status) {
     for (OnlyofficeEditorListener l : listeners) {
