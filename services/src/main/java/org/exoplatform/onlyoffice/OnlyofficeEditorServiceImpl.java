@@ -151,22 +151,34 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   public static final String    CACHE_NAME             = "onlyoffice.EditorCache".intern();
 
   /**
-   * DocumentTypesConfig
+   * DocumentTypesConfig.
    */
   public static class DocumentTypesConfig {
+    
+    /** The mime types. */
     protected List<String> mimeTypes;
 
+    /**
+     * Gets the mime types.
+     *
+     * @return the mime types
+     */
     public List<String> getMimeTypes() {
       return mimeTypes;
     }
 
+    /**
+     * Sets the mime types.
+     *
+     * @param mimeTypes the new mime types
+     */
     public void setMimeTypes(List<String> mimeTypes) {
       this.mimeTypes = mimeTypes;
     }
   }
 
   /**
-   * The Class LockState
+   * The Class LockState.
    */
   class LockState {
 
@@ -285,6 +297,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   protected final ConcurrentLinkedQueue<OnlyofficeEditorListener> listeners    =
                                                                             new ConcurrentLinkedQueue<OnlyofficeEditorListener>();
 
+  /** The document type plugin. */
   protected DocumentTypePlugin                                    documentTypePlugin;
 
   /**
@@ -1740,7 +1753,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /**
    * Fire get.
    *
-   * @param config the config
+   * @param status the status
    */
   protected void fireGet(DocumentStatus status) {
     for (OnlyofficeEditorListener l : listeners) {
@@ -1755,7 +1768,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /**
    * Fire joined.
    *
-   * @param config the config
+   * @param status the status
    */
   protected void fireJoined(DocumentStatus status) {
     for (OnlyofficeEditorListener l : listeners) {
@@ -1770,7 +1783,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /**
    * Fire leaved.
    *
-   * @param config the config
+   * @param status the status
    */
   protected void fireLeaved(DocumentStatus status) {
     for (OnlyofficeEditorListener l : listeners) {
@@ -1785,7 +1798,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /**
    * Fire saved.
    *
-   * @param config the config
+   * @param status the status
    */
   protected void fireSaved(DocumentStatus status) {
     for (OnlyofficeEditorListener l : listeners) {
@@ -1800,7 +1813,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /**
    * Fire error.
    *
-   * @param config the config
+   * @param status the status
    */
   protected void fireError(DocumentStatus status) {
     for (OnlyofficeEditorListener l : listeners) {
