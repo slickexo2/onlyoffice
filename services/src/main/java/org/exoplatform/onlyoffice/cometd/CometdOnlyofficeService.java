@@ -38,7 +38,6 @@ import org.mortbay.cometd.continuation.EXoContinuationBayeux;
 import org.picocontainer.Startable;
 
 import org.exoplatform.commons.utils.PropertyManager;
-import org.exoplatform.onlyoffice.Config;
 import org.exoplatform.onlyoffice.DocumentStatus;
 import org.exoplatform.onlyoffice.OnlyofficeEditorListener;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
@@ -53,13 +52,13 @@ public class CometdOnlyofficeService implements Startable {
   /** The Constant LOG. */
   private static final Log                LOG                  = ExoLogger.getLogger(CometdOnlyofficeService.class);
 
-  /**  The channel name. */
+  /** The channel name. */
   public static final String              CHANNEL_NAME         = "/eXo/Application/Onlyoffice/editor/";
 
-  /**  The document saved event. */
-  public static final String              DOCUMENT_SAVED_EVENT = "document_saved";
+  /** The document saved event. */
+  public static final String              DOCUMENT_SAVED_EVENT = "DOCUMENT_SAVED";
 
-  /**  The Onlyoffice editor service. */
+  /** The Onlyoffice editor service. */
   protected final OnlyofficeEditorService onlyofficeEditorService;
 
   /** The exo bayeux. */
@@ -143,7 +142,8 @@ public class CometdOnlyofficeService implements Startable {
   }
 
   /**
-   * The CometService is responsible for sending messages to Cometd channels when a document is saved.
+   * The CometService is responsible for sending messages to Cometd channels
+   * when a document is saved.
    */
   @Service("onlyoffice")
   public class CometdService {

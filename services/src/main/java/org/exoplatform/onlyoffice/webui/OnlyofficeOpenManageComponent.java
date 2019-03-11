@@ -35,7 +35,6 @@ import org.exoplatform.services.log.Log;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.web.application.JavascriptManager;
 import org.exoplatform.web.application.Parameter;
-import org.exoplatform.web.application.RequestContext;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.EventConfig;
@@ -118,16 +117,6 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
   }
 
   /**
-   * Inits the context.
-   *
-   * @param context the context
-   * @throws Exception the exception
-   */
-  protected void initContext(RequestContext context) throws Exception {
-
-  }
-
-  /**
    * {@inheritDoc}
    */
   @Override
@@ -150,14 +139,14 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
         String userToken = cometdService.getUserToken(userId);
         String containerName = PortalContainer.getCurrentPortalContainerName();
         String docId = editorService.initDocument(uiExplorer.getCurrentNode());
-        
+
         CometdInfo cometdInfo = new CometdInfo(userId, userToken, cometdPath, containerName, docId);
         ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
         String cometdInfoJson = ow.writeValueAsString(cometdInfo);
-        
+
         JavascriptManager js = ((WebuiRequestContext) WebuiRequestContext.getCurrentInstance()).getJavascriptManager();
         js.require("SHARED/onlyoffice", "onlyoffice").addScripts("onlyoffice.initExplorer(" + cometdInfoJson + ");");
-        
+
         if (editorLink != null && !editorLink.isEmpty()) {
           return "javascript:window.open('" + editorLink + "');";
         }

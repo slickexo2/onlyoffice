@@ -22,15 +22,12 @@
   /**
    * Stuff grabbed from CW's commons.js
    */
-
   var pageBaseUrl = function(theLocation) {
     if (!theLocation) {
       theLocation = window.location;
     }
 
     var theHostName = theLocation.hostname;
-    var theQueryString = theLocation.search;
-
     if (theLocation.port) {
       theHostName += ":" + theLocation.port;
     }
@@ -90,10 +87,6 @@
     }
   };
 
-  var getPortalUser = function() {
-    return eXo.env.portal.userName;
-  };
-
   var tryParseJson = function(message) {
     var src = message.data ? message.data : (message.error ? message.error : message.failure);
     if (src) {
@@ -107,7 +100,6 @@
     }
     return src;
   };
-
 
 
   // ******** REST services ********
@@ -175,7 +167,7 @@
     return process.promise(processTarget);
   };
 
-  /*
+  /* TODO cleanup
   var configGet = function(workspace, path) {
     var request = $.ajax({
       type : "GET",
@@ -184,7 +176,6 @@
     });
     return initRequest(request);
   };
-  */
 
   var configPost = function(workspace, path) {
     var request = $.ajax({
@@ -195,8 +186,7 @@
 
     return initRequest(request);
   };
-  
-  /*
+ 
   var configGetByKey = function(key) {
     var request = $.ajax({
       type : "GET",
@@ -205,7 +195,6 @@
     });
     return initRequest(request);
   };
-  */
   
   var documentPost = function(workspace, path) {
     var request = $.ajax({
@@ -226,34 +215,28 @@
 
     return initRequest(request);
   };
+  */
 
   /**
    * Editor core class.
    */
   function Editor() {
 
+    // Constants:
+    var DOCUMENT_SAVED = "DOCUMENT_SAVED";
+
     var self = this;
     var store;
     
     var docActionsReducer = function(state, action) {
-      if (action.type === "DOCUMENT_SAVED") {
+      if (action.type === DOCUMENT_SAVED) {
         return {
-          status: "DOCUMENT_SAVED",
+          status: action.type,
           userId: action.payload.userId
         };
       }
       log("Unknown action type:" + action.type);
       return state ? state : {}; // TODO is it OK?
-    };
-
-    // Generates DOCUMENT SAVED action with userId
-    var docSavedAction = function(userId) {
-      return {
-        type: "DOCUMENT_SAVED",
-        payload: {
-          userId: userId
-        }
-      };
     };
     
     var subscribeDocumentUpdates = function(cometdInfo){
@@ -269,12 +252,17 @@
       cometdContext = {
         "exoContainerName" : cometdInfo.container
       };
-      var subscription = cometd.subscribe("/eXo/Application/Onlyoffice/editor/" + cometdInfo.docId, function(message) {
+      cometd.subscribe("/eXo/Application/Onlyoffice/editor/" + cometdInfo.docId, function(message) {
         // Channel message handler
         var result = tryParseJson(message);
         log(result);
-        if (result.eventType === "document_saved") {
-          store.dispatch(docSavedAction(result.user));
+        if (result.eventType === DOCUMENT_SAVED) {
+          store.dispatch({
+            type: result.eventType,
+            payload: {
+              userId: result.user
+            }
+          });
         }
         
       }, cometdContext, function(subscribeReply) {
@@ -452,7 +440,7 @@
       store = redux.createStore(docActionsReducer);
       store.subscribe(function() {
         var state = store.getState();
-        if (state.status === "DOCUMENT_SAVED") {
+        if (state.status === DOCUMENT_SAVED) {
           UI.addRefreshBannerActivity(activityId);
         }
       });
@@ -476,7 +464,7 @@
         store = redux.createStore(docActionsReducer);
         store.subscribe(function() {
           var state = store.getState();
-          if (state.status === "DOCUMENT_SAVED") {
+          if (state.status === DOCUMENT_SAVED) {
             if (state.userId === cometdInfo.user) {
               UI.refreshExplorerPreview();
             } else {
@@ -540,10 +528,13 @@
       if ($banner.length !== 0) {
         $banner.remove();
       }
-      var $vieverScript = $(".document-preview-content-file script[src$='/viewer.js']")
-      var viewerSrc = $vieverScript.attr('src');
-      $vieverScript.remove();
-      $(".document-preview-content-file").append("<script src='" + viewerSrc + "'></script>");
+      setTimeout(function() {
+        var $vieverScript = $(".document-preview-content-file script[src$='/viewer.js']")
+        var viewerSrc = $vieverScript.attr("src");
+        $vieverScript.remove();
+        $(".document-preview-content-file").append("<script src='" + viewerSrc + "'></script>");
+        //$("#UIJCRExplorer .uiAddressBar a.refreshIcon i.uiIconRefresh").click();
+      }, 5000); // XXX we need wait for office preview server generate a new preview
     };
     this.refreshExplorerPreview = refreshExplorerPreview;
 
@@ -599,6 +590,39 @@
       } else {
         log("WARN: Editor element not found");
       }
+    };
+
+    this.addRefreshBannerExplorer = function() {
+      var $toolbarContainer = $(".document-preview-content-file #toolbarContainer");
+      if($toolbarContainer.find(".documentPreviewBanner").length === 0){
+        $toolbarContainer.append("<div class='documentPreviewBanner'><div class='previewBannerContent'>The document has been updated. <span class='previewBannerLink'>Update</span></div></div>");
+        $(".documentPreviewBanner .previewBannerLink").click(function() {
+          refreshExplorerPreview();
+        });
+      }
+    };
+    
+    this.addEditButtonJCRExplorer = function() {
+      $("#UIJCRExplorer .fileContent").closest("#UIJCRExplorer").find("#uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen").addClass("uiIconEdit");
+    };
+    
+    this.addEditorButtonToActivity = function(activityId, editorLink, editorLabel){
+      $("#activityContainer" + activityId).find("div[id^='ActivityContextBox'] > .actionBar .statusAction.pull-left").append(
+          getEditorButton(editorLink, editorLabel));
+    };
+    
+    this.addEditorButtonToPreview = function(activityId, editorLink, previewIndex, editorLabel){
+      $("#Preview" + activityId + "-" + previewIndex).click(function() {
+        // We set timeout here to avoid the case when the element is rendered but is going to be updated soon
+        setTimeout(function() {
+          tryAddEditorButtonToPreview(editorLink, editorLabel, 100, 100);
+        }, 100);
+      });
+    };
+    
+    this.addRefreshBannerActivity = function(activityId){
+      // TODO add the banner
+      log("Activity document: " + activityId + " has been updated");
     };
 
     /**
@@ -663,41 +687,6 @@
         onInit : onInit
       });
     };
-
-
-    this.addRefreshBannerExplorer = function(){
-      var $toolbarContainer = $(".document-preview-content-file #toolbarContainer");
-      if($toolbarContainer.find('.documentPreviewBanner').length === 0){
-        $toolbarContainer.append('<div class="documentPreviewBanner"><div class="previewBannerContent">The document has been updated. <span class="previewBannerLink">Update</span></div></div>');
-        $(".documentPreviewBanner .previewBannerLink").on('click', function(){
-          refreshExplorerPreview();
-        });
-      }
-    };
-    
-    this.addEditButtonJCRExplorer = function(){
-      $("#UIJCRExplorer .fileContent").closest("#UIJCRExplorer").find("#uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen").addClass("uiIconEdit");         
-    };
-    
-    this.addEditorButtonToActivity = function(activityId, editorLink, editorLabel){
-      $("#activityContainer" + activityId).find("div[id^='ActivityContextBox'] > .actionBar .statusAction.pull-left").append(
-          getEditorButton(editorLink, editorLabel));
-    };
-    
-    this.addEditorButtonToPreview = function(activityId, editorLink, previewIndex, editorLabel){
-      $("#Preview" + activityId + "-" + previewIndex).click(function() {
-        // We set timeout here to avoid the case when the element is rendered but is going to be updated soon
-        setTimeout(function() {
-          tryAddEditorButtonToPreview(editorLink, editorLabel, 100, 100);
-        }, 100);
-      });
-    };
-    
-    this.addRefreshBannerActivity = function(activityId){
-      // TODO add the banner
-      log("Activity document: " + activityId + " has been updated");
-    };
-    
   }
 
   var editor = new Editor();
