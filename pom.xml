@@ -29,7 +29,7 @@
   
   <artifactId>exo-onlyoffice-editor-parent</artifactId>
   <groupId>org.exoplatform.addons.onlyoffice</groupId>
-  <version>1.4.x-SNAPSHOT</version>
+  <version>1.4.0-M02</version>
   <packaging>pom</packaging>
   <name>eXo OnlyOffice Editor :: Parent</name>
   <description>eXo OnlyOffice Editor for Documents extension</description>
@@ -37,7 +37,7 @@
   <scm>
     <connection>scm:git:git://github.com/exo-addons/onlyoffice.git</connection>
     <developerConnection>scm:git:git@github.com:exo-addons/onlyoffice.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>1.4.0-M02</tag>
     <url>https://github.com/exo-addons/onlyoffice</url>
   </scm>
 
