@@ -228,11 +228,19 @@
     var self = this;
     var store;
     
+    var eventStore = function(){
+      if(!store){
+        store = redux.createStore(docActionsReducer);
+      }
+      return store;
+    };
+    
     var docActionsReducer = function(state, action) {
       if (action.type === DOCUMENT_SAVED) {
         return {
           status: action.type,
-          userId: action.payload.userId
+          userId: action.payload.userId,
+          docId: action.payload.docId
         };
       }
       log("Unknown action type:" + action.type);
@@ -260,7 +268,8 @@
           store.dispatch({
             type: result.eventType,
             payload: {
-              userId: result.user
+              userId: result.user,
+              docId: cometdInfo.docId
             }
           });
         }
@@ -437,11 +446,12 @@
       // Listen to document updates
       subscribeDocumentUpdates(cometdInfo);
       // Init redux store
-      store = redux.createStore(docActionsReducer);
+      eventStore();
+
       store.subscribe(function() {
         var state = store.getState();
-        if (state.status === DOCUMENT_SAVED) {
-          UI.addRefreshBannerActivity(activityId);
+        if (state.status === DOCUMENT_SAVED && state.docId === cometdInfo.docId) {
+            UI.addRefreshBannerActivity(activityId);
         }
       });
       if (editorLink !== "null") {
@@ -461,7 +471,7 @@
         // Listen document updated
         subscribeDocumentUpdates(cometdInfo);
         // Init redux store
-        store = redux.createStore(docActionsReducer);
+        eventStore();
         store.subscribe(function() {
           var state = store.getState();
           if (state.status === DOCUMENT_SAVED) {
@@ -534,7 +544,7 @@
         $vieverScript.remove();
         $(".document-preview-content-file").append("<script src='" + viewerSrc + "'></script>");
         //$("#UIJCRExplorer .uiAddressBar a.refreshIcon i.uiIconRefresh").click();
-      }, 5000); // XXX we need wait for office preview server generate a new preview
+      }, 500); // XXX we need wait for office preview server generate a new preview
     };
     this.refreshExplorerPreview = refreshExplorerPreview;
 
@@ -622,6 +632,11 @@
     
     this.addRefreshBannerActivity = function(activityId){
       // TODO add the banner
+      // Try refresh for testing purposes
+     /* var $previewHtml = $("#Preview" + activityId + "-0").parent();;
+      var $parent = $previewHtml.parent();
+      $previewHtml.remove();
+      $parent.append($previewHtml);*/
       log("Activity document: " + activityId + " has been updated");
     };
 

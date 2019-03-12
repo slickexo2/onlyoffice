@@ -117,6 +117,7 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
             return null;
           }
         });
+        
         String editorLink = editorLinks.get(node);
         cometdInfo.setDocId(node.getUUID());
         String cometdInfoJson = ow.writeValueAsString(cometdInfo);
