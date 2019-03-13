@@ -125,7 +125,8 @@
 	background-image: url("icons/oxygen/16/actions/process-stop.png")
 }
 
-.document-preview-content-file #toolbarContainer .documentPreviewBanner {
+.document-preview-content-file #toolbarContainer .documentPreviewBanner,
+.mediaContent.docTypeContent .documentPreviewBanner{
     position : absolute;
     width : 100%;
     opacity : 0.9;

@@ -533,7 +533,20 @@
       }
     };
     
-    var refreshExplorerPreview = function () {
+    var refreshActivityPreview = function(activityId) {
+      var $img = $("#Preview" + activityId + "-0 #MediaContent" + activityId + "-0 img");
+      if($img.length !== 0){
+        // TODO: Take into account the version
+        var src = $img.attr("src");
+        if(src.includes("lastModified=")){
+        src = src.substring(0, src.indexOf("lastModified=") + 13);
+      }
+      src += new Date().getTime();
+      $img.attr("src", src += new Date().getTime());
+      }
+    };
+
+    var refreshExplorerPreview = function() {
       var $banner = $(".document-preview-content-file #toolbarContainer .documentPreviewBanner");
       if ($banner.length !== 0) {
         $banner.remove();
@@ -631,12 +644,16 @@
     };
     
     this.addRefreshBannerActivity = function(activityId){
-      // TODO add the banner
-      // Try refresh for testing purposes
-     /* var $previewHtml = $("#Preview" + activityId + "-0").parent();;
-      var $parent = $previewHtml.parent();
-      $previewHtml.remove();
-      $parent.append($previewHtml);*/
+      // TODO fix the banner
+      
+      var $mediaContent = $("#MediaContent" + activityId + "-0");
+      if($mediaContent.find(".documentPreviewBanner").length === 0){
+        $mediaContent.append("<div class='documentPreviewBanner'><div class='previewBannerContent'>The document has been updated. <span class='previewBannerLink'>Update</span></div></div>");
+        $(".documentPreviewBanner .previewBannerLink").click(function() {
+          refreshActivityPreview(activityId);
+        });
+      }
+
       log("Activity document: " + activityId + " has been updated");
     };
 
@@ -724,6 +741,5 @@
       log("Error configuring Onlyoffice Editor style.", e);
     }
   });
-
   return editor;
 })($, cCometD, Redux);
