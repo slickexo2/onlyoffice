@@ -561,13 +561,15 @@
     var refreshActivityPreview = function(activityId) {
       var $img = $("#Preview" + activityId + "-0 #MediaContent" + activityId + "-0 img");
       if($img.length !== 0){
-        // TODO: Take into account the version
         var src = $img.attr("src");
-        if(src.includes("lastModified=")){
-        src = src.substring(0, src.indexOf("lastModified=") + 13);
-      }
-      src += new Date().getTime();
-      $img.attr("src", src += new Date().getTime());
+        if(src.includes("version=")){
+          src = src.substring(0, src.indexOf("version="));
+        }
+        var timestamp = new Date().getTime();
+
+        src += "version=oview_" + timestamp;
+        src += "&lastModified=" + timestamp;
+        $img.attr("src", src);
       }
     };
 
