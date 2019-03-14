@@ -1,4 +1,3 @@
-
 .onlyofficeEditorBody {
   margin-top: 0px !important;
   margin-bottom: 0px !important;
@@ -6,12 +5,12 @@
   margin-right: 0px !important;
 }
 
-.onlyofficeEditorBody #RightBody, .onlyofficeEditorBody .onlyofficeContainer > .editor {
-  height : 100vh;
+.onlyofficeEditorBody #RightBody, .onlyofficeEditorBody .onlyofficeContainer>.editor {
+  height: 100vh;
 }
 
 .onlyofficeEditorBody .RightBodyTDContainer {
-  padding-top : 0px;
+  padding-top: 0px;
 }
 
 .maskLayer .onlyofficeEditorClose .uiIconClose {
@@ -20,19 +19,21 @@
   right: 10px;
   cursor: pointer;
 }
+
 .maskLayer .onlyofficeEditorClose .uiIconClose:before {
   color: #ffffff !important;
 }
+
 .maskLayer .onlyofficeEditorClose .uiIconClose:hover {
   color: #ffffff !important;
 }
 
 #UIDocumentWorkspace .fileContent .content {
-	text-align: left;
+  text-align: left;
 }
 
-.onlyofficeContainer > #editor, .onlyofficeContainer > .editor {
-	width: 100%;
+.onlyofficeContainer>#editor, .onlyofficeContainer>.editor {
+  width: 100%;
   height: 100%;
   position: relative;
   border: 1px solid #d1d1d1;
@@ -41,8 +42,8 @@
   margin-bottom: 15px;
 }
 
-.onlyofficeContainer > .loading {
-	width: 100%;
+.onlyofficeContainer>.loading {
+  width: 100%;
   height: 100%;
   position: relative;
   border: 0px;
@@ -51,94 +52,94 @@
   margin-bottom: 15px;
 }
 
-.onlyofficeContainer > #editor > iframe, .onlyofficeContainer > .editor > iframe {
-	position: absolute;
-	width: 100%;
-	height: 100%;
+.onlyofficeContainer>#editor>iframe, .onlyofficeContainer>.editor>iframe {
+  position: absolute;
+  width: 100%;
+  height: 100%;
 }
 
 .waitThrobber {
-	display: inline-block;
-	width: 50%;
-	height: 320px;
-	margin-right: auto;
-	margin-left: auto;
-	pointer-events: none;
-	background: url('icons/oxygen/32/animations/throbber.gif') no-repeat
-		left center !important; /* orientation=lt */
-	background: url('icons/oxygen/32/animations/throbber.gif') no-repeat
-		right center !important; /* orientation=rt */
+  display: inline-block;
+  width: 50%;
+  height: 320px;
+  margin-right: auto;
+  margin-left: auto;
+  pointer-events: none;
+  background: url('icons/oxygen/32/animations/throbber.gif') no-repeat left center !important; /* orientation=lt */
+  background: url('icons/oxygen/32/animations/throbber.gif') no-repeat right center !important; /* orientation=rt */
 }
 
 /***** Disabled styles *******/
-
 .editorDisabled {
-	opacity: .6
+  opacity: .6
 }
 
 /******** Pnotify icons ********/
 .picon-32.picon-task-complete {
-	background-image: url("icons/oxygen/32/status/task-complete.png")
+  background-image: url("icons/oxygen/32/status/task-complete.png")
 }
 
 .picon-32.picon-throbber {
-	background-image: url("icons/oxygen/32/animations/throbber.gif")
+  background-image: url("icons/oxygen/32/animations/throbber.gif")
 }
 
 .picon-32.picon-dialog-error {
-	background-image: url("icons/oxygen/32/status/dialog-error.png")
+  background-image: url("icons/oxygen/32/status/dialog-error.png")
 }
 
 .picon-32.picon-dialog-information {
-	background-image: url("icons/oxygen/32/status/dialog-information.png")
+  background-image: url("icons/oxygen/32/status/dialog-information.png")
 }
 
 .picon-32.picon-dialog-warning {
-	background-image: url("icons/oxygen/32/status/dialog-warning.png")
+  background-image: url("icons/oxygen/32/status/dialog-warning.png")
 }
 
 .picon-32.picon-process-stop {
-	background-image: url("icons/oxygen/32/actions/process-stop.png")
+  background-image: url("icons/oxygen/32/actions/process-stop.png")
 }
 
 .picon.picon-task-complete {
-	background-image: url("icons/oxygen/16/status/task-complete.png")
+  background-image: url("icons/oxygen/16/status/task-complete.png")
 }
 
 .picon.picon-throbber {
-	background-image: url("icons/oxygen/16/animations/throbber.gif")
+  background-image: url("icons/oxygen/16/animations/throbber.gif")
 }
 
 .picon.picon-dialog-error {
-	background-image: url("icons/oxygen/16/status/dialog-error.png")
+  background-image: url("icons/oxygen/16/status/dialog-error.png")
 }
 
 .picon.picon-dialog-information {
-	background-image: url("icons/oxygen/16/status/dialog-information.png")
+  background-image: url("icons/oxygen/16/status/dialog-information.png")
 }
 
 .picon.picon-dialog-warning {
-	background-image: url("icons/oxygen/16/status/dialog-warning.png")
+  background-image: url("icons/oxygen/16/status/dialog-warning.png")
 }
 
 .picon.picon-process-stop {
-	background-image: url("icons/oxygen/16/actions/process-stop.png")
+  background-image: url("icons/oxygen/16/actions/process-stop.png")
 }
 
-.document-preview-content-file #toolbarContainer .documentPreviewBanner,
-.mediaContent.docTypeContent .documentPreviewBanner{
-    position : absolute;
-    width : 100%;
-    opacity : 0.9;
-    background : #FFEB3B;
+.documentRefreshBanner {
+  position: absolute;
+  width: 100%;
+  opacity: 0.9;
+  background: #FFEB3B;
 }
 
-.previewBannerContent {
-	padding: 5px;
+.fileShare .documentRefreshBanner {
+  position: relative;
 }
 
-.previewBannerLink {
-	text-decoration: underline;
-	cursor: pointer;
-	font-weight: bold;
+.refreshBannerContent {
+  padding: 5px;
+}
+
+.refreshBannerLink {
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: bold;
 }

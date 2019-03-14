@@ -227,7 +227,8 @@
 
     var self = this;
     var store;
-    
+    var subscribedDocuments = [];
+
     var eventStore = function(){
       if(!store){
         store = redux.createStore(docActionsReducer);
@@ -248,6 +249,11 @@
     };
     
     var subscribeDocumentUpdates = function(cometdInfo){
+      // Use only one channel for one document
+      if(subscribedDocuments.includes(cometdInfo.docId)){
+        return;
+      }
+
       cCometD.configure({
         "url" : prefixUrl + cometdInfo.cometdPath,
         "exoId" : cometdInfo.user,
@@ -279,6 +285,7 @@
         if (subscribeReply.successful) {
           // The server successfully subscribed this client to the channel.
           log("Document updates subscribed successfully: " + JSON.stringify(subscribeReply));
+          subscribedDocuments.push(cometdInfo.docId);
         } else {
           var err = subscribeReply.error ? subscribeReply.error : (subscribeReply.failure ? subscribeReply.failure.reason
               : "Undefined");
@@ -460,8 +467,26 @@
     };
     
     // File preview in the activity stream
-    this.initPreview = function(activityId, editorLink, previewIndex, editorLabel) {
-      UI.addEditorButtonToPreview(activityId, editorLink, previewIndex, editorLabel);
+    this.initPreview = function(cometdInfo, activityId, editorLink, previewIndex, editorLabel) {
+
+      $("#Preview" + activityId + "-" + previewIndex).click(function() {
+        // We set timeout here to avoid the case when the element is rendered but is going to be updated soon
+        setTimeout(function() {
+          subscribeDocumentUpdates(cometdInfo);
+          // Init redux store
+          eventStore();
+          store.subscribe(function() {
+          var state = store.getState();
+          if (state.status === DOCUMENT_SAVED && state.docId === cometdInfo.docId) {
+            UI.addRefreshBannerPDF();
+          }
+        });
+        }, 100);
+      });
+
+      if (editorLink !== "null") {
+        UI.addEditorButtonToPreview(activityId, editorLink, previewIndex, editorLabel);
+      }
     };
     
     // File explorer
@@ -476,13 +501,13 @@
           var state = store.getState();
           if (state.status === DOCUMENT_SAVED) {
             if (state.userId === cometdInfo.user) {
-              UI.refreshExplorerPreview();
+              UI.refreshPDFPreview();
             } else {
-              UI.addRefreshBannerExplorer();
+              UI.addRefreshBannerPDF();
             }
           }
         });
-        UI.addEditButtonJCRExplorer();
+        UI.addEditorButtonToExplorer();
       }
     };
   }
@@ -546,8 +571,8 @@
       }
     };
 
-    var refreshExplorerPreview = function() {
-      var $banner = $(".document-preview-content-file #toolbarContainer .documentPreviewBanner");
+    var refreshPDFPreview = function() {
+      var $banner = $(".document-preview-content-file #toolbarContainer .documentRefreshBanner");
       if ($banner.length !== 0) {
         $banner.remove();
       }
@@ -559,7 +584,8 @@
         //$("#UIJCRExplorer .uiAddressBar a.refreshIcon i.uiIconRefresh").click();
       }, 500); // XXX we need wait for office preview server generate a new preview
     };
-    this.refreshExplorerPreview = refreshExplorerPreview;
+
+    this.refreshPDFPreview = refreshPDFPreview;
 
     /**
      * Init editor page UI.
@@ -615,17 +641,7 @@
       }
     };
 
-    this.addRefreshBannerExplorer = function() {
-      var $toolbarContainer = $(".document-preview-content-file #toolbarContainer");
-      if($toolbarContainer.find(".documentPreviewBanner").length === 0){
-        $toolbarContainer.append("<div class='documentPreviewBanner'><div class='previewBannerContent'>The document has been updated. <span class='previewBannerLink'>Update</span></div></div>");
-        $(".documentPreviewBanner .previewBannerLink").click(function() {
-          refreshExplorerPreview();
-        });
-      }
-    };
-    
-    this.addEditButtonJCRExplorer = function() {
+    this.addEditorButtonToExplorer = function() {
       $("#UIJCRExplorer .fileContent").closest("#UIJCRExplorer").find("#uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen").addClass("uiIconEdit");
     };
     
@@ -644,17 +660,30 @@
     };
     
     this.addRefreshBannerActivity = function(activityId){
-      // TODO fix the banner
-      
-      var $mediaContent = $("#MediaContent" + activityId + "-0");
-      if($mediaContent.find(".documentPreviewBanner").length === 0){
-        $mediaContent.append("<div class='documentPreviewBanner'><div class='previewBannerContent'>The document has been updated. <span class='previewBannerLink'>Update</span></div></div>");
-        $(".documentPreviewBanner .previewBannerLink").click(function() {
-          refreshActivityPreview(activityId);
+
+      var $previewParent = $("#Preview" + activityId + "-0").parent();
+      // If the activity contains only one preview
+      if($previewParent.find("#Preview" + activityId + "-1").length === 0){
+        if($previewParent.find(".documentRefreshBanner").length === 0){
+          $previewParent.prepend("<div class='documentRefreshBanner'><div class='refreshBannerContent'>The document has been updated. <span class='refreshBannerLink'>Update</span></div></div>");
+          $banner = $previewParent.find(".documentRefreshBanner");
+          $(".documentRefreshBanner .refreshBannerLink").click(function() {
+            refreshActivityPreview(activityId);
+            $banner.remove();
+          });
+        }
+        log("Activity document: " + activityId + " has been updated");
+      }
+    };
+
+    this.addRefreshBannerPDF = function() {
+      var $toolbarContainer = $(".document-preview-content-file #toolbarContainer");
+      if($toolbarContainer.find(".documentRefreshBanner").length === 0){
+        $toolbarContainer.append("<div class='documentRefreshBanner'><div class='refreshBannerContent'>The document has been updated. <span class='refreshBannerLink'>Update</span></div></div>");
+        $(".documentRefreshBanner .refreshBannerLink").click(function() {
+          refreshPDFPreview();
         });
       }
-
-      log("Activity document: " + activityId + " has been updated");
     };
 
     /**

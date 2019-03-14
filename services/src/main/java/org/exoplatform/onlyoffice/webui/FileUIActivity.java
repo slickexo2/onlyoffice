@@ -140,11 +140,12 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
           }
         });
         String editorLink = editorLinks.get(node);
-        if (editorLink != null) {
+        cometdInfo.setDocId(node.getUUID());
+        String cometdInfoJson = ow.writeValueAsString(cometdInfo);
           js.require("SHARED/onlyoffice", "onlyoffice")
-            .addScripts("onlyoffice.initPreview('" + getActivity().getId() + "','" + editorLink + "','" + index + "', '"
+            .addScripts("onlyoffice.initPreview(" + cometdInfoJson + ", '" + getActivity().getId() + "','" + editorLink + "','" + index + "', '"
                 + editLabel + "');");
-        }
+        
       }
     }
     super.end();
