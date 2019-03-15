@@ -175,13 +175,13 @@ public class CometdOnlyofficeService implements Startable {
             LOG.info("Document {} saved. Sending message to cometd channel", docId);
             StringBuilder data = new StringBuilder();
             data.append('{');
-            data.append("\"eventType\": \"");
+            data.append("\"type\": \"");
             data.append(DOCUMENT_SAVED_EVENT);
             data.append("\", ");
-            data.append("\"documentId\": \"");
+            data.append("\"docId\": \"");
             data.append(docId);
             data.append("\", ");
-            data.append("\"user\": \"");
+            data.append("\"userId\": \"");
             data.append(status.getLastUser());
             data.append("\"");
             data.append('}');

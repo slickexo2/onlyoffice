@@ -1,6 +1,6 @@
-  /**
-   * Onlyoffice Editor client.
-   */
+/**
+ * Onlyoffice Editor client.
+ */
 (function($, cCometD, redux) {
   // ******** polyfills ********
   if (!String.prototype.endsWith) {
@@ -101,7 +101,6 @@
     return src;
   };
 
-
   // ******** REST services ********
   var prefixUrl = pageBaseUrl(location);
 
@@ -186,7 +185,7 @@
 
     return initRequest(request);
   };
- 
+  
   var configGetByKey = function(key) {
     var request = $.ajax({
       type : "GET",
@@ -232,34 +231,30 @@
     /**
      * Initializes the redux store or returns existing one.
      */
-    var eventStore = function(){
-      if(!store){
+    var eventStore = function() {
+      if (!store) {
         store = redux.createStore(docActionsReducer);
       }
       return store;
     };
-    
+
     /**
-     * Changes the redux store depending on the actin;
+     * Changes the redux store depending on the action.
      */
     var docActionsReducer = function(state, action) {
       if (action.type === DOCUMENT_SAVED) {
-        return {
-          status: action.type,
-          userId: action.payload.userId,
-          docId: action.payload.docId
-        };
+        return action;
       }
       log("Unknown action type:" + action.type);
       return state ? state : {}; // TODO is it OK?
     };
-    
+
     /**
      * Subscribes on a document updates using cometd. Dispatches events to the redux store.
      */
-    var subscribeDocumentUpdates = function(cometdInfo){
+    var subscribeDocumentUpdates = function(cometdInfo) {
       // Use only one channel for one document
-      if(subscribedDocuments.includes(cometdInfo.docId)){
+      if (subscribedDocuments.includes(cometdInfo.docId)) {
         return;
       }
 
@@ -278,17 +273,7 @@
       cometd.subscribe("/eXo/Application/Onlyoffice/editor/" + cometdInfo.docId, function(message) {
         // Channel message handler
         var result = tryParseJson(message);
-        log(result);
-        if (result.eventType === DOCUMENT_SAVED) {
-          store.dispatch({
-            type: result.eventType,
-            payload: {
-              userId: result.user,
-              docId: cometdInfo.docId
-            }
-          });
-        }
-        
+        store.dispatch(result);
       }, cometdContext, function(subscribeReply) {
         // Subscription status callback
         if (subscribeReply.successful) {
@@ -460,7 +445,7 @@
     /**
      * Initializes a file activity in the activity stream.
      */
-    this.initActivity = function(cometdInfo, activityId, editorLink, editorLabel){
+    this.initActivity = function(cometdInfo, activityId, editorLink, editorLabel) {
       // Listen to document updates
       subscribeDocumentUpdates(cometdInfo);
       // Init redux store
@@ -468,15 +453,15 @@
 
       store.subscribe(function() {
         var state = store.getState();
-        if (state.status === DOCUMENT_SAVED && state.docId === cometdInfo.docId) {
-            UI.addRefreshBannerActivity(activityId);
+        if (state.type === DOCUMENT_SAVED && state.docId === cometdInfo.docId) {
+          UI.addRefreshBannerActivity(activityId);
         }
       });
       if (editorLink !== "null") {
         UI.addEditorButtonToActivity(activityId, editorLink, editorLabel);
       }
     };
-    
+
     /**
      * Initializes a document preview (from the activity stream).
      */
@@ -489,11 +474,11 @@
           // Init redux store
           eventStore();
           store.subscribe(function() {
-          var state = store.getState();
-          if (state.status === DOCUMENT_SAVED && state.docId === cometdInfo.docId) {
-            UI.addRefreshBannerPDF();
-          }
-        });
+            var state = store.getState();
+            if (state.type === DOCUMENT_SAVED && state.docId === cometdInfo.docId) {
+              UI.addRefreshBannerPDF();
+            }
+          });
         }, 100);
       });
 
@@ -501,12 +486,12 @@
         UI.addEditorButtonToPreview(activityId, editorLink, previewIndex, editorLabel);
       }
     };
-    
+
     /**
      * Initializes JCRExplorer when a document is displayed.
      */
     this.initExplorer = function(cometdInfo) {
-      var $JCRFileContent = $("#UIJCRExplorer .fileContent"); 
+      var $JCRFileContent = $("#UIJCRExplorer .fileContent");
       if ($JCRFileContent.length > 0) {
         // Listen document updated
         subscribeDocumentUpdates(cometdInfo);
@@ -514,7 +499,7 @@
         eventStore();
         store.subscribe(function() {
           var state = store.getState();
-          if (state.status === DOCUMENT_SAVED) {
+          if (state.type === DOCUMENT_SAVED) {
             if (state.userId === cometdInfo.user) {
               UI.refreshPDFPreview();
             } else {
@@ -538,22 +523,23 @@
     var hasDocumentChanged = false;
 
     var self = this;
-    
+
     /**
      * Returns the html markup of the 'Edit Online' button.
      */
     var getEditorButton = function(editorLink, editorLabel) {
-      return "<li><a href='" + editorLink + "' target='_blank'><i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i> "
-          + editorLabel + "</a></li>";
+      return "<li><a href='" + editorLink
+          + "' target='_blank'><i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i> " + editorLabel
+          + "</a></li>";
     };
-    
+
     /**
      * Returns the html markup of the refresh banner;
      */
-    var getRefreshBanner = function(){
+    var getRefreshBanner = function() {
       return "<div class='documentRefreshBanner'><div class='refreshBannerContent'>The document has been updated. <span class='refreshBannerLink'>Update</span></div></div>";
     };
-    
+
     /**
      * Adds the 'Edit Online' button to a preview (from the activity stream) when it's loaded.
      */
@@ -585,15 +571,15 @@
         }
       }
     };
-    
+
     /**
      * Refreshes an activity preview by updating preview picture.
      */
     var refreshActivityPreview = function(activityId) {
       var $img = $("#Preview" + activityId + "-0 #MediaContent" + activityId + "-0 img");
-      if($img.length !== 0){
+      if ($img.length !== 0) {
         var src = $img.attr("src");
-        if(src.includes("version=")){
+        if (src.includes("version=")) {
           src = src.substring(0, src.indexOf("version="));
         }
         var timestamp = new Date().getTime();
@@ -617,7 +603,7 @@
         var viewerSrc = $vieverScript.attr("src");
         $vieverScript.remove();
         $(".document-preview-content-file").append("<script src='" + viewerSrc + "'></script>");
-        //$("#UIJCRExplorer .uiAddressBar a.refreshIcon i.uiIconRefresh").click();
+        // $("#UIJCRExplorer .uiAddressBar a.refreshIcon i.uiIconRefresh").click();
       }, 500); // XXX we need wait for office preview server generate a new preview
     };
 
@@ -681,21 +667,22 @@
      * Ads the 'Edit Online' button to the JCRExplorer when a document is displayed.
      */
     this.addEditorButtonToExplorer = function() {
-      $("#UIJCRExplorer .fileContent").closest("#UIJCRExplorer").find("#uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen").addClass("uiIconEdit");
+      $("#UIJCRExplorer .fileContent").closest("#UIJCRExplorer").find("#uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen")
+          .addClass("uiIconEdit");
     };
-    
+
     /**
      * Ads the 'Edit Online' button to an activity in the activity stream.
      */
-    this.addEditorButtonToActivity = function(activityId, editorLink, editorLabel){
+    this.addEditorButtonToActivity = function(activityId, editorLink, editorLabel) {
       $("#activityContainer" + activityId).find("div[id^='ActivityContextBox'] > .actionBar .statusAction.pull-left").append(
           getEditorButton(editorLink, editorLabel));
     };
-    
+
     /**
      * Ads the 'Edit Online' button to a preview (opened from the activity stream).
      */
-    this.addEditorButtonToPreview = function(activityId, editorLink, previewIndex, editorLabel){
+    this.addEditorButtonToPreview = function(activityId, editorLink, previewIndex, editorLabel) {
       $("#Preview" + activityId + "-" + previewIndex).click(function() {
         // We set timeout here to avoid the case when the element is rendered but is going to be updated soon
         setTimeout(function() {
@@ -703,15 +690,15 @@
         }, 100);
       });
     };
-    
+
     /**
      * Ads the refresh banner to an activity in the activity stream.
      */
-    this.addRefreshBannerActivity = function(activityId){
+    this.addRefreshBannerActivity = function(activityId) {
       var $previewParent = $("#Preview" + activityId + "-0").parent();
       // If the activity contains only one preview
-      if($previewParent.find("#Preview" + activityId + "-1").length === 0){
-        if($previewParent.find(".documentRefreshBanner").length === 0){
+      if ($previewParent.find("#Preview" + activityId + "-1").length === 0) {
+        if ($previewParent.find(".documentRefreshBanner").length === 0) {
           $previewParent.prepend(getRefreshBanner());
           $banner = $previewParent.find(".documentRefreshBanner");
           $(".documentRefreshBanner .refreshBannerLink").click(function() {
@@ -728,7 +715,7 @@
      */
     this.addRefreshBannerPDF = function() {
       var $toolbarContainer = $(".document-preview-content-file #toolbarContainer");
-      if($toolbarContainer.find(".documentRefreshBanner").length === 0){
+      if ($toolbarContainer.find(".documentRefreshBanner").length === 0) {
         $toolbarContainer.append(getRefreshBanner());
         $(".documentRefreshBanner .refreshBannerLink").click(function() {
           refreshPDFPreview();
