@@ -229,6 +229,9 @@
     var store;
     var subscribedDocuments = [];
 
+    /**
+     * Initializes the redux store or returns existing one.
+     */
     var eventStore = function(){
       if(!store){
         store = redux.createStore(docActionsReducer);
@@ -236,6 +239,9 @@
       return store;
     };
     
+    /**
+     * Changes the redux store depending on the actin;
+     */
     var docActionsReducer = function(state, action) {
       if (action.type === DOCUMENT_SAVED) {
         return {
@@ -248,6 +254,9 @@
       return state ? state : {}; // TODO is it OK?
     };
     
+    /**
+     * Subscribes on a document updates using cometd. Dispatches events to the redux store.
+     */
     var subscribeDocumentUpdates = function(cometdInfo){
       // Use only one channel for one document
       if(subscribedDocuments.includes(cometdInfo.docId)){
@@ -448,7 +457,9 @@
       UI.showError(title, text);
     };
 
-    // File activity in the activity stream
+    /**
+     * Initializes a file activity in the activity stream.
+     */
     this.initActivity = function(cometdInfo, activityId, editorLink, editorLabel){
       // Listen to document updates
       subscribeDocumentUpdates(cometdInfo);
@@ -466,7 +477,9 @@
       }
     };
     
-    // File preview in the activity stream
+    /**
+     * Initializes a document preview (from the activity stream).
+     */
     this.initPreview = function(cometdInfo, activityId, editorLink, previewIndex, editorLabel) {
 
       $("#Preview" + activityId + "-" + previewIndex).click(function() {
@@ -489,7 +502,9 @@
       }
     };
     
-    // File explorer
+    /**
+     * Initializes JCRExplorer when a document is displayed.
+     */
     this.initExplorer = function(cometdInfo) {
       var $JCRFileContent = $("#UIJCRExplorer .fileContent"); 
       if ($JCRFileContent.length > 0) {
@@ -524,11 +539,24 @@
 
     var self = this;
     
+    /**
+     * Returns the html markup of the 'Edit Online' button.
+     */
     var getEditorButton = function(editorLink, editorLabel) {
       return "<li><a href='" + editorLink + "' target='_blank'><i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i> "
           + editorLabel + "</a></li>";
-    }
+    };
     
+    /**
+     * Returns the html markup of the refresh banner;
+     */
+    var getRefreshBanner = function(){
+      return "<div class='documentRefreshBanner'><div class='refreshBannerContent'>The document has been updated. <span class='refreshBannerLink'>Update</span></div></div>";
+    };
+    
+    /**
+     * Adds the 'Edit Online' button to a preview (from the activity stream) when it's loaded.
+     */
     var tryAddEditorButtonToPreview = function(editorLink, editorLabel, attempts, delay) {
       var $elem = $(".previewBtn");
       if ($elem.length == 0 || !$elem.is(":visible")) {
@@ -558,6 +586,9 @@
       }
     };
     
+    /**
+     * Refreshes an activity preview by updating preview picture.
+     */
     var refreshActivityPreview = function(activityId) {
       var $img = $("#Preview" + activityId + "-0 #MediaContent" + activityId + "-0 img");
       if($img.length !== 0){
@@ -573,6 +604,9 @@
       }
     };
 
+    /**
+     * Refreshes a document preview (PDF) by reloading viewer.js script.
+     */
     var refreshPDFPreview = function() {
       var $banner = $(".document-preview-content-file #toolbarContainer .documentRefreshBanner");
       if ($banner.length !== 0) {
@@ -643,15 +677,24 @@
       }
     };
 
+    /**
+     * Ads the 'Edit Online' button to the JCRExplorer when a document is displayed.
+     */
     this.addEditorButtonToExplorer = function() {
       $("#UIJCRExplorer .fileContent").closest("#UIJCRExplorer").find("#uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen").addClass("uiIconEdit");
     };
     
+    /**
+     * Ads the 'Edit Online' button to an activity in the activity stream.
+     */
     this.addEditorButtonToActivity = function(activityId, editorLink, editorLabel){
       $("#activityContainer" + activityId).find("div[id^='ActivityContextBox'] > .actionBar .statusAction.pull-left").append(
           getEditorButton(editorLink, editorLabel));
     };
     
+    /**
+     * Ads the 'Edit Online' button to a preview (opened from the activity stream).
+     */
     this.addEditorButtonToPreview = function(activityId, editorLink, previewIndex, editorLabel){
       $("#Preview" + activityId + "-" + previewIndex).click(function() {
         // We set timeout here to avoid the case when the element is rendered but is going to be updated soon
@@ -661,13 +704,15 @@
       });
     };
     
+    /**
+     * Ads the refresh banner to an activity in the activity stream.
+     */
     this.addRefreshBannerActivity = function(activityId){
-
       var $previewParent = $("#Preview" + activityId + "-0").parent();
       // If the activity contains only one preview
       if($previewParent.find("#Preview" + activityId + "-1").length === 0){
         if($previewParent.find(".documentRefreshBanner").length === 0){
-          $previewParent.prepend("<div class='documentRefreshBanner'><div class='refreshBannerContent'>The document has been updated. <span class='refreshBannerLink'>Update</span></div></div>");
+          $previewParent.prepend(getRefreshBanner());
           $banner = $previewParent.find(".documentRefreshBanner");
           $(".documentRefreshBanner .refreshBannerLink").click(function() {
             refreshActivityPreview(activityId);
@@ -678,10 +723,13 @@
       }
     };
 
+    /**
+     * Ads the refresh banner to the PDF document preview.
+     */
     this.addRefreshBannerPDF = function() {
       var $toolbarContainer = $(".document-preview-content-file #toolbarContainer");
       if($toolbarContainer.find(".documentRefreshBanner").length === 0){
-        $toolbarContainer.append("<div class='documentRefreshBanner'><div class='refreshBannerContent'>The document has been updated. <span class='refreshBannerLink'>Update</span></div></div>");
+        $toolbarContainer.append(getRefreshBanner());
         $(".documentRefreshBanner .refreshBannerLink").click(function() {
           refreshPDFPreview();
         });
