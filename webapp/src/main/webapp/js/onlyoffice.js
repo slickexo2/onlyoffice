@@ -696,6 +696,10 @@
      */
     this.addRefreshBannerActivity = function(activityId) {
       var $previewParent = $("#Preview" + activityId + "-0").parent();
+      // If there is no preview
+      if($previewParent.length === 0 || $previewParent.find(".mediaContent.docTypeContent.NoPreview").length !== 0){
+        return;
+      }
       // If the activity contains only one preview
       if ($previewParent.find("#Preview" + activityId + "-1").length === 0) {
         if ($previewParent.find(".documentRefreshBanner").length === 0) {
@@ -715,7 +719,7 @@
      */
     this.addRefreshBannerPDF = function() {
       var $toolbarContainer = $(".document-preview-content-file #toolbarContainer");
-      if ($toolbarContainer.find(".documentRefreshBanner").length === 0) {
+      if ($toolbarContainer.length !== 0 && $toolbarContainer.find(".documentRefreshBanner").length === 0) {
         $toolbarContainer.append(getRefreshBanner());
         $(".documentRefreshBanner .refreshBannerLink").click(function() {
           refreshPDFPreview();
