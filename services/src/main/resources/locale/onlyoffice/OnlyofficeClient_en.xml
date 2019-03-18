@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bundle>
+  <!-- For client UI -->
+  <OnlyofficeEditorClient>
+    <EditButtonTitle>Edit Online</EditButtonTitle>
+    <UpdateBannerTitle>The document has been updated.</UpdateBannerTitle>
+    <ReloadButtonTitle>Reload</ReloadButtonTitle>
+
+    <ErrorTitle>Error</ErrorTitle>
+    <InfoTitle>Information</InfoTitle>
+  </OnlyofficeEditorClient>
+</bundle>

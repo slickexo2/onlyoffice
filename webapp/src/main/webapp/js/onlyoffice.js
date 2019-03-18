@@ -101,6 +101,13 @@
     return src;
   };
 
+  var messages = {}; // should be initialized by Editor.initMessages()
+
+  var message = function(key) {
+    var m = messages[key];
+		return m ? m : key;
+	};
+
   // ******** REST services ********
   var prefixUrl = pageBaseUrl(location);
 
@@ -412,6 +419,10 @@
     };
     this.create = create;
 
+    this.initMessages = function(userMessages) {
+      messages = userMessages;
+    };
+
     /**
      * Initialize an editor page in current browser window.
      */
@@ -445,7 +456,7 @@
     /**
      * Initializes a file activity in the activity stream.
      */
-    this.initActivity = function(cometdInfo, activityId, editorLink, editorLabel) {
+    this.initActivity = function(cometdInfo, activityId, editorLink) {
       // Listen to document updates
       subscribeDocumentUpdates(cometdInfo);
       // Init redux store
@@ -458,15 +469,14 @@
         }
       });
       if (editorLink !== "null") {
-        UI.addEditorButtonToActivity(activityId, editorLink, editorLabel);
+        UI.addEditorButtonToActivity(activityId, editorLink);
       }
     };
 
     /**
      * Initializes a document preview (from the activity stream).
      */
-    this.initPreview = function(cometdInfo, activityId, editorLink, previewIndex, editorLabel) {
-
+    this.initPreview = function(cometdInfo, activityId, editorLink, previewIndex) {
       $("#Preview" + activityId + "-" + previewIndex).click(function() {
         // We set timeout here to avoid the case when the element is rendered but is going to be updated soon
         setTimeout(function() {
@@ -481,9 +491,8 @@
           });
         }, 100);
       });
-
       if (editorLink !== "null") {
-        UI.addEditorButtonToPreview(activityId, editorLink, previewIndex, editorLabel);
+        UI.addEditorButtonToPreview(activityId, editorLink, previewIndex);
       }
     };
 
@@ -527,9 +536,9 @@
     /**
      * Returns the html markup of the 'Edit Online' button.
      */
-    var getEditorButton = function(editorLink, editorLabel) {
+    var getEditorButton = function(editorLink) {
       return "<li><a href='" + editorLink
-          + "' target='_blank'><i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i> " + editorLabel
+          + "' target='_blank'><i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i> " + message("EditButtonTitle")
           + "</a></li>";
     };
 
@@ -537,24 +546,25 @@
      * Returns the html markup of the refresh banner;
      */
     var getRefreshBanner = function() {
-      return "<div class='documentRefreshBanner'><div class='refreshBannerContent'>The document has been updated. <span class='refreshBannerLink'>Update</span></div></div>";
+      return "<div class='documentRefreshBanner'><div class='refreshBannerContent'>" + message("UpdateBannerTitle") +
+        " <span class='refreshBannerLink'>" + message("ReloadButtonTitle") + "</span></div></div>";
     };
 
     /**
      * Adds the 'Edit Online' button to a preview (from the activity stream) when it's loaded.
      */
-    var tryAddEditorButtonToPreview = function(editorLink, editorLabel, attempts, delay) {
+    var tryAddEditorButtonToPreview = function(editorLink, attempts, delay) {
       var $elem = $(".previewBtn");
       if ($elem.length == 0 || !$elem.is(":visible")) {
         if (attempts > 0) {
           setTimeout(function() {
-            tryAddEditorButtonToPreview(editorLink, editorLabel, attempts - 1, delay);
+            tryAddEditorButtonToPreview(editorLink, attempts - 1, delay);
           }, delay);
         } else {
           log("Cannot find element " + $elem);
         }
       } else {
-        $(".previewBtn").append("<div class='onlyOfficeEditBtn'>" + getEditorButton(editorLink, editorLabel) + "</div>");
+        $(".previewBtn").append("<div class='onlyOfficeEditBtn'>" + getEditorButton(editorLink) + "</div>");
       }
     };
 
@@ -603,8 +613,7 @@
         var viewerSrc = $vieverScript.attr("src");
         $vieverScript.remove();
         $(".document-preview-content-file").append("<script src='" + viewerSrc + "'></script>");
-        // $("#UIJCRExplorer .uiAddressBar a.refreshIcon i.uiIconRefresh").click();
-      }, 500); // XXX we need wait for office preview server generate a new preview
+      }, 250); // XXX we need wait for office preview server generate a new preview
     };
 
     this.refreshPDFPreview = refreshPDFPreview;
@@ -623,12 +632,18 @@
       return $("#UIPage .onlyofficeContainer").length > 0;
     };
 
+    /**
+     * TODO Should we use it when user close the page, to notify the channel doc is closed?
+     */
     this.closeEditor = function() {
       saveAndDestroy();
       // Use Close menu to reload the view with right representation
       $("#UIDocumentWorkspace .fileContent .onlyofficeContainer .loading .onClose").click();
     };
 
+    /**
+     * TODO not used
+     */
     this.disableMenu = function() {
       $("#uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen").parent().addClass("editorDisabled").parent().removeAttr("onclick");
       $("#uiActionsBarContainer i.uiIconEcmsOnlyofficeClose").parent().addClass("editorDisabled").parent().removeAttr("onclick");
@@ -636,6 +651,7 @@
 
     this.documentChanged = function(event) {
       // Used for UI messages.
+      // TODO use this to broadcast this user changes to the doc channel and save the user version in JCR
       hasDocumentChanged = true;
     };
 
@@ -674,19 +690,19 @@
     /**
      * Ads the 'Edit Online' button to an activity in the activity stream.
      */
-    this.addEditorButtonToActivity = function(activityId, editorLink, editorLabel) {
+    this.addEditorButtonToActivity = function(activityId, editorLink) {
       $("#activityContainer" + activityId).find("div[id^='ActivityContextBox'] > .actionBar .statusAction.pull-left").append(
-          getEditorButton(editorLink, editorLabel));
+          getEditorButton(editorLink));
     };
 
     /**
      * Ads the 'Edit Online' button to a preview (opened from the activity stream).
      */
-    this.addEditorButtonToPreview = function(activityId, editorLink, previewIndex, editorLabel) {
+    this.addEditorButtonToPreview = function(activityId, editorLink, previewIndex) {
       $("#Preview" + activityId + "-" + previewIndex).click(function() {
         // We set timeout here to avoid the case when the element is rendered but is going to be updated soon
         setTimeout(function() {
-          tryAddEditorButtonToPreview(editorLink, editorLabel, 100, 100);
+          tryAddEditorButtonToPreview(editorLink, 100, 100);
         }, 100);
       });
     };

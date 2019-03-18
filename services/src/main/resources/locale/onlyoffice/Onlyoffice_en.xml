@@ -19,6 +19,13 @@
     <message>
       <ViewerNotFound>Online document editor not found</ViewerNotFound>
     </message>
+    <error>
+      <EditorCannotBeCreated>Editor cannot be created. Please retry.</EditorCannotBeCreated>
+      <CannotReadDocument>Cannot read the document. Please retry.</CannotReadDocument>
+      <CannotCreateEditor>Cannot create editor. Please retry.</CannotCreateEditor>
+      <CannotSendEditorConfiguration>Cannot send editor configuration. Please retry.</CannotSendEditorConfiguration>
+      <DocumentIdRequired>Wrong request: document ID required.</DocumentIdRequired>
+    </error>
   </OnlyofficeEditor>
   <portal>
     <intranet>
