@@ -160,3 +160,14 @@
   cursor: pointer;
   font-weight: bold;
 }
+.refreshBannerLink.disabled {
+  color: #A9A9A9;
+  cursor: default;
+  text-decoration: none;
+}
+.documentRefreshBanner .loading {
+  display: inline-block;
+  position: absolute;
+  top: 0;
+  margin-left: 10px;
+}

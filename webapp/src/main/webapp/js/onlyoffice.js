@@ -105,8 +105,8 @@
 
   var message = function(key) {
     var m = messages[key];
-		return m ? m : key;
-	};
+    return m ? m : key;
+  };
 
   // ******** REST services ********
   var prefixUrl = pageBaseUrl(location);
@@ -585,7 +585,14 @@
     /**
      * Refreshes an activity preview by updating preview picture.
      */
-    var refreshActivityPreview = function(activityId) {
+    var refreshActivityPreview = function(activityId, $banner) {
+      $banner.find(".refreshBannerContent").append("<div class='loading'><i class='uiLoadingIconSmall uiIconEcmsGray'></i></div>");
+      $refreshLink = $banner.find(".refreshBannerLink");
+      $refreshLink.addClass("disabled");
+      $refreshLink.on('click', function(){
+        return false;
+      });
+      $refreshLink.attr("href", "#");
       var $img = $("#Preview" + activityId + "-0 #MediaContent" + activityId + "-0 img");
       if ($img.length !== 0) {
         var src = $img.attr("src");
@@ -596,6 +603,10 @@
 
         src += "version=oview_" + timestamp;
         src += "&lastModified=" + timestamp;
+        
+        $img.on('load', function(){
+          $banner.remove();
+        });
         $img.attr("src", src);
       }
     };
@@ -722,8 +733,7 @@
           $previewParent.prepend(getRefreshBanner());
           $banner = $previewParent.find(".documentRefreshBanner");
           $(".documentRefreshBanner .refreshBannerLink").click(function() {
-            refreshActivityPreview(activityId);
-            $banner.remove();
+            refreshActivityPreview(activityId, $banner);
           });
         }
         log("Activity document: " + activityId + " has been updated");
