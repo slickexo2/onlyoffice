@@ -22,11 +22,14 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 import javax.jcr.Node;
 
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
 import org.exoplatform.ws.frameworks.json.impl.JsonException;
 import org.exoplatform.ws.frameworks.json.impl.JsonGeneratorImpl;
 
@@ -39,6 +42,9 @@ import org.exoplatform.ws.frameworks.json.impl.JsonGeneratorImpl;
  * @version $Id: Editor.java 00000 Feb 12, 2016 pnedonosko $
  */
 public class Config implements Externalizable {
+
+  /** The Constant LOG. */
+  private static final Log                LOG             = ExoLogger.getLogger(Config.class);
 
   /** The Constant DATETIME_FORMAT. */
   protected static final SimpleDateFormat DATETIME_FORMAT = new SimpleDateFormat("MM/dd/yyyy");
@@ -80,6 +86,9 @@ public class Config implements Externalizable {
 
     /** The ECMS explorer page URL. */
     protected String       explorerUrl;
+
+    /** The explorer URI. */
+    protected URI          explorerUri;
 
     /** The document. */
     // Document
@@ -145,6 +154,17 @@ public class Config implements Externalizable {
      */
     public Builder explorerUrl(String explorerUrl) {
       this.explorerUrl = explorerUrl;
+      return this;
+    }
+
+    /**
+     * Explorer relative URL.
+     *
+     * @param uri the uri
+     * @return the builder
+     */
+    public Builder explorerUri(URI uri) {
+      this.explorerUri = uri;
       return this;
     }
 
@@ -319,6 +339,7 @@ public class Config implements Externalizable {
                         platformRestUrl,
                         editorUrl,
                         explorerUrl,
+                        explorerUri,
                         documentType,
                         workspace,
                         path,
@@ -799,6 +820,9 @@ public class Config implements Externalizable {
   /** The explorer page URL (ECMS Explorer page). */
   private String         explorerUrl;
 
+  /** The explorer relative URL (ECMS Explorer page URI). */
+  private transient URI  explorerUri;
+
   /** The workspace. */
   private String         workspace;
 
@@ -851,6 +875,7 @@ public class Config implements Externalizable {
    * @param platformRestUrl the platform url
    * @param editorUrl the editor url
    * @param explorerUrl the explorer url
+   * @param explorerUri the explorer uri
    * @param documentType the document type
    * @param workspace the workspace
    * @param path the path
@@ -862,6 +887,7 @@ public class Config implements Externalizable {
                    String platformRestUrl,
                    String editorUrl,
                    String explorerUrl,
+                   URI explorerUri,
                    String documentType,
                    String workspace,
                    String path,
@@ -878,6 +904,7 @@ public class Config implements Externalizable {
     this.platformRestUrl = platformRestUrl;
     this.editorUrl = editorUrl;
     this.explorerUrl = explorerUrl;
+    this.explorerUri = explorerUri;
 
     this.document = document;
     this.editorConfig = editor;
@@ -897,6 +924,12 @@ public class Config implements Externalizable {
     out.writeUTF(platformRestUrl.toString());
     out.writeUTF(editorUrl);
     out.writeUTF(explorerUrl);
+    try {
+      out.writeObject(explorerUri);
+    } catch (Exception e) {
+      LOG.warn("Error serializing explorer URI for " + explorerUrl, e);
+    }
+
     out.writeUTF(open != null ? open.toString() : EMPTY);
     // Note: closing state isn't replicable
     out.writeUTF(error != null ? error : EMPTY);
@@ -935,6 +968,17 @@ public class Config implements Externalizable {
     this.platformRestUrl = in.readUTF();
     this.editorUrl = in.readUTF();
     this.explorerUrl = in.readUTF();
+    try {
+      this.explorerUri = (URI) in.readObject();
+    } catch (Exception e) {
+      LOG.warn("Error deserializing explorer URI for " + explorerUrl, e);
+      try {
+        this.explorerUri = URI.create(explorerUrl);
+      } catch (Exception e1) {
+        LOG.warn("Error deserializing explorer URI from " + explorerUrl, e);
+        this.explorerUri = null;
+      }
+    }
     String openString = in.readUTF();
     // Note: closing state isn't replicable (due to short lifecycle, few seconds
     // max and it's valuable
@@ -1043,7 +1087,7 @@ public class Config implements Externalizable {
   }
 
   /**
-   * Gets the editor url.
+   * Gets the editor absolute URL.
    *
    * @return the editorUrl
    */
@@ -1052,12 +1096,21 @@ public class Config implements Externalizable {
   }
 
   /**
-   * Gets the explorer url.
+   * Gets the explorer absolute URL.
    *
    * @return the explorerUrl
    */
   public String getExplorerUrl() {
     return explorerUrl;
+  }
+
+  /**
+   * Gets the explorer page URI.
+   *
+   * @return the explorer URI
+   */
+  public URI getExplorerUri() {
+    return explorerUri;
   }
 
   /**
@@ -1102,6 +1155,7 @@ public class Config implements Externalizable {
                       platformRestUrl,
                       editorUrl,
                       explorerUrl,
+                      explorerUri,
                       documentType,
                       workspace,
                       path,

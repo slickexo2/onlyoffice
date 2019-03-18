@@ -31,6 +31,8 @@ import org.exoplatform.container.component.ComponentPlugin;
  */
 public interface OnlyofficeEditorService {
 
+  static String EDITOR_OPEN_EVENT = "exo.onlyoffice.editor.open";
+  
   /**
    * Return existing editor configuration for given user and node. If editor not
    * open for given node or user then <code>null</code> will be returned. If
@@ -63,6 +65,7 @@ public interface OnlyofficeEditorService {
    *
    * @param userSchema the schema
    * @param userHost the host
+   * @param userPost the user post
    * @param userId {@link String}
    * @param workspace {@link String}
    * @param docId {@link String} a document reference in the workspace, see
@@ -74,6 +77,7 @@ public interface OnlyofficeEditorService {
    */
   Config createEditor(String userSchema,
                       String userHost,
+                      int userPost,
                       String userId,
                       String workspace,
                       String docId) throws OnlyofficeEditorException, RepositoryException;
@@ -129,11 +133,12 @@ public interface OnlyofficeEditorService {
    *
    * @param schema the schema
    * @param host the host
+   * @param port the port
    * @param workspace the workspace
    * @param docId the doc ID
    * @return the editor link
    */
-  String getEditorLink(String schema, String host, String workspace, String docId);
+  String getEditorLink(String schema, String host, int port, String workspace, String docId);
 
   /**
    * Gets the document node by its ID and optionally a repository workspace.

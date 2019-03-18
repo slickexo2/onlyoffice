@@ -152,11 +152,10 @@ public class EditorService implements ResourceContainer {
   }
 
   /** The editors. */
-  protected final OnlyofficeEditorService   editors;
-
+  protected final OnlyofficeEditorService editors;
 
   /** The initiated. */
-  protected final Map<UUID, Config>         initiated = new ConcurrentHashMap<UUID, Config>();
+  protected final Map<UUID, Config>       initiated = new ConcurrentHashMap<UUID, Config>();
 
   /**
    * REST cloudDrives uses {@link OnlyofficeEditorService} for actual job.
@@ -347,7 +346,12 @@ public class EditorService implements ResourceContainer {
           if (convo != null) {
             String username = convo.getIdentity().getUserId();
             URI requestUri = uriInfo.getRequestUri();
-            Config config = editors.createEditor(requestUri.getScheme(), requestHost(requestUri), username, workspace, path);
+            Config config = editors.createEditor(requestUri.getScheme(),
+                                                 requestUri.getHost(),
+                                                 requestUri.getPort(),
+                                                 username,
+                                                 workspace,
+                                                 path);
             if (config.getEditorConfig().getLang() == null) {
               if (request.getLocale() != null) {
                 // If user lang not defined use current request one
@@ -522,7 +526,12 @@ public class EditorService implements ResourceContainer {
           if (convo != null) {
             String docId = editors.initDocument(workspace, path);
             URI requestUri = uriInfo.getRequestUri();
-            resp.document(editors.getEditorLink(requestUri.getScheme(), requestHost(requestUri), workspace, docId)).ok();
+            resp.document(editors.getEditorLink(requestUri.getScheme(),
+                                                requestUri.getHost(),
+                                                requestUri.getPort(),
+                                                workspace,
+                                                docId))
+                .ok();
           } else {
             LOG.warn("ConversationState not set to get editor config");
             resp.error("User not authenticated").status(Status.UNAUTHORIZED);

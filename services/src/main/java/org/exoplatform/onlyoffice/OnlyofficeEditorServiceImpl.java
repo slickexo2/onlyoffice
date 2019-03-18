@@ -67,7 +67,6 @@ import org.exoplatform.container.xml.PropertiesParam;
 import org.exoplatform.ecm.utils.lock.LockUtil;
 import org.exoplatform.ecm.webui.utils.PermissionUtil;
 import org.exoplatform.ecm.webui.utils.Utils;
-import org.exoplatform.onlyoffice.cometd.CometdOnlyofficeService;
 import org.exoplatform.onlyoffice.jcr.NodeFinder;
 import org.exoplatform.portal.Constants;
 import org.exoplatform.services.cache.CacheListener;
@@ -154,7 +153,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * DocumentTypesConfig.
    */
   public static class DocumentTypesConfig {
-    
+
     /** The mime types. */
     protected List<String> mimeTypes;
 
@@ -550,6 +549,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   @Override
   public Config createEditor(String schema,
                              String host,
+                             int port,
                              String userId,
                              String workspace,
                              String docId) throws OnlyofficeEditorException, RepositoryException {
@@ -632,7 +632,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
           builder.key(key);
 
-          StringBuilder platformUrl = platformUrl(schema, host);
+          StringBuilder platformUrl = platformUrl(schema, host, port);
           // REST URL for file and callback URLs fill be generated respectively
           // the platform URL and actual user
           builder.generateUrls(new StringBuilder(platformUrl).append('/')
@@ -642,7 +642,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           builder.editorUrl(new StringBuilder(platformUrl).append(editorURLPath(docId)).toString());
 
           // ECMS explorer page URL
-          builder.explorerUrl(explorerUrl(schema, host, path).toString());
+          String ecmsLink = explorerLink(path);
+          builder.explorerUri(explorerUri(schema, host, port, ecmsLink));
+          builder.explorerUrl(explorerUrl(schema, host, port, ecmsLink).toString());
 
           config = builder.build();
 
@@ -843,7 +845,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               // manually from Onlyoffice)
               // config.close(); // close for use in listeners
               // fireSaved(config);
-              
+
               fireError(status);
               LOG.warn("Received Onlyoffice error of saving document. Key: " + key + ". Users: "
                   + Arrays.toString(status.getUsers()) + ". Last change was successfully saved for " + nodePath);
@@ -922,10 +924,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       String workspace = node.getSession().getWorkspace().getName();
       String docId = initDocument(node);
       PortletRequestContext pcontext = (PortletRequestContext) WebuiRequestContext.getCurrentInstance();
-      int port = pcontext.getRequest().getServerPort();
-      String host = pcontext.getRequest().getServerName();
-      host = port >= 0 && port != 80 && port != 443 ? host + ":" + port : host;
-      String link = getEditorLink(pcontext.getRequest().getScheme(), host, workspace, docId);
+      String link = getEditorLink(pcontext.getRequest().getScheme(),
+                                  pcontext.getRequest().getServerName(),
+                                  pcontext.getRequest().getServerPort(),
+                                  workspace,
+                                  docId);
       LOG.info("DEBUG >>> Editor link {}: {}", node.getPath(), link);
       return link;
     }
@@ -937,8 +940,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * {@inheritDoc}
    */
   @Override
-  public String getEditorLink(String schema, String host, String workspace, String docId) {
-    return platformUrl(schema, host).append(editorURLPath(docId)).toString();
+  public String getEditorLink(String schema, String host, int port, String workspace, String docId) {
+    return platformUrl(schema, host, port).append(editorURLPath(docId)).toString();
   }
 
   /**
@@ -1190,6 +1193,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    *
    * @param schema the schema
    * @param host the host
+   * @param port the port
    * @param workspace the workspace
    * @param path the path
    * @return the string
@@ -1197,11 +1201,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @throws RepositoryException the repository exception
    */
   @Deprecated
-  protected String webdavUrl(String schema, String host, String workspace, String path) throws OnlyofficeEditorException,
-                                                                                        RepositoryException {
+  protected String webdavUrl(String schema,
+                             String host,
+                             int port,
+                             String workspace,
+                             String path) throws OnlyofficeEditorException, RepositoryException {
     StringBuilder filePath = new StringBuilder();
     try {
-      URI baseWebdavUri = webdavUri(schema, host);
+      URI baseWebdavUri = webdavUri(schema, host, port);
 
       filePath.append(baseWebdavUri.getPath());
       filePath.append('/');
@@ -1658,13 +1665,18 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    *
    * @param schema the schema
    * @param host the host
+   * @param port the port
    * @return the string builder
    */
-  protected StringBuilder platformUrl(String schema, String host) {
+  protected StringBuilder platformUrl(String schema, String host, int port) {
     StringBuilder platformUrl = new StringBuilder();
     platformUrl.append(schema);
     platformUrl.append("://");
     platformUrl.append(host);
+    if (port >= 0 && port != 80 && port != 443) {
+      platformUrl.append(':');
+      platformUrl.append(port);
+    }
     platformUrl.append('/');
     platformUrl.append(PortalContainer.getCurrentPortalContainerName());
 
@@ -1676,24 +1688,59 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    *
    * @param schema the schema
    * @param host the host
-   * @param jcrPath the JCR path of the document node
+   * @param port the port
+   * @param ecmsURL the ECMS URL
    * @return the string builder
    */
-  protected StringBuilder explorerUrl(String schema, String host, String jcrPath) {
+  protected StringBuilder explorerUrl(String schema, String host, int port, String ecmsURL) {
     StringBuilder explorerUrl = new StringBuilder();
     explorerUrl.append(schema);
     explorerUrl.append("://");
     explorerUrl.append(host);
+    if (port >= 0 && port != 80 && port != 443) {
+      explorerUrl.append(':');
+      explorerUrl.append(port);
+    }
+    explorerUrl.append(ecmsURL);
+    return explorerUrl;
+  }
 
+  protected URI explorerUri(String schema, String host, int port, String ecmsLink) {
+    URI uri;
     try {
-      String documentLink = documentService.getLinkInDocumentsApp(jcrPath);
-      explorerUrl.append(documentLink);
+      String[] linkParts = ecmsLink.split("\\?");
+      if (linkParts.length >= 2) {
+        uri = new URI(schema, null, host, port, linkParts[0], linkParts[1], null);
+      } else {
+        uri = new URI(schema, null, host, port, ecmsLink, null, null);
+      }
+    } catch (Exception e) {
+      LOG.warn("Error creating document URI", e);
+      try {
+        uri = URI.create(ecmsLink);
+      } catch (Exception e1) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Error creating document URI from ECMS link and after error: " + e.getMessage(), e1);
+        }
+        uri = null;
+      }
+    }
+    return uri;
+  }
+
+  /**
+   * ECMS explorer page relative URL (within the Platform).
+   *
+   * @param jcrPath the jcr path
+   * @return the string
+   */
+  protected String explorerLink(String jcrPath) {
+    try {
+      return documentService.getLinkInDocumentsApp(jcrPath);
     } catch (Exception e) {
       LOG.warn("Error creating document link for " + jcrPath, e);
-      explorerUrl.append('/').append(PortalContainer.getCurrentPortalContainerName());
+      return new StringBuilder().append('/').append(PortalContainer.getCurrentPortalContainerName()).toString();
     }
-
-    return explorerUrl;
   }
 
   /**
@@ -1715,11 +1762,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    *
    * @param schema the schema
    * @param host the host
+   * @param port the port
    * @return the string builder
    */
   @Deprecated
-  protected StringBuilder platformRestUrl(String schema, String host) {
-    return platformRestUrl(platformUrl(schema, host));
+  protected StringBuilder platformRestUrl(String schema, String host, int port) {
+    return platformRestUrl(platformUrl(schema, host, port));
   }
 
   /**
@@ -1727,12 +1775,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    *
    * @param schema the schema
    * @param host the host
+   * @param port the port
    * @return the uri
    * @throws URISyntaxException the URI syntax exception
    */
   @Deprecated
-  protected URI webdavUri(String schema, String host) throws URISyntaxException {
-    return new URI(platformRestUrl(schema, host).append("/jcr").toString());
+  protected URI webdavUri(String schema, String host, int port) throws URISyntaxException {
+    return new URI(platformRestUrl(schema, host, port).append("/jcr").toString());
   }
 
   /**

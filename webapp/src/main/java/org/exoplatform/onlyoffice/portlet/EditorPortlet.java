@@ -18,12 +18,11 @@
  */
 package org.exoplatform.onlyoffice.portlet;
 
-import static org.exoplatform.onlyoffice.webui.OnlyofficeClientContext.*;
+import static org.exoplatform.onlyoffice.webui.OnlyofficeClientContext.callModule;
+import static org.exoplatform.onlyoffice.webui.OnlyofficeClientContext.showError;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 import java.util.ResourceBundle;
 
 import javax.jcr.RepositoryException;
@@ -40,7 +39,6 @@ import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.onlyoffice.Config;
 import org.exoplatform.onlyoffice.OnlyofficeEditorException;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
-import org.exoplatform.onlyoffice.webui.OnlyofficeClientContext;
 import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -83,7 +81,12 @@ public class EditorPortlet extends GenericPortlet {
     String docId = webuiContext.getRequestParameter("docId");
     if (docId != null) {
       try {
-        Config config = onlyoffice.createEditor(request.getScheme(), requestHost(request), request.getRemoteUser(), null, docId);
+        Config config = onlyoffice.createEditor(request.getScheme(),
+                                                request.getServerName(),
+                                                request.getServerPort(),
+                                                request.getRemoteUser(),
+                                                null,
+                                                docId);
         if (config != null) {
           if (config.getEditorConfig().getLang() == null) {
             if (request.getLocale() != null) {
@@ -106,12 +109,7 @@ public class EditorPortlet extends GenericPortlet {
           ListenerService listenerService = webuiContext.getApplication()
                                                         .getApplicationServiceContainer()
                                                         .getComponentInstanceOfType(ListenerService.class);
-          Map<String, String> gam = new HashMap<>();
-          gam.put("ruleTitle", "openOnlyofficeDocument");
-          gam.put("senderId", request.getRemoteUser());
-          gam.put("receiverId", request.getRemoteUser());
-          gam.put("object", config.getExplorerUrl());
-          listenerService.broadcast("exo.gamification.generic.action", gam, "");
+          listenerService.broadcast(OnlyofficeEditorService.EDITOR_OPEN_EVENT, onlyoffice, config);
         } catch (Exception e) {
           LOG.error("Error firing listener with Onlyoffice event for user: {}, document: {}", request.getRemoteUser(), docId, e);
         }
