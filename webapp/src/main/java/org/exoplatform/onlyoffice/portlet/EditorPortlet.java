@@ -18,8 +18,13 @@
  */
 package org.exoplatform.onlyoffice.portlet;
 
+import static org.exoplatform.onlyoffice.webui.OnlyofficeClientContext.*;
+
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
+import java.util.ResourceBundle;
 
 import javax.jcr.RepositoryException;
 import javax.portlet.GenericPortlet;
@@ -35,10 +40,10 @@ import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.onlyoffice.Config;
 import org.exoplatform.onlyoffice.OnlyofficeEditorException;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
+import org.exoplatform.onlyoffice.webui.OnlyofficeClientContext;
+import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
-import org.exoplatform.web.application.RequestContext;
-import org.exoplatform.web.application.RequireJS;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.ws.frameworks.json.impl.JsonException;
 
@@ -74,8 +79,7 @@ public class EditorPortlet extends GenericPortlet {
   @RenderMode(name = "view")
   public void view(RenderRequest request, RenderResponse response) throws IOException, PortletException {
     WebuiRequestContext webuiContext = (WebuiRequestContext) WebuiRequestContext.getCurrentInstance();
-    RequireJS js = webuiContext.getJavascriptManager().require("SHARED/onlyoffice", "onlyoffice");
-
+    ResourceBundle i18n = webuiContext.getApplicationResourceBundle();
     String docId = webuiContext.getRequestParameter("docId");
     if (docId != null) {
       try {
@@ -90,22 +94,42 @@ public class EditorPortlet extends GenericPortlet {
               config.getEditorConfig().setLang(Locale.getDefault().getLanguage());
             }
           }
-          js.addScripts("onlyoffice.initEditor(" + config.toJSON() + ");");
+          callModule("initEditor(" + config.toJSON() + ");");
         } else {
-          js.addScripts("onlyoffice.showError('Error','Editor cannot be created. Please retry.');");
+          showError(i18n.getString("OnlyofficeEditorClient.ErrorTitle"),
+                    i18n.getString("OnlyofficeEditor.error.EditorCannotBeCreated"));
+        }
+
+        // Notify Gamification listeners
+        // TODO make broadcast name configurable
+        try {
+          ListenerService listenerService = webuiContext.getApplication()
+                                                        .getApplicationServiceContainer()
+                                                        .getComponentInstanceOfType(ListenerService.class);
+          Map<String, String> gam = new HashMap<>();
+          gam.put("ruleTitle", "openOnlyofficeDocument");
+          gam.put("senderId", request.getRemoteUser());
+          gam.put("receiverId", request.getRemoteUser());
+          gam.put("object", config.getExplorerUrl());
+          listenerService.broadcast("exo.gamification.generic.action", gam, "");
+        } catch (Exception e) {
+          LOG.error("Error firing listener with Onlyoffice event for user: {}, document: {}", request.getRemoteUser(), docId, e);
         }
       } catch (RepositoryException e) {
         LOG.error("Error reading document node by ID: {}", docId, e);
-        js.addScripts("onlyoffice.showError('Error','Cannot read the document. Please retry.');");
+        showError(i18n.getString("OnlyofficeEditorClient.ErrorTitle"),
+                  i18n.getString("OnlyofficeEditor.error.CannotReadDocument"));
       } catch (OnlyofficeEditorException e) {
         LOG.error("Error creating document editor for node by ID: {}", docId, e);
-        js.addScripts("onlyoffice.showError('Error','Cannot create editor. Please retry.');");
+        showError(i18n.getString("OnlyofficeEditorClient.ErrorTitle"),
+                  i18n.getString("OnlyofficeEditor.error.CannotCreateEditor"));
       } catch (JsonException e) {
         LOG.error("Error converting editor configuration to JSON for node by ID: {}", docId, e);
-        js.addScripts("onlyoffice.showError('Error','Cannot send editor configuration. Please retry.');");
+        showError(i18n.getString("OnlyofficeEditorClient.ErrorTitle"),
+                  i18n.getString("OnlyofficeEditor.error.CannotSendEditorConfiguration"));
       }
     } else {
-      js.addScripts("onlyoffice.showError('Error','Wrong request: document ID required.');");
+      showError(i18n.getString("OnlyofficeEditorClient.ErrorTitle"), i18n.getString("OnlyofficeEditor.error.DocumentIdRequired"));
     }
 
     PortletRequestDispatcher prDispatcher = getPortletContext().getRequestDispatcher("/WEB-INF/pages/editor.jsp");

@@ -33,9 +33,7 @@ import org.exoplatform.onlyoffice.cometd.CometdOnlyofficeService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.security.ConversationState;
-import org.exoplatform.web.application.JavascriptManager;
 import org.exoplatform.web.application.Parameter;
-import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.EventConfig;
 import org.exoplatform.webui.core.lifecycle.UIContainerLifecycle;
@@ -128,7 +126,7 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
         // we store current node in the context
         OnlyofficeEditorService editorService = this.getApplicationComponent(OnlyofficeEditorService.class);
         CometdOnlyofficeService cometdService = this.getApplicationComponent(CometdOnlyofficeService.class);
-       
+
         String editorLink = editorService.getEditorLink(uiExplorer.getCurrentNode());
         ConversationState convo = ConversationState.getCurrent();
         String userId = null;
@@ -144,8 +142,7 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
         ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
         String cometdInfoJson = ow.writeValueAsString(cometdInfo);
 
-        JavascriptManager js = ((WebuiRequestContext) WebuiRequestContext.getCurrentInstance()).getJavascriptManager();
-        js.require("SHARED/onlyoffice", "onlyoffice").addScripts("onlyoffice.initExplorer(" + cometdInfoJson + ");");
+        OnlyofficeClientContext.callModule("initExplorer(" + cometdInfoJson + ");");
 
         if (editorLink != null && !editorLink.isEmpty()) {
           return "javascript:window.open('" + editorLink + "');";
