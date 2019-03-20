@@ -37,15 +37,15 @@
   </portlet>
   
   <portlet>
-    <portlet-name>OnlyofficeStreamPortlet</portlet-name>
-    <display-name xml:lang="EN">Onlyoffice Stream Portlet</display-name>
-    <portlet-class>org.exoplatform.onlyoffice.portlet.ActivityStreamPortlet</portlet-class>
+    <portlet-name>OnlyofficeDocumentStatePortlet</portlet-name>
+    <display-name xml:lang="EN">Onlyoffice Document State Portlet</display-name>
+    <portlet-class>org.exoplatform.onlyoffice.portlet.DocumentStatePortlet</portlet-class>
     <supports>
       <mime-type>text/html</mime-type>
     </supports>
     <portlet-info>
-      <title>Onlyoffice stream portlet</title>
-      <short-title>Onlyoffice stream</short-title>
+      <title>Onlyoffice document state portlet</title>
+      <short-title>Onlyoffice document</short-title>
     </portlet-info>
   </portlet>
 </portlet-app>

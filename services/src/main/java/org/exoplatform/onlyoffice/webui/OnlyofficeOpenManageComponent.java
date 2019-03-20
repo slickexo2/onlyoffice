@@ -18,24 +18,16 @@
  */
 package org.exoplatform.onlyoffice.webui;
 
-import static org.exoplatform.onlyoffice.webui.OnlyofficeClientContext.callModule;
 import static org.exoplatform.onlyoffice.webui.OnlyofficeClientContext.editorLink;
 
 import java.util.Arrays;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-
-import org.exoplatform.container.PortalContainer;
 import org.exoplatform.ecm.webui.component.explorer.UIJCRExplorer;
 import org.exoplatform.ecm.webui.component.explorer.control.listener.UIActionBarActionListener;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
-import org.exoplatform.onlyoffice.cometd.CometdInfo;
-import org.exoplatform.onlyoffice.cometd.CometdOnlyofficeService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
-import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.web.application.Parameter;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.EventConfig;
@@ -102,24 +94,8 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
       if (uiExplorer != null) {
         // we store current node in the context
         OnlyofficeEditorService editorService = this.getApplicationComponent(OnlyofficeEditorService.class);
-        CometdOnlyofficeService cometdService = this.getApplicationComponent(CometdOnlyofficeService.class);
-
         String editorLink = editorService.getEditorLink(uiExplorer.getCurrentNode());
         if (editorLink != null && !editorLink.isEmpty()) {
-          ConversationState convo = ConversationState.getCurrent();
-          String userId = null;
-          if (convo != null && convo.getIdentity() != null) {
-            userId = convo.getIdentity().getUserId();
-          }
-          String cometdPath = cometdService.getCometdServerPath();
-          String userToken = cometdService.getUserToken(userId);
-          String containerName = PortalContainer.getCurrentPortalContainerName();
-          String docId = editorService.initDocument(uiExplorer.getCurrentNode());
-
-          CometdInfo cometdInfo = new CometdInfo(userId, userToken, cometdPath, containerName, docId);
-          ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-          String cometdInfoJson = ow.writeValueAsString(cometdInfo);
-          callModule("initExplorer(" + cometdInfoJson + ");");
           return "javascript:window.open('" + editorLink(editorLink, "documents") + "');";
         }
       } else {

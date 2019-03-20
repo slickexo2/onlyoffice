@@ -406,12 +406,12 @@
         </value-param>
         <object-param>
           <name>OnlyofficeStream</name>
-          <description>Onlyoffice Activity Stream portlet</description>
+          <description>Onlyoffice Document State portlet</description>
           <object type="org.exoplatform.portal.config.serialize.PortletApplication">
             <field name="state">
               <object type="org.exoplatform.portal.config.model.TransientApplicationState">
                 <field name="contentId">
-                  <string>onlyoffice/OnlyofficeStreamPortlet</string>
+                  <string>onlyoffice/OnlyofficeDocumentStatePortlet</string>
                 </field>
               </object>
             </field>
