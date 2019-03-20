@@ -19,6 +19,16 @@
   }
 
   // ******** Utils ********
+
+	var getRandomArbitrary = function(min, max) {
+	  return Math.floor((Math.random() * (max - min - 1) + min) + 1);
+	};
+
+	/**
+	 * Universal client ID for use in logging, services connectivity and related cases.
+	 */
+  var clientId = "" + getRandomArbitrary(100000, 999998);
+  
   /**
    * Stuff grabbed from CW's commons.js
    */
@@ -231,9 +241,18 @@
 
     // Constants:
     var DOCUMENT_SAVED = "DOCUMENT_SAVED";
+    var DOCUMENT_CHANGED = "DOCUMENT_CHANGED";
+    var DOCUMENT_DOWNLOAD = "DOCUMENT_DOWNLOAD";
+    var DOCUMENT_VERSION = "DOCUMENT_VERSION";
+
+    // CometD transport bus
+	  var cometd, cometdContext;
 
     var store;
     var subscribedDocuments = [];
+
+    // Current config (actual for editor page only)
+    var currentConfig;
 
     /**
      * Initializes the redux store or returns existing one.
@@ -295,6 +314,21 @@
       });
     };
 
+    var publishDocumentUpdate = function(docId, data) {
+      // TODO do we need Handshake or eXo's cCometD already did this?
+      cometd.publish("/eXo/Application/Onlyoffice/editor/" + docId, data, cometdContext, function(publishReply) {
+        // Publication status callback
+        if (publishReply.successful) {
+          // The server successfully subscribed this client to the channel.
+          log("Document update published successfully: " + JSON.stringify(publishReply));
+        } else {
+          var err = publishReply.error ? publishReply.error : (publishReply.failure ? publishReply.failure.reason
+              : "Undefined");
+          log("Document updates publication failed for " + docId, err);
+        }
+      });
+    };
+
     var onError = function(event) {
       log("ONLYOFFICE Document Editor reports an error: " + JSON.stringify(event));
     };
@@ -311,9 +345,39 @@
       log("documentChange: " + JSON.stringify(event));
       if (event.data) {
         log("ONLYOFFICE The document changed");
-        UI.documentChanged(event);
+        // Document changed locally, soon it will be sent to Document Server.
+        // TODO We may get prepared here for a soon call of downloadAs().
       } else {
         log("ONLYOFFICE Changes are collected on document editing service");
+        // TODO since now we start collect this user changes (via channel) at server-side and
+        // when another co-editor will fire the same event (this method by anotehr user), this 
+        // user should save his changes in eXo storage version by calling 
+        // docEditor.downloadAs();
+        if (currentConfig) {
+          // We are a editor oage here: publish that the doc was changed by current user
+          publishDocumentUpdate(currentConfig.docId, {
+            "type": DOCUMENT_CHANGED,
+            "userId": currentConfig.editorConfig.user.id,
+            "clientId": clientId
+          });
+        }
+      }
+    };
+
+    var onDownloadAs = function(event) {
+      log("onDownloadAs: " + JSON.stringify(event));
+      if (event.data) {
+        log("ONLYOFFICE Document Editor download file: " + event.data);
+        // TODO send USER_VERSION event to channel with a link
+        if (currentConfig) {
+          // We are a editor oage here: publish that the doc ready for download
+          publishDocumentUpdate(currentConfig.docId, {
+            "type": DOCUMENT_VERSION,
+            "userId": currentConfig.editorConfig.user.id,
+            "documentLink" : event.data,
+            "clientId": clientId
+          });
+        }
       }
     };
 
@@ -341,7 +405,8 @@
           "onDocumentStateChange" : onDocumentStateChange,
           "onError" : onError,
           "onReady" : onReady,
-          "onBack" : onBack
+          "onBack" : onBack,
+          "onDownloadAs": onDownloadAs,
         };
         config.editorConfig.customization = {
           "chat" : false,
@@ -432,6 +497,20 @@
       // so we'll refresh this explorer view to reflect the edited content.
       UI.initEditor();
       create(config).done(function(localConfig) {
+        currentConfig = localConfig;
+
+        // TODO need cometdInfo
+        // Listen to document updates
+        subscribeDocumentUpdates(cometdInfo);
+        // Init redux store
+        eventStore();
+        store.subscribe(function () {
+          var state = store.getState();
+          if (state.type === DOCUMENT_DOWNLOAD && state.docId === currentConfig.docId && state.clientId === clientId) {
+            UI.downloadAs();
+          }
+        });
+
         $(function() {
           try {
             UI.create(localConfig);
@@ -528,10 +607,6 @@
     var NOTICE_WIDTH = "380px";
 
     var docEditor;
-
-    var hasDocumentChanged = false;
-
-    var self = this;
 
     /**
      * Returns the html markup of the 'Edit Online' button.
@@ -648,22 +723,11 @@
      */
     this.closeEditor = function() {
       saveAndDestroy();
-      // Use Close menu to reload the view with right representation
-      $("#UIDocumentWorkspace .fileContent .onlyofficeContainer .loading .onClose").click();
     };
 
-    /**
-     * TODO not used
-     */
-    this.disableMenu = function() {
-      $("#uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen").parent().addClass("editorDisabled").parent().removeAttr("onclick");
-      $("#uiActionsBarContainer i.uiIconEcmsOnlyofficeClose").parent().addClass("editorDisabled").parent().removeAttr("onclick");
-    };
-
-    this.documentChanged = function(event) {
-      // Used for UI messages.
-      // TODO use this to broadcast this user changes to the doc channel and save the user version in JCR
-      hasDocumentChanged = true;
+    this.downloadAs = function() {
+      // We request Document Server to preare a download link for the document state.
+      docEditor.downloadAs();      
     };
 
     /**
@@ -678,7 +742,6 @@
 
           // create and start editor (this also will re-use an existing editor config from the server)
           docEditor = new DocsAPI.DocEditor("onlyoffice", localConfig);
-          hasDocumentChanged = false;
           // show editor
           $container.find(".editor").show("blind");
           $container.find(".loading").hide("blind");
