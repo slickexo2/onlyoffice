@@ -23,9 +23,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 
+import org.exoplatform.onlyoffice.OnlyofficeEditorService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.resources.ResourceBundleService;
+import org.exoplatform.social.core.space.SpaceUtils;
+import org.exoplatform.social.core.space.model.Space;
 import org.exoplatform.web.application.JavascriptManager;
 import org.exoplatform.web.application.RequireJS;
 import org.exoplatform.webui.application.WebuiRequestContext;
@@ -90,7 +93,7 @@ public class OnlyofficeClientContext {
   private RequireJS appRequireJS() {
     return require;
   }
-  
+
   private void callOnModule(String code) {
     require.addScripts(new StringBuilder("onlyoffice.").append(code).append("\n").toString());
   }
@@ -121,14 +124,15 @@ public class OnlyofficeClientContext {
 
   /**
    * Adds the script to be called on <code>onlyoffice</code> module. Finally it
-   * will appear as <code>onlyoffice.myMethod(...)</code>, where myMethod(...) it's what given as code parameter.
+   * will appear as <code>onlyoffice.myMethod(...)</code>, where myMethod(...)
+   * it's what given as code parameter.
    *
    * @param code the code of a method to invoke on onlyoffice module
    */
   public static void callModule(String code) {
     context().callOnModule(code);
   }
-  
+
   /**
    * Return Web UI app's RequireJS instance.
    *
@@ -138,8 +142,35 @@ public class OnlyofficeClientContext {
     return context().appRequireJS();
   }
 
+  /**
+   * Show error message to an user.
+   *
+   * @param title the title
+   * @param message the message
+   */
   public static void showError(String title, String message) {
     context().showClientError(title, message);
+  }
+
+  /**
+   * Generate Editor link with context information: source app (e.g. stream or
+   * documents), space name etc.
+   *
+   * @param link the link obtained from {@link OnlyofficeEditorService#getEditorLink(javax.jcr.Node)}
+   * @param source the source name, can be any text value
+   * @return the string with link URL
+   */
+  public static String editorLink(String link, String source) {
+    StringBuilder linkBuilder = new StringBuilder(link).append("&source=").append(source);
+    // Owner space (actual in FileUIActivity):
+    // Space space =
+    // getApplicationComponent(SpaceService.class).getSpaceById(getOwnerIdentity().getRemoteId());
+    // Context space:
+    Space space = SpaceUtils.getSpaceByContext();
+    if (space != null) {
+      linkBuilder.append("&space=").append(space.getPrettyName());
+    }
+    return linkBuilder.toString();
   }
 
 }

@@ -28,7 +28,6 @@ import java.util.ResourceBundle;
 import javax.jcr.RepositoryException;
 import javax.portlet.GenericPortlet;
 import javax.portlet.PortletException;
-import javax.portlet.PortletRequest;
 import javax.portlet.PortletRequestDispatcher;
 import javax.portlet.RenderMode;
 import javax.portlet.RenderRequest;
@@ -103,8 +102,7 @@ public class EditorPortlet extends GenericPortlet {
                     i18n.getString("OnlyofficeEditor.error.EditorCannotBeCreated"));
         }
 
-        // Notify Gamification listeners
-        // TODO make broadcast name configurable
+        // Notify listeners
         try {
           ListenerService listenerService = webuiContext.getApplication()
                                                         .getApplicationServiceContainer()
@@ -132,21 +130,5 @@ public class EditorPortlet extends GenericPortlet {
 
     PortletRequestDispatcher prDispatcher = getPortletContext().getRequestDispatcher("/WEB-INF/pages/editor.jsp");
     prDispatcher.include(request, response);
-  }
-
-  /**
-   * Request host.
-   *
-   * @param request the request
-   * @return the string
-   */
-  protected String requestHost(PortletRequest request) {
-    StringBuilder host = new StringBuilder(request.getServerName());
-    int port = request.getServerPort();
-    if (port >= 0 && port != 80 && port != 443) {
-      host.append(':');
-      host.append(port);
-    }
-    return host.toString();
   }
 }

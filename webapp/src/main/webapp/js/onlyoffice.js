@@ -111,6 +111,7 @@
   // ******** REST services ********
   var prefixUrl = pageBaseUrl(location);
 
+  /* TODO not used
   var initRequest = function(request) {
     var process = $.Deferred();
 
@@ -171,7 +172,7 @@
       request : request
     };
     return process.promise(processTarget);
-  };
+  }; */
 
   /* TODO cleanup
   var configGet = function(workspace, path) {
@@ -231,7 +232,6 @@
     // Constants:
     var DOCUMENT_SAVED = "DOCUMENT_SAVED";
 
-    var self = this;
     var store;
     var subscribedDocuments = [];
 

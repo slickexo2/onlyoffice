@@ -806,20 +806,4 @@ public class EditorService implements ResourceContainer {
     return false;
   }
 
-  /**
-   * Request host.
-   *
-   * @param requestUri the request uri
-   * @return the string
-   */
-  protected String requestHost(URI requestUri) {
-    StringBuilder host = new StringBuilder(requestUri.getHost());
-    int port = requestUri.getPort();
-    if (port >= 0 && port != 80 && port != 443) {
-      host.append(':');
-      host.append(port);
-    }
-    return host.toString();
-  }
-
 }

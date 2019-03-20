@@ -85,9 +85,10 @@ public class Config implements Externalizable {
     protected String       editorUrl;
 
     /** The ECMS explorer page URL. */
+    @Deprecated
     protected String       explorerUrl;
 
-    /** The explorer URI. */
+    /** The ECMS explorer page URL. */
     protected URI          explorerUri;
 
     /** The document. */
@@ -152,15 +153,16 @@ public class Config implements Externalizable {
      * @param explorerUrl the explorer url
      * @return the builder
      */
+    @Deprecated
     public Builder explorerUrl(String explorerUrl) {
       this.explorerUrl = explorerUrl;
       return this;
     }
 
     /**
-     * Explorer relative URL.
+     * URI of ECMS explorer page with a document.
      *
-     * @param uri the uri
+     * @param uri the URI of the page
      * @return the builder
      */
     public Builder explorerUri(URI uri) {
@@ -338,7 +340,6 @@ public class Config implements Externalizable {
       return new Config(documentserverUrl,
                         platformRestUrl,
                         editorUrl,
-                        explorerUrl,
                         explorerUri,
                         documentType,
                         workspace,
@@ -818,9 +819,6 @@ public class Config implements Externalizable {
   private String         editorUrl;
 
   /** The explorer page URL (ECMS Explorer page). */
-  private String         explorerUrl;
-
-  /** The explorer relative URL (ECMS Explorer page URI). */
   private transient URI  explorerUri;
 
   /** The workspace. */
@@ -874,7 +872,6 @@ public class Config implements Externalizable {
    * @param documentserverUrl the documentserver URL
    * @param platformRestUrl the platform url
    * @param editorUrl the editor url
-   * @param explorerUrl the explorer url
    * @param explorerUri the explorer uri
    * @param documentType the document type
    * @param workspace the workspace
@@ -886,7 +883,6 @@ public class Config implements Externalizable {
   protected Config(String documentserverUrl,
                    String platformRestUrl,
                    String editorUrl,
-                   String explorerUrl,
                    URI explorerUri,
                    String documentType,
                    String workspace,
@@ -903,7 +899,6 @@ public class Config implements Externalizable {
 
     this.platformRestUrl = platformRestUrl;
     this.editorUrl = editorUrl;
-    this.explorerUrl = explorerUrl;
     this.explorerUri = explorerUri;
 
     this.document = document;
@@ -923,11 +918,10 @@ public class Config implements Externalizable {
     out.writeUTF(documentserverJsUrl);
     out.writeUTF(platformRestUrl.toString());
     out.writeUTF(editorUrl);
-    out.writeUTF(explorerUrl);
     try {
       out.writeObject(explorerUri);
     } catch (Exception e) {
-      LOG.warn("Error serializing explorer URI for " + explorerUrl, e);
+      LOG.warn("Error serializing explorer URI for " + path, e);
     }
 
     out.writeUTF(open != null ? open.toString() : EMPTY);
@@ -967,17 +961,11 @@ public class Config implements Externalizable {
     this.documentserverJsUrl = in.readUTF();
     this.platformRestUrl = in.readUTF();
     this.editorUrl = in.readUTF();
-    this.explorerUrl = in.readUTF();
     try {
       this.explorerUri = (URI) in.readObject();
     } catch (Exception e) {
-      LOG.warn("Error deserializing explorer URI for " + explorerUrl, e);
-      try {
-        this.explorerUri = URI.create(explorerUrl);
-      } catch (Exception e1) {
-        LOG.warn("Error deserializing explorer URI from " + explorerUrl, e);
-        this.explorerUri = null;
-      }
+      LOG.warn("Error deserializing explorer URI for " + path, e);
+      this.explorerUri = null;
     }
     String openString = in.readUTF();
     // Note: closing state isn't replicable (due to short lifecycle, few seconds
@@ -1101,7 +1089,7 @@ public class Config implements Externalizable {
    * @return the explorerUrl
    */
   public String getExplorerUrl() {
-    return explorerUrl;
+    return explorerUri.toString();
   }
 
   /**
@@ -1154,7 +1142,6 @@ public class Config implements Externalizable {
     return new Config(documentserverUrl,
                       platformRestUrl,
                       editorUrl,
-                      explorerUrl,
                       explorerUri,
                       documentType,
                       workspace,
