@@ -104,12 +104,14 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
       Node node = getContentNode(0);
       if (node != null) {
         String editorLink = editorLinks.computeIfAbsent(node, n -> getEditorLink(n));
-        if (editorLink != null && !editorLink.isEmpty()) {
-          cometdInfo.setDocId(node.getUUID());
-          String cometdInfoJson = ow.writeValueAsString(cometdInfo);
-          callModule("initActivity(" + cometdInfoJson + ", '" + getActivity().getId() + "','" + editorLink(editorLink, "stream")
-              + "');");
+        if (editorLink == null || editorLink.isEmpty()) {
+          editorLink = "null";
+        } else {
+          editorLink = "'" + editorLink(editorLink, "stream") + "'";
         }
+        cometdInfo.setDocId(node.getUUID());
+        String cometdInfoJson = ow.writeValueAsString(cometdInfo);
+        callModule("initActivity(" + cometdInfoJson + ", '" + getActivity().getId() + "'," + editorLink + ");");
       }
     }
 
@@ -118,12 +120,15 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
       Node node = getContentNode(index);
       if (node != null) {
         String editorLink = editorLinks.computeIfAbsent(node, n -> getEditorLink(n));
-        if (editorLink != null && !editorLink.isEmpty()) {
-          cometdInfo.setDocId(node.getUUID());
-          String cometdInfoJson = ow.writeValueAsString(cometdInfo);
-          callModule("initPreview(" + cometdInfoJson + ", '" + getActivity().getId() + "','" + editorLink(editorLink, "preview")
-              + "','" + index + "');");
+        if (editorLink == null || editorLink.isEmpty()) {
+          editorLink = "null";
+        } else {
+          editorLink = "'" + editorLink(editorLink, "preview") + "'";
         }
+
+        cometdInfo.setDocId(node.getUUID());
+        String cometdInfoJson = ow.writeValueAsString(cometdInfo);
+        callModule("initPreview(" + cometdInfoJson + ", '" + getActivity().getId() + "'," + editorLink + ",'" + index + "');");
       }
     }
 

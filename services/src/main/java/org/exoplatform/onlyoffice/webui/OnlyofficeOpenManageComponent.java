@@ -119,7 +119,6 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
           CometdInfo cometdInfo = new CometdInfo(userId, userToken, cometdPath, containerName, docId);
           ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
           String cometdInfoJson = ow.writeValueAsString(cometdInfo);
-
           callModule("initExplorer(" + cometdInfoJson + ");");
           return "javascript:window.open('" + editorLink(editorLink, "documents") + "');";
         }

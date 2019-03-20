@@ -468,7 +468,7 @@
           UI.addRefreshBannerActivity(activityId);
         }
       });
-      if (editorLink !== "null") {
+      if (editorLink) {
         UI.addEditorButtonToActivity(activityId, editorLink);
       }
     };
@@ -491,7 +491,7 @@
           });
         }, 100);
       });
-      if (editorLink !== "null") {
+      if (editorLink) {
         UI.addEditorButtonToPreview(activityId, editorLink, previewIndex);
       }
     };
