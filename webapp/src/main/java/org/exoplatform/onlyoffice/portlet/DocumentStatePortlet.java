@@ -33,7 +33,7 @@ public class DocumentStatePortlet extends GenericPortlet {
   @Override
   protected void doView(final RenderRequest request, final RenderResponse response) {
     WebuiRequestContext webuiContext = (WebuiRequestContext) WebuiRequestContext.getCurrentInstance();
-    UIJCRExplorer explorer = webuiContext.getUIApplication().getApplicationComponent(UIJCRExplorer.class);
+    UIJCRExplorer explorer = webuiContext.getUIApplication().findFirstComponentOfType(UIJCRExplorer.class);
     if (explorer != null) {
       ExoContainer container = ExoContainerContext.getCurrentContainer();
 
