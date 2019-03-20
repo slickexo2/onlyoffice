@@ -156,7 +156,8 @@ public class OnlyofficeClientContext {
    * Generate Editor link with context information: source app (e.g. stream or
    * documents), space name etc.
    *
-   * @param link the link obtained from {@link OnlyofficeEditorService#getEditorLink(javax.jcr.Node)}
+   * @param link the link obtained from
+   *          {@link OnlyofficeEditorService#getEditorLink(javax.jcr.Node)}
    * @param source the source name, can be any text value
    * @return the string with link URL
    */
@@ -166,6 +167,8 @@ public class OnlyofficeClientContext {
     // Space space =
     // getApplicationComponent(SpaceService.class).getSpaceById(getOwnerIdentity().getRemoteId());
     // Context space:
+    // XXX context space will be null for space doc links in form:
+    // /portal/intranet/documents?path=.spaces.test_onlyoffice%2FGroups%2Fspaces%2Ftest_onlyoffice%2FDocuments%2FSimple+Document.docx
     Space space = SpaceUtils.getSpaceByContext();
     if (space != null) {
       linkBuilder.append("&space=").append(space.getPrettyName());
