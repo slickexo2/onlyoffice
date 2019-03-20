@@ -18,6 +18,9 @@
  */
 package org.exoplatform.onlyoffice.webui;
 
+import static org.exoplatform.onlyoffice.webui.OnlyofficeClientContext.callModule;
+import static org.exoplatform.onlyoffice.webui.OnlyofficeClientContext.editorLink;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,8 +37,8 @@ import org.exoplatform.onlyoffice.cometd.CometdInfo;
 import org.exoplatform.onlyoffice.cometd.CometdOnlyofficeService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
-import org.exoplatform.social.webui.Utils;
 import org.exoplatform.social.webui.activity.BaseUIActivity;
+import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.ComponentConfigs;
 import org.exoplatform.webui.config.annotation.EventConfig;
@@ -86,7 +89,7 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
   @Override
   public void end() throws Exception {
     CometdOnlyofficeService cometdService = this.getApplicationComponent(CometdOnlyofficeService.class);
-    String userId = Utils.getViewerIdentity().getId();
+    String userId = WebuiRequestContext.getCurrentInstance().getRemoteUser();
 
     CometdInfo cometdInfo = new CometdInfo();
     cometdInfo.setUser(userId);
@@ -100,19 +103,13 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
     if (getFilesCount() == 1) {
       Node node = getContentNode(0);
       if (node != null) {
-        editorLinks.computeIfAbsent(node, n -> {
-          try {
-            return editorService.getEditorLink(n);
-          } catch (OnlyofficeEditorException | RepositoryException e) {
-            LOG.error(e);
-            return null;
-          }
-        });
-        String editorLink = editorLinks.get(node);
-        cometdInfo.setDocId(node.getUUID());
-        String cometdInfoJson = ow.writeValueAsString(cometdInfo);
-        OnlyofficeClientContext.callModule("initActivity(" + cometdInfoJson + ", '" + getActivity().getId() + "','"
-            + editorLink + "');");
+        String editorLink = editorLinks.computeIfAbsent(node, n -> getEditorLink(n));
+        if (editorLink != null && !editorLink.isEmpty()) {
+          cometdInfo.setDocId(node.getUUID());
+          String cometdInfoJson = ow.writeValueAsString(cometdInfo);
+          callModule("initActivity(" + cometdInfoJson + ", '" + getActivity().getId() + "','" + editorLink(editorLink, "stream")
+              + "');");
+        }
       }
     }
 
@@ -120,22 +117,25 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
     for (int index = 0; index < getFilesCount(); index++) {
       Node node = getContentNode(index);
       if (node != null) {
-        editorLinks.computeIfAbsent(node, n -> {
-          try {
-            return editorService.getEditorLink(n);
-          } catch (OnlyofficeEditorException | RepositoryException e) {
-            LOG.error(e);
-            return null;
-          }
-        });
-        String editorLink = editorLinks.get(node);
-        cometdInfo.setDocId(node.getUUID());
-        String cometdInfoJson = ow.writeValueAsString(cometdInfo);
-        OnlyofficeClientContext.callModule("initPreview(" + cometdInfoJson + ", '" + getActivity().getId() + "','"
-            + editorLink + "','" + index + "');");
+        String editorLink = editorLinks.computeIfAbsent(node, n -> getEditorLink(n));
+        if (editorLink != null && !editorLink.isEmpty()) {
+          cometdInfo.setDocId(node.getUUID());
+          String cometdInfoJson = ow.writeValueAsString(cometdInfo);
+          callModule("initPreview(" + cometdInfoJson + ", '" + getActivity().getId() + "','" + editorLink(editorLink, "preview")
+              + "','" + index + "');");
+        }
       }
     }
-    
+
     super.end();
+  }
+
+  protected String getEditorLink(Node docNode) {
+    try {
+      return editorService.getEditorLink(docNode);
+    } catch (OnlyofficeEditorException | RepositoryException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 }

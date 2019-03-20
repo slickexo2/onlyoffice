@@ -18,6 +18,9 @@
  */
 package org.exoplatform.onlyoffice.webui;
 
+import static org.exoplatform.onlyoffice.webui.OnlyofficeClientContext.callModule;
+import static org.exoplatform.onlyoffice.webui.OnlyofficeClientContext.editorLink;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -74,33 +77,7 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
      * {@inheritDoc}
      */
     public void processEvent(Event<OnlyofficeOpenManageComponent> event) throws Exception {
-      // TODO This code will be invoked by portal's handler on "Edit Online"
-      // button -
-      // if we'll remove that link, this will never be called.
-      // Indeed, we must ensure that portal state is correct
-      // see in
-
-      // We don't need anything here as it will never be requested (to do
-      // not harm with interaction state updates and new editor page - we remove
-      // this onclick action in Javascript)
-
-      // WebuiRequestContext context = event.getRequestContext();
-      // UIJCRExplorer explorer =
-      // event.getSource().getAncestorOfType(UIJCRExplorer.class);
-
-      // String workspace = explorer.getCurrentWorkspace();
-      // String path = explorer.getCurrentNode().getPath();
-
-      // Refresh UI components
-      // UIDocumentWorkspace docWorkspace =
-      // explorer.findFirstComponentOfType(UIDocumentWorkspace.class);
-      // context.addUIComponentToUpdateByAjax(docWorkspace);
-      // TODO in fact we don't need refresh the action bar (no menu items to
-      // show/hide as editor will open in new window and several editors
-      // possible)
-      // UIActionBar actionBar =
-      // explorer.findFirstComponentOfType(UIActionBar.class);
-      // context.addUIComponentToUpdateByAjax(actionBar);
+      // This code will not be invoked
     }
   }
 
@@ -128,24 +105,23 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
         CometdOnlyofficeService cometdService = this.getApplicationComponent(CometdOnlyofficeService.class);
 
         String editorLink = editorService.getEditorLink(uiExplorer.getCurrentNode());
-        ConversationState convo = ConversationState.getCurrent();
-        String userId = null;
-        if (convo != null && convo.getIdentity() != null) {
-          userId = convo.getIdentity().getUserId();
-        }
-        String cometdPath = cometdService.getCometdServerPath();
-        String userToken = cometdService.getUserToken(userId);
-        String containerName = PortalContainer.getCurrentPortalContainerName();
-        String docId = editorService.initDocument(uiExplorer.getCurrentNode());
-
-        CometdInfo cometdInfo = new CometdInfo(userId, userToken, cometdPath, containerName, docId);
-        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-        String cometdInfoJson = ow.writeValueAsString(cometdInfo);
-
-        OnlyofficeClientContext.callModule("initExplorer(" + cometdInfoJson + ");");
-
         if (editorLink != null && !editorLink.isEmpty()) {
-          return "javascript:window.open('" + editorLink + "');";
+          ConversationState convo = ConversationState.getCurrent();
+          String userId = null;
+          if (convo != null && convo.getIdentity() != null) {
+            userId = convo.getIdentity().getUserId();
+          }
+          String cometdPath = cometdService.getCometdServerPath();
+          String userToken = cometdService.getUserToken(userId);
+          String containerName = PortalContainer.getCurrentPortalContainerName();
+          String docId = editorService.initDocument(uiExplorer.getCurrentNode());
+
+          CometdInfo cometdInfo = new CometdInfo(userId, userToken, cometdPath, containerName, docId);
+          ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+          String cometdInfoJson = ow.writeValueAsString(cometdInfo);
+
+          callModule("initExplorer(" + cometdInfoJson + ");");
+          return "javascript:window.open('" + editorLink(editorLink, "documents") + "');";
         }
       } else {
         LOG.warn("Cannot find ancestor of type UIJCRExplorer in component " + this + ", parent: " + this.getParent());

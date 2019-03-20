@@ -642,9 +642,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           builder.editorUrl(new StringBuilder(platformUrl).append(editorURLPath(docId)).toString());
 
           // ECMS explorer page URL
-          String ecmsLink = explorerLink(path);
-          builder.explorerUri(explorerUri(schema, host, port, ecmsLink));
-          builder.explorerUrl(explorerUrl(schema, host, port, ecmsLink).toString());
+          String ecmsPageLink = explorerLink(path);
+          builder.explorerUri(explorerUri(schema, host, port, ecmsPageLink));
 
           config = builder.build();
 
@@ -1692,6 +1691,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @param ecmsURL the ECMS URL
    * @return the string builder
    */
+  @Deprecated
   protected StringBuilder explorerUrl(String schema, String host, int port, String ecmsURL) {
     StringBuilder explorerUrl = new StringBuilder();
     explorerUrl.append(schema);
