@@ -67,6 +67,8 @@ public class OnlyofficeDocumentsFilter implements Filter {
           app.getApplicationLifecycle().remove(lifecycle);
         }
       }
+    } else {
+      chain.doFilter(request, response);
     }
   }
 }

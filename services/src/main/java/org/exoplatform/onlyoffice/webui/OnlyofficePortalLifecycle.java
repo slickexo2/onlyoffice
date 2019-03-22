@@ -34,6 +34,7 @@ import org.exoplatform.webui.application.WebuiRequestContext;
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: OnlyofficePortalLifecycle.java 00000 Mar 21, 2019 pnedonosko $
  */
+@Deprecated
 public class OnlyofficePortalLifecycle extends AbstractOnlyofficeLifecycle {
 
   /** The Constant LOG. */

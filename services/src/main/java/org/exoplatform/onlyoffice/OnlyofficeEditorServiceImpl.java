@@ -919,6 +919,18 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * {@inheritDoc}
    */
   @Override
+  public String getDocumentId(String workspace, String path) throws OnlyofficeEditorException, RepositoryException {
+    Node node = node(workspace, path);
+    if (canEditDocument(node)) {
+      return initDocument(node);
+    }
+    return null;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public String getEditorLink(Node node) throws RepositoryException, OnlyofficeEditorException {
     if (canEditDocument(node)) {
       String workspace = node.getSession().getWorkspace().getName();

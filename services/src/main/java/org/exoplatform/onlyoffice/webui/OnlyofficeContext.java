@@ -49,12 +49,16 @@ import org.exoplatform.ws.frameworks.json.impl.JsonGeneratorImpl;
  */
 public class OnlyofficeContext {
 
+  public static final String    DOCUMENT_WORKSPACE_ATTRIBUTE = "OnlyofficeContext.document.workspace";
+
+  public static final String    DOCUMENT_PATH_ATTRIBUTE      = "OnlyofficeContext.document.path";
+
   /** The Constant JAVASCRIPT. */
-  protected static final String JAVASCRIPT             = "OnlyofficeContext_Javascript".intern();
+  protected static final String JAVASCRIPT                   = "OnlyofficeContext_Javascript".intern();
 
-  protected static final String CLIENT_RESOURCE_PREFIX = "OnlyofficeEditorClient.";
+  protected static final String CLIENT_RESOURCE_PREFIX       = "OnlyofficeEditorClient.";
 
-  protected static final Log    LOG                    = ExoLogger.getLogger(OnlyofficeContext.class);
+  protected static final Log    LOG                          = ExoLogger.getLogger(OnlyofficeContext.class);
 
   private final RequireJS       require;
 

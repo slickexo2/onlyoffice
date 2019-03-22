@@ -39,7 +39,7 @@ import org.exoplatform.webui.core.UIContainer;
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: OnlyofficeEditorLifecycle.java 00000 Mar 22, 2019 pnedonosko $
  */
-public class OnlyofficeEditorLifecycle extends OnlyofficePortalLifecycle {
+public class OnlyofficeEditorLifecycle extends AbstractOnlyofficeLifecycle {
 
   /** The Constant LOG. */
   protected static final Log   LOG               = ExoLogger.getLogger(OnlyofficeEditorLifecycle.class);

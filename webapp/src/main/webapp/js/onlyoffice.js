@@ -396,20 +396,30 @@
     this.create = create;
 
     this.init = function(userId, cometdConf, userMessages) {
-      log("Initialize user: " + userId);
-      currentUserId = userId;
-      messages = userMessages;
-      cCometD.configure({
-        "url" : prefixUrl + cometdConf.path,
-        "exoId" : userId,
-        "exoToken" : cometdConf.token,
-        "maxNetworkDelay" : 30000,
-        "connectTimeout" : 60000
-      });
-      cometdContext = {
-        "exoContainerName" : cometdConf.containerName
-      };
-      cometd = cCometD;
+      if (userId == currentUserId) {
+        log("Already initialized user: " + userId);
+      } else if (userId) {
+        currentUserId = userId;
+        log("Initialize user: " + userId);
+        if (userMessages) {
+          messages = userMessages;
+        }
+        if (cometdConf) {
+          cCometD.configure({
+            "url": prefixUrl + cometdConf.path,
+            "exoId": userId,
+            "exoToken": cometdConf.token,
+            "maxNetworkDelay": 30000,
+            "connectTimeout": 60000
+          });
+          cometdContext = {
+            "exoContainerName": cometdConf.containerName
+          };
+          cometd = cCometD;
+        }
+      } else {
+        log("Cannot initialize user: " + userId);
+      }
     };
 
     /**

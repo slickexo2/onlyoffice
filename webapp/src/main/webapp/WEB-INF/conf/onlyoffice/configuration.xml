@@ -423,7 +423,7 @@
 
   <external-component-plugins>
     <target-component>org.exoplatform.web.filter.ExtensibleFilter</target-component>
-    <component-plugin>
+    <!-- component-plugin>
       <name>Onlyoffice context integration filter plugin</name>
       <set-method>addFilterDefinitions</set-method>
       <type>org.exoplatform.web.filter.FilterDefinitionPlugin</type>
@@ -444,10 +444,7 @@
           </object>
         </object-param>
       </init-params>
-    </component-plugin>
-  </external-component-plugins>
-  <external-component-plugins>
-    <target-component>org.exoplatform.web.filter.ExtensibleFilter</target-component>
+    </component-plugin -->
     <component-plugin>
       <name>Onlyoffice Editor integration filter plugin</name>
       <set-method>addFilterDefinitions</set-method>
@@ -470,9 +467,6 @@
         </object-param>
       </init-params>
     </component-plugin>
-  </external-component-plugins>
-  <external-component-plugins>
-    <target-component>org.exoplatform.web.filter.ExtensibleFilter</target-component>
     <component-plugin>
       <name>Onlyoffice Documents integration filter plugin</name>
       <set-method>addFilterDefinitions</set-method>
@@ -490,7 +484,7 @@
                   <string>/intranet/documents.*</string>
                 </value>
                 <value>
-                  <string>/g.*/documents.*</string>
+                  <string>/g/.*/documents.*</string>
                 </value>
               </collection>
             </field>

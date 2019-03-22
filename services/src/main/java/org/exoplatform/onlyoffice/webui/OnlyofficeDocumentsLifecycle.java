@@ -19,17 +19,13 @@
 
 package org.exoplatform.onlyoffice.webui;
 
-import static org.exoplatform.onlyoffice.webui.OnlyofficeContext.callModule;
-
 import javax.jcr.Node;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import org.exoplatform.ecm.webui.component.explorer.UIJCRExplorer;
-import org.exoplatform.onlyoffice.OnlyofficeEditorService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.web.application.Application;
+import org.exoplatform.web.application.RequestContext;
 import org.exoplatform.webui.application.WebuiRequestContext;
 
 /**
@@ -58,35 +54,17 @@ public class OnlyofficeDocumentsLifecycle extends AbstractOnlyofficeLifecycle {
    */
   @Override
   public void onEndRequest(Application app, WebuiRequestContext context) throws Exception {
-    initExplorer(app, context);
-    super.onEndRequest(app, context);
-  }
-
-  // ******* internals ******
-
-  /**
-   * Inits the explorer.
-   *
-   * @param app the app
-   * @param context the context
-   * @throws Exception the exception
-   */
-  protected void initExplorer(Application app, WebuiRequestContext webuiContext) throws Exception {
-    UIJCRExplorer explorer = webuiContext.getUIApplication().findFirstComponentOfType(UIJCRExplorer.class);
-    if (explorer != null) {
+    RequestContext parentContext = context.getParentAppRequestContext();
+    UIJCRExplorer explorer = context.getUIApplication().findFirstComponentOfType(UIJCRExplorer.class);
+    if (explorer != null && parentContext != null) {
       try {
-        OnlyofficeEditorService editorService = app.getApplicationServiceContainer()
-                                                   .getComponentInstanceOfType(OnlyofficeEditorService.class);
         Node node = explorer.getCurrentNode();
-        if (editorService.canEditDocument(node)) {
-          String docId = editorService.initDocument(node);
-          callModule("initExplorer('" + docId + "');");
-        }
-      } catch (JsonProcessingException e) {
-        LOG.error("Couldn't create JSON from cometInfo object.", e);
+        parentContext.setAttribute(OnlyofficeContext.DOCUMENT_WORKSPACE_ATTRIBUTE, node.getSession().getWorkspace().getName());
+        parentContext.setAttribute(OnlyofficeContext.DOCUMENT_PATH_ATTRIBUTE, node.getPath());
       } catch (Exception e) {
-        LOG.error("Couldn't init document of node. ", e);
+        LOG.error("Couldn't read document of node", e);
       }
     }
+    super.onEndRequest(app, context);
   }
 }

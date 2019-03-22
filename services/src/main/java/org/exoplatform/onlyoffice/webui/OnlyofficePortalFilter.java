@@ -43,6 +43,7 @@ import org.exoplatform.webui.application.WebuiApplication;
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: OnlyofficePortalFilter.java 00000 Mar 21, 2019 pnedonosko $
  */
+@Deprecated
 public class OnlyofficePortalFilter implements Filter {
 
   /** The Constant LOG. */
@@ -65,6 +66,8 @@ public class OnlyofficePortalFilter implements Filter {
           app.getApplicationLifecycle().remove(lifecycle);
         }
       }
+    } else {
+      chain.doFilter(request, response);
     }
   }
 }
