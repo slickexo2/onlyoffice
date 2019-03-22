@@ -23,10 +23,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 
+import org.exoplatform.container.ExoContainer;
+import org.exoplatform.container.PortalContainer;
+import org.exoplatform.onlyoffice.OnlyofficeEditorException;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
+import org.exoplatform.onlyoffice.cometd.CometdConfig;
+import org.exoplatform.onlyoffice.cometd.CometdOnlyofficeService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.resources.ResourceBundleService;
+import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.social.core.space.SpaceUtils;
 import org.exoplatform.social.core.space.model.Space;
 import org.exoplatform.web.application.JavascriptManager;
@@ -41,14 +47,18 @@ import org.exoplatform.ws.frameworks.json.impl.JsonGeneratorImpl;
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: OnlyofficeClientContext.java 00000 Mar 18, 2019 pnedonosko $
  */
-public class OnlyofficeClientContext {
+public class OnlyofficeContext {
+
+  public static final String    DOCUMENT_WORKSPACE_ATTRIBUTE = "OnlyofficeContext.document.workspace";
+
+  public static final String    DOCUMENT_PATH_ATTRIBUTE      = "OnlyofficeContext.document.path";
 
   /** The Constant JAVASCRIPT. */
-  protected static final String JAVASCRIPT             = "OnlyofficeClientContext_Javascript".intern();
+  protected static final String JAVASCRIPT                   = "OnlyofficeContext_Javascript".intern();
 
-  protected static final String CLIENT_RESOURCE_PREFIX = "OnlyofficeEditorClient.";
+  protected static final String CLIENT_RESOURCE_PREFIX       = "OnlyofficeEditorClient.";
 
-  protected static final Log    LOG                    = ExoLogger.getLogger(OnlyofficeClientContext.class);
+  protected static final Log    LOG                          = ExoLogger.getLogger(OnlyofficeContext.class);
 
   private final RequireJS       require;
 
@@ -56,12 +66,13 @@ public class OnlyofficeClientContext {
    * Instantiates a new onlyoffice client context.
    *
    * @param requestContext the request context
+   * @throws Exception the exception
    */
-  private OnlyofficeClientContext(WebuiRequestContext requestContext) {
+  private OnlyofficeContext(WebuiRequestContext requestContext) throws Exception {
     JavascriptManager js = requestContext.getJavascriptManager();
     this.require = js.require("SHARED/onlyoffice", "onlyoffice");
 
-    //
+    // Basic JS module initialization
     String messagesJson;
     try {
       ResourceBundleService i18nService = requestContext.getApplication()
@@ -87,7 +98,23 @@ public class OnlyofficeClientContext {
       LOG.warn("Cannot build messages bundle", e);
       messagesJson = "{}";
     }
-    callOnModule(new StringBuilder("initMessages(").append(messagesJson).append(");").toString());
+
+    ConversationState convo = ConversationState.getCurrent();
+    if (convo != null && convo.getIdentity() != null) {
+      ExoContainer container = requestContext.getApplication().getApplicationServiceContainer();
+      CometdOnlyofficeService cometdService = container.getComponentInstanceOfType(CometdOnlyofficeService.class);
+
+      String userId = convo.getIdentity().getUserId();
+
+      CometdConfig cometdConf = new CometdConfig();
+      cometdConf.setPath(cometdService.getCometdServerPath());
+      cometdConf.setToken(cometdService.getUserToken(userId));
+      cometdConf.setContainerName(PortalContainer.getCurrentPortalContainerName());
+
+      callOnModule("init('" + userId + "', " + cometdConf.toJSON() + ", " + messagesJson + ");");
+    } else {
+      throw new OnlyofficeEditorException("Authenticated user required");
+    }
   }
 
   private RequireJS appRequireJS() {
@@ -102,24 +129,36 @@ public class OnlyofficeClientContext {
     callOnModule(new StringBuilder("showError('").append(title).append("', '" + message + "');").toString());
   }
 
-  private static OnlyofficeClientContext context() {
-    OnlyofficeClientContext context;
+  private static OnlyofficeContext context() throws Exception {
+    OnlyofficeContext context;
     WebuiRequestContext requestContext = WebuiRequestContext.getCurrentInstance();
     Object obj = requestContext.getAttribute(JAVASCRIPT);
-    if (obj == null || !OnlyofficeClientContext.class.isAssignableFrom(obj.getClass())) {
+    if (obj == null || !OnlyofficeContext.class.isAssignableFrom(obj.getClass())) {
       synchronized (requestContext) {
         obj = requestContext.getAttribute(JAVASCRIPT);
-        if (obj == null || !OnlyofficeClientContext.class.isAssignableFrom(obj.getClass())) {
-          context = new OnlyofficeClientContext(requestContext);
+        if (obj == null || !OnlyofficeContext.class.isAssignableFrom(obj.getClass())) {
+          context = new OnlyofficeContext(requestContext);
           requestContext.setAttribute(JAVASCRIPT, context);
         } else {
-          context = OnlyofficeClientContext.class.cast(obj);
+          context = OnlyofficeContext.class.cast(obj);
         }
       }
     } else {
-      context = OnlyofficeClientContext.class.cast(obj);
+      context = OnlyofficeContext.class.cast(obj);
     }
     return context;
+  }
+
+  /**
+   * Inits the context (current user, CometD settings, etc). This method called
+   * from
+   * {@link OnlyofficePortalLifecycle#onStartRequest(org.exoplatform.web.application.Application, WebuiRequestContext)},
+   * on Platform app request start.
+   *
+   * @throws Exception the exception
+   */
+  public static void init() throws Exception {
+    context();
   }
 
   /**
@@ -128,8 +167,9 @@ public class OnlyofficeClientContext {
    * it's what given as code parameter.
    *
    * @param code the code of a method to invoke on onlyoffice module
+   * @throws Exception the exception
    */
-  public static void callModule(String code) {
+  public static void callModule(String code) throws Exception {
     context().callOnModule(code);
   }
 
@@ -137,8 +177,9 @@ public class OnlyofficeClientContext {
    * Return Web UI app's RequireJS instance.
    *
    * @return the require JS
+   * @throws Exception the exception
    */
-  public static RequireJS requireJS() {
+  public static RequireJS requireJS() throws Exception {
     return context().appRequireJS();
   }
 
@@ -149,7 +190,11 @@ public class OnlyofficeClientContext {
    * @param message the message
    */
   public static void showError(String title, String message) {
-    context().showClientError(title, message);
+    try {
+      context().showClientError(title, message);
+    } catch (Exception e) {
+      LOG.error("Error initializing context", e);
+    }
   }
 
   /**

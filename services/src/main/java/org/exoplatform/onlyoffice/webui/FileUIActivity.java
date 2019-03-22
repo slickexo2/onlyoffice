@@ -18,27 +18,20 @@
  */
 package org.exoplatform.onlyoffice.webui;
 
-import static org.exoplatform.onlyoffice.webui.OnlyofficeClientContext.callModule;
-import static org.exoplatform.onlyoffice.webui.OnlyofficeClientContext.editorLink;
+import static org.exoplatform.onlyoffice.webui.OnlyofficeContext.callModule;
+import static org.exoplatform.onlyoffice.webui.OnlyofficeContext.editorLink;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-
-import org.exoplatform.container.PortalContainer;
 import org.exoplatform.onlyoffice.OnlyofficeEditorException;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
-import org.exoplatform.onlyoffice.cometd.CometdInfo;
-import org.exoplatform.onlyoffice.cometd.CometdOnlyofficeService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.social.webui.activity.BaseUIActivity;
-import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.ComponentConfigs;
 import org.exoplatform.webui.config.annotation.EventConfig;
@@ -67,10 +60,13 @@ import org.exoplatform.webui.core.lifecycle.UIFormLifecycle;
 public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.FileUIActivity {
 
   /** The Constant LOG. */
-  private static final Log                LOG = ExoLogger.getLogger(FileUIActivity.class);
+  private static final Log                LOG         = ExoLogger.getLogger(FileUIActivity.class);
 
   /** The editor service. */
   protected final OnlyofficeEditorService editorService;
+
+  /** The editor links. */
+  protected final Map<Node, String>       editorLinks = new ConcurrentHashMap<>();
 
   /**
    * Instantiates a new file UI activity with Edit Online button for office
@@ -88,30 +84,13 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
    */
   @Override
   public void end() throws Exception {
-    CometdOnlyofficeService cometdService = this.getApplicationComponent(CometdOnlyofficeService.class);
-    String userId = WebuiRequestContext.getCurrentInstance().getRemoteUser();
-
-    CometdInfo cometdInfo = new CometdInfo();
-    cometdInfo.setUser(userId);
-    cometdInfo.setCometdPath(cometdService.getCometdServerPath());
-    cometdInfo.setUserToken(cometdService.getUserToken(userId));
-    cometdInfo.setContainer(PortalContainer.getCurrentPortalContainerName());
-    ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-
-    Map<Node, String> editorLinks = new HashMap<>();
+    String activityId = getActivity().getId();
 
     if (getFilesCount() == 1) {
       Node node = getContentNode(0);
       if (node != null) {
-        String editorLink = editorLinks.computeIfAbsent(node, n -> getEditorLink(n));
-        if (editorLink == null || editorLink.isEmpty()) {
-          editorLink = "null";
-        } else {
-          editorLink = "'" + editorLink(editorLink, "stream") + "'";
-        }
-        cometdInfo.setDocId(node.getUUID());
-        String cometdInfoJson = ow.writeValueAsString(cometdInfo);
-        callModule("initActivity(" + cometdInfoJson + ", '" + getActivity().getId() + "'," + editorLink + ");");
+        callModule("initActivity('" + editorService.initDocument(node) + "', " + contextEditorLink(node, "stream") + ",'"
+            + activityId + "');");
       }
     }
 
@@ -119,16 +98,8 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
     for (int index = 0; index < getFilesCount(); index++) {
       Node node = getContentNode(index);
       if (node != null) {
-        String editorLink = editorLinks.computeIfAbsent(node, n -> getEditorLink(n));
-        if (editorLink == null || editorLink.isEmpty()) {
-          editorLink = "null";
-        } else {
-          editorLink = "'" + editorLink(editorLink, "preview") + "'";
-        }
-
-        cometdInfo.setDocId(node.getUUID());
-        String cometdInfoJson = ow.writeValueAsString(cometdInfo);
-        callModule("initPreview(" + cometdInfoJson + ", '" + getActivity().getId() + "'," + editorLink + ",'" + index + "');");
+        callModule("initPreview('" + editorService.initDocument(node) + "', " + contextEditorLink(node, "preview") + ",'"
+            + new StringBuilder("#Preview").append(activityId).append('-').append(index).toString() + "');");
       }
     }
 
@@ -141,6 +112,15 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
     } catch (OnlyofficeEditorException | RepositoryException e) {
       LOG.error(e);
       return null;
+    }
+  }
+
+  private String contextEditorLink(Node node, String context) {
+    String link = editorLinks.computeIfAbsent(node, n -> getEditorLink(n));
+    if (link == null || link.isEmpty()) {
+      return "null".intern();
+    } else {
+      return new StringBuilder().append('\'').append(editorLink(link, context)).append('\'').toString();
     }
   }
 }

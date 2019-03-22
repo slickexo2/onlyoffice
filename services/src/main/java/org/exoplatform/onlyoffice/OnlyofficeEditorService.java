@@ -32,7 +32,7 @@ import org.exoplatform.container.component.ComponentPlugin;
 public interface OnlyofficeEditorService {
 
   static String EDITOR_OPEN_EVENT = "exo.onlyoffice.editor.open";
-  
+
   /**
    * Return existing editor configuration for given user and node. If editor not
    * open for given node or user then <code>null</code> will be returned. If
@@ -212,5 +212,20 @@ public interface OnlyofficeEditorService {
    * @throws RepositoryException the repository exeption
    */
   boolean canEditDocument(Node node) throws RepositoryException;
+
+  /**
+   * Gets the document ID by given node workspace and path. It will return an ID
+   * for use within editors if the node can be edited, otherwise
+   * <code>null</code> will be returned.
+   *
+   * @param workspace the workspace
+   * @param path the path
+   * @return the document ID or <code>null</code>
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   * @throws RepositoryException the repository exception
+   * @see #initDocument(String, String)
+   * @see #canEditDocument(Node)
+   */
+  String getDocumentId(String workspace, String path) throws OnlyofficeEditorException, RepositoryException;
 
 }

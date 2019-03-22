@@ -402,18 +402,91 @@
         </value-param>
         <value-param>
           <name>containerName</name>
-          <value>middle-topNavigation-container</value>
+          <value>bottom-all-container</value>
         </value-param>
         <object-param>
           <name>OnlyofficeStream</name>
-          <description>Onlyoffice Activity Stream portlet</description>
+          <description>Onlyoffice Document State portlet</description>
           <object type="org.exoplatform.portal.config.serialize.PortletApplication">
             <field name="state">
               <object type="org.exoplatform.portal.config.model.TransientApplicationState">
                 <field name="contentId">
-                  <string>onlyoffice/OnlyofficeStreamPortlet</string>
+                  <string>onlyoffice/OnlyofficeDocumentStatePortlet</string>
                 </field>
               </object>
+            </field>
+          </object>
+        </object-param>
+      </init-params>
+    </component-plugin>
+  </external-component-plugins>
+
+  <external-component-plugins>
+    <target-component>org.exoplatform.web.filter.ExtensibleFilter</target-component>
+    <!-- component-plugin>
+      <name>Onlyoffice context integration filter plugin</name>
+      <set-method>addFilterDefinitions</set-method>
+      <type>org.exoplatform.web.filter.FilterDefinitionPlugin</type>
+      <init-params>
+        <object-param>
+          <name>Onlyoffice context integration filter</name>
+          <object type="org.exoplatform.web.filter.FilterDefinition">
+            <field name="filter">
+              <object type="org.exoplatform.onlyoffice.webui.OnlyofficePortalFilter" />
+            </field>
+            <field name="patterns">
+              <collection type="java.util.ArrayList" item-type="java.lang.String">
+                <value>
+                  <string>/.*</string>
+                </value>
+              </collection>
+            </field>
+          </object>
+        </object-param>
+      </init-params>
+    </component-plugin -->
+    <component-plugin>
+      <name>Onlyoffice Editor integration filter plugin</name>
+      <set-method>addFilterDefinitions</set-method>
+      <type>org.exoplatform.web.filter.FilterDefinitionPlugin</type>
+      <init-params>
+        <object-param>
+          <name>Onlyoffice Editor integration filter</name>
+          <object type="org.exoplatform.web.filter.FilterDefinition">
+            <field name="filter">
+              <object type="org.exoplatform.onlyoffice.webui.OnlyofficeEditorFilter" />
+            </field>
+            <field name="patterns">
+              <collection type="java.util.ArrayList" item-type="java.lang.String">
+                <value>
+                  <string>/intranet/oeditor.*</string>
+                </value>
+              </collection>
+            </field>
+          </object>
+        </object-param>
+      </init-params>
+    </component-plugin>
+    <component-plugin>
+      <name>Onlyoffice Documents integration filter plugin</name>
+      <set-method>addFilterDefinitions</set-method>
+      <type>org.exoplatform.web.filter.FilterDefinitionPlugin</type>
+      <init-params>
+        <object-param>
+          <name>Onlyoffice Documents integration filter</name>
+          <object type="org.exoplatform.web.filter.FilterDefinition">
+            <field name="filter">
+              <object type="org.exoplatform.onlyoffice.webui.OnlyofficeDocumentsFilter" />
+            </field>
+            <field name="patterns">
+              <collection type="java.util.ArrayList" item-type="java.lang.String">
+                <value>
+                  <string>/intranet/documents.*</string>
+                </value>
+                <value>
+                  <string>/g/.*/documents.*</string>
+                </value>
+              </collection>
             </field>
           </object>
         </object-param>

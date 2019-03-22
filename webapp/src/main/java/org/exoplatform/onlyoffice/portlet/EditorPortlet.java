@@ -18,8 +18,8 @@
  */
 package org.exoplatform.onlyoffice.portlet;
 
-import static org.exoplatform.onlyoffice.webui.OnlyofficeClientContext.callModule;
-import static org.exoplatform.onlyoffice.webui.OnlyofficeClientContext.showError;
+import static org.exoplatform.onlyoffice.webui.OnlyofficeContext.callModule;
+import static org.exoplatform.onlyoffice.webui.OnlyofficeContext.showError;
 
 import java.io.IOException;
 import java.util.Locale;
@@ -66,7 +66,7 @@ public class EditorPortlet extends GenericPortlet {
   }
 
   /**
-   * View.
+   * Renderer the portlet view.
    *
    * @param request the request
    * @param response the response
@@ -121,6 +121,10 @@ public class EditorPortlet extends GenericPortlet {
                   i18n.getString("OnlyofficeEditor.error.CannotCreateEditor"));
       } catch (JsonException e) {
         LOG.error("Error converting editor configuration to JSON for node by ID: {}", docId, e);
+        showError(i18n.getString("OnlyofficeEditorClient.ErrorTitle"),
+                  i18n.getString("OnlyofficeEditor.error.CannotSendEditorConfiguration"));
+      } catch (Exception e) {
+        LOG.error("Error initializing editor for node by ID: {}", docId, e);
         showError(i18n.getString("OnlyofficeEditorClient.ErrorTitle"),
                   i18n.getString("OnlyofficeEditor.error.CannotSendEditorConfiguration"));
       }
