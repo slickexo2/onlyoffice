@@ -232,52 +232,28 @@
     // Constants:
     var DOCUMENT_SAVED = "DOCUMENT_SAVED";
 
-    var store;
-    var subscribedDocuments = [];
-
-    /**
-     * Initializes the redux store or returns existing one.
-     */
-    var eventStore = function() {
-      if (!store) {
-        store = redux.createStore(docActionsReducer);
-      }
-      return store;
-    };
-
-    /**
-     * Changes the redux store depending on the action.
-     */
-    var docActionsReducer = function(state, action) {
+    // Current user ID
+    var currentUserId;
+    
+    // Redux store for dispatching document updates inside the app
+    var store = redux.createStore(function (state, action) {
       if (action.type === DOCUMENT_SAVED) {
         return action;
       }
       log("Unknown action type:" + action.type);
       return state ? state : {}; // TODO is it OK?
-    };
+    });
+    var subscribedDocuments = [];
 
     /**
      * Subscribes on a document updates using cometd. Dispatches events to the redux store.
      */
-    var subscribeDocumentUpdates = function(cometdInfo) {
+    var subscribeDocument = function(docId) {
       // Use only one channel for one document
-      if (subscribedDocuments.includes(cometdInfo.docId)) {
+      if (subscribedDocuments.includes(docId)) {
         return;
       }
-
-      cCometD.configure({
-        "url" : prefixUrl + cometdInfo.cometdPath,
-        "exoId" : cometdInfo.user,
-        "exoToken" : cometdInfo.userToken,
-        "maxNetworkDelay" : 30000,
-        "connectTimeout" : 60000
-      });
-
-      cometd = cCometD;
-      cometdContext = {
-        "exoContainerName" : cometdInfo.container
-      };
-      cometd.subscribe("/eXo/Application/Onlyoffice/editor/" + cometdInfo.docId, function(message) {
+      cometd.subscribe("/eXo/Application/Onlyoffice/editor/" + docId, function(message) {
         // Channel message handler
         var result = tryParseJson(message);
         store.dispatch(result);
@@ -286,11 +262,11 @@
         if (subscribeReply.successful) {
           // The server successfully subscribed this client to the channel.
           log("Document updates subscribed successfully: " + JSON.stringify(subscribeReply));
-          subscribedDocuments.push(cometdInfo.docId);
+          subscribedDocuments.push(docId);
         } else {
           var err = subscribeReply.error ? subscribeReply.error : (subscribeReply.failure ? subscribeReply.failure.reason
               : "Undefined");
-          log("Document updates subscription failed for " + cometdInfo.user, err);
+          log("Document updates subscription failed for " + currentUserId, err);
         }
       });
     };
@@ -419,8 +395,21 @@
     };
     this.create = create;
 
-    this.initMessages = function(userMessages) {
+    this.init = function(userId, cometdConf, userMessages) {
+      log("Initialize user: " + userId);
+      currentUserId = userId;
       messages = userMessages;
+      cCometD.configure({
+        "url" : prefixUrl + cometdConf.path,
+        "exoId" : userId,
+        "exoToken" : cometdConf.token,
+        "maxNetworkDelay" : 30000,
+        "connectTimeout" : 60000
+      });
+      cometdContext = {
+        "exoContainerName" : cometdConf.containerName
+      };
+      cometd = cCometD;
     };
 
     /**
@@ -430,6 +419,7 @@
       // TODO Establish a Comet/WebSocket channel from this point.
       // A new editor page will join the channel and notify when the doc will be saved
       // so we'll refresh this explorer view to reflect the edited content.
+      log("Initialize editor for document: " + config.docId);
       UI.initEditor();
       create(config).done(function(localConfig) {
         $(function() {
@@ -445,6 +435,66 @@
       });
     };
 
+    /**
+     * Initializes a file activity in the activity stream.
+     */
+    this.initActivity = function(docId, editorLink, activityId) {
+      log("Initialize activity " + activityId + " with document: " + docId);
+      // Listen to document updates
+      store.subscribe(function() {
+        var state = store.getState();
+        if (state.type === DOCUMENT_SAVED && state.docId === docId) {
+          UI.addRefreshBannerActivity(activityId);
+        }
+      });
+      subscribeDocument(docId);
+      if (editorLink) {
+        UI.addEditorButtonToActivity(editorLink, activityId);
+      }
+    };
+
+    /**
+     * Initializes a document preview (from the activity stream).
+     */
+    this.initPreview = function(docId, editorLink, clickSelector) {
+      $(clickSelector).click(function() {
+        log("Initialize preview " + clickSelector + " of document: " + docId);
+        // We set timeout here to avoid the case when the element is rendered but is going to be updated soon
+        setTimeout(function() {
+          store.subscribe(function() {
+            var state = store.getState();
+            if (state.type === DOCUMENT_SAVED && state.docId === docId) {
+              UI.addRefreshBannerPDF();
+            }
+          });
+        }, 100);
+        subscribeDocument(docId);
+      });
+      if (editorLink) {
+        UI.addEditorButtonToPreview(editorLink, clickSelector);
+      }
+    };
+
+    /**
+     * Initializes JCRExplorer when a document is displayed.
+     */
+    this.initExplorer = function(docId) {
+      log("Initialize explorer with document: " + docId);
+      // Listen document updated
+      store.subscribe(function() {
+        var state = store.getState();
+        if (state.type === DOCUMENT_SAVED) {
+          if (state.userId === currentUserId) {
+            UI.refreshPDFPreview();
+          } else {
+            UI.addRefreshBannerPDF();
+          }
+        }
+      });
+      subscribeDocument(docId);
+      UI.addEditorButtonToExplorer();
+    };
+
     this.showInfo = function(title, text) {
       UI.showInfo(title, text);
     };
@@ -453,72 +503,6 @@
       UI.showError(title, text);
     };
 
-    /**
-     * Initializes a file activity in the activity stream.
-     */
-    this.initActivity = function(cometdInfo, activityId, editorLink) {
-      // Listen to document updates
-      subscribeDocumentUpdates(cometdInfo);
-      // Init redux store
-      eventStore();
-
-      store.subscribe(function() {
-        var state = store.getState();
-        if (state.type === DOCUMENT_SAVED && state.docId === cometdInfo.docId) {
-          UI.addRefreshBannerActivity(activityId);
-        }
-      });
-      if (editorLink) {
-        UI.addEditorButtonToActivity(activityId, editorLink);
-      }
-    };
-
-    /**
-     * Initializes a document preview (from the activity stream).
-     */
-    this.initPreview = function(cometdInfo, activityId, editorLink, previewIndex) {
-      $("#Preview" + activityId + "-" + previewIndex).click(function() {
-        // We set timeout here to avoid the case when the element is rendered but is going to be updated soon
-        setTimeout(function() {
-          subscribeDocumentUpdates(cometdInfo);
-          // Init redux store
-          eventStore();
-          store.subscribe(function() {
-            var state = store.getState();
-            if (state.type === DOCUMENT_SAVED && state.docId === cometdInfo.docId) {
-              UI.addRefreshBannerPDF();
-            }
-          });
-        }, 100);
-      });
-      if (editorLink) {
-        UI.addEditorButtonToPreview(activityId, editorLink, previewIndex);
-      }
-    };
-
-    /**
-     * Initializes JCRExplorer when a document is displayed.
-     */
-    this.initExplorer = function(cometdInfo) {
-      var $JCRFileContent = $("#UIJCRExplorer .fileContent");
-      if ($JCRFileContent.length > 0) {
-        // Listen document updated
-        subscribeDocumentUpdates(cometdInfo);
-        // Init redux store
-        eventStore();
-        store.subscribe(function() {
-          var state = store.getState();
-          if (state.type === DOCUMENT_SAVED) {
-            if (state.userId === cometdInfo.user) {
-              UI.refreshPDFPreview();
-            } else {
-              UI.addRefreshBannerPDF();
-            }
-          }
-        });
-        UI.addEditorButtonToExplorer();
-      }
-    };
   }
 
   /**
@@ -633,8 +617,9 @@
      * Init editor page UI.
      */
     this.initEditor = function() {
-      $("#LeftNavigation").parent(".LeftNavigationTDContainer").remove();
-      $("#NavigationPortlet").remove();
+      // TODO cleanup
+      //$("#LeftNavigation").parent(".LeftNavigationTDContainer").remove();
+      //$("#NavigationPortlet").remove();
       // $("body").addClass("maskLayer");
       $("#SharedLayoutRightBody").addClass("onlyofficeEditorBody");
     };
@@ -701,7 +686,7 @@
     /**
      * Ads the 'Edit Online' button to an activity in the activity stream.
      */
-    this.addEditorButtonToActivity = function(activityId, editorLink) {
+    this.addEditorButtonToActivity = function(editorLink, activityId) {
       $("#activityContainer" + activityId).find("div[id^='ActivityContextBox'] > .actionBar .statusAction.pull-left").append(
           getEditorButton(editorLink));
     };
@@ -709,8 +694,8 @@
     /**
      * Ads the 'Edit Online' button to a preview (opened from the activity stream).
      */
-    this.addEditorButtonToPreview = function(activityId, editorLink, previewIndex) {
-      $("#Preview" + activityId + "-" + previewIndex).click(function() {
+    this.addEditorButtonToPreview = function(editorLink, clickSelector) {
+      $(clickSelector).click(function() {
         // We set timeout here to avoid the case when the element is rendered but is going to be updated soon
         setTimeout(function() {
           tryAddEditorButtonToPreview(editorLink, 100, 100);

@@ -28,6 +28,11 @@ package org.exoplatform.onlyoffice;
 public class OnlyofficeEditorException extends Exception {
 
   /**
+   * 
+   */
+  private static final long serialVersionUID = -8981933520830552416L;
+
+  /**
    * Instantiates a new onlyoffice editor exception.
    *
    * @param message the message

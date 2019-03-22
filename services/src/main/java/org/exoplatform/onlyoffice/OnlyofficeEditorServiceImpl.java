@@ -563,13 +563,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
     Node node = nodeByUUID(workspace, docId);
     String path = node.getPath();
-    // TODO replace with workspace+docId, but this will be less informative in
-    // logs/errors
     String nodePath = nodePath(workspace, path);
 
+    // TODO other node types?
     if (!node.isNodeType("nt:file")) {
-      // TODO other types?
-      throw new OnlyofficeEditorException("Only nt:file supported " + nodePath);
+      throw new OnlyofficeEditorException("Document should be a nt:file node: " + nodePath);
+    }
+    if (!canEditDocument(node)) {
+      throw new OnlyofficeEditorException("Cannot edit document: " + nodePath);
     }
 
     Config config = getEditor(userId, nodePath, true);

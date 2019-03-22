@@ -18,7 +18,7 @@
  */
 package org.exoplatform.onlyoffice.webui;
 
-import static org.exoplatform.onlyoffice.webui.OnlyofficeClientContext.editorLink;
+import static org.exoplatform.onlyoffice.webui.OnlyofficeContext.editorLink;
 
 import java.util.Arrays;
 import java.util.List;
@@ -88,11 +88,9 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
    */
   @Override
   public String renderEventURL(boolean ajax, String name, String beanId, Parameter[] params) throws Exception {
-    // init context where this action appears
     if (name.equals("OnlyofficeOpen")) {
       UIJCRExplorer uiExplorer = getAncestorOfType(UIJCRExplorer.class);
       if (uiExplorer != null) {
-        // we store current node in the context
         OnlyofficeEditorService editorService = this.getApplicationComponent(OnlyofficeEditorService.class);
         String editorLink = editorService.getEditorLink(uiExplorer.getCurrentNode());
         if (editorLink != null && !editorLink.isEmpty()) {
