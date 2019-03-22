@@ -20,13 +20,13 @@
 
   // ******** Utils ********
 
-	var getRandomArbitrary = function(min, max) {
-	  return Math.floor((Math.random() * (max - min - 1) + min) + 1);
-	};
+  var getRandomArbitrary = function(min, max) {
+    return Math.floor((Math.random() * (max - min - 1) + min) + 1);
+  };
 
-	/**
-	 * Universal client ID for use in logging, services connectivity and related cases.
-	 */
+  /**
+   * Universal client ID for use in logging, services connectivity and related cases.
+   */
   var clientId = "" + getRandomArbitrary(100000, 999998);
   
   /**
@@ -246,7 +246,7 @@
     var DOCUMENT_VERSION = "DOCUMENT_VERSION";
 
     // CometD transport bus
-	  var cometd, cometdContext;
+    var cometd, cometdContext;
 
     // Current config (actual for editor page only)
     var currentConfig;
@@ -256,7 +256,7 @@
     
     // Redux store for dispatching document updates inside the app
     var store = redux.createStore(function (state, action) {
-      if (action.type === DOCUMENT_SAVED) {
+      if (action.type === DOCUMENT_SAVED || action.type === DOCUMENT_CHANGED) {
         return action;
       }
       log("Unknown action type:" + action.type);

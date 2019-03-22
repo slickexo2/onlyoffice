@@ -25,9 +25,12 @@ import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
+import org.cometd.annotation.Param;
 import org.cometd.annotation.ServerAnnotationProcessor;
 import org.cometd.annotation.Service;
 import org.cometd.annotation.Session;
+import org.cometd.annotation.Subscription;
+import org.cometd.bayeux.Message;
 import org.cometd.bayeux.server.BayeuxServer;
 import org.cometd.bayeux.server.LocalSession;
 import org.cometd.bayeux.server.ServerChannel;
@@ -54,6 +57,9 @@ public class CometdOnlyofficeService implements Startable {
 
   /** The channel name. */
   public static final String              CHANNEL_NAME         = "/eXo/Application/Onlyoffice/editor/";
+
+  /** The channel name. */
+  public static final String              CHANNEL_NAME_PARAMS  = CHANNEL_NAME + "{docId}";
 
   /** The document saved event. */
   public static final String              DOCUMENT_SAVED_EVENT = "DOCUMENT_SAVED";
@@ -214,6 +220,20 @@ public class CometdOnlyofficeService implements Startable {
           // Nothing
         }
       });
+    }
+
+    /**
+     * Subscribe document events.
+     * 
+     * @param message the message.
+     * @param docId the docId.
+     */
+    @Subscription(CHANNEL_NAME_PARAMS)
+    public void subscribeDocuments(Message message, @Param("docId") String docId) {
+      // TODO: collect continuous 'DOCUMENT_CHANGED' events from the same user,
+      // create new version when another user interrupts the stream of events.
+      LOG.info("Call published in " + message.getChannel() + " by " + message.getClientId() + " docId: " + docId + " data: "
+          + message.getJSON());
     }
 
   }
