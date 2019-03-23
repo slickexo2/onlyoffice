@@ -18,13 +18,10 @@
  */
 package org.exoplatform.onlyoffice.portlet;
 
-import static org.exoplatform.onlyoffice.webui.OnlyofficeContext.callModule;
-
 import javax.portlet.GenericPortlet;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 
-import org.exoplatform.onlyoffice.OnlyofficeEditorService;
 import org.exoplatform.onlyoffice.webui.OnlyofficeContext;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -43,23 +40,18 @@ public class DocumentStatePortlet extends GenericPortlet {
    */
   @Override
   protected void doView(final RenderRequest request, final RenderResponse response) {
-    WebuiRequestContext context = WebuiRequestContext.getCurrentInstance();
-    // These attributes saved in portal context by OnlyofficeDocumentsLifecycle
-    String docWs = (String) context.getAttribute(OnlyofficeContext.DOCUMENT_WORKSPACE_ATTRIBUTE);
-    String docPath = (String) context.getAttribute(OnlyofficeContext.DOCUMENT_PATH_ATTRIBUTE);
-    if (docWs != null && docPath != null) {
-      try {
-        OnlyofficeEditorService editorService = context.getApplication()
-                                                       .getApplicationServiceContainer()
-                                                       .getComponentInstanceOfType(OnlyofficeEditorService.class);
-
-        String docId = editorService.getDocumentId(docWs, docPath);
-        if (docId != null) {
-          callModule("initExplorer('" + docId + "');");
-        }
-      } catch (Exception e) {
-        LOG.error("Couldn't init document of node {}:{}", docWs, docPath, e);
-      }
+    // This code will be executed once per a portlet app, thus first time when
+    // navigated to a portal page, all other calls inside the page (ajax
+    // calls), will not cause rendering of this portlet, except if this will not
+    // be issued explicitly.
+    if (LOG.isDebugEnabled()) {
+      WebuiRequestContext context = WebuiRequestContext.getCurrentInstance();
+      // These attributes saved in portal context by
+      // OnlyofficeDocumentsLifecycle
+      String userId = (String) context.getAttribute(OnlyofficeContext.USERID_ATTRIBUTE);
+      String nodeWs = (String) context.getAttribute(OnlyofficeContext.DOCUMENT_WORKSPACE_ATTRIBUTE);
+      String nodePath = (String) context.getAttribute(OnlyofficeContext.DOCUMENT_PATH_ATTRIBUTE);
+      LOG.debug("Work in documents explorer for {} ({}), node: {}:{}", userId, request.getRemoteUser(), nodeWs, nodePath);
     }
   }
 

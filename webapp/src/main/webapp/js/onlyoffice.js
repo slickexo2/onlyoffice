@@ -251,11 +251,14 @@
     // Current config (actual for editor page only)
     var currentConfig;
     
-    // true if current changes are collected by the document server (only for editor page)
+    // Indicate current changes are collected by the document server (only for editor page)
     var changesSaved = true;
 
     // Current user ID
     var currentUserId;
+
+    // Current document ID (actual for Documents explorer)
+    var explorerDocId;
     
     // Redux store for dispatching document updates inside the app
     var store = redux.createStore(function (state, action) {
@@ -265,17 +268,17 @@
       log("Unknown action type:" + action.type);
       return state ? state : {}; // TODO is it OK?
     });
-    var subscribedDocuments = [];
+    var subscribedDocuments = {};
 
     /**
      * Subscribes on a document updates using cometd. Dispatches events to the redux store.
      */
     var subscribeDocument = function(docId) {
       // Use only one channel for one document
-      if (subscribedDocuments.includes(docId)) {
+      if (subscribedDocuments.docId) {
         return;
       }
-      cometd.subscribe("/eXo/Application/Onlyoffice/editor/" + docId, function(message) {
+      var subscription = cometd.subscribe("/eXo/Application/Onlyoffice/editor/" + docId, function(message) {
         // Channel message handler
         var result = tryParseJson(message);
         store.dispatch(result);
@@ -284,13 +287,30 @@
         if (subscribeReply.successful) {
           // The server successfully subscribed this client to the channel.
           log("Document updates subscribed successfully: " + JSON.stringify(subscribeReply));
-          subscribedDocuments.push(docId);
+          subscribedDocuments.docId = subscription;
         } else {
           var err = subscribeReply.error ? subscribeReply.error : (subscribeReply.failure ? subscribeReply.failure.reason
               : "Undefined");
-          log("Document updates subscription failed for " + currentUserId, err);
+          log("Document updates subscription failed for " + docId, err);
         }
       });
+    };
+
+    var unsubscribeDocument = function(docId) {
+      var subscription = subscribedDocuments.docId;
+      if (subscription) {
+        cometd.unsubscribe(subscription, {}, function (unsubscribeReply) {
+          if (unsubscribeReply.successful) {
+            // The server successfully unsubscribed this client to the channel.
+            log("Document updates unsubscribed successfully for: " + docId);
+            delete subscribedDocuments.docId;
+          } else {
+            var err = unsubscribeReply.error ? unsubscribeReply.error : (unsubscribeReply.failure ? unsubscribeReply.failure.reason
+              : "Undefined");
+            log("Document updates unsubscription failed for " + docId, err);
+          }
+        });
+      }
     };
 
     var publishDocumentUpdate = function(docId, data) {
@@ -574,6 +594,8 @@
     this.initExplorer = function(docId) {
       log("Initialize explorer with document: " + docId);
       // Listen document updated
+      // TODO do we need unsubscribe Redux store from previous docId (explorerDocId)?
+      // Or don't subscribe again if was done by previous doc?
       store.subscribe(function() {
         var state = store.getState();
         if (state.type === DOCUMENT_SAVED) {
@@ -584,7 +606,14 @@
           }
         }
       });
-      subscribeDocument(docId);
+      if (docId != explorerDocId) {
+        // We need unsubscribe from previous doc
+        if (explorerDocId) {
+          unsubscribeDocument(explorerDocId);
+        }
+        subscribeDocument(docId);
+        explorerDocId = docId;
+      }
       UI.addEditorButtonToExplorer();
     };
 
@@ -705,10 +734,10 @@
      * Init editor page UI.
      */
     this.initEditor = function() {
+      // We may need this for some cases
+      $("#LeftNavigation").parent(".LeftNavigationTDContainer").remove();
       // TODO cleanup
-      //$("#LeftNavigation").parent(".LeftNavigationTDContainer").remove();
       //$("#NavigationPortlet").remove();
-      // $("body").addClass("maskLayer");
       $("#SharedLayoutRightBody").addClass("onlyofficeEditorBody");
     };
 

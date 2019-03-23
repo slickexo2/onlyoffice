@@ -55,14 +55,12 @@ public class OnlyofficeEditorFilter implements Filter {
     WebAppController controller = ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(WebAppController.class);
     WebuiApplication app = controller.getApplication(PortalApplication.PORTAL_APPLICATION_ID);
     if (app != null) {
-      synchronized (app) {
-        OnlyofficeEditorLifecycle lifecycle = new OnlyofficeEditorLifecycle();
-        try {
-          app.getApplicationLifecycle().add(lifecycle);
-          chain.doFilter(request, response);
-        } finally {
-          app.getApplicationLifecycle().remove(lifecycle);
-        }
+      OnlyofficeEditorLifecycle lifecycle = new OnlyofficeEditorLifecycle();
+      try {
+        app.getApplicationLifecycle().add(lifecycle);
+        chain.doFilter(request, response);
+      } finally {
+        app.getApplicationLifecycle().remove(lifecycle);
       }
     } else {
       chain.doFilter(request, response);
