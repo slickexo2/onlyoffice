@@ -18,7 +18,9 @@
  */
 package org.exoplatform.onlyoffice.cometd;
 
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -53,16 +55,19 @@ import org.exoplatform.services.log.Log;
 public class CometdOnlyofficeService implements Startable {
 
   /** The Constant LOG. */
-  private static final Log                LOG                  = ExoLogger.getLogger(CometdOnlyofficeService.class);
+  private static final Log                LOG                    = ExoLogger.getLogger(CometdOnlyofficeService.class);
 
   /** The channel name. */
-  public static final String              CHANNEL_NAME         = "/eXo/Application/Onlyoffice/editor/";
+  public static final String              CHANNEL_NAME           = "/eXo/Application/Onlyoffice/editor/";
 
   /** The channel name. */
-  public static final String              CHANNEL_NAME_PARAMS  = CHANNEL_NAME + "{docId}";
+  public static final String              CHANNEL_NAME_PARAMS    = CHANNEL_NAME + "{docId}";
 
   /** The document saved event. */
-  public static final String              DOCUMENT_SAVED_EVENT = "DOCUMENT_SAVED";
+  public static final String              DOCUMENT_SAVED_EVENT   = "DOCUMENT_SAVED";
+
+  /** The document changed event. */
+  public static final String              DOCUMENT_CHANGED_EVENT = "DOCUMENT_CHANGED";
 
   /** The Onlyoffice editor service. */
   protected final OnlyofficeEditorService onlyofficeEditorService;
@@ -156,15 +161,18 @@ public class CometdOnlyofficeService implements Startable {
 
     /** The bayeux. */
     @Inject
-    private BayeuxServer  bayeux;
+    private BayeuxServer        bayeux;
 
     /** The local session. */
     @Session
-    private LocalSession  localSession;
+    private LocalSession        localSession;
 
     /** The server session. */
     @Session
-    private ServerSession serverSession;
+    private ServerSession       serverSession;
+
+    /** The documentUpdates map contains data about document updates. K - docId, V - last userId. */
+    private Map<String, String> documentUpdates = new ConcurrentHashMap<>();
 
     /**
      * Post construct.
@@ -230,12 +238,21 @@ public class CometdOnlyofficeService implements Startable {
      */
     @Subscription(CHANNEL_NAME_PARAMS)
     public void subscribeDocuments(Message message, @Param("docId") String docId) {
-      // TODO: collect continuous 'DOCUMENT_CHANGED' events from the same user,
-      // create new version when another user interrupts the stream of events.
-      LOG.info("Call published in " + message.getChannel() + " by " + message.getClientId() + " docId: " + docId + " data: "
-          + message.getJSON());
+      Map<String, Object> data = message.getDataAsMap();
+      String type = (String) data.get("type");
+      String userId = (String) data.get("userId");
+      if (DOCUMENT_CHANGED_EVENT.equals(type)) {
+        String lastUser = documentUpdates.computeIfAbsent(docId, id -> userId);
+        if (!userId.equals(lastUser)) {
+          LOG.info("Create document version for " + lastUser + ", docId: " + docId);
+          // TODO create new version for lastUser
+          documentUpdates.replace(docId, userId);
+          LOG.info("Started collecting changes for: " + userId + ", docId: " + docId);
+        }
+        LOG.info("Changes collected from: " + userId + ", docId: " + docId);
+      }
+      LOG.info("Event published in " + message.getChannel() + ", docId: " + docId + ", data: " + message.getJSON());
     }
-
   }
 
   /**

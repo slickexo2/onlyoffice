@@ -250,6 +250,9 @@
 
     // Current config (actual for editor page only)
     var currentConfig;
+    
+    // true if current changes are collected by the document server (only for editor page)
+    var changesSaved = true;
 
     // Current user ID
     var currentUserId;
@@ -321,21 +324,27 @@
       log("documentChange: " + JSON.stringify(event));
       if (event.data) {
         log("ONLYOFFICE The document changed");
+        changesSaved = false;
         // Document changed locally, soon it will be sent to Document Server.
         // TODO We may get prepared here for a soon call of downloadAs().
       } else {
-        log("ONLYOFFICE Changes are collected on document editing service");
-        // TODO since now we start collect this user changes (via channel) at server-side and
-        // when another co-editor will fire the same event (this method by anotehr user), this 
-        // user should save his changes in eXo storage version by calling 
-        // docEditor.downloadAs();
-        if (currentConfig) {
-          // We are a editor oage here: publish that the doc was changed by current user
-          publishDocumentUpdate(currentConfig.docId, {
-            "type": DOCUMENT_CHANGED,
-            "userId": currentConfig.editorConfig.user.id,
-            "clientId": clientId
-          });
+        // We use this check to avoid publishing updates from other users 
+        // and publishing when user hasn't made any changes yet (opened editor)
+        if (!changesSaved) {
+          log("ONLYOFFICE Changes are collected on document editing service");
+          // TODO since now we start collect this user changes (via channel) at server-side and
+          // when another co-editor will fire the same event (this method by anotehr user), this 
+          // user should save his changes in eXo storage version by calling 
+          // docEditor.downloadAs();
+          if (currentConfig) {
+            // We are a editor oage here: publish that the doc was changed by current user
+            publishDocumentUpdate(currentConfig.docId, {
+              "type": DOCUMENT_CHANGED,
+              "userId": currentUserId,
+              "clientId": clientId
+            });
+          }
+          changesSaved = true;
         }
       }
     };
