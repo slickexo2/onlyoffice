@@ -49,6 +49,8 @@ import org.exoplatform.ws.frameworks.json.impl.JsonGeneratorImpl;
  */
 public class OnlyofficeContext {
 
+  public static final String    USERID_ATTRIBUTE = "OnlyofficeContext.userId";
+  
   public static final String    DOCUMENT_WORKSPACE_ATTRIBUTE = "OnlyofficeContext.document.workspace";
 
   public static final String    DOCUMENT_PATH_ATTRIBUTE      = "OnlyofficeContext.document.path";

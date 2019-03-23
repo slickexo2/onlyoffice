@@ -46,19 +46,20 @@ public class FileFilter extends org.exoplatform.webui.ext.filter.impl.FileFilter
    */
   @Override
   public boolean accept(Map<String, Object> context) throws Exception {
-    if (context == null) {
-      return true;
+    Node contextNode = null;
+    if (context != null) {
+      contextNode = (Node) context.get(Node.class.getName());
     }
-
-    Node contextNode = (Node) context.get(Node.class.getName());
     if (contextNode == null) {
       UIJCRExplorer uiExplorer = (UIJCRExplorer) context.get(UIJCRExplorer.class.getName());
       if (uiExplorer != null) {
         contextNode = uiExplorer.getCurrentNode();
       }
     }
-
-    OnlyofficeEditorService onlyofficeEditorService = WCMCoreUtils.getService(OnlyofficeEditorService.class);
-    return onlyofficeEditorService.canEditDocument(contextNode);
+    if (contextNode != null) {
+      OnlyofficeEditorService onlyofficeEditorService = WCMCoreUtils.getService(OnlyofficeEditorService.class);
+      return onlyofficeEditorService.canEditDocument(contextNode);
+    }
+    return false;
   }
 }

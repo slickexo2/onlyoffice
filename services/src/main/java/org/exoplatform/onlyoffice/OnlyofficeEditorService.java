@@ -95,8 +95,10 @@ public interface OnlyofficeEditorService {
   void updateDocument(String userId, DocumentStatus status) throws OnlyofficeEditorException, RepositoryException;
 
   /**
-   * Inits the document and returns an ID for use within editors. Node will be
-   * saved by this method.
+   * Inits the document and returns an ID for use within editors. Node may be
+   * saved by this method if ID generation will be required, in this case it
+   * should be allowed to edit the node (not locked and user has write
+   * permissions).
    *
    * @param node the node of the document
    * @return the string with document ID for use within editors
@@ -214,18 +216,16 @@ public interface OnlyofficeEditorService {
   boolean canEditDocument(Node node) throws RepositoryException;
 
   /**
-   * Gets the document ID by given node workspace and path. It will return an ID
-   * for use within editors if the node can be edited, otherwise
-   * <code>null</code> will be returned.
+   * Gets the document ID for given node. It will return an ID for use within an
+   * editor, otherwise <code>null</code> will be returned.
    *
-   * @param workspace the workspace
-   * @param path the path
+   * @param node the node
    * @return the document ID or <code>null</code>
    * @throws OnlyofficeEditorException the onlyoffice editor exception
    * @throws RepositoryException the repository exception
    * @see #initDocument(String, String)
    * @see #canEditDocument(Node)
    */
-  String getDocumentId(String workspace, String path) throws OnlyofficeEditorException, RepositoryException;
+  String getDocumentId(Node node) throws OnlyofficeEditorException, RepositoryException;
 
 }

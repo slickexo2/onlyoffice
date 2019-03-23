@@ -899,7 +899,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    */
   @Override
   public String initDocument(Node node) throws OnlyofficeEditorException, RepositoryException {
-    if (node.canAddMixin("mix:referenceable")) {
+    if (node.canAddMixin("mix:referenceable") && canEditDocument(node)) {
       node.addMixin("mix:referenceable");
       node.save();
     }
@@ -919,10 +919,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * {@inheritDoc}
    */
   @Override
-  public String getDocumentId(String workspace, String path) throws OnlyofficeEditorException, RepositoryException {
-    Node node = node(workspace, path);
-    if (canEditDocument(node)) {
-      return initDocument(node);
+  public String getDocumentId(Node node) throws OnlyofficeEditorException, RepositoryException {
+    if (node.isNodeType("mix:referenceable")) {
+      return node.getUUID();
     }
     return null;
   }

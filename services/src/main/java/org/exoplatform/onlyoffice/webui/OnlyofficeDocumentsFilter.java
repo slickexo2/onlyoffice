@@ -58,14 +58,12 @@ public class OnlyofficeDocumentsFilter implements Filter {
     WebAppController controller = ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(WebAppController.class);
     WebuiApplication app = controller.getApplication(ECMS_EXPLORER_APP_ID);
     if (app != null) {
-      synchronized (app) {
-        OnlyofficeDocumentsLifecycle lifecycle = new OnlyofficeDocumentsLifecycle();
-        try {
-          app.getApplicationLifecycle().add(lifecycle);
-          chain.doFilter(request, response);
-        } finally {
-          app.getApplicationLifecycle().remove(lifecycle);
-        }
+      OnlyofficeDocumentsLifecycle lifecycle = new OnlyofficeDocumentsLifecycle();
+      try {
+        app.getApplicationLifecycle().add(lifecycle);
+        chain.doFilter(request, response);
+      } finally {
+        app.getApplicationLifecycle().remove(lifecycle);
       }
     } else {
       chain.doFilter(request, response);
