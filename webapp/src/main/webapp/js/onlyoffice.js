@@ -605,10 +605,11 @@
      * Refreshes an activity preview by updating preview picture.
      */
     var refreshActivityPreview = function(activityId, $banner) {
-      $banner.find(".refreshBannerContent").append("<div class='loading'><i class='uiLoadingIconSmall uiIconEcmsGray'></i></div>");
+      $banner.find(".refreshBannerContent")
+          .append("<div class='loading'><i class='uiLoadingIconSmall uiIconEcmsGray'></i></div>");
       $refreshLink = $banner.find(".refreshBannerLink");
       $refreshLink.addClass("disabled");
-      $refreshLink.on('click', function(){
+      $refreshLink.on('click', function() {
         return false;
       });
       $refreshLink.attr("href", "#");
@@ -622,11 +623,28 @@
 
         src += "version=oview_" + timestamp;
         src += "&lastModified=" + timestamp;
-        
-        $img.on('load', function(){
+
+        $img.on('load', function() {
           $banner.remove();
         });
         $img.attr("src", src);
+
+        // Hide banner when there no preview image
+        var $mediaContent = $("#Preview" + activityId + "-0 #MediaContent" + activityId + "-0");
+        var observer = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+            if (mutation.attributeName === "class") {
+              var attributeValue = $(mutation.target).prop(mutation.attributeName);
+              if (attributeValue.includes("NoPreview")) {
+                log("Cannot load preview for activity " + activityId + ". Hiding refresh banner");
+                $banner.remove();
+              }
+            }
+          });
+        });
+        observer.observe($mediaContent[0], {
+          attributes : true
+        });
       }
     };
 
