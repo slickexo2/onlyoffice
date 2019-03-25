@@ -1013,14 +1013,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   public boolean canEditDocument(Node node) throws RepositoryException {
     boolean res = false;
     if (node != null) {
-      String mimeType;
-      if (node.isNodeType(Utils.NT_FILE)) {
-        mimeType = node.getNode(Utils.JCR_CONTENT).getProperty(Utils.JCR_MIMETYPE).getString();
-      } else {
-        mimeType = new MimeTypeResolver().getMimeType(node.getName());
-      }
-
-      if (documentTypePlugin.getMimeTypes().contains(mimeType)) {
+      if (isDocumentMimeSupported(node)) {
         String remoteUser = WCMCoreUtils.getRemoteUser();
         String superUser = WCMCoreUtils.getSuperUser();
         boolean locked = node.isLocked();
@@ -1035,6 +1028,23 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       LOG.debug("Cannot edit: {}", node.getPath());
     }
     return res;
+  }
+  
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public boolean isDocumentMimeSupported(Node node) throws RepositoryException {
+    if (node != null) {
+      String mimeType;
+      if (node.isNodeType(Utils.NT_FILE)) {
+        mimeType = node.getNode(Utils.JCR_CONTENT).getProperty(Utils.JCR_MIMETYPE).getString();
+      } else {
+        mimeType = new MimeTypeResolver().getMimeType(node.getName());
+      }
+      return documentTypePlugin.getMimeTypes().contains(mimeType);
+    }
+    return false;
   }
 
   // *********************** implementation level ***************

@@ -76,7 +76,7 @@ public class OnlyofficeDocumentsLifecycle extends AbstractOnlyofficeLifecycle {
                                                          .getApplicationServiceContainer()
                                                          .getComponentInstanceOfType(OnlyofficeEditorService.class);
           String docId = editorService.getDocumentId(node);
-          if (docId != null) {
+          if (docId != null && editorService.isDocumentMimeSupported(node)) {
             // This will init explorer even for docs that cannot be edited
             // by the user (locked or lack of permissions)
             callModule("initExplorer('" + docId + "');");
