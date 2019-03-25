@@ -940,10 +940,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                   pcontext.getRequest().getServerPort(),
                                   workspace,
                                   docId);
-      LOG.info("DEBUG >>> Editor link {}: {}", node.getPath(), link);
+      if (LOG.isDebugEnabled()) {
+        LOG.info("Editor link {}: {}", node.getPath(), link);
+      }
       return link;
     }
-    LOG.info("DEBUG >>> Editor link NOT FOUND for {}", node.getPath());
+    if (LOG.isDebugEnabled()) {
+      LOG.info("Editor link NOT FOUND for {}", node.getPath());
+    }
     return null;
   }
 
@@ -1027,8 +1031,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         res = !locked && permit;
       }
     }
-    if (!res) {
-      LOG.info("DEBUG >>> Cannot edit: {}", node.getPath());
+    if (!res && LOG.isDebugEnabled()) {
+      LOG.debug("Cannot edit: {}", node.getPath());
     }
     return res;
   }
