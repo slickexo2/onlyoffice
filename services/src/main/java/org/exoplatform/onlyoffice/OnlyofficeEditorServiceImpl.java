@@ -899,6 +899,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    */
   @Override
   public String initDocument(Node node) throws OnlyofficeEditorException, RepositoryException {
+    if(node.getPrimaryNodeType().getName().equals("exo:symlink")) {
+      node = (Node) finder.findItem(node.getSession(), node.getPath());
+    }
     if (node.canAddMixin("mix:referenceable") && canEditDocument(node)) {
       node.addMixin("mix:referenceable");
       node.save();
