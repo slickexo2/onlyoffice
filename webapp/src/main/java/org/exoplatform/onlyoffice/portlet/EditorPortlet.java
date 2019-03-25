@@ -41,6 +41,7 @@ import org.exoplatform.onlyoffice.OnlyofficeEditorService;
 import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.services.resources.ResourceBundleService;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.ws.frameworks.json.impl.JsonException;
 
@@ -55,6 +56,9 @@ public class EditorPortlet extends GenericPortlet {
   /** The onlyoffice. */
   private OnlyofficeEditorService onlyoffice;
 
+  /** The i 18 n service. */
+  private ResourceBundleService   i18nService;
+
   /**
    * {@inheritDoc}
    */
@@ -63,6 +67,7 @@ public class EditorPortlet extends GenericPortlet {
     super.init();
     ExoContainer container = ExoContainerContext.getCurrentContainer();
     this.onlyoffice = container.getComponentInstanceOfType(OnlyofficeEditorService.class);
+    this.i18nService = container.getComponentInstanceOfType(ResourceBundleService.class);
   }
 
   /**
@@ -76,7 +81,12 @@ public class EditorPortlet extends GenericPortlet {
   @RenderMode(name = "view")
   public void view(RenderRequest request, RenderResponse response) throws IOException, PortletException {
     WebuiRequestContext webuiContext = (WebuiRequestContext) WebuiRequestContext.getCurrentInstance();
-    ResourceBundle i18n = webuiContext.getApplicationResourceBundle();
+    // ResourceBundle i18n = webuiContext.getApplicationResourceBundle();
+    ResourceBundle i18n = i18nService.getResourceBundle(
+                                                       new String[] { "locale.onlyoffice.Onlyoffice",
+                                                           "locale.onlyoffice.OnlyofficeClient" },
+                                                       request.getLocale());
+
     String docId = webuiContext.getRequestParameter("docId");
     if (docId != null) {
       try {
