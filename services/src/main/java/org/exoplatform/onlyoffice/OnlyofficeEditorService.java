@@ -228,4 +228,13 @@ public interface OnlyofficeEditorService {
    */
   String getDocumentId(Node node) throws OnlyofficeEditorException, RepositoryException;
 
+  /**
+   * Checks if the node has compatible mime-types.
+   *
+   * @param node the node
+   * @return true, if the node mime-types are supported
+   * @throws RepositoryException the repository exeption
+   */
+  boolean isDocumentMimeSupported(Node node) throws RepositoryException;
+
 }
