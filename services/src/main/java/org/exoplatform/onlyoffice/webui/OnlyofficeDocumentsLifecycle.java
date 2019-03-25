@@ -66,42 +66,28 @@ public class OnlyofficeDocumentsLifecycle extends AbstractOnlyofficeLifecycle {
         String nodeWs = node.getSession().getWorkspace().getName();
         String nodePath = node.getPath();
         if (isNotSameUserDocument(userName, nodeWs, nodePath, parentContext)) {
-          // sync against the explorer instance - same user requests will do
-          // one-by-one and
-          synchronized (explorer) {
-            if (isNotSameUserDocument(userName, nodeWs, nodePath, parentContext)) {
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Init documents explorer for {}, node: {}:{}, explorer: {}", userName, nodeWs, nodePath, explorer);
-              }
-              parentContext.setAttribute(OnlyofficeContext.USERID_ATTRIBUTE, userName);
-              parentContext.setAttribute(OnlyofficeContext.DOCUMENT_WORKSPACE_ATTRIBUTE, nodeWs);
-              parentContext.setAttribute(OnlyofficeContext.DOCUMENT_PATH_ATTRIBUTE, nodePath);
-              OnlyofficeEditorService editorService = context.getApplication()
-                                                             .getApplicationServiceContainer()
-                                                             .getComponentInstanceOfType(OnlyofficeEditorService.class);
-              String docId = editorService.getDocumentId(node);
-              if (docId != null) {
-                // This will init explorer even for docs that cannot be edited
-                // by the user (locked or lack of permissions)
-                callModule("initExplorer('" + docId + "');");
-              }
-            } else {
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Already initialized documents explorer for {}, node: {}:{}, explorer: {}",
-                          userName,
-                          nodeWs,
-                          nodePath,
-                          explorer);
-              }
-            }
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Init documents explorer for {}, node: {}:{}, context: {}", userName, nodeWs, nodePath, parentContext);
+          }
+          parentContext.setAttribute(OnlyofficeContext.USERID_ATTRIBUTE, userName);
+          parentContext.setAttribute(OnlyofficeContext.DOCUMENT_WORKSPACE_ATTRIBUTE, nodeWs);
+          parentContext.setAttribute(OnlyofficeContext.DOCUMENT_PATH_ATTRIBUTE, nodePath);
+          OnlyofficeEditorService editorService = context.getApplication()
+                                                         .getApplicationServiceContainer()
+                                                         .getComponentInstanceOfType(OnlyofficeEditorService.class);
+          String docId = editorService.getDocumentId(node);
+          if (docId != null) {
+            // This will init explorer even for docs that cannot be edited
+            // by the user (locked or lack of permissions)
+            callModule("initExplorer('" + docId + "');");
           }
         } else {
           if (LOG.isDebugEnabled()) {
-            LOG.debug("Already initialized documents explorer for {}, node: {}:{}, explorer: {}",
+            LOG.debug("Already initialized documents explorer for {}, node: {}:{}, context: {}",
                       userName,
                       nodeWs,
                       nodePath,
-                      explorer);
+                      parentContext);
           }
         }
       } catch (Exception e) {
