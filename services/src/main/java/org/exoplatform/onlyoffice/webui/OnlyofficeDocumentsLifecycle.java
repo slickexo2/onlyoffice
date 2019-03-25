@@ -93,6 +93,8 @@ public class OnlyofficeDocumentsLifecycle extends AbstractOnlyofficeLifecycle {
       } catch (Exception e) {
         LOG.error("Couldn't read document of node", e);
       }
+    } else if (LOG.isDebugEnabled()) {
+      LOG.debug("Explorer or portal context not found, explorer: {}, context: {}", explorer, parentContext);
     }
     super.onEndRequest(app, context);
   }

@@ -941,12 +941,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                   workspace,
                                   docId);
       if (LOG.isDebugEnabled()) {
-        LOG.info("Editor link {}: {}", node.getPath(), link);
+        LOG.debug("Editor link {}: {}", node.getPath(), link);
       }
       return link;
     }
     if (LOG.isDebugEnabled()) {
-      LOG.info("Editor link NOT FOUND for {}", node.getPath());
+      LOG.debug("Editor link NOT FOUND for {}", node.getPath());
     }
     return null;
   }
