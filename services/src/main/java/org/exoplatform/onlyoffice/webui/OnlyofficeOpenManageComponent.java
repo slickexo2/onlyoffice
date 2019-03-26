@@ -23,6 +23,8 @@ import static org.exoplatform.onlyoffice.webui.OnlyofficeContext.editorLink;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.jcr.Node;
+
 import org.exoplatform.ecm.webui.component.explorer.UIJCRExplorer;
 import org.exoplatform.ecm.webui.component.explorer.control.listener.UIActionBarActionListener;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
@@ -92,7 +94,9 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
       UIJCRExplorer uiExplorer = getAncestorOfType(UIJCRExplorer.class);
       if (uiExplorer != null) {
         OnlyofficeEditorService editorService = this.getApplicationComponent(OnlyofficeEditorService.class);
-        String editorLink = editorService.getEditorLink(uiExplorer.getCurrentNode());
+        Node node = uiExplorer.getCurrentNode();
+        node = editorService.getDocument(node.getSession().getWorkspace().getName(), node.getPath());
+        String editorLink = editorService.getEditorLink(node);
         if (editorLink != null && !editorLink.isEmpty()) {
           return "javascript:window.open('" + editorLink(editorLink, "documents") + "');";
         }

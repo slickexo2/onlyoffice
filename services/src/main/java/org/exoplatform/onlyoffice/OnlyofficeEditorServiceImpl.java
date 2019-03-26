@@ -966,12 +966,27 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * {@inheritDoc}
    */
   @Override
-  public Node getDocument(String workspace, String uuid) throws RepositoryException {
+  public Node getDocumentById(String workspace, String uuid) throws RepositoryException {
     if (workspace == null) {
       workspace = jcrService.getCurrentRepository().getConfiguration().getDefaultWorkspaceName();
     }
     try {
       return nodeByUUID(workspace, uuid);
+    } catch (ItemNotFoundException e) {
+      return null;
+    }
+  }
+  
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Node getDocument(String workspace, String path) throws RepositoryException, BadParameterException {
+    if (workspace == null) {
+      workspace = jcrService.getCurrentRepository().getConfiguration().getDefaultWorkspaceName();
+    }
+    try {
+      return node(workspace, path);
     } catch (ItemNotFoundException e) {
       return null;
     }
@@ -1022,7 +1037,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         boolean locked = node.isLocked();
         if (locked && (remoteUser.equalsIgnoreCase(superUser) || node.getLock().getLockOwner().equals(remoteUser))) {
           locked = false;
-        }
+        }    
         res = !locked && PermissionUtil.canSetProperty(node);
       }
     }
