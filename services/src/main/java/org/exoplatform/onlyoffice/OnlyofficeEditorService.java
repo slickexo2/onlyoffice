@@ -143,15 +143,16 @@ public interface OnlyofficeEditorService {
   String getEditorLink(String schema, String host, int port, String workspace, String docId);
 
   /**
-   * Gets the document node by its ID and optionally a repository workspace.
+   * Gets the document node by its path and optionally a repository workspace.
    *
    * @param workspace the workspace, can be <code>null</code>, then a default
    *          one will be used
-   * @param id the ID of a document
+   * @param path the path of a document
    * @return the document or <code>null</code> if nothing found
    * @throws RepositoryException the repository exception
+   * @throws BadParameterException the bad parameter exeption
    */
-  Node getDocument(String workspace, String id) throws RepositoryException;
+  Node getDocument(String workspace, String path) throws RepositoryException, BadParameterException;
 
   /**
    * Get file content.
@@ -236,5 +237,16 @@ public interface OnlyofficeEditorService {
    * @throws RepositoryException the repository exeption
    */
   boolean isDocumentMimeSupported(Node node) throws RepositoryException;
+
+  /**
+   * Gets the document node by its id and optionally a repository workspace.
+   *
+   * @param workspace the workspace, can be <code>null</code>, then a default
+   *          one will be used
+   * @param uuid the id of a document
+   * @return the document or <code>null</code> if nothing found
+   * @throws RepositoryException the repository exception
+   */
+  Node getDocumentById(String workspace, String uuid) throws RepositoryException;
 
 }

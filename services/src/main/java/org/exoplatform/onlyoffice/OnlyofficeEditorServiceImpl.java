@@ -944,12 +944,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                   workspace,
                                   docId);
       if (LOG.isDebugEnabled()) {
-        LOG.info("Editor link {}: {}", node.getPath(), link);
+        LOG.debug("Editor link {}: {}", node.getPath(), link);
       }
       return link;
     }
     if (LOG.isDebugEnabled()) {
-      LOG.info("Editor link NOT FOUND for {}", node.getPath());
+      LOG.debug("Editor link NOT FOUND for {}", node.getPath());
     }
     return null;
   }
@@ -966,12 +966,27 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * {@inheritDoc}
    */
   @Override
-  public Node getDocument(String workspace, String uuid) throws RepositoryException {
+  public Node getDocumentById(String workspace, String uuid) throws RepositoryException {
     if (workspace == null) {
       workspace = jcrService.getCurrentRepository().getConfiguration().getDefaultWorkspaceName();
     }
     try {
       return nodeByUUID(workspace, uuid);
+    } catch (ItemNotFoundException e) {
+      return null;
+    }
+  }
+  
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Node getDocument(String workspace, String path) throws RepositoryException, BadParameterException {
+    if (workspace == null) {
+      workspace = jcrService.getCurrentRepository().getConfiguration().getDefaultWorkspaceName();
+    }
+    try {
+      return node(workspace, path);
     } catch (ItemNotFoundException e) {
       return null;
     }
@@ -1022,9 +1037,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         boolean locked = node.isLocked();
         if (locked && (remoteUser.equalsIgnoreCase(superUser) || node.getLock().getLockOwner().equals(remoteUser))) {
           locked = false;
-        }
-        boolean permit = WCMCoreUtils.canAccessParentNode(node) && PermissionUtil.canAddNode(node.getParent());
-        res = !locked && permit;
+        }    
+        res = !locked && PermissionUtil.canSetProperty(node);
       }
     }
     if (!res && LOG.isDebugEnabled()) {
