@@ -1023,8 +1023,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         if (locked && (remoteUser.equalsIgnoreCase(superUser) || node.getLock().getLockOwner().equals(remoteUser))) {
           locked = false;
         }
-        boolean permit = WCMCoreUtils.canAccessParentNode(node) && PermissionUtil.canAddNode(node.getParent());
-        res = !locked && permit;
+        res = !locked && PermissionUtil.canSetProperty(node);
       }
     }
     if (!res && LOG.isDebugEnabled()) {
