@@ -2,6 +2,7 @@
  * Onlyoffice Editor client.
  */
 (function($, cCometD, redux) {
+  "use strict";
   // ******** polyfills ********
   if (!String.prototype.endsWith) {
     String.prototype.endsWith = function(search, this_len) {
@@ -350,18 +351,21 @@
       } else {
         // We use this check to avoid publishing updates from other users 
         // and publishing when user hasn't made any changes yet (opened editor)
+        
         if (!changesSaved) {
           log("ONLYOFFICE Changes are collected on document editing service");
           // TODO since now we start collect this user changes (via channel) at server-side and
           // when another co-editor will fire the same event (this method by anotehr user), this 
           // user should save his changes in eXo storage version by calling 
           // docEditor.downloadAs();
+         // UI.downloadAs();      
           if (currentConfig) {
             // We are a editor oage here: publish that the doc was changed by current user
             publishDocumentUpdate(currentConfig.docId, {
               "type": DOCUMENT_CHANGED,
               "userId": currentUserId,
-              "clientId": clientId
+              "clientId": clientId,
+              "key": currentConfig.document.key
             });
           }
           changesSaved = true;
@@ -375,6 +379,7 @@
         log("ONLYOFFICE Document Editor download file: " + event.data);
         // TODO send USER_VERSION event to channel with a link
         if (currentConfig) {
+          console.log("ON DOWLOAD AS: " + event.data);
           // We are a editor oage here: publish that the doc ready for download
           publishDocumentUpdate(currentConfig.docId, {
             "type": DOCUMENT_VERSION,
@@ -411,7 +416,7 @@
           "onError" : onError,
           "onReady" : onReady,
           "onBack" : onBack,
-          "onDownloadAs": onDownloadAs,
+          "onDownloadAs": onDownloadAs
         };
         config.editorConfig.customization = {
           "chat" : false,
@@ -443,12 +448,12 @@
         // XXX need let Onlyoffice to know about a host of API end-points,
         // as we will add their script dynamically to the DOM, the script will not be able to detect an URL
         // thus we use "extensionParams" observed in the script code
-        if ("undefined" == typeof (extensionParams) || null == extensionParams) {
+        /*if ("undefined" == typeof (extensionParams) || null == extensionParams) {
           extensionParams = {};
         }
         if ("undefined" == typeof (extensionParams.url) || null == extensionParams.url) {
           extensionParams.url = config.documentserverUrl;
-        }
+        }*/
 
         // load Onlyoffice API script
         // XXX need load API script to DOM head, Onlyoffice needs a real element in <script> to detect the DS server URL

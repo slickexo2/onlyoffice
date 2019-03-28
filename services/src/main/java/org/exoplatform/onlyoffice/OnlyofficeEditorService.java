@@ -249,4 +249,15 @@ public interface OnlyofficeEditorService {
    */
   Node getDocumentById(String workspace, String uuid) throws RepositoryException;
 
+  /**
+   * Creates a new version of the document.
+   * 
+   * @param key the key.
+   * @param userId the userId.
+   * @param contentUrl the contentUrl.
+   * @throws OnlyofficeEditorException the onlyoffice editor exeption
+   * @throws RepositoryException the repository exeption
+   */
+  void createVersion(String key, String userId, String contentUrl) throws OnlyofficeEditorException, RepositoryException;
+
 }
