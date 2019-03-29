@@ -899,7 +899,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    */
   @Override
   public String initDocument(Node node) throws OnlyofficeEditorException, RepositoryException {
-    if(node.getPrimaryNodeType().getName().equals("exo:symlink")) {
+    if (node.getPrimaryNodeType().getName().equals("exo:symlink")) {
       node = (Node) finder.findItem(node.getSession(), node.getPath());
     }
     if (node.canAddMixin("mix:referenceable") && canEditDocument(node)) {
@@ -976,7 +976,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       return null;
     }
   }
-  
+
   /**
    * {@inheritDoc}
    */
@@ -1037,7 +1037,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         boolean locked = node.isLocked();
         if (locked && (remoteUser.equalsIgnoreCase(superUser) || node.getLock().getLockOwner().equals(remoteUser))) {
           locked = false;
-        }    
+        }
         res = !locked && PermissionUtil.canSetProperty(node);
       }
     }
@@ -1046,7 +1046,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
     return res;
   }
-  
+
   /**
    * {@inheritDoc}
    */
@@ -1486,7 +1486,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       sessionProviders.setSessionProvider(null, contextProvider);
     }
   }
-  
+
   // TODO REFACTOR
 
   @Override
@@ -1502,7 +1502,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       LOG.debug(">> download(" + nodePath + ", " + config.getDocument().getKey() + ")");
     }
 
-  
     validateUser(userId, config);
 
     Calendar editedTime = Calendar.getInstance();
@@ -1550,6 +1549,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       }
 
       // work in user session
+
       Node node = node(workspace, path);
       Node content = nodeContent(node);
 
@@ -1591,9 +1591,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             node.checkout();
           }
 
-          //config.closed(); // reset transient closing state
-          //status.setConfig(config);
-          //fireSaved(status);
+          // config.closed(); // reset transient closing state
+          DocumentStatus status = new DocumentStatus();
+          status.setKey(key);
+          status.setUrl(contentUrl);
+          status.setUsers(new String[] { userId });
+          status.setConfig(config);
+          fireSaved(status);
         } catch (RepositoryException e) {
           try {
             node.refresh(false); // rollback JCR modifications

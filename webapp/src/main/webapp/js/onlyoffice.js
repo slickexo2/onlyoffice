@@ -244,8 +244,10 @@
     var DOCUMENT_SAVED = "DOCUMENT_SAVED";
     var DOCUMENT_CHANGED = "DOCUMENT_CHANGED";
     var DOCUMENT_DOWNLOAD = "DOCUMENT_DOWNLOAD";
+    var DOCUMENT_DOWNLOAD_AS = "DOCUMENT_DOWNLOAD_AS";
     var DOCUMENT_VERSION = "DOCUMENT_VERSION";
-
+    var EDITOR_CLOSED = "EDITOR_CLOSED";
+    
     // CometD transport bus
     var cometd, cometdContext;
 
@@ -254,6 +256,9 @@
     
     // Indicate current changes are collected by the document server (only for editor page)
     var changesSaved = true;
+    
+    // Indicates the last change is made by current user or another one.
+    var lastChangeIsCurrent = false;
 
     // Current user ID
     var currentUserId;
@@ -261,9 +266,12 @@
     // Current document ID (actual for Documents explorer)
     var explorerDocId;
     
+    // Used to download document as another user in case, when they closed the editor
+    var downloadAsUser = null;
+    
     // Redux store for dispatching document updates inside the app
     var store = redux.createStore(function (state, action) {
-      if (action.type === DOCUMENT_SAVED || action.type === DOCUMENT_CHANGED) {
+      if (action.type === DOCUMENT_SAVED || action.type === DOCUMENT_CHANGED || action.type === DOCUMENT_DOWNLOAD || action.type === DOCUMENT_VERSION || action.type === DOCUMENT_DOWNLOAD_AS) {
         return action;
       }
       log("Unknown action type:" + action.type);
@@ -364,11 +372,13 @@
             publishDocumentUpdate(currentConfig.docId, {
               "type": DOCUMENT_CHANGED,
               "userId": currentUserId,
-              "clientId": clientId,
-              "key": currentConfig.document.key
+              "clientId": clientId
             });
           }
           changesSaved = true;
+          lastChangeIsCurrent = true;
+        } else {
+          lastChangeIsCurrent = false;
         }
       }
     };
@@ -377,16 +387,21 @@
       log("onDownloadAs: " + JSON.stringify(event));
       if (event.data) {
         log("ONLYOFFICE Document Editor download file: " + event.data);
-        // TODO send USER_VERSION event to channel with a link
+        var userId = currentUserId;
+        if (downloadAsUser) {
+          userId = downloadAsUser;
+        }
         if (currentConfig) {
-          console.log("ON DOWLOAD AS: " + event.data);
+          log("onDownloadAs listener: " + event.data);
           // We are a editor oage here: publish that the doc ready for download
           publishDocumentUpdate(currentConfig.docId, {
             "type": DOCUMENT_VERSION,
-            "userId": currentConfig.editorConfig.user.id,
+            "userId": userId,
             "documentLink" : event.data,
-            "clientId": clientId
+            "clientId": clientId,
+            "key": currentConfig.document.key
           });
+          downloadAsUser = null;
         }
       }
     };
@@ -491,6 +506,20 @@
       }
       return process.promise();
     };
+
+    var beforeEditorCloseListener = function(e){
+
+      // We need to save current changes when user closes the editor
+      if(lastChangeIsCurrent && currentConfig){
+        publishDocumentUpdate(currentConfig.docId, {
+              "type": EDITOR_CLOSED,
+              "userId": currentUserId,
+              "clientId": clientId,
+              "key": currentConfig.document.key
+            });
+      }
+    };
+
     this.create = create;
 
     this.init = function(userId, cometdConf, userMessages) {
@@ -534,11 +563,16 @@
 
         store.subscribe(function () {
           var state = store.getState();
-          if (state.type === DOCUMENT_DOWNLOAD && state.docId === currentConfig.docId && state.clientId === clientId) {
+          if ((state.type === DOCUMENT_DOWNLOAD || state.type === DOCUMENT_DOWNLOAD_AS) && state.docId === currentConfig.docId && state.userId === currentUserId) {
+            if (state.asUserId){
+              downloadAsUser = state.asUserId;
+            }
             UI.downloadAs();
           }
         });
         subscribeDocument(currentConfig.docId);
+
+        window.addEventListener("beforeunload", beforeEditorCloseListener);
 
         $(function() {
           try {
@@ -694,7 +728,7 @@
     var refreshActivityPreview = function(activityId, $banner) {
       $banner.find(".refreshBannerContent")
           .append("<div class='loading'><i class='uiLoadingIconSmall uiIconEcmsGray'></i></div>");
-      $refreshLink = $banner.find(".refreshBannerLink");
+      var $refreshLink = $banner.find(".refreshBannerLink");
       $refreshLink.addClass("disabled");
       $refreshLink.on('click', function() {
         return false;
@@ -844,7 +878,7 @@
       if ($previewParent.find("#Preview" + activityId + "-1").length === 0) {
         if ($previewParent.find(".documentRefreshBanner").length === 0) {
           $previewParent.prepend(getRefreshBanner());
-          $banner = $previewParent.find(".documentRefreshBanner");
+          var $banner = $previewParent.find(".documentRefreshBanner");
           $(".documentRefreshBanner .refreshBannerLink").click(function() {
             refreshActivityPreview(activityId, $banner);
           });

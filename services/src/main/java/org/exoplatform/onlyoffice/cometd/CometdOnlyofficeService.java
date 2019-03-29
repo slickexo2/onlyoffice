@@ -193,9 +193,15 @@ public class CometdOnlyofficeService implements Startable {
 
   /** The document download event. */
   public static final String              DOCUMENT_DOWNLOAD_EVENT = "DOCUMENT_DOWNLOAD";
+  
+  /** The document download event. */
+  public static final String              DOCUMENT_DOWNLOAD_AS_EVENT = "DOCUMENT_DOWNLOAD_AS";
 
   /** The document version event. */
   public static final String              DOCUMENT_VERSION_EVENT  = "DOCUMENT_VERSION";
+  
+  /** The editor closed event. */
+  public static final String              EDITOR_CLOSED_EVENT  = "EDITOR_CLOSED";
 
   /**
    * Base minimum number of threads for remote calls' thread executors.
@@ -378,24 +384,7 @@ public class CometdOnlyofficeService implements Startable {
 
         @Override
         public void onSaved(DocumentStatus status) {
-          String docId = status.getConfig().getDocId();
-          ServerChannel channel = bayeux.getChannel(CHANNEL_NAME + docId);
-          if (channel != null) {
-            LOG.info("Document {} saved. Sending message to cometd channel", docId);
-            StringBuilder data = new StringBuilder();
-            data.append('{');
-            data.append("\"type\": \"");
-            data.append(DOCUMENT_SAVED_EVENT);
-            data.append("\", ");
-            data.append("\"docId\": \"");
-            data.append(docId);
-            data.append("\", ");
-            data.append("\"userId\": \"");
-            data.append(status.getLastUser());
-            data.append("\"");
-            data.append('}');
-            channel.publish(localSession, data.toString());
-          }
+          publishSavedEvent(status.getConfig().getDocId(), status.getLastUser());
         }
 
         @Override
@@ -436,15 +425,51 @@ public class CometdOnlyofficeService implements Startable {
     @Subscription(CHANNEL_NAME_PARAMS)
     public void subscribeDocuments(Message message, @Param("docId") String docId) throws OnlyofficeEditorException,
                                                                                   RepositoryException {
+      Object objData = message.getData();
+      if (!Map.class.isInstance(objData)) {
+        LOG.info("Couldn't get data as a map from event");
+        return;
+      }
+
       Map<String, Object> data = message.getDataAsMap();
       String type = (String) data.get("type");
       if (DOCUMENT_CHANGED_EVENT.equals(type)) {
         handleDocumentChangeEvent(data, docId);
       } else if (DOCUMENT_VERSION_EVENT.equals(type)) {
         handleDocumentVersionEvent(data, docId);
+      } else if (EDITOR_CLOSED_EVENT.equals(type)) {
+        handleEditorClosedEvent(data, docId);
       }
       LOG.info("Event published in " + message.getChannel() + ", docId: " + docId + ", data: " + message.getJSON());
     }
+
+    private void handleEditorClosedEvent(Map<String, Object> data, String docId) {
+      String userId = (String) data.get("userId");
+      String key = (String) data.get("key");
+      try {
+        String[] users = onlyofficeEditorService.getState(userId, key).getUsers();
+        // If there are other users editing the document
+        // TODO: change to clientId instead of userId
+        if(users.length > 1) {
+          String targetUser = null;
+          // Find anyone to send DOWNLOAD_AS event
+          for(String activeUser : users) {
+            if(!activeUser.equals(userId)) {
+              targetUser = activeUser;
+              break;
+            }
+          }
+          // TODO change to download as event
+          publishDownloadAsEvent(docId, targetUser, userId);
+          
+        }
+        
+      } catch (OnlyofficeEditorException e) {
+        LOG.error("Cannot get state of document key: " + key + ", user: " + userId);
+      }
+      
+    }
+    
 
     protected void handleDocumentVersionEvent(Map<String, Object> data, String docId) {
       String userId = (String) data.get("userId");
@@ -459,7 +484,8 @@ public class CometdOnlyofficeService implements Startable {
         @Override
         void execute(ExoContainer exoContainer) {
           try {
-            LOG.info("Creating a new version for user: " + userId + ", docId: " + docId);
+            LOG.info("Creating a new version for user: " + userId + ", docId: " + docId + ", link: " + link);
+
             onlyofficeEditorService.createVersion(key, userId, link);
           } catch (OnlyofficeEditorException | RepositoryException e) {
             LOG.error("Cannot create version :", e);
@@ -489,6 +515,51 @@ public class CometdOnlyofficeService implements Startable {
         data.append('{');
         data.append("\"type\": \"");
         data.append(DOCUMENT_DOWNLOAD_EVENT);
+        data.append("\", ");
+        data.append("\"docId\": \"");
+        data.append(docId);
+        data.append("\", ");
+        data.append("\"userId\": \"");
+        data.append(userId);
+        data.append("\"");
+        data.append('}');
+        channel.publish(localSession, data.toString());
+      }
+
+    }
+    
+    protected void publishDownloadAsEvent(String docId, String targetId, String asUserId) {
+      ServerChannel channel = bayeux.getChannel(CHANNEL_NAME + docId);
+      if (channel != null) {
+        LOG.info("Document {} saved. Sending message to cometd channel", docId);
+        StringBuilder data = new StringBuilder();
+        data.append('{');
+        data.append("\"type\": \"");
+        data.append(DOCUMENT_DOWNLOAD_AS_EVENT);
+        data.append("\", ");
+        data.append("\"docId\": \"");
+        data.append(docId);
+        data.append("\", ");
+        data.append("\"userId\": \"");
+        data.append(targetId);
+        data.append("\", ");
+        data.append("\"asUserId\": \"");
+        data.append(asUserId);
+        data.append("\"");
+        data.append('}');
+        channel.publish(localSession, data.toString());
+      }
+
+    }
+    
+    protected void publishSavedEvent(String docId, String userId) {
+      ServerChannel channel = bayeux.getChannel(CHANNEL_NAME + docId);
+      if (channel != null) {
+        LOG.info("Document {} saved. Sending message to cometd channel", docId);
+        StringBuilder data = new StringBuilder();
+        data.append('{');
+        data.append("\"type\": \"");
+        data.append(DOCUMENT_SAVED_EVENT);
         data.append("\", ");
         data.append("\"docId\": \"");
         data.append(docId);
