@@ -841,8 +841,7 @@
      * Ads the 'Edit Online' button to the JCRExplorer when a document is displayed.
      */
     this.addEditorButtonToExplorer = function() {
-      $("#UIJCRExplorer .fileContent").closest("#UIJCRExplorer").find("#uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen")
-          .addClass("uiIconEdit");
+      $("#UIJCRExplorer #uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen").addClass("uiIconEdit");
     };
 
     /**
