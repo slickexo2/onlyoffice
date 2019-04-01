@@ -1064,6 +1064,47 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     return false;
   }
 
+  /**
+   * Downloads document's content to the JCR node when the editor is closed.
+   * 
+   * @param config the config
+   * @param status the status
+   */
+  public void downloadClosed(Config config, DocumentStatus status) {
+    // First mark closing, then do actual download and save in storage
+    config.closing();
+    try {
+      download(config, status);
+      config.closed(); // reset transient closing state
+    } catch (OnlyofficeEditorException | RepositoryException e) {
+      LOG.error("Error occured while downloading document content [Closed]. docId: " + config.getDocId(), e);
+    }
+
+  }
+
+  /**
+   * Downloads document's content to the JCR node creating a new version.
+   * 
+   * @param key the key
+   * @param userId the userId
+   * @param contentUrl the contentUrl
+   */
+  @Override
+  public void downloadVersion(String key, String userId, String contentUrl) {
+    String docId = null;
+    try {
+      Config config = getEditorByKey(userId, key);
+      docId = config.getDocId();
+      DocumentStatus status = new DocumentStatus();
+      status.setKey(key);
+      status.setUrl(contentUrl);
+      status.setUsers(new String[] { userId });
+      download(config, status);
+    } catch (OnlyofficeEditorException | RepositoryException e) {
+      LOG.error("Error occured while downloading document content [Version]. docId: " + docId, e);
+    }
+  }
+  
   // *********************** implementation level ***************
 
   /**
@@ -1336,19 +1377,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   /**
-   * Download.
-   *
+   * Downloads document's content to the JCR node.
+   * 
    * @param config the config
    * @param status the status
-   * @throws OnlyofficeEditorException the onlyoffice editor exception
-   * @throws RepositoryException the repository exception
+   * @throws OnlyofficeEditorException the OnlyofficeEditorException
+   * @throws RepositoryException the RepositoryException
    */
-  @SuppressWarnings("deprecation")
   protected void download(Config config, DocumentStatus status) throws OnlyofficeEditorException, RepositoryException {
-
-    // First mark closing, then do actual download and save in storage
-    config.closing();
-
     String workspace = config.getWorkspace();
     String path = config.getPath();
     String nodePath = nodePath(workspace, path);
@@ -1447,155 +1483,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             // actions in ECMS appear on it
             node.checkout();
           }
-
-          config.closed(); // reset transient closing state
-          status.setConfig(config);
-          fireSaved(status);
-        } catch (RepositoryException e) {
-          try {
-            node.refresh(false); // rollback JCR modifications
-          } catch (Throwable re) {
-            LOG.warn("Error rolling back failed change for " + nodePath, re);
-          }
-          throw e; // let the caller handle it further
-        } finally {
-          try {
-            data.close();
-          } catch (Throwable e) {
-            LOG.warn("Error closing exported content stream for " + nodePath, e);
-          }
-          try {
-            connection.disconnect();
-          } catch (Throwable e) {
-            LOG.warn("Error closing export connection for " + nodePath, e);
-          }
-          try {
-            if (node.isLocked() && lock.wasLocked()) {
-              unlock(node, lock);
-            }
-          } catch (Throwable e) {
-            LOG.warn("Error unlocking edited document " + nodePath(workspace, path), e);
-          }
-        }
-      } else {
-        throw new OnlyofficeEditorException("Document locked " + nodePath);
-      }
-    } finally {
-      // restore context env
-      ConversationState.setCurrent(contextState);
-      sessionProviders.setSessionProvider(null, contextProvider);
-    }
-  }
-
-  // TODO REFACTOR
-
-  @Override
-  public void createVersion(String key, String userId, String contentUrl) throws OnlyofficeEditorException, RepositoryException {
-
-    Config config = getEditorByKey(userId, key);
-
-    String workspace = config.getWorkspace();
-    String path = config.getPath();
-    String nodePath = nodePath(workspace, path);
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(">> download(" + nodePath + ", " + config.getDocument().getKey() + ")");
-    }
-
-    validateUser(userId, config);
-
-    Calendar editedTime = Calendar.getInstance();
-
-    HttpURLConnection connection;
-    InputStream data;
-    try {
-      URL url = new URL(contentUrl);
-      connection = (HttpURLConnection) url.openConnection();
-      data = connection.getInputStream();
-      if (data == null) {
-        throw new OnlyofficeEditorException("Content stream is null");
-      }
-    } catch (MalformedURLException e) {
-      throw new OnlyofficeEditorException("Error parsing content URL " + contentUrl + " for " + nodePath, e);
-    } catch (IOException e) {
-      throw new OnlyofficeEditorException("Error reading content stream " + contentUrl + " for " + nodePath, e);
-    }
-
-    // remember real context state and session provider to restore them at the
-    // end
-    ConversationState contextState = ConversationState.getCurrent();
-    SessionProvider contextProvider = sessionProviders.getSessionProvider(null);
-    try {
-      // We want do all the job under actual (last editor) user here
-      // Notable that some WCM actions (FileUpdateActivityListener) will fail if
-      // user will be anonymous
-      // TODO but it seems looks as nasty thing for security, it should be
-      // carefully reviewed for production
-      Identity userIdentity = userIdentity(userId);
-      if (userIdentity != null) {
-        ConversationState state = new ConversationState(userIdentity);
-        // Keep subject as attribute in ConversationState.
-        state.setAttribute(ConversationState.SUBJECT, userIdentity.getSubject());
-        ConversationState.setCurrent(state);
-        SessionProvider userProvider = new SessionProvider(state);
-        sessionProviders.setSessionProvider(null, userProvider);
-        if (LOG.isDebugEnabled()) {
-          LOG.debug(">>> download under user " + userIdentity.getUserId() + " (" + nodePath + ", " + config.getDocument().getKey()
-              + ")");
-        }
-      } else {
-        LOG.warn("User identity not found " + userId + " for downloading " + config.getDocument().getKey() + " " + nodePath);
-        throw new OnlyofficeEditorException("User identity not found " + userId);
-      }
-
-      // work in user session
-
-      Node node = node(workspace, path);
-      Node content = nodeContent(node);
-
-      // lock node first, this also will check if node isn't locked by another
-      // user (will throw exception)
-      final LockState lock = lock(node, config);
-      if (lock.canEdit()) {
-        // manage version only if node already mix:versionable
-        boolean checkIn = checkout(node);
-
-        try {
-          // update document
-          content.setProperty("jcr:data", data);
-          // update modified date (this will force PDFViewer to regenerate its
-          // images)
-          content.setProperty("jcr:lastModified", editedTime);
-          if (content.hasProperty("exo:dateModified")) {
-            content.setProperty("exo:dateModified", editedTime);
-          }
-          if (content.hasProperty("exo:lastModifiedDate")) {
-            content.setProperty("exo:lastModifiedDate", editedTime);
-          }
-          if (node.hasProperty("exo:lastModifiedDate")) {
-            node.setProperty("exo:lastModifiedDate", editedTime);
-          }
-          if (node.hasProperty("exo:dateModified")) {
-            node.setProperty("exo:dateModified", editedTime);
-          }
-          if (node.hasProperty("exo:lastModifier")) {
-            node.setProperty("exo:lastModifier", userId);
-          }
-
-          node.save();
-          if (checkIn) {
-            // Make a new version from the downloaded state
-            node.checkin();
-            // Since 1.2.0-RC01 we check-out the document to let (more) other
-            // actions in ECMS appear on it
-            node.checkout();
-          }
-
-          // config.closed(); // reset transient closing state
-          DocumentStatus status = new DocumentStatus();
-          status.setKey(key);
-          status.setUrl(contentUrl);
-          status.setUsers(new String[] { userId });
           status.setConfig(config);
           fireSaved(status);
         } catch (RepositoryException e) {

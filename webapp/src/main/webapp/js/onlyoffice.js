@@ -248,6 +248,9 @@
     var DOCUMENT_VERSION = "DOCUMENT_VERSION";
     var EDITOR_CLOSED = "EDITOR_CLOSED";
     
+    // Events that are dispatched to redux as actions
+    var dispatchableEvents = [DOCUMENT_SAVED, DOCUMENT_CHANGED, DOCUMENT_DOWNLOAD, DOCUMENT_DOWNLOAD_AS, DOCUMENT_VERSION];
+    
     // CometD transport bus
     var cometd, cometdContext;
 
@@ -290,7 +293,9 @@
       var subscription = cometd.subscribe("/eXo/Application/Onlyoffice/editor/" + docId, function(message) {
         // Channel message handler
         var result = tryParseJson(message);
-        store.dispatch(result);
+        if(dispatchableEvents.includes(result.type)){
+          store.dispatch(result);
+        }
       }, cometdContext, function(subscribeReply) {
         // Subscription status callback
         if (subscribeReply.successful) {
@@ -507,19 +512,6 @@
       return process.promise();
     };
 
-    var beforeEditorCloseListener = function(e){
-
-      // We need to save current changes when user closes the editor
-      if(lastChangeIsCurrent && currentConfig){
-        publishDocumentUpdate(currentConfig.docId, {
-              "type": EDITOR_CLOSED,
-              "userId": currentUserId,
-              "clientId": clientId,
-              "key": currentConfig.document.key
-            });
-      }
-    };
-
     this.create = create;
 
     this.init = function(userId, cometdConf, userMessages) {
@@ -572,7 +564,17 @@
         });
         subscribeDocument(currentConfig.docId);
 
-        window.addEventListener("beforeunload", beforeEditorCloseListener);
+        window.addEventListener("unload", function() {
+          // We need to save current changes when user closes the editor
+        if(lastChangeIsCurrent && currentConfig){
+          publishDocumentUpdate(currentConfig.docId, {
+                "type": EDITOR_CLOSED,
+                "userId": currentUserId,
+                "clientId": clientId,
+                "key": currentConfig.document.key
+              });
+        }
+        });
 
         $(function() {
           try {
