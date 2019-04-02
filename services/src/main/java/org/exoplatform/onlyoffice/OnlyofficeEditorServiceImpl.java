@@ -821,7 +821,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           }
         } else if (statusCode == 2) {
           // save as "document is ready for saving" (2)
-          download(config, status);
+          downloadClosed(config, status);
           activeCache.remove(key);
           activeCache.remove(nodePath);
         } else if (statusCode == 3) {
@@ -835,7 +835,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               // if URL available then we can download it assuming it's last
               // successful modification
               // the same behaviour as for status (2)
-              download(config, status);
+              downloadClosed(config, status);
               activeCache.remove(key);
               activeCache.remove(nodePath);
               config.setError("Error in editor. Last change was successfully saved");
