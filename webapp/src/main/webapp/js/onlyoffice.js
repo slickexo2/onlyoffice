@@ -247,6 +247,7 @@
     var DOCUMENT_DOWNLOAD_AS = "DOCUMENT_DOWNLOAD_AS";
     var DOCUMENT_VERSION = "DOCUMENT_VERSION";
     var EDITOR_CLOSED = "EDITOR_CLOSED";
+    var EDITOR_OPENED = "EDITOR_OPENED";
     
     // Events that are dispatched to redux as actions
     var dispatchableEvents = [DOCUMENT_SAVED, DOCUMENT_CHANGED, DOCUMENT_DOWNLOAD, DOCUMENT_DOWNLOAD_AS, DOCUMENT_VERSION];
@@ -377,7 +378,8 @@
             publishDocumentUpdate(currentConfig.docId, {
               "type": DOCUMENT_CHANGED,
               "userId": currentUserId,
-              "clientId": clientId
+              "clientId": clientId,
+              "key": currentConfig.document.key
             });
           }
           changesSaved = true;
@@ -563,15 +565,25 @@
           }
         });
         subscribeDocument(currentConfig.docId);
+        
+        if (currentConfig) {
+          // We are a editor oage here: publish that the doc was changed by current user
+          publishDocumentUpdate(currentConfig.docId, {
+            "type": EDITOR_OPENED,
+            "userId": currentUserId,
+            "clientId": clientId
+          });
+        }
 
         window.addEventListener("unload", function() {
           // We need to save current changes when user closes the editor
-        if(lastChangeIsCurrent && currentConfig){
+        if (currentConfig){
           publishDocumentUpdate(currentConfig.docId, {
                 "type": EDITOR_CLOSED,
                 "userId": currentUserId,
                 "clientId": clientId,
-                "key": currentConfig.document.key
+                "key": currentConfig.document.key,
+                "changes": lastChangeIsCurrent
               });
         }
         });

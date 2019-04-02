@@ -25,6 +25,8 @@ import java.io.ObjectOutput;
 import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.jcr.Node;
 
@@ -599,6 +601,12 @@ public class Config implements Externalizable {
 
       /** The username. */
       protected final String     username;
+      
+      /** The lastModified timestamp. */
+      protected transient Long lastModified;
+      
+      /** The set of client ids. */
+      protected transient Set<String> clients = new HashSet<>();
 
       /** The lock token. */
       @Deprecated
@@ -653,6 +661,51 @@ public class Config implements Externalizable {
        */
       public String getLastname() {
         return lastname;
+      }
+      
+      /**
+       * Gets the lastModified.
+       * 
+       * @return the lastModified
+       */
+      public Long getLastModified() {
+        return lastModified;
+      }
+      
+      /**
+       * Sets the lastModified.
+       * 
+       * @param lastModified the lastModified
+       */
+      public void setLastModified(Long lastModified) {
+        this.lastModified = lastModified;
+      }
+      
+      /**
+       * Gets the clients.
+       * 
+       * @return the clients
+       */
+      public Set<String> getClients() {
+        return clients;
+      }
+      
+      /**
+       * Adds a client.
+       * 
+       * @param clientId the clientId
+       */
+      public void addClient(String clientId) {
+        clients.add(clientId);
+      }
+      
+      /**
+       * Removes a client.
+       * 
+       * @param clientId the clientId
+       */
+      public void removeClient(String clientId) {
+        clients.remove(clientId);
       }
 
       /**

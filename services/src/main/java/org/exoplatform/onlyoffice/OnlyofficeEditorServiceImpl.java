@@ -34,6 +34,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.Set;
@@ -1104,7 +1105,38 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       LOG.error("Error occured while downloading document content [Version]. docId: " + docId, e);
     }
   }
-  
+
+  @Override
+  public String getLastModifierId(String key) {
+    ConcurrentMap<String, Config> configs = activeCache.get(key);
+    String userId = null;
+    if (configs != null) {
+      // TODO: could be replaced with lambda
+      Long maxLastModified = null;
+      for (Entry<String, Config> entry : configs.entrySet()) {
+        Long lastModified = entry.getValue().getEditorConfig().getUser().getLastModified();
+        if (lastModified != null && (maxLastModified == null || lastModified > maxLastModified)) {
+          maxLastModified = lastModified;
+          userId = entry.getKey();
+        }
+      }
+    }
+    return userId;
+  }
+
+  @Override
+  public void setLastModifiedId(String key, String userId) {
+    ConcurrentMap<String, Config> configs = activeCache.get(key);
+    if (configs != null) {
+      configs.get(userId).getEditorConfig().getUser().setLastModified(System.currentTimeMillis());
+      activeCache.put(key, configs);
+      activeCache.put(nodePath(configs.get(userId)), configs); // TODO: is it ok
+                                                               // ?
+    }
+
+    // TODO: activeCache.put(nodePath, configs);
+  }
+
   // *********************** implementation level ***************
 
   /**

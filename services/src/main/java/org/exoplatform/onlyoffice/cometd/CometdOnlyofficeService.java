@@ -20,7 +20,6 @@ package org.exoplatform.onlyoffice.cometd;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -203,13 +202,16 @@ public class CometdOnlyofficeService implements Startable {
   /** The editor closed event. */
   public static final String              EDITOR_CLOSED_EVENT        = "EDITOR_CLOSED";
 
+  /** The editor opened event. */
+  public static final String              EDITOR_OPENED_EVENT        = "EDITOR_OPENED";
+
   /**
-   * Base minimum number of threads for remote calls' thread executors.
+   * Base minimum number of threads for document updates thread executors.
    */
   public static final int                 MIN_THREADS                = 2;
 
   /**
-   * Minimal number of threads maximum possible for remote calls' thread executors.
+   * Minimal number of threads maximum possible for document updates thread executors.
    */
   public static final int                 MIN_MAX_THREADS            = 4;
 
@@ -217,19 +219,19 @@ public class CometdOnlyofficeService implements Startable {
   public static final int                 THREAD_IDLE_TIME           = 120;
 
   /**
-   * Maximum threads per CPU for thread executors of user call channel.
+   * Maximum threads per CPU for thread executors of document changes channel.
    */
-  public static final int                 CALL_MAX_FACTOR            = 20;
+  public static final int                 MAX_FACTOR                 = 20;
 
   /**
-   * Queue size per CPU for thread executors of user call channel.
+   * Queue size per CPU for thread executors of document updates channel.
    */
-  public static final int                 CALL_QUEUE_FACTOR          = CALL_MAX_FACTOR * 2;
+  public static final int                 QUEUE_FACTOR               = MAX_FACTOR * 2;
 
   /**
-   * Thread name used for calls executor.
+   * Thread name used for the executor.
    */
-  public static final String              CALL_THREAD_PREFIX         = "onlyoffice-comet-thread-";
+  public static final String              THREAD_PREFIX              = "onlyoffice-comet-thread-";
 
   /** The Onlyoffice editor service. */
   protected final OnlyofficeEditorService onlyofficeEditorService;
@@ -254,7 +256,7 @@ public class CometdOnlyofficeService implements Startable {
     this.onlyofficeEditorService = onlyofficeEditorService;
     this.service = new CometdService();
     // Thread executors
-    this.eventsHandlers = createThreadExecutor(CALL_THREAD_PREFIX, CALL_MAX_FACTOR, CALL_QUEUE_FACTOR);
+    this.eventsHandlers = createThreadExecutor(THREAD_PREFIX, MAX_FACTOR, QUEUE_FACTOR);
   }
 
   /**
@@ -362,18 +364,15 @@ public class CometdOnlyofficeService implements Startable {
 
     /** The bayeux. */
     @Inject
-    private BayeuxServer        bayeux;
+    private BayeuxServer  bayeux;
 
     /** The local session. */
     @Session
-    private LocalSession        localSession;
+    private LocalSession  localSession;
 
     /** The server session. */
     @Session
-    private ServerSession       serverSession;
-
-    /** The documentUpdates map contains data about document updates. K - docId, V - last userId. */
-    private Map<String, String> documentUpdates = new ConcurrentHashMap<>();
+    private ServerSession serverSession;
 
     /**
      * Post construct.
@@ -433,40 +432,57 @@ public class CometdOnlyofficeService implements Startable {
 
       Map<String, Object> data = message.getDataAsMap();
       String type = (String) data.get("type");
-      if (DOCUMENT_CHANGED_EVENT.equals(type)) {
+
+      switch (type) {
+      case DOCUMENT_CHANGED_EVENT:
         handleDocumentChangeEvent(data, docId);
-      } else if (DOCUMENT_VERSION_EVENT.equals(type)) {
+        break;
+      case DOCUMENT_VERSION_EVENT:
         handleDocumentVersionEvent(data, docId);
-      } else if (EDITOR_CLOSED_EVENT.equals(type)) {
+        break;
+      case EDITOR_OPENED_EVENT:
+        handleEditorOpenedEvent(data, docId);
+        break;
+      case EDITOR_CLOSED_EVENT:
         handleEditorClosedEvent(data, docId);
+        break;
+      default:
+        LOG.info("Unknown event type {}", type);
       }
       LOG.info("Event published in " + message.getChannel() + ", docId: " + docId + ", data: " + message.getJSON());
     }
 
-    private void handleEditorClosedEvent(Map<String, Object> data, String docId) {
+    protected void handleEditorOpenedEvent(Map<String, Object> data, String docId) {
+      // TODO: add clientId to the activeCache in editor service
+    }
+
+    protected void handleEditorClosedEvent(Map<String, Object> data, String docId) {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
-      try {
-        String[] users = onlyofficeEditorService.getState(userId, key).getUsers();
-        // If there are other users editing the document
-        // TODO: change to clientId instead of userId
-        if (users.length > 1) {
-          String targetUser = null;
-          // Find anyone to send DOWNLOAD_AS event
-          for (String activeUser : users) {
-            if (!activeUser.equals(userId)) {
-              targetUser = activeUser;
-              break;
+      Boolean changes = (Boolean) data.get("changes");
+      // If the user has made changes that need to be saved
+      if (changes) {
+        try {
+          String[] users = onlyofficeEditorService.getState(userId, key).getUsers();
+          // If there are other users editing the document
+          // TODO: change to clientId instead of userId
+          if (users.length > 1) {
+            String targetUser = null;
+            // Find anyone to send DOWNLOAD_AS event
+            for (String activeUser : users) {
+              if (!activeUser.equals(userId)) {
+                targetUser = activeUser;
+                break;
+              }
             }
+            publishDownloadAsEvent(docId, targetUser, userId);
           }
-          // TODO change to download as event
-          publishDownloadAsEvent(docId, targetUser, userId);
-
+        } catch (OnlyofficeEditorException e) {
+          LOG.error("Cannot get state of document key: " + key + ", user: " + userId);
         }
-
-      } catch (OnlyofficeEditorException e) {
-        LOG.error("Cannot get state of document key: " + key + ", user: " + userId);
       }
+
+      // TODO: remove the clientId from activeCache in the editorService
 
     }
 
@@ -491,13 +507,15 @@ public class CometdOnlyofficeService implements Startable {
 
     protected void handleDocumentChangeEvent(Map<String, Object> data, String docId) {
       String userId = (String) data.get("userId");
-      String lastUser = documentUpdates.computeIfAbsent(docId, id -> userId);
-      if (!userId.equals(lastUser)) {
+      String key = (String) data.get("key");
+      String lastUser = onlyofficeEditorService.getLastModifierId(key);
+      if (lastUser != null && !userId.equals(lastUser)) {
         LOG.info("Download a new version of document: user " + lastUser + ", docId: " + docId);
         publishDownloadEvent(docId, lastUser);
-        documentUpdates.replace(docId, userId);
         LOG.info("Started collecting changes for: " + userId + ", docId: " + docId);
       }
+      onlyofficeEditorService.setLastModifiedId(key, userId);
+
       LOG.info("Changes collected from: " + userId + ", docId: " + docId);
     }
 

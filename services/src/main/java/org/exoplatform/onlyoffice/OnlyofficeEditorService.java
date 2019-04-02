@@ -258,4 +258,20 @@ public interface OnlyofficeEditorService {
    */
   void downloadVersion(String key, String userId, String contentUrl);
 
+  /**
+   * Gets the last modifier userId.
+   * 
+   * @param key the key
+   * @return the userId
+   */
+  String getLastModifierId(String key);
+
+  /**
+   * Sets the last modifier userId.
+   * 
+   * @param key the key
+   * @param userId the userId
+   */
+  void setLastModifiedId(String key, String userId);
+
 }
