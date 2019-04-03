@@ -100,7 +100,7 @@ public class CometdConfig {
    * To JSON.
    *
    * @return the string
-   * @throws JsonException
+   * @throws JsonException the json exception
    */
   public String toJSON() throws JsonException {
     return new JsonGeneratorImpl().createJsonObject(this).toString();

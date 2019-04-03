@@ -251,7 +251,7 @@ public class CometdOnlyofficeService implements Startable {
    * Instantiates the CometdOnlyofficeService.
    *
    * @param exoBayeux the exoBayeux
-   * @param editors the OnlyofficeEditorService
+   * @param onlyofficeEditorService the onlyoffice editor service
    */
   public CometdOnlyofficeService(EXoContinuationBayeux exoBayeux, OnlyofficeEditorService onlyofficeEditorService) {
     this.exoBayeux = exoBayeux;
@@ -417,11 +417,11 @@ public class CometdOnlyofficeService implements Startable {
 
     /**
      * Subscribe document events.
-     * 
+     *
      * @param message the message.
      * @param docId the docId.
-     * @throws RepositoryException
-     * @throws OnlyofficeEditorException
+     * @throws OnlyofficeEditorException the onlyoffice editor exception
+     * @throws RepositoryException the repository exception
      */
     @Subscription(CHANNEL_NAME_PARAMS)
     public void subscribeDocuments(Message message, @Param("docId") String docId) throws OnlyofficeEditorException,
@@ -457,6 +457,12 @@ public class CometdOnlyofficeService implements Startable {
  
     }
 
+    /**
+     * Handle editor opened event.
+     *
+     * @param data the data
+     * @param docId the doc id
+     */
     protected void handleEditorOpenedEvent(Map<String, Object> data, String docId) {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
@@ -465,6 +471,12 @@ public class CometdOnlyofficeService implements Startable {
       editors.addClient(key, userId, clientId);
     }
 
+    /**
+     * Handle editor closed event.
+     *
+     * @param data the data
+     * @param docId the doc id
+     */
     protected void handleEditorClosedEvent(Map<String, Object> data, String docId) {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
@@ -495,6 +507,12 @@ public class CometdOnlyofficeService implements Startable {
       editors.removeClient(key, userId, clientId);
     }
 
+    /**
+     * Handle document version event.
+     *
+     * @param data the data
+     * @param docId the doc id
+     */
     protected void handleDocumentVersionEvent(Map<String, Object> data, String docId) {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
@@ -516,6 +534,12 @@ public class CometdOnlyofficeService implements Startable {
 
     }
 
+    /**
+     * Handle document change event.
+     *
+     * @param data the data
+     * @param docId the doc id
+     */
     protected void handleDocumentChangeEvent(Map<String, Object> data, String docId) {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
@@ -538,6 +562,12 @@ public class CometdOnlyofficeService implements Startable {
       }
     }
 
+    /**
+     * Publish download event.
+     *
+     * @param docId the doc id
+     * @param userId the user id
+     */
     protected void publishDownloadEvent(String docId, String userId) {
       ServerChannel channel = bayeux.getChannel(CHANNEL_NAME + docId);
       if (channel != null) {
@@ -558,6 +588,13 @@ public class CometdOnlyofficeService implements Startable {
 
     }
 
+    /**
+     * Publish download as event.
+     *
+     * @param docId the doc id
+     * @param targetId the target id
+     * @param asUserId the as user id
+     */
     protected void publishDownloadAsEvent(String docId, String targetId, String asUserId) {
       ServerChannel channel = bayeux.getChannel(CHANNEL_NAME + docId);
       if (channel != null) {
@@ -580,6 +617,12 @@ public class CometdOnlyofficeService implements Startable {
       }
     }
 
+    /**
+     * Publish saved event.
+     *
+     * @param docId the doc id
+     * @param userId the user id
+     */
     protected void publishSavedEvent(String docId, String userId) {
       ServerChannel channel = bayeux.getChannel(CHANNEL_NAME + docId);
       if (channel != null) {
