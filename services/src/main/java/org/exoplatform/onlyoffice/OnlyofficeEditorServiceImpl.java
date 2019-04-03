@@ -1107,9 +1107,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   @Override
-  public String getLastModifierId(String key) {
+  public String getLastModifier(String key) {
     ConcurrentMap<String, Config> configs = activeCache.get(key);
-    String userId = null;
     if (configs != null) {
       // TODO: could be replaced with lambda
       Long maxLastModified = null;
@@ -1117,24 +1116,22 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         Long lastModified = entry.getValue().getEditorConfig().getUser().getLastModified();
         if (lastModified != null && (maxLastModified == null || lastModified > maxLastModified)) {
           maxLastModified = lastModified;
-          userId = entry.getKey();
+          return entry.getKey();
         }
       }
     }
-    return userId;
+    return null;
   }
 
   @Override
-  public void setLastModifiedId(String key, String userId) {
+  public void setLastModifier(String key, String userId) {
     ConcurrentMap<String, Config> configs = activeCache.get(key);
     if (configs != null) {
-      configs.get(userId).getEditorConfig().getUser().setLastModified(System.currentTimeMillis());
+      Config config = configs.get(userId);
+      config.getEditorConfig().getUser().setLastModified(System.currentTimeMillis());
       activeCache.put(key, configs);
-      activeCache.put(nodePath(configs.get(userId)), configs); // TODO: is it ok
-                                                               // ?
+      activeCache.put(nodePath(config), configs);
     }
-
-    // TODO: activeCache.put(nodePath, configs);
   }
 
   // *********************** implementation level ***************

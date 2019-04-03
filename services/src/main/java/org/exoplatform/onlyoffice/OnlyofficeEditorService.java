@@ -264,7 +264,7 @@ public interface OnlyofficeEditorService {
    * @param key the key
    * @return the userId
    */
-  String getLastModifierId(String key);
+  String getLastModifier(String key);
 
   /**
    * Sets the last modifier userId.
@@ -272,6 +272,6 @@ public interface OnlyofficeEditorService {
    * @param key the key
    * @param userId the userId
    */
-  void setLastModifiedId(String key, String userId);
+  void setLastModifier(String key, String userId);
 
 }

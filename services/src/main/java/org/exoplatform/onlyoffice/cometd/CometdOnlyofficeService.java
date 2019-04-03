@@ -176,65 +176,63 @@ public class CometdOnlyofficeService implements Startable {
   }
 
   /** The Constant LOG. */
-  private static final Log                LOG                        = ExoLogger.getLogger(CometdOnlyofficeService.class);
+  private static final Log                LOG                     = ExoLogger.getLogger(CometdOnlyofficeService.class);
 
   /** The channel name. */
-  public static final String              CHANNEL_NAME               = "/eXo/Application/Onlyoffice/editor/";
+  public static final String              CHANNEL_NAME            = "/eXo/Application/Onlyoffice/editor/";
 
   /** The channel name. */
-  public static final String              CHANNEL_NAME_PARAMS        = CHANNEL_NAME + "{docId}";
+  public static final String              CHANNEL_NAME_PARAMS     = CHANNEL_NAME + "{docId}";
 
   /** The document saved event. */
-  public static final String              DOCUMENT_SAVED_EVENT       = "DOCUMENT_SAVED";
+  public static final String              DOCUMENT_SAVED_EVENT    = "DOCUMENT_SAVED";
 
   /** The document changed event. */
-  public static final String              DOCUMENT_CHANGED_EVENT     = "DOCUMENT_CHANGED";
+  public static final String              DOCUMENT_CHANGED_EVENT  = "DOCUMENT_CHANGED";
 
   /** The document download event. */
-  public static final String              DOCUMENT_DOWNLOAD_EVENT    = "DOCUMENT_DOWNLOAD";
-
-  /** The document download event. */
-  public static final String              DOCUMENT_DOWNLOAD_AS_EVENT = "DOCUMENT_DOWNLOAD_AS";
+  public static final String              DOCUMENT_DOWNLOAD_EVENT = "DOCUMENT_DOWNLOAD";
 
   /** The document version event. */
-  public static final String              DOCUMENT_VERSION_EVENT     = "DOCUMENT_VERSION";
+  public static final String              DOCUMENT_VERSION_EVENT  = "DOCUMENT_VERSION";
 
   /** The editor closed event. */
-  public static final String              EDITOR_CLOSED_EVENT        = "EDITOR_CLOSED";
+  public static final String              EDITOR_CLOSED_EVENT     = "EDITOR_CLOSED";
 
   /** The editor opened event. */
-  public static final String              EDITOR_OPENED_EVENT        = "EDITOR_OPENED";
+  public static final String              EDITOR_OPENED_EVENT     = "EDITOR_OPENED";
 
   /**
    * Base minimum number of threads for document updates thread executors.
    */
-  public static final int                 MIN_THREADS                = 2;
+  public static final int                 MIN_THREADS             = 2;
 
   /**
-   * Minimal number of threads maximum possible for document updates thread executors.
+   * Minimal number of threads maximum possible for document updates thread
+   * executors.
    */
-  public static final int                 MIN_MAX_THREADS            = 4;
+  public static final int                 MIN_MAX_THREADS         = 4;
 
   /** Thread idle time for thread executors (in seconds). */
-  public static final int                 THREAD_IDLE_TIME           = 120;
+  public static final int                 THREAD_IDLE_TIME        = 120;
 
   /**
    * Maximum threads per CPU for thread executors of document changes channel.
    */
-  public static final int                 MAX_FACTOR                 = 20;
+  public static final int                 MAX_FACTOR              = 20;
 
   /**
    * Queue size per CPU for thread executors of document updates channel.
    */
-  public static final int                 QUEUE_FACTOR               = MAX_FACTOR * 2;
+  public static final int                 QUEUE_FACTOR            = MAX_FACTOR * 2;
 
   /**
    * Thread name used for the executor.
    */
-  public static final String              THREAD_PREFIX              = "onlyoffice-comet-thread-";
+  public static final String              THREAD_PREFIX           = "onlyoffice-comet-thread-";
 
   /** The Onlyoffice editor service. */
-  protected final OnlyofficeEditorService onlyofficeEditorService;
+  protected final OnlyofficeEditorService editors;
 
   /** The exo bayeux. */
   protected final EXoContinuationBayeux   exoBayeux;
@@ -249,11 +247,11 @@ public class CometdOnlyofficeService implements Startable {
    * Instantiates the CometdOnlyofficeService.
    *
    * @param exoBayeux the exoBayeux
-   * @param onlyofficeEditorService the OnlyofficeEditorService
+   * @param editors the OnlyofficeEditorService
    */
   public CometdOnlyofficeService(EXoContinuationBayeux exoBayeux, OnlyofficeEditorService onlyofficeEditorService) {
     this.exoBayeux = exoBayeux;
-    this.onlyofficeEditorService = onlyofficeEditorService;
+    this.editors = onlyofficeEditorService;
     this.service = new CometdService();
     // Thread executors
     this.eventsHandlers = createThreadExecutor(THREAD_PREFIX, MAX_FACTOR, QUEUE_FACTOR);
@@ -379,7 +377,7 @@ public class CometdOnlyofficeService implements Startable {
      */
     @PostConstruct
     public void postConstruct() {
-      onlyofficeEditorService.addListener(new OnlyofficeEditorListener() {
+      editors.addListener(new OnlyofficeEditorListener() {
 
         @Override
         public void onSaved(DocumentStatus status) {
@@ -418,8 +416,8 @@ public class CometdOnlyofficeService implements Startable {
      * 
      * @param message the message.
      * @param docId the docId.
-     * @throws RepositoryException 
-     * @throws OnlyofficeEditorException 
+     * @throws RepositoryException
+     * @throws OnlyofficeEditorException
      */
     @Subscription(CHANNEL_NAME_PARAMS)
     public void subscribeDocuments(Message message, @Param("docId") String docId) throws OnlyofficeEditorException,
@@ -463,7 +461,7 @@ public class CometdOnlyofficeService implements Startable {
       // If the user has made changes that need to be saved
       if (changes) {
         try {
-          String[] users = onlyofficeEditorService.getState(userId, key).getUsers();
+          String[] users = editors.getState(userId, key).getUsers();
           // If there are other users editing the document
           // TODO: change to clientId instead of userId
           if (users.length > 1) {
@@ -499,7 +497,7 @@ public class CometdOnlyofficeService implements Startable {
         @Override
         void execute(ExoContainer exoContainer) {
           LOG.info("Creating a new version for user: " + userId + ", docId: " + docId + ", link: " + link);
-          onlyofficeEditorService.downloadVersion(key, userId, link);
+          editors.downloadVersion(key, userId, link);
         }
       });
 
@@ -508,13 +506,13 @@ public class CometdOnlyofficeService implements Startable {
     protected void handleDocumentChangeEvent(Map<String, Object> data, String docId) {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
-      String lastUser = onlyofficeEditorService.getLastModifierId(key);
-      if (lastUser != null && !userId.equals(lastUser)) {
-        LOG.info("Download a new version of document: user " + lastUser + ", docId: " + docId);
-        publishDownloadEvent(docId, lastUser);
+      String lastUserId = editors.getLastModifier(key);
+      if (lastUserId != null && !userId.equals(lastUserId)) {
+        LOG.info("Download a new version of document: user " + lastUserId + ", docId: " + docId);
+        publishDownloadEvent(docId, lastUserId);
         LOG.info("Started collecting changes for: " + userId + ", docId: " + docId);
       }
-      onlyofficeEditorService.setLastModifiedId(key, userId);
+      editors.setLastModifier(key, userId);
 
       LOG.info("Changes collected from: " + userId + ", docId: " + docId);
     }
@@ -547,7 +545,7 @@ public class CometdOnlyofficeService implements Startable {
         StringBuilder data = new StringBuilder();
         data.append('{');
         data.append("\"type\": \"");
-        data.append(DOCUMENT_DOWNLOAD_AS_EVENT);
+        data.append(DOCUMENT_DOWNLOAD_EVENT);
         data.append("\", ");
         data.append("\"docId\": \"");
         data.append(docId);
@@ -561,7 +559,6 @@ public class CometdOnlyofficeService implements Startable {
         data.append('}');
         channel.publish(localSession, data.toString());
       }
-
     }
 
     protected void publishSavedEvent(String docId, String userId) {

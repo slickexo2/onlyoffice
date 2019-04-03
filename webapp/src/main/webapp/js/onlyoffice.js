@@ -244,13 +244,12 @@
     var DOCUMENT_SAVED = "DOCUMENT_SAVED";
     var DOCUMENT_CHANGED = "DOCUMENT_CHANGED";
     var DOCUMENT_DOWNLOAD = "DOCUMENT_DOWNLOAD";
-    var DOCUMENT_DOWNLOAD_AS = "DOCUMENT_DOWNLOAD_AS";
     var DOCUMENT_VERSION = "DOCUMENT_VERSION";
     var EDITOR_CLOSED = "EDITOR_CLOSED";
     var EDITOR_OPENED = "EDITOR_OPENED";
     
     // Events that are dispatched to redux as actions
-    var dispatchableEvents = [DOCUMENT_SAVED, DOCUMENT_CHANGED, DOCUMENT_DOWNLOAD, DOCUMENT_DOWNLOAD_AS, DOCUMENT_VERSION];
+    var dispatchableEvents = [DOCUMENT_SAVED, DOCUMENT_CHANGED, DOCUMENT_DOWNLOAD, DOCUMENT_VERSION];
     
     // CometD transport bus
     var cometd, cometdContext;
@@ -262,7 +261,7 @@
     var changesSaved = true;
     
     // Indicates the last change is made by current user or another one.
-    var lastChangeIsCurrent = false;
+    var currentUserChanges = false;
 
     // Current user ID
     var currentUserId;
@@ -275,11 +274,15 @@
     
     // Redux store for dispatching document updates inside the app
     var store = redux.createStore(function (state, action) {
-      if (action.type === DOCUMENT_SAVED || action.type === DOCUMENT_CHANGED || action.type === DOCUMENT_DOWNLOAD || action.type === DOCUMENT_VERSION || action.type === DOCUMENT_DOWNLOAD_AS) {
+      if (dispatchableEvents.includes(action.type)) {
+        // TODO do we need merge with previous state as Redux assumes?
         return action;
+      } else if (action.type.startsWith("@@redux/INIT")) {
+        // it's OK (at least for initialization) 
+      } else {
+        log("Unknown action type:" + action.type);
       }
-      log("Unknown action type:" + action.type);
-      return state ? state : {}; // TODO is it OK?
+      return state;
     });
     var subscribedDocuments = {};
 
@@ -294,7 +297,7 @@
       var subscription = cometd.subscribe("/eXo/Application/Onlyoffice/editor/" + docId, function(message) {
         // Channel message handler
         var result = tryParseJson(message);
-        if(dispatchableEvents.includes(result.type)){
+        if (dispatchableEvents.includes(result.type)) {
           store.dispatch(result);
         }
       }, cometdContext, function(subscribeReply) {
@@ -370,9 +373,7 @@
           log("ONLYOFFICE Changes are collected on document editing service");
           // TODO since now we start collect this user changes (via channel) at server-side and
           // when another co-editor will fire the same event (this method by anotehr user), this 
-          // user should save his changes in eXo storage version by calling 
-          // docEditor.downloadAs();
-         // UI.downloadAs();      
+          // user should save his changes in eXo storage version by calling UI.downloadAs()     
           if (currentConfig) {
             // We are a editor oage here: publish that the doc was changed by current user
             publishDocumentUpdate(currentConfig.docId, {
@@ -383,9 +384,9 @@
             });
           }
           changesSaved = true;
-          lastChangeIsCurrent = true;
+          currentUserChanges = true;
         } else {
-          lastChangeIsCurrent = false;
+          currentUserChanges = false;
         }
       }
     };
@@ -513,7 +514,6 @@
       }
       return process.promise();
     };
-
     this.create = create;
 
     this.init = function(userId, cometdConf, userMessages) {
@@ -547,9 +547,6 @@
      * Initialize an editor page in current browser window.
      */
     this.initEditor = function(config) {
-      // TODO Establish a Comet/WebSocket channel from this point.
-      // A new editor page will join the channel and notify when the doc will be saved
-      // so we'll refresh this explorer view to reflect the edited content.
       log("Initialize editor for document: " + config.docId);
       UI.initEditor();
       create(config).done(function(localConfig) {
@@ -557,13 +554,19 @@
 
         store.subscribe(function () {
           var state = store.getState();
-          if ((state.type === DOCUMENT_DOWNLOAD || state.type === DOCUMENT_DOWNLOAD_AS) && state.docId === currentConfig.docId && state.userId === currentUserId) {
-            if (state.asUserId){
+          if (state.type === DOCUMENT_DOWNLOAD && state.docId === currentConfig.docId && state.userId === currentUserId) {
+            if (state.asUserId) {
               downloadAsUser = state.asUserId;
+            } else {
+              downloadAsUser = null;
             }
             UI.downloadAs();
           }
         });
+
+        // Establish a Comet/WebSocket channel from this point.
+        // A new editor page will join the channel and notify when the doc will be saved
+        // so we'll refresh this explorer view to reflect the edited content.
         subscribeDocument(currentConfig.docId);
         
         if (currentConfig) {
@@ -575,17 +578,17 @@
           });
         }
 
-        window.addEventListener("unload", function() {
+        window.addEventListener("unload", function () {
           // We need to save current changes when user closes the editor
-        if (currentConfig){
-          publishDocumentUpdate(currentConfig.docId, {
-                "type": EDITOR_CLOSED,
-                "userId": currentUserId,
-                "clientId": clientId,
-                "key": currentConfig.document.key,
-                "changes": lastChangeIsCurrent
-              });
-        }
+          if (currentConfig) {
+            publishDocumentUpdate(currentConfig.docId, {
+              "type": EDITOR_CLOSED,
+              "userId": currentUserId,
+              "clientId": clientId,
+              "key": currentConfig.document.key,
+              "changes": currentUserChanges
+            });
+          }
         });
 
         $(function() {
