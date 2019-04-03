@@ -716,7 +716,7 @@
      * Adds the 'Edit Online' button to a preview (from the activity stream) when it's loaded.
      */
     var tryAddEditorButtonToPreview = function(editorLink, attempts, delay) {
-      var $elem = $(".previewBtn");
+      var $elem = $("div#uiDocumentPreview .previewBtn");
       if ($elem.length == 0 || !$elem.is(":visible")) {
         if (attempts > 0) {
           setTimeout(function() {
