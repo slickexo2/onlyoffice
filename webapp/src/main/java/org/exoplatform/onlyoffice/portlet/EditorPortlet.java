@@ -80,12 +80,12 @@ public class EditorPortlet extends GenericPortlet {
    */
   @RenderMode(name = "view")
   public void view(RenderRequest request, RenderResponse response) throws IOException, PortletException {
-    WebuiRequestContext webuiContext = (WebuiRequestContext) WebuiRequestContext.getCurrentInstance();
+    WebuiRequestContext webuiContext = WebuiRequestContext.getCurrentInstance();
     // ResourceBundle i18n = webuiContext.getApplicationResourceBundle();
     ResourceBundle i18n = i18nService.getResourceBundle(
-                                                       new String[] { "locale.onlyoffice.Onlyoffice",
-                                                           "locale.onlyoffice.OnlyofficeClient" },
-                                                       request.getLocale());
+                                                        new String[] { "locale.onlyoffice.Onlyoffice",
+                                                            "locale.onlyoffice.OnlyofficeClient" },
+                                                        request.getLocale());
 
     String docId = webuiContext.getRequestParameter("docId");
     if (docId != null) {

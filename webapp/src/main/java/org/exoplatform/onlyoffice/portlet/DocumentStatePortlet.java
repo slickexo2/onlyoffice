@@ -25,6 +25,7 @@ import javax.portlet.RenderResponse;
 import org.exoplatform.onlyoffice.webui.OnlyofficeContext;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.web.application.RequestContext;
 import org.exoplatform.webui.application.WebuiRequestContext;
 
 public class DocumentStatePortlet extends GenericPortlet {
@@ -45,7 +46,10 @@ public class DocumentStatePortlet extends GenericPortlet {
     // calls), will not cause rendering of this portlet, except if this will not
     // be issued explicitly.
     if (LOG.isDebugEnabled()) {
-      WebuiRequestContext context = WebuiRequestContext.getCurrentInstance();
+      RequestContext context = WebuiRequestContext.getCurrentInstance();
+      if (context.getParentAppRequestContext() != null) {
+        context = context.getParentAppRequestContext();
+      }
       // These attributes saved in portal context by
       // OnlyofficeDocumentsLifecycle
       String userId = (String) context.getAttribute(OnlyofficeContext.USERID_ATTRIBUTE);
