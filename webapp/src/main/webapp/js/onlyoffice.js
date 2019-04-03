@@ -716,7 +716,7 @@
      * Adds the 'Edit Online' button to a preview (from the activity stream) when it's loaded.
      */
     var tryAddEditorButtonToPreview = function(editorLink, attempts, delay) {
-      var $elem = $("div#uiDocumentPreview .previewBtn");
+      var $elem = $("#uiDocumentPreview .previewBtn");
       if ($elem.length == 0 || !$elem.is(":visible")) {
         if (attempts > 0) {
           setTimeout(function() {
@@ -726,7 +726,7 @@
           log("Cannot find element " + $elem);
         }
       } else {
-        $("div#uiDocumentPreview .previewBtn").append("<div class='onlyOfficeEditBtn'>" + getEditorButton(editorLink) + "</div>");
+        $("#uiDocumentPreview .previewBtn").append("<div class='onlyOfficeEditBtn'>" + getEditorButton(editorLink) + "</div>");
       }
     };
 
