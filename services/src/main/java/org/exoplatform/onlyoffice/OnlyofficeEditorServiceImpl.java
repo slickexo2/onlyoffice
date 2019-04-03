@@ -1110,19 +1110,19 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   @Override
   public Editor.User getLastModifier(String key) {
     ConcurrentMap<String, Config> configs = activeCache.get(key);
+    Editor.User lastUser = null;
     if (configs != null) {
-      // TODO: could be replaced with lambda
       Long maxLastModified = null;
       for (Entry<String, Config> entry : configs.entrySet()) {
         Editor.User user = entry.getValue().getEditorConfig().getUser();
         Long lastModified = user.getLastModified();
         if (lastModified != null && (maxLastModified == null || lastModified > maxLastModified)) {
           maxLastModified = lastModified;
-          return user;
+          lastUser = user;
         }
       }
     }
-    return null;
+    return lastUser;
   }
 
   @Override
