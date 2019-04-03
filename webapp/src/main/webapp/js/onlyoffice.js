@@ -726,7 +726,7 @@
           log("Cannot find element " + $elem);
         }
       } else {
-        $("#uiDocumentPreview .previewBtn").append("<div class='onlyOfficeEditBtn'>" + getEditorButton(editorLink) + "</div>");
+        $elem.append("<div class='onlyOfficeEditBtn'>" + getEditorButton(editorLink) + "</div>");
       }
     };
 
