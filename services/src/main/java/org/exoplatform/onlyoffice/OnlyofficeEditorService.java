@@ -275,4 +275,22 @@ public interface OnlyofficeEditorService {
    */
   void setLastModifier(String key, String userId);
 
+  /**
+   * Removes user's client.
+   * 
+   * @param key the key
+   * @param userId the userId
+   * @param clientId the clientId
+   */
+  void removeClient(String key, String userId, String clientId);
+  
+  /**
+   * Adds user's client.
+   * 
+   * @param key the key
+   * @param userId the userId
+   * @param clientId the clientId
+   */
+  void addClient(String key, String userId, String clientId);
+
 }

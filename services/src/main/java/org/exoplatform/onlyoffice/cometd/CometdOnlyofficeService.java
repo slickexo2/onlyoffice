@@ -428,7 +428,9 @@ public class CometdOnlyofficeService implements Startable {
                                                                                   RepositoryException {
       Object objData = message.getData();
       if (!Map.class.isInstance(objData)) {
-        LOG.info("Couldn't get data as a map from event");
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Couldn't get data as a map from event");
+        }
         return;
       }
 
@@ -448,20 +450,26 @@ public class CometdOnlyofficeService implements Startable {
       case EDITOR_CLOSED_EVENT:
         handleEditorClosedEvent(data, docId);
         break;
-      default:
-        LOG.info("Unknown event type {}", type);
       }
-      LOG.info("Event published in " + message.getChannel() + ", docId: " + docId + ", data: " + message.getJSON());
+      if(LOG.isDebugEnabled()) {
+        LOG.debug("Event published in " + message.getChannel() + ", docId: " + docId + ", data: " + message.getJSON());
+      }
+ 
     }
 
     protected void handleEditorOpenedEvent(Map<String, Object> data, String docId) {
-      // TODO: add clientId to the activeCache in editor service
+      String userId = (String) data.get("userId");
+      String key = (String) data.get("key");
+      String clientId = (String) data.get("clientId");
+      
+      editors.addClient(key, userId, clientId);
     }
 
     protected void handleEditorClosedEvent(Map<String, Object> data, String docId) {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
       Boolean changes = (Boolean) data.get("changes");
+      String clientId = (String) data.get("clientId");
       // If the user has made changes that need to be saved
       if (changes) {
         try {
@@ -483,9 +491,8 @@ public class CometdOnlyofficeService implements Startable {
           LOG.error("Cannot get state of document key: " + key + ", user: " + userId);
         }
       }
-
-      // TODO: remove the clientId from activeCache in the editorService
-
+      
+      editors.removeClient(key, userId, clientId);
     }
 
     protected void handleDocumentVersionEvent(Map<String, Object> data, String docId) {
@@ -500,7 +507,9 @@ public class CometdOnlyofficeService implements Startable {
 
         @Override
         void execute(ExoContainer exoContainer) {
-          LOG.info("Creating a new version for user: " + userId + ", docId: " + docId + ", link: " + link);
+          if(LOG.isDebugEnabled()) {
+            LOG.debug("Creating a new version for user: " + userId + ", docId: " + docId + ", link: " + link);
+          }
           editors.downloadVersion(key, userId, link);
         }
       });
@@ -515,18 +524,23 @@ public class CometdOnlyofficeService implements Startable {
           && System.currentTimeMillis() - lastUser.getLastModified() > SAME_USER_VERSION_LIFETIME))) {
         // We download user version if another user started to change the
         // document or enough time passed since previous change.
-        LOG.info("Download a new version of document: user " + lastUser.getId() + ", docId: " + docId);
+        
         publishDownloadEvent(docId, lastUser.getId());
-        LOG.info("Started collecting changes for: " + userId + ", docId: " + docId);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Download a new version of document: user " + lastUser.getId() + ", docId: " + docId);
+          LOG.debug("Started collecting changes for: " + userId + ", docId: " + docId);
+        }
       }
       editors.setLastModifier(key, userId);
-      LOG.info("Changes collected from: " + userId + ", docId: " + docId);
+      
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Changes collected from: " + userId + ", docId: " + docId);
+      }
     }
 
     protected void publishDownloadEvent(String docId, String userId) {
       ServerChannel channel = bayeux.getChannel(CHANNEL_NAME + docId);
       if (channel != null) {
-        LOG.info("Document {} saved. Sending message to cometd channel", docId);
         StringBuilder data = new StringBuilder();
         data.append('{');
         data.append("\"type\": \"");
@@ -547,7 +561,6 @@ public class CometdOnlyofficeService implements Startable {
     protected void publishDownloadAsEvent(String docId, String targetId, String asUserId) {
       ServerChannel channel = bayeux.getChannel(CHANNEL_NAME + docId);
       if (channel != null) {
-        LOG.info("Document {} saved. Sending message to cometd channel", docId);
         StringBuilder data = new StringBuilder();
         data.append('{');
         data.append("\"type\": \"");
@@ -570,7 +583,6 @@ public class CometdOnlyofficeService implements Startable {
     protected void publishSavedEvent(String docId, String userId) {
       ServerChannel channel = bayeux.getChannel(CHANNEL_NAME + docId);
       if (channel != null) {
-        LOG.info("Document {} saved. Sending message to cometd channel", docId);
         StringBuilder data = new StringBuilder();
         data.append('{');
         data.append("\"type\": \"");

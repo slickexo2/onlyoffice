@@ -1066,23 +1066,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     return false;
   }
 
-  /**
-   * Downloads document's content to the JCR node when the editor is closed.
-   * 
-   * @param config the config
-   * @param status the status
-   */
-  public void downloadClosed(Config config, DocumentStatus status) {
-    // First mark closing, then do actual download and save in storage
-    config.closing();
-    try {
-      download(config, status);
-      config.closed(); // reset transient closing state
-    } catch (OnlyofficeEditorException | RepositoryException e) {
-      LOG.error("Error occured while downloading document content [Closed]. docId: " + config.getDocId(), e);
-    }
 
-  }
 
   /**
    * Downloads document's content to the JCR node creating a new version.
@@ -1135,9 +1119,54 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       activeCache.put(nodePath(config), configs);
     }
   }
+  
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void removeClient(String key, String userId, String clientId) {
+    ConcurrentMap<String, Config> configs = activeCache.get(key);
+    if(configs != null && configs.containsKey(userId)) {
+      configs.get(userId).getEditorConfig().getUser().removeClient(clientId);
+      if(LOG.isDebugEnabled()) {
+        LOG.debug("Client clientId: " + clientId + " removed, user: " + userId + ", key: " + key);
+      } 
+    }
+  }
+  
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void addClient(String key, String userId, String clientId) {
+    ConcurrentMap<String, Config> configs = activeCache.get(key);
+    if(configs != null && configs.containsKey(userId)) {
+      configs.get(userId).getEditorConfig().getUser().addClient(clientId);
+      if(LOG.isDebugEnabled()) {
+        LOG.debug("Client clientId: " + clientId + " added, user: " + userId + ", key: " + key);
+      }
+    }
+  }
 
   // *********************** implementation level ***************
 
+  /**
+   * Downloads document's content to the JCR node when the editor is closed.
+   * 
+   * @param config the config
+   * @param status the status
+   */
+  protected void downloadClosed(Config config, DocumentStatus status) {
+    // First mark closing, then do actual download and save in storage
+    config.closing();
+    try {
+      download(config, status);
+      config.closed(); // reset transient closing state
+    } catch (OnlyofficeEditorException | RepositoryException e) {
+      LOG.error("Error occured while downloading document content [Closed]. docId: " + config.getDocId(), e);
+    }
+  }
+  
   /**
    * Node title.
    *
