@@ -54,6 +54,7 @@ import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.component.RequestLifeCycle;
+import org.exoplatform.onlyoffice.Config.Editor;
 import org.exoplatform.onlyoffice.DocumentStatus;
 import org.exoplatform.onlyoffice.OnlyofficeEditorException;
 import org.exoplatform.onlyoffice.OnlyofficeEditorListener;
@@ -176,60 +177,63 @@ public class CometdOnlyofficeService implements Startable {
   }
 
   /** The Constant LOG. */
-  private static final Log                LOG                     = ExoLogger.getLogger(CometdOnlyofficeService.class);
+  private static final Log                LOG                        = ExoLogger.getLogger(CometdOnlyofficeService.class);
 
   /** The channel name. */
-  public static final String              CHANNEL_NAME            = "/eXo/Application/Onlyoffice/editor/";
+  public static final String              CHANNEL_NAME               = "/eXo/Application/Onlyoffice/editor/";
 
   /** The channel name. */
-  public static final String              CHANNEL_NAME_PARAMS     = CHANNEL_NAME + "{docId}";
+  public static final String              CHANNEL_NAME_PARAMS        = CHANNEL_NAME + "{docId}";
 
   /** The document saved event. */
-  public static final String              DOCUMENT_SAVED_EVENT    = "DOCUMENT_SAVED";
+  public static final String              DOCUMENT_SAVED_EVENT       = "DOCUMENT_SAVED";
 
   /** The document changed event. */
-  public static final String              DOCUMENT_CHANGED_EVENT  = "DOCUMENT_CHANGED";
+  public static final String              DOCUMENT_CHANGED_EVENT     = "DOCUMENT_CHANGED";
 
   /** The document download event. */
-  public static final String              DOCUMENT_DOWNLOAD_EVENT = "DOCUMENT_DOWNLOAD";
+  public static final String              DOCUMENT_DOWNLOAD_EVENT    = "DOCUMENT_DOWNLOAD";
 
   /** The document version event. */
-  public static final String              DOCUMENT_VERSION_EVENT  = "DOCUMENT_VERSION";
+  public static final String              DOCUMENT_VERSION_EVENT     = "DOCUMENT_VERSION";
 
   /** The editor closed event. */
-  public static final String              EDITOR_CLOSED_EVENT     = "EDITOR_CLOSED";
+  public static final String              EDITOR_CLOSED_EVENT        = "EDITOR_CLOSED";
 
   /** The editor opened event. */
-  public static final String              EDITOR_OPENED_EVENT     = "EDITOR_OPENED";
+  public static final String              EDITOR_OPENED_EVENT        = "EDITOR_OPENED";
 
   /**
    * Base minimum number of threads for document updates thread executors.
    */
-  public static final int                 MIN_THREADS             = 2;
+  public static final int                 MIN_THREADS                = 2;
 
   /**
    * Minimal number of threads maximum possible for document updates thread
    * executors.
    */
-  public static final int                 MIN_MAX_THREADS         = 4;
+  public static final int                 MIN_MAX_THREADS            = 4;
 
   /** Thread idle time for thread executors (in seconds). */
-  public static final int                 THREAD_IDLE_TIME        = 120;
+  public static final int                 THREAD_IDLE_TIME           = 120;
 
   /**
    * Maximum threads per CPU for thread executors of document changes channel.
    */
-  public static final int                 MAX_FACTOR              = 20;
+  public static final int                 MAX_FACTOR                 = 20;
 
   /**
    * Queue size per CPU for thread executors of document updates channel.
    */
-  public static final int                 QUEUE_FACTOR            = MAX_FACTOR * 2;
+  public static final int                 QUEUE_FACTOR               = MAX_FACTOR * 2;
 
   /**
    * Thread name used for the executor.
    */
-  public static final String              THREAD_PREFIX           = "onlyoffice-comet-thread-";
+  public static final String              THREAD_PREFIX              = "onlyoffice-comet-thread-";
+
+  /** The Constant SAME_USER_VERSION_LIFETIME. */
+  public static final long                SAME_USER_VERSION_LIFETIME = 10 * 60 * 1000;
 
   /** The Onlyoffice editor service. */
   protected final OnlyofficeEditorService editors;
@@ -506,14 +510,16 @@ public class CometdOnlyofficeService implements Startable {
     protected void handleDocumentChangeEvent(Map<String, Object> data, String docId) {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
-      String lastUserId = editors.getLastModifier(key);
-      if (lastUserId != null && !userId.equals(lastUserId)) {
-        LOG.info("Download a new version of document: user " + lastUserId + ", docId: " + docId);
-        publishDownloadEvent(docId, lastUserId);
+      Editor.User lastUser = editors.getLastModifier(key);
+      if (lastUser != null && (!userId.equals(lastUser.getId()) || (lastUser.getLastModified() != null
+          && System.currentTimeMillis() - lastUser.getLastModified() > SAME_USER_VERSION_LIFETIME))) {
+        // We download user version if another user started to change the
+        // document or enough time passed since previous change.
+        LOG.info("Download a new version of document: user " + lastUser.getId() + ", docId: " + docId);
+        publishDownloadEvent(docId, lastUser.getId());
         LOG.info("Started collecting changes for: " + userId + ", docId: " + docId);
       }
       editors.setLastModifier(key, userId);
-
       LOG.info("Changes collected from: " + userId + ", docId: " + docId);
     }
 

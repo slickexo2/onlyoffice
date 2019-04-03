@@ -22,6 +22,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
 import org.exoplatform.container.component.ComponentPlugin;
+import org.exoplatform.onlyoffice.Config.Editor;
 
 /**
  * Created by The eXo Platform SAS.
@@ -262,9 +263,9 @@ public interface OnlyofficeEditorService {
    * Gets the last modifier userId.
    * 
    * @param key the key
-   * @return the userId
+   * @return the editor user
    */
-  String getLastModifier(String key);
+  Editor.User getLastModifier(String key);
 
   /**
    * Sets the last modifier userId.

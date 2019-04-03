@@ -68,6 +68,7 @@ import org.exoplatform.container.xml.PropertiesParam;
 import org.exoplatform.ecm.utils.lock.LockUtil;
 import org.exoplatform.ecm.webui.utils.PermissionUtil;
 import org.exoplatform.ecm.webui.utils.Utils;
+import org.exoplatform.onlyoffice.Config.Editor;
 import org.exoplatform.onlyoffice.jcr.NodeFinder;
 import org.exoplatform.portal.Constants;
 import org.exoplatform.services.cache.CacheListener;
@@ -1107,16 +1108,17 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   @Override
-  public String getLastModifier(String key) {
+  public Editor.User getLastModifier(String key) {
     ConcurrentMap<String, Config> configs = activeCache.get(key);
     if (configs != null) {
       // TODO: could be replaced with lambda
       Long maxLastModified = null;
       for (Entry<String, Config> entry : configs.entrySet()) {
-        Long lastModified = entry.getValue().getEditorConfig().getUser().getLastModified();
+        Editor.User user = entry.getValue().getEditorConfig().getUser();
+        Long lastModified = user.getLastModified();
         if (lastModified != null && (maxLastModified == null || lastModified > maxLastModified)) {
           maxLastModified = lastModified;
-          return entry.getKey();
+          return user;
         }
       }
     }

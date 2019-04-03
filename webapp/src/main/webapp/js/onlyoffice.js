@@ -331,7 +331,7 @@
       }
     };
 
-    var publishDocumentUpdate = function(docId, data) {
+    var publishDocument = function(docId, data) {
       // TODO do we need Handshake or eXo's cCometD already did this?
       cometd.publish("/eXo/Application/Onlyoffice/editor/" + docId, data, cometdContext, function(publishReply) {
         // Publication status callback
@@ -371,12 +371,12 @@
         
         if (!changesSaved) {
           log("ONLYOFFICE Changes are collected on document editing service");
-          // TODO since now we start collect this user changes (via channel) at server-side and
+          // Since now we start collect this user changes (via channel) at server-side and
           // when another co-editor will fire the same event (this method by anotehr user), this 
           // user should save his changes in eXo storage version by calling UI.downloadAs()     
           if (currentConfig) {
             // We are a editor oage here: publish that the doc was changed by current user
-            publishDocumentUpdate(currentConfig.docId, {
+            publishDocument(currentConfig.docId, {
               "type": DOCUMENT_CHANGED,
               "userId": currentUserId,
               "clientId": clientId,
@@ -402,7 +402,7 @@
         if (currentConfig) {
           log("onDownloadAs listener: " + event.data);
           // We are a editor oage here: publish that the doc ready for download
-          publishDocumentUpdate(currentConfig.docId, {
+          publishDocument(currentConfig.docId, {
             "type": DOCUMENT_VERSION,
             "userId": userId,
             "documentLink" : event.data,
@@ -571,17 +571,22 @@
         
         if (currentConfig) {
           // We are a editor oage here: publish that the doc was changed by current user
-          publishDocumentUpdate(currentConfig.docId, {
+          publishDocument(currentConfig.docId, {
             "type": EDITOR_OPENED,
             "userId": currentUserId,
             "clientId": clientId
           });
         }
 
+        window.addEventListener("beforeunload", function () {
+          UI.closeEditor(); // try this first, then in unload
+        });
+
         window.addEventListener("unload", function () {
+          UI.closeEditor();
           // We need to save current changes when user closes the editor
           if (currentConfig) {
-            publishDocumentUpdate(currentConfig.docId, {
+            publishDocument(currentConfig.docId, {
               "type": EDITOR_CLOSED,
               "userId": currentUserId,
               "clientId": clientId,
@@ -725,16 +730,16 @@
       }
     };
 
-    // TODO Use this in on-close window handler
+    // Use this in on-close window handler.
     var saveAndDestroy = function() {
       if (docEditor) {
+        var theEditor = docEditor;
+        docEditor = null; 
         try {
-          docEditor.processSaveResult(true);
-          docEditor.destroyEditor();
+          theEditor.processSaveResult(true);
+          theEditor.destroyEditor();
         } catch (e) {
           log("Error saving and destroying ONLYOFFICE editor", e);
-        } finally {
-          docEditor = null;
         }
       }
     };
@@ -820,7 +825,7 @@
     };
 
     /**
-     * TODO Should we use it when user close the page, to notify the channel doc is closed?
+     * Use it when user close the page, to notify in the channel doc is closed.
      */
     this.closeEditor = function() {
       saveAndDestroy();
