@@ -271,6 +271,18 @@
     
     // Used to download document as another user in case, when they closed the editor
     var downloadAsUser = null;
+
+    // The Deffered object for the getting document link process.
+    var linkProcess;
+
+    // Used to setup changesTimer on the editor page
+    var changesTimer;
+
+    // Used to indicate if we need to send DOCUMENT_VERSION event to comet
+    var createVersion = false;
+    
+    // The document link from the document server.
+    var downloadLink;
     
     // Redux store for dispatching document updates inside the app
     var store = redux.createStore(function (state, action) {
@@ -371,6 +383,13 @@
         
         if (!changesSaved) {
           log("ONLYOFFICE Changes are collected on document editing service");
+          // We need a new link for new changes.
+          downloadLink = null;
+          clearTimeout(changesTimer);
+          changesTimer = setTimeout(function(){
+            log("Getting document link...");
+            UI.downloadAs();
+          }, 30000);
           // Since now we start collect this user changes (via channel) at server-side and
           // when another co-editor will fire the same event (this method by anotehr user), this 
           // user should save his changes in eXo storage version by calling UI.downloadAs()     
@@ -395,22 +414,7 @@
       log("onDownloadAs: " + JSON.stringify(event));
       if (event.data) {
         log("ONLYOFFICE Document Editor download file: " + event.data);
-        var userId = currentUserId;
-        if (downloadAsUser) {
-          userId = downloadAsUser;
-        }
-        if (currentConfig) {
-          log("onDownloadAs listener: " + event.data);
-          // We are a editor oage here: publish that the doc ready for download
-          publishDocument(currentConfig.docId, {
-            "type": DOCUMENT_VERSION,
-            "userId": userId,
-            "documentLink" : event.data,
-            "clientId": clientId,
-            "key": currentConfig.document.key
-          });
-          downloadAsUser = null;
-        }
+        linkProcess.notify(event.data);
       }
     };
 
@@ -551,6 +555,32 @@
       UI.initEditor();
       create(config).done(function(localConfig) {
         currentConfig = localConfig;
+        linkProcess = $.Deferred();
+
+        linkProcess.progress(function(link){
+
+          if (createVersion) {
+            var userId = currentUserId;
+            if (downloadAsUser) {
+              userId = downloadAsUser;
+            }
+            if (currentConfig) {
+              log("Sending DOCUMENT_VERSION event, link: " + link);
+              // We are a editor oage here: publish that the doc ready for download
+              publishDocument(currentConfig.docId, {
+                "type": DOCUMENT_VERSION,
+                "userId": userId,
+                "documentLink" : link,
+                "clientId": clientId,
+                "key": currentConfig.document.key
+              });
+              downloadAsUser = null;
+              createVersion = false;
+            }
+          } else {
+            downloadLink = link;
+          }
+        });
 
         store.subscribe(function () {
           var state = store.getState();
@@ -560,7 +590,12 @@
             } else {
               downloadAsUser = null;
             }
-            UI.downloadAs();
+             createVersion = true;
+             if(downloadLink){
+              linkProcess.notify(downloadLink);
+             } else {
+              UI.downloadAs();
+             }
           }
         });
 

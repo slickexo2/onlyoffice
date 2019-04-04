@@ -485,10 +485,10 @@ public class CometdOnlyofficeService implements Startable {
       // If the user has made changes that need to be saved
       if (changes) {
         try {
-          String[] users = editors.getState(userId, key).getUsers();
+          String[] users = editors.getState(userId, key).getUsers();        
           // If there are other users editing the document
           // TODO: change to clientId instead of userId
-          if (users.length > 1) {
+          if (users.length > 0) {
             String targetUser = null;
             // Find anyone to send DOWNLOAD_AS event
             for (String activeUser : users) {
