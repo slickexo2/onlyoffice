@@ -3,6 +3,7 @@
   <!-- For menu caption in Action Bar -->
   <UIActionBar>
     <tooltip>
+      <NewDocument>New Document</NewDocument>
       <OnlyofficeOpen>Edit Online</OnlyofficeOpen>
       <OnlyofficeClose>Close Online Editor</OnlyofficeClose>
     </tooltip>
@@ -10,6 +11,7 @@
   <!-- Used in Administration-Content-Explorer in Views settings a popup with actions list -->
   <UITabForm>
     <label>
+      <newDocument>New</newDocument>
       <onlyofficeOpen>Edit Online</onlyofficeOpen>
       <onlyofficeClose>Close Online Editor</onlyofficeClose>
     </label>

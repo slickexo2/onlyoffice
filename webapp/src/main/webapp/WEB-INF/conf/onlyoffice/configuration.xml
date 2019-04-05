@@ -205,22 +205,22 @@
           </object>
         </object-param>
         <object-param>
-					<name>Share File Activity</name>
-					<object type="org.exoplatform.social.webui.activity.UIActivityExtension">
-						<field name="type">
-							<string>org.exoplatform.social.webui.activity.BaseUIActivity</string>
-						</field>
-						<field name="name">
-							<string>sharefiles:spaces</string>
-						</field>
-						<field name="component">
-							<string>org.exoplatform.onlyoffice.webui.FileUIActivity</string>
-						</field>
-						<field name="activityBuiderClass">
-							<string>org.exoplatform.wcm.ext.component.activity.UISharedFileBuilder</string>
-						</field>
-					</object>
-				</object-param>
+          <name>Share File Activity</name>
+          <object type="org.exoplatform.social.webui.activity.UIActivityExtension">
+            <field name="type">
+              <string>org.exoplatform.social.webui.activity.BaseUIActivity</string>
+            </field>
+            <field name="name">
+              <string>sharefiles:spaces</string>
+            </field>
+            <field name="component">
+              <string>org.exoplatform.onlyoffice.webui.FileUIActivity</string>
+            </field>
+            <field name="activityBuiderClass">
+              <string>org.exoplatform.wcm.ext.component.activity.UISharedFileBuilder</string>
+            </field>
+          </object>
+        </object-param>
         <object-param>
           <name>OnlyofficeOpen</name>
           <object type="org.exoplatform.webui.ext.UIExtension">
@@ -235,6 +235,23 @@
             </field>
             <field name="component">
               <string>org.exoplatform.onlyoffice.webui.OnlyofficeOpenManageComponent</string>
+            </field>
+          </object>
+        </object-param>
+        <object-param>
+          <name>NewDocument</name>
+          <object type="org.exoplatform.webui.ext.UIExtension">
+            <field name="type">
+              <string>org.exoplatform.ecm.dms.UIActionBar</string>
+            </field>
+            <field name="name">
+              <string>NewDocument</string>
+            </field>
+            <field name="rank">
+              <int>10</int>
+            </field>
+            <field name="component">
+              <string>org.exoplatform.onlyoffice.webui.explorer.NewDocumentManageComponent</string>
             </field>
           </object>
         </object-param>
@@ -272,6 +289,18 @@
                     </field>
                   </object>
                 </value>
+                <value>
+                  <object type="org.exoplatform.services.cms.views.ViewConfig$Tab">
+                    <field name="tabName">
+                      <string>Admin</string>
+                    </field>
+                    <field name="buttons">
+                      <string>
+                        newDocument
+                      </string>
+                    </field>
+                  </object>
+                </value>
               </collection>
             </field>
           </object>
@@ -293,6 +322,18 @@
                     <field name="buttons">
                       <string>
                         onlyofficeOpen
+                      </string>
+                    </field>
+                  </object>
+                </value>
+                <value>
+                  <object type="org.exoplatform.services.cms.views.ViewConfig$Tab">
+                    <field name="tabName">
+                      <string>Icons</string>
+                    </field>
+                    <field name="buttons">
+                      <string>
+                        newDocument
                       </string>
                     </field>
                   </object>
@@ -322,6 +363,18 @@
                     </field>
                   </object>
                 </value>
+                <value>
+                  <object type="org.exoplatform.services.cms.views.ViewConfig$Tab">
+                    <field name="tabName">
+                      <string>List</string>
+                    </field>
+                    <field name="buttons">
+                      <string>
+                        newDocument
+                      </string>
+                    </field>
+                  </object>
+                </value>
               </collection>
             </field>
           </object>
@@ -347,6 +400,18 @@
                     </field>
                   </object>
                 </value>
+                <value>
+                  <object type="org.exoplatform.services.cms.views.ViewConfig$Tab">
+                    <field name="tabName">
+                      <string>Authoring</string>
+                    </field>
+                    <field name="buttons">
+                      <string>
+                        newDocument
+                      </string>
+                    </field>
+                  </object>
+                </value>
               </collection>
             </field>
           </object>
@@ -368,6 +433,18 @@
                     <field name="buttons"><!-- ; onlyofficeClose -->
                       <string>
                         onlyofficeOpen
+                      </string>
+                    </field>
+                  </object>
+                </value>
+                <value>
+                  <object type="org.exoplatform.services.cms.views.ViewConfig$Tab">
+                    <field name="tabName">
+                      <string>Collaboration</string>
+                    </field>
+                    <field name="buttons">
+                      <string>
+                        newDocument
                       </string>
                     </field>
                   </object>
@@ -404,8 +481,8 @@
       </init-params>
     </component-plugin>
   </external-component-plugins>
-  
-   <external-component-plugins>
+
+  <external-component-plugins>
     <target-component>org.exoplatform.commons.addons.AddOnService</target-component>
     <component-plugin>
       <name>addPlugin</name>
