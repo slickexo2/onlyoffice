@@ -26,10 +26,9 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
-import org.gatein.common.logging.Logger;
-import org.gatein.common.logging.LoggerFactory;
-
 import org.exoplatform.container.ExoContainerContext;
+import org.exoplatform.services.log.ExoLogger;
+import org.exoplatform.services.log.Log;
 import org.exoplatform.web.WebAppController;
 import org.exoplatform.web.filter.Filter;
 import org.exoplatform.webui.application.WebuiApplication;
@@ -45,7 +44,7 @@ import org.exoplatform.webui.application.WebuiApplication;
 public class OnlyofficeDocumentsFilter implements Filter {
 
   /** The Constant LOG. */
-  protected static final Logger LOG                  = LoggerFactory.getLogger(OnlyofficeDocumentsFilter.class);
+  protected static final Log    LOG                  = ExoLogger.getLogger(OnlyofficeDocumentsLifecycle.class);
 
   /** The Constant ECMS_EXPLORER_APP_ID. */
   protected static final String ECMS_EXPLORER_APP_ID = "ecmexplorer/FileExplorerPortlet";
@@ -57,6 +56,10 @@ public class OnlyofficeDocumentsFilter implements Filter {
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
     WebAppController controller = ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(WebAppController.class);
     WebuiApplication app = controller.getApplication(ECMS_EXPLORER_APP_ID);
+    // XXX It's known that since portal start this app will not present at very
+    // first request to it (Documents Explorer app), thus the filter will not
+    // add the lifecycle and it will not initialize the app in the first
+    // request.
     if (app != null) {
       OnlyofficeDocumentsLifecycle lifecycle = new OnlyofficeDocumentsLifecycle();
       try {

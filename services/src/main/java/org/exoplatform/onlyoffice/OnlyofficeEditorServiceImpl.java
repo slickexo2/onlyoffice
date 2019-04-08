@@ -1080,6 +1080,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     String docId = null;
     try {
       Config config = getEditorByKey(userId, key);
+      // we set it sooner to let clients see the save 
+      config.getEditorConfig().getUser().setLastSaved(System.currentTimeMillis());
       docId = config.getDocId();
       DocumentStatus status = new DocumentStatus();
       status.setKey(key);
@@ -1096,11 +1098,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     ConcurrentMap<String, Config> configs = activeCache.get(key);
     Editor.User lastUser = null;
     if (configs != null) {
-      Long maxLastModified = null;
+      long maxLastModified = 0;
       for (Entry<String, Config> entry : configs.entrySet()) {
         Editor.User user = entry.getValue().getEditorConfig().getUser();
-        Long lastModified = user.getLastModified();
-        if (lastModified != null && (maxLastModified == null || lastModified > maxLastModified)) {
+        long lastModified = user.getLastModified();
+        if (lastModified > maxLastModified) {
           maxLastModified = lastModified;
           lastUser = user;
         }
@@ -1453,8 +1455,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       LOG.debug(">> download(" + nodePath + ", " + config.getDocument().getKey() + ")");
     }
 
-    String userId = status.getLastUser(); // assuming a single user here (last
-                                          // editor)
+    // Assuming a single user here (last modifier)
+    String userId = status.getLastUser(); 
     validateUser(userId, config);
 
     String contentUrl = status.getUrl();
@@ -1543,6 +1545,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             // actions in ECMS appear on it
             node.checkout();
           }
+          
           status.setConfig(config);
           fireSaved(status);
         } catch (RepositoryException e) {

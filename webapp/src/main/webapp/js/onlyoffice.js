@@ -271,6 +271,15 @@
     
     // Used to download document as another user in case, when they closed the editor
     var downloadAsUser = null;
+
+    // The Deffered object for the getting document link process.
+    var downloadProcess;
+
+    // Used to setup changesTimer on the editor page
+    var changesTimer;
+    
+    // A time to issue document version save if no changes were done, but editor is open
+    var autosaveTimer;
     
     // Redux store for dispatching document updates inside the app
     var store = redux.createStore(function (state, action) {
@@ -369,22 +378,52 @@
         // We use this check to avoid publishing updates from other users 
         // and publishing when user hasn't made any changes yet (opened editor)
         
+        // New autosave should be done by a client that makes changes
+        if (autosaveTimer && !currentUserChanges) {
+          log("Reset autosave timer...");
+          clearTimeout(autosaveTimer);
+          autosaveTimer = null;
+        }
+        
         if (!changesSaved) {
           log("ONLYOFFICE Changes are collected on document editing service");
+          changesSaved = true;
+          currentUserChanges = true;
+          
+          // We need a new link for new changes - reset it in the process stream.
+          downloadProcess.notify(null);
+          if (changesTimer) {
+            log("Reset changes timer...");
+            clearTimeout(changesTimer);
+            changesTimer = null;
+          }
+          changesTimer = setTimeout(function() {
+            log("Getting document link after a timeout...");
+            UI.downloadAs();
+            autosaveTimer = setTimeout(function() {
+              log("It's time to make autosave of document version...");
+              // Send fake DOCUMENT_CHANGED to make the server check for a version lifetime
+              /*publishDocument(currentConfig.docId, {
+                "type": DOCUMENT_CHANGED,
+                "userId": currentUserId,
+                "clientId": clientId,
+                "key": currentConfig.document.key
+              });*/
+              // Publish autosave version for download
+              downloadVersion();
+            }, 600000); // 10min for autosave
+          }, 30000); // 30sec to download a link
+          
           // Since now we start collect this user changes (via channel) at server-side and
           // when another co-editor will fire the same event (this method by anotehr user), this 
           // user should save his changes in eXo storage version by calling UI.downloadAs()     
-          if (currentConfig) {
-            // We are a editor oage here: publish that the doc was changed by current user
-            publishDocument(currentConfig.docId, {
-              "type": DOCUMENT_CHANGED,
-              "userId": currentUserId,
-              "clientId": clientId,
-              "key": currentConfig.document.key
-            });
-          }
-          changesSaved = true;
-          currentUserChanges = true;
+          // We are a editor page here: publish that the doc was changed by current user
+          publishDocument(currentConfig.docId, {
+            "type": DOCUMENT_CHANGED,
+            "userId": currentUserId,
+            "clientId": clientId,
+            "key": currentConfig.document.key
+          });
         } else {
           currentUserChanges = false;
         }
@@ -394,23 +433,46 @@
     var onDownloadAs = function(event) {
       log("onDownloadAs: " + JSON.stringify(event));
       if (event.data) {
-        log("ONLYOFFICE Document Editor download file: " + event.data);
-        var userId = currentUserId;
-        if (downloadAsUser) {
-          userId = downloadAsUser;
+        log("ONLYOFFICE Document Editor download link: " + event.data);
+        downloadProcess.notify(event.data);
+      }
+    };
+    
+    var downloadVersion = function(userId) {
+      if (currentConfig) {
+        if (!userId) {
+          userId = currentUserId
         }
-        if (currentConfig) {
-          log("onDownloadAs listener: " + event.data);
-          // We are a editor oage here: publish that the doc ready for download
+        // if no link have to this moment - ask for it
+        downloadProcess.progress(function(link) {
+          if (link) {
+            log("Can download version from: " + link);
+            downloadProcess.resolve(link);                    
+          } else {
+            log("Requesting fresh download link...");
+            // Force download link acquisition
+            UI.downloadAs();
+          }
+        });
+        downloadProcess.done(function(link) {
+          // A new deferred for next version
+          downloadProcess = $.Deferred();
+          // Cancel change download timer, but not autosave if already started
+          if (changesTimer) {
+            clearTimeout(changesTimer);
+          }
+          log("Sending DOCUMENT_VERSION event, link: " + link);
+          // Publish that the doc version ready for download
           publishDocument(currentConfig.docId, {
-            "type": DOCUMENT_VERSION,
-            "userId": userId,
-            "documentLink" : event.data,
-            "clientId": clientId,
-            "key": currentConfig.document.key
+            "type" : DOCUMENT_VERSION,
+            "userId" : userId,
+            "documentLink" : link,
+            "clientId" : clientId,
+            "key" : currentConfig.document.key
           });
-          downloadAsUser = null;
-        }
+        });        
+      } else {
+        log("WARN: Editor configuration not found. Cannot download document version.");
       }
     };
 
@@ -467,16 +529,6 @@
           "autostart" : [],
           "pluginsData" : []
         };
-
-        // XXX need let Onlyoffice to know about a host of API end-points,
-        // as we will add their script dynamically to the DOM, the script will not be able to detect an URL
-        // thus we use "extensionParams" observed in the script code
-        /*if ("undefined" == typeof (extensionParams) || null == extensionParams) {
-          extensionParams = {};
-        }
-        if ("undefined" == typeof (extensionParams.url) || null == extensionParams.url) {
-          extensionParams.url = config.documentserverUrl;
-        }*/
 
         // load Onlyoffice API script
         // XXX need load API script to DOM head, Onlyoffice needs a real element in <script> to detect the DS server URL
@@ -550,62 +602,61 @@
       log("Initialize editor for document: " + config.docId);
       UI.initEditor();
       create(config).done(function(localConfig) {
-        currentConfig = localConfig;
+        if (localConfig) {
+          currentConfig = localConfig;
+          downloadProcess = $.Deferred();
 
-        store.subscribe(function () {
-          var state = store.getState();
-          if (state.type === DOCUMENT_DOWNLOAD && state.docId === currentConfig.docId && state.userId === currentUserId) {
-            if (state.asUserId) {
-              downloadAsUser = state.asUserId;
-            } else {
-              downloadAsUser = null;
+          store.subscribe(function() {
+            var state = store.getState();
+            if (state.type === DOCUMENT_DOWNLOAD && state.docId === currentConfig.docId && state.userId === currentUserId) {
+              downloadVersion(state.asUserId);
             }
-            UI.downloadAs();
-          }
-        });
+          });
 
-        // Establish a Comet/WebSocket channel from this point.
-        // A new editor page will join the channel and notify when the doc will be saved
-        // so we'll refresh this explorer view to reflect the edited content.
-        subscribeDocument(currentConfig.docId);
-        
-        if (currentConfig) {
+          // Establish a Comet/WebSocket channel from this point.
+          // A new editor page will join the channel and notify when the doc will be saved
+          // so we'll refresh this explorer view to reflect the edited content.
+          subscribeDocument(currentConfig.docId);
+          
           // We are a editor oage here: publish that the doc was changed by current user
           publishDocument(currentConfig.docId, {
             "type": EDITOR_OPENED,
             "userId": currentUserId,
             "clientId": clientId
           });
+
+          window.addEventListener("beforeunload", function () {
+            UI.closeEditor(); // try this first, then in unload
+          });
+
+          window.addEventListener("unload", function () {
+            UI.closeEditor();
+            // We need to save current changes when user closes the editor
+            if (currentConfig) {
+              publishDocument(currentConfig.docId, {
+                "type": EDITOR_CLOSED,
+                "userId": currentUserId,
+                "clientId": clientId,
+                "key": currentConfig.document.key,
+                "changes": currentUserChanges
+              });
+            }
+          });
+
+          $(function() {
+            try {
+              UI.create(currentConfig);
+            } catch (e) {
+              log("Error initializing Onlyoffice client UI " + e, e);
+            }
+          });          
+        } else {
+          log("ERROR: editor config not defined: " + localConfig);
+          UI.showError(message("ErrorTitle"), message("ErrorConfigNotDefined"));
         }
-
-        window.addEventListener("beforeunload", function () {
-          UI.closeEditor(); // try this first, then in unload
-        });
-
-        window.addEventListener("unload", function () {
-          UI.closeEditor();
-          // We need to save current changes when user closes the editor
-          if (currentConfig) {
-            publishDocument(currentConfig.docId, {
-              "type": EDITOR_CLOSED,
-              "userId": currentUserId,
-              "clientId": clientId,
-              "key": currentConfig.document.key,
-              "changes": currentUserChanges
-            });
-          }
-        });
-
-        $(function() {
-          try {
-            UI.create(currentConfig);
-          } catch (e) {
-            log("Error initializing Onlyoffice client UI " + e, e);
-          }
-        });
       }).fail(function(error) {
-        log("ERROR: editor config failed : " + error);
-        UI.showError("Error", "Failed to setup editor configuration");
+        log("ERROR: editor config creation failed : " + error);
+        UI.showError(message("ErrorTitle"), message("ErrorCreateConfig"));
       });
     };
 
@@ -655,8 +706,6 @@
     this.initExplorer = function(docId) {
       log("Initialize explorer with document: " + docId);
       // Listen document updated
-      // TODO do we need unsubscribe Redux store from previous docId (explorerDocId)?
-      // Or don't subscribe again if was done by previous doc?
       store.subscribe(function() {
         var state = store.getState();
         if (state.type === DOCUMENT_SAVED) {

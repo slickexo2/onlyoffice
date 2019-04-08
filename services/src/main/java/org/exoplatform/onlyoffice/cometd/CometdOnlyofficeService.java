@@ -235,6 +235,9 @@ public class CometdOnlyofficeService implements Startable {
   /** The Constant SAME_USER_VERSION_LIFETIME. */
   public static final long                SAME_USER_VERSION_LIFETIME = 10 * 60 * 1000;
 
+  /** The Constant SAME_USER_VERSION_SKIPTIME. */
+  public static final long                SAME_USER_VERSION_SKIPTIME = 5 * 1000;
+
   /** The Onlyoffice editor service. */
   protected final OnlyofficeEditorService editors;
 
@@ -451,10 +454,10 @@ public class CometdOnlyofficeService implements Startable {
         handleEditorClosedEvent(data, docId);
         break;
       }
-      if(LOG.isDebugEnabled()) {
+      if (LOG.isDebugEnabled()) {
         LOG.debug("Event published in " + message.getChannel() + ", docId: " + docId + ", data: " + message.getJSON());
       }
- 
+
     }
 
     /**
@@ -467,7 +470,7 @@ public class CometdOnlyofficeService implements Startable {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
       String clientId = (String) data.get("clientId");
-      
+
       editors.addClient(key, userId, clientId);
     }
 
@@ -488,7 +491,7 @@ public class CometdOnlyofficeService implements Startable {
           String[] users = editors.getState(userId, key).getUsers();
           // If there are other users editing the document
           // TODO: change to clientId instead of userId
-          if (users.length > 1) {
+          if (users.length > 0) {
             String targetUser = null;
             // Find anyone to send DOWNLOAD_AS event
             for (String activeUser : users) {
@@ -503,7 +506,7 @@ public class CometdOnlyofficeService implements Startable {
           LOG.error("Cannot get state of document key: " + key + ", user: " + userId);
         }
       }
-      
+
       editors.removeClient(key, userId, clientId);
     }
 
@@ -517,6 +520,27 @@ public class CometdOnlyofficeService implements Startable {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
       String link = (String) data.get("documentLink");
+      Editor.User lastUser = editors.getLastModifier(key);
+      if (LOG.isDebugEnabled()) {
+        if (lastUser != null) {
+          LOG.debug("Handle document version: {} for {}, lastUser: {}:{}",
+                    userId,
+                    docId,
+                    lastUser.getId(),
+                    lastUser.getLastSaved());
+        } else {
+          LOG.debug("Handle document version: {} for {}, lastUser: null", userId, docId);
+        }
+      }
+      if (lastUser != null && lastUser.getId().equals(userId) && lastUser.getLastSaved() > 0
+          && System.currentTimeMillis() - lastUser.getLastSaved() <= SAME_USER_VERSION_SKIPTIME) {
+        // XXX We don't want save same user version too often (case for many
+        // open editors by same user of same doc)
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Skipped same user version: {} for {}", userId, docId);
+        }
+        return;
+      }
       eventsHandlers.submit(new ContainerCommand(PortalContainer.getCurrentPortalContainerName()) {
         @Override
         void onContainerError(String error) {
@@ -525,7 +549,7 @@ public class CometdOnlyofficeService implements Startable {
 
         @Override
         void execute(ExoContainer exoContainer) {
-          if(LOG.isDebugEnabled()) {
+          if (LOG.isDebugEnabled()) {
             LOG.debug("Creating a new version for user: " + userId + ", docId: " + docId + ", link: " + link);
           }
           editors.downloadVersion(key, userId, link);
@@ -544,11 +568,21 @@ public class CometdOnlyofficeService implements Startable {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
       Editor.User lastUser = editors.getLastModifier(key);
-      if (lastUser != null && (!userId.equals(lastUser.getId()) || (lastUser.getLastModified() != null
-          && System.currentTimeMillis() - lastUser.getLastModified() > SAME_USER_VERSION_LIFETIME))) {
+      if (lastUser != null // TODO reconsider and cleanup
+          && (!userId.equals(lastUser.getId()) /*
+                                                * || (lastUser.getLastSaved() >
+                                                * 0 &&
+                                                * lastUser.getLastModified() > 0
+                                                * && lastUser.getLastModified()
+                                                * - lastUser.getLastSaved() >
+                                                * SAME_USER_VERSION_LIFETIME &&
+                                                * System.currentTimeMillis() -
+                                                * lastUser.getLastModified() >
+                                                * SAME_USER_VERSION_LIFETIME)
+                                                */)) {
         // We download user version if another user started to change the
-        // document or enough time passed since previous change.
-        
+        // document or enough time passed since previous change by this user.
+
         publishDownloadEvent(docId, lastUser.getId());
         if (LOG.isDebugEnabled()) {
           LOG.debug("Download a new version of document: user " + lastUser.getId() + ", docId: " + docId);
@@ -556,7 +590,7 @@ public class CometdOnlyofficeService implements Startable {
         }
       }
       editors.setLastModifier(key, userId);
-      
+
       if (LOG.isDebugEnabled()) {
         LOG.debug("Changes collected from: " + userId + ", docId: " + docId);
       }

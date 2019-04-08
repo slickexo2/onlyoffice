@@ -80,6 +80,12 @@ public class OnlyofficeDocumentsLifecycle extends AbstractOnlyofficeLifecycle {
             // This will init explorer even for docs that cannot be edited
             // by the user (locked or lack of permissions)
             callModule("initExplorer('" + docId + "');");
+          } else if (LOG.isDebugEnabled()) {
+            LOG.debug("Document not initialized or not editable for {}, node: {}:{}, context: {}",
+                      userName,
+                      nodeWs,
+                      nodePath,
+                      parentContext);
           }
         } else {
           if (LOG.isDebugEnabled()) {
