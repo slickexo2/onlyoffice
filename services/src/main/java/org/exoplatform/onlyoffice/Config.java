@@ -591,26 +591,26 @@ public class Config implements Externalizable {
     public static class User {
 
       /** The id. */
-      protected final String     id;
+      protected final String          id;
 
       /** The firstname. */
-      protected final String     firstname;
+      protected final String          firstname;
 
       /** The lastname. */
-      protected final String     lastname;
+      protected final String          lastname;
 
-      /** The username. */
-      protected final String     username;
-      
       /** The lastModified timestamp. */
-      protected transient Long lastModified;
-      
+      protected Long                  lastModified = Long.valueOf(0);
+
+      /** The last saved timestamp. */
+      protected Long                  lastSaved = Long.valueOf(0);
+
       /** The set of client ids. */
       protected transient Set<String> clients = new HashSet<>();
 
       /** The lock token. */
       @Deprecated
-      protected transient String lockToken;
+      protected transient String      lockToken;
 
       /**
        * Instantiates a new user.
@@ -622,7 +622,6 @@ public class Config implements Externalizable {
       protected User(String id, String firstname, String lastname) {
         super();
         this.id = id;
-        this.username = id;
         this.firstname = firstname;
         this.lastname = lastname;
       }
@@ -634,15 +633,6 @@ public class Config implements Externalizable {
        */
       public String getId() {
         return id;
-      }
-
-      /**
-       * Gets the username.
-       *
-       * @return the username
-       */
-      public String getUsername() {
-        return username;
       }
 
       /**
@@ -662,25 +652,43 @@ public class Config implements Externalizable {
       public String getLastname() {
         return lastname;
       }
-      
+
       /**
        * Gets the lastModified.
        * 
        * @return the lastModified
        */
-      public Long getLastModified() {
+      public long getLastModified() {
         return lastModified;
       }
-      
+
       /**
        * Sets the lastModified.
        * 
        * @param lastModified the lastModified
        */
-      public void setLastModified(Long lastModified) {
+      public void setLastModified(long lastModified) {
         this.lastModified = lastModified;
       }
-      
+
+      /**
+       * Gets the last saved.
+       *
+       * @return the lastSaved
+       */
+      public long getLastSaved() {
+        return lastSaved;
+      }
+
+      /**
+       * Sets the last saved.
+       *
+       * @param lastSaved the lastSaved to set
+       */
+      public void setLastSaved(long lastSaved) {
+        this.lastSaved = lastSaved;
+      }
+
       /**
        * Gets the clients.
        * 
@@ -689,7 +697,7 @@ public class Config implements Externalizable {
       public Set<String> getClients() {
         return clients;
       }
-      
+
       /**
        * Adds a client.
        * 
@@ -698,7 +706,7 @@ public class Config implements Externalizable {
       public void addClient(String clientId) {
         clients.add(clientId);
       }
-      
+
       /**
        * Removes a client.
        * 
@@ -999,6 +1007,8 @@ public class Config implements Externalizable {
     out.writeUTF(editorConfig.getUser().getId());
     out.writeUTF(editorConfig.getUser().getFirstname());
     out.writeUTF(editorConfig.getUser().getLastname());
+    out.writeLong(editorConfig.getUser().getLastModified());
+    out.writeLong(editorConfig.getUser().getLastSaved());
   }
 
   /**
@@ -1060,7 +1070,11 @@ public class Config implements Externalizable {
     String euid = in.readUTF();
     String eufirstname = in.readUTF();
     String eulastname = in.readUTF();
+    long lastModified = in.readLong();
+    long lastSaved = in.readLong();
     Editor.User euser = new Editor.User(euid, eufirstname, eulastname);
+    euser.setLastModified(lastModified);
+    euser.setLastSaved(lastSaved);
     this.editorConfig = new Editor(ecallbackUrl, elang, emode, euser);
   }
 

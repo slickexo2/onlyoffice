@@ -403,12 +403,14 @@
             autosaveTimer = setTimeout(function() {
               log("It's time to make autosave of document version...");
               // Send fake DOCUMENT_CHANGED to make the server check for a version lifetime
-              publishDocument(currentConfig.docId, {
+              /*publishDocument(currentConfig.docId, {
                 "type": DOCUMENT_CHANGED,
                 "userId": currentUserId,
                 "clientId": clientId,
                 "key": currentConfig.document.key
-              });
+              });*/
+              // Publish autosave version for download
+              downloadVersion();
             }, 600000); // 10min for autosave
           }, 30000); // 30sec to download a link
           
@@ -433,6 +435,44 @@
       if (event.data) {
         log("ONLYOFFICE Document Editor download link: " + event.data);
         downloadProcess.notify(event.data);
+      }
+    };
+    
+    var downloadVersion = function(userId) {
+      if (currentConfig) {
+        if (!userId) {
+          userId = currentUserId
+        }
+        // if no link have to this moment - ask for it
+        downloadProcess.progress(function(link) {
+          if (link) {
+            log("Can download version from: " + link);
+            downloadProcess.resolve(link);                    
+          } else {
+            log("Requesting fresh download link...");
+            // Force download link acquisition
+            UI.downloadAs();
+          }
+        });
+        downloadProcess.done(function(link) {
+          // A new deferred for next version
+          downloadProcess = $.Deferred();
+          // Cancel change download timer, but not autosave if already started
+          if (changesTimer) {
+            clearTimeout(changesTimer);
+          }
+          log("Sending DOCUMENT_VERSION event, link: " + link);
+          // Publish that the doc version ready for download
+          publishDocument(currentConfig.docId, {
+            "type" : DOCUMENT_VERSION,
+            "userId" : userId,
+            "documentLink" : link,
+            "clientId" : clientId,
+            "key" : currentConfig.document.key
+          });
+        });        
+      } else {
+        log("WARN: Editor configuration not found. Cannot download document version.");
       }
     };
 
@@ -569,38 +609,7 @@
           store.subscribe(function() {
             var state = store.getState();
             if (state.type === DOCUMENT_DOWNLOAD && state.docId === currentConfig.docId && state.userId === currentUserId) {
-              // if no link have to this moment - ask for it
-              downloadProcess.progress(function(link) {
-                if (link) {
-                  log("Can download version from: " + link);
-                  downloadProcess.resolve(link);                    
-                } else {
-                  log("Requesting fresh download link...");
-                  // Force download link acquisition
-                  UI.downloadAs();
-                }
-              });
-              downloadProcess.done(function(link) {
-                // A new deferred for next version
-                downloadProcess = $.Deferred();
-                // Cancel change download timer, but not autosave if already started
-                if (changesTimer) {
-                  clearTimeout(changesTimer);
-                }
-                log("Sending DOCUMENT_VERSION event, link: " + link);
-                var userId = currentUserId;
-                if (state.asUserId) {
-                  userId = state.asUserId;
-                }
-                // Publish that the doc version ready for download
-                publishDocument(currentConfig.docId, {
-                  "type" : DOCUMENT_VERSION,
-                  "userId" : userId,
-                  "documentLink" : link,
-                  "clientId" : clientId,
-                  "key" : currentConfig.document.key
-                });
-              });
+              downloadVersion(state.asUserId);
             }
           });
 
