@@ -21,17 +21,17 @@ import org.exoplatform.webui.form.UIForm;
 import org.exoplatform.webui.form.UIFormSelectBox;
 import org.exoplatform.webui.form.UIFormStringInput;
 
-@ComponentConfig(lifecycle = UIFormLifecycle.class, template = "app:/groovy/webui/component/explorer/popup/action/UINewDocument.gtmpl", events = {
+@ComponentConfig(lifecycle = UIFormLifecycle.class, template = "classpath:groovy/templates/UINewDocument.gtmpl", events = {
     @EventConfig(listeners = UINewDocumentForm.SaveActionListener.class),
     @EventConfig(listeners = UINewDocumentForm.OnChangeActionListener.class),
     @EventConfig(listeners = UINewDocumentForm.CancelActionListener.class, phase = Phase.DECODE) })
 public class UINewDocumentForm extends UIForm implements UIPopupComponent {
 
-  public static final String FIELD_TITLE_TEXT_BOX         = "titleTextBox";
+  public static final String FIELD_TITLE_TEXT_BOX  = "titleTextBox";
 
-  public static final String FIELD_CUSTOM_TYPE_SELECT_BOX = "customTypeSelectBox";
+  public static final String FIELD_TYPE_SELECT_BOX = "typeSelectBox";
 
-  private static final Log   LOG                          = ExoLogger.getLogger(UINewDocumentForm.class.getName());
+  private static final Log   LOG                   = ExoLogger.getLogger(UINewDocumentForm.class.getName());
 
   private String             selectedType;
 
@@ -41,12 +41,14 @@ public class UINewDocumentForm extends UIForm implements UIPopupComponent {
    * @throws Exception
    */
   public UINewDocumentForm() throws Exception {
+
+    LOG.info("CLASSPATH: " + System.getProperty("java.class.path"));
     // Title checkbox
     UIFormStringInput titleTextBox = new UIFormStringInput(FIELD_TITLE_TEXT_BOX, FIELD_TITLE_TEXT_BOX, null);
     this.addUIFormInput(titleTextBox);
 
     // Custom type selectbox
-    UIFormSelectBox customTypeSelectBox = new UIFormSelectBox(FIELD_CUSTOM_TYPE_SELECT_BOX, FIELD_CUSTOM_TYPE_SELECT_BOX, null);
+    UIFormSelectBox customTypeSelectBox = new UIFormSelectBox(FIELD_TYPE_SELECT_BOX, FIELD_TYPE_SELECT_BOX, null);
     customTypeSelectBox.setRendered(false);
     this.addUIFormInput(customTypeSelectBox);
 
@@ -76,7 +78,7 @@ public class UINewDocumentForm extends UIForm implements UIPopupComponent {
   @Override
   public void activate() {
     try {
-      UIFormSelectBox customTypeSelectBox = this.getUIFormSelectBox(FIELD_CUSTOM_TYPE_SELECT_BOX);
+      UIFormSelectBox customTypeSelectBox = this.getUIFormSelectBox(FIELD_TYPE_SELECT_BOX);
 
       // TODO: refactor available file types
       List<String> documentTypes = new ArrayList<>();
@@ -96,7 +98,7 @@ public class UINewDocumentForm extends UIForm implements UIPopupComponent {
   }
 
   private void fillCustomTypeSelectBox(List<String> documentTypes) throws Exception {
-    UIFormSelectBox customTypeSelectBox = this.getUIFormSelectBox(FIELD_CUSTOM_TYPE_SELECT_BOX);
+    UIFormSelectBox customTypeSelectBox = this.getUIFormSelectBox(FIELD_TYPE_SELECT_BOX);
     List<SelectItemOption<String>> options = new ArrayList<SelectItemOption<String>>();
     for (String documentType : documentTypes) {
       String label = this.getLabel(documentType.replace(":", "_"));
@@ -104,14 +106,14 @@ public class UINewDocumentForm extends UIForm implements UIPopupComponent {
     }
     Collections.sort(options, new ItemOptionNameComparator());
     customTypeSelectBox.setOptions(options);
-    
+
   }
 
   @Override
   public void deActivate() {
     // TODO Auto-generated method stub
   }
-  
+
   /**
    * Get selected Document Type.
    *
@@ -120,7 +122,7 @@ public class UINewDocumentForm extends UIForm implements UIPopupComponent {
   public String getSelectedType() {
     return selectedType;
   }
-  
+
   /**
    * Set selected document type.
    *
@@ -129,6 +131,5 @@ public class UINewDocumentForm extends UIForm implements UIPopupComponent {
   private void setSelectedType(String selectedType) {
     this.selectedType = selectedType;
   }
-  
 
 }

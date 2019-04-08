@@ -10,20 +10,20 @@ String fieldName; %>
 <div class="UIForm uiNewDocument">
   <%uiform.begin()%>
       <div class="form-horizontal resizable">
-				<label for="<%=uiform.FIELD_TITLE_TEXT_BOX%>"><%=uiform.getLabel(uiform.FIELD_TITLE_TEXT_BOX) %></label>
-				<div class="controls-full">
-					<% uiform.renderChild(uiform.FIELD_TITLE_TEXT_BOX) %>
-				</div>			
-					<div class="actionLabel clearfix">
-				
-					  <%
-		          if(uiform.getChildById(uiform.FIELD_CUSTOM_TYPE_SELECT_BOX).isRendered()) {
-		            uiform.renderChild(uiform.FIELD_CUSTOM_TYPE_SELECT_BOX)
-		          }
-		        %>        
-	        </div>
-	      <%} %>  
-      </div>
+	      <div class="control-group">
+	      		<label class="control-label" for="<%=uiform.FIELD_TITLE_TEXT_BOX%>"><%=uiform.getLabel(uiform.FIELD_TITLE_TEXT_BOX) %></label>
+	      		<div class="controls">
+	      			<% uiform.renderChild(uiform.FIELD_TITLE_TEXT_BOX) %>
+	      		</div>
+	      </div>
+	      
+	      <div class="control-group">
+	      		<label class="control-label" for="<%=uiform.FIELD_TYPE_SELECT_BOX%>"><%=uiform.getLabel(uiform.FIELD_TYPE_SELECT_BOX) %></label>
+	      		<div class="controls">
+	      			<% uiform.renderChild(uiform.FIELD_TYPE_SELECT_BOX)  %>
+	      		</div>
+	      </div>
+	  </div>
       <div class="uiAction uiActionBorder">
         <% for(action in uiform.getActions()) {
              String actionLabel = _ctx.appRes(uiform.getName() + ".action." + action);
@@ -32,6 +32,6 @@ String fieldName; %>
         %>
           <button type="button" href="javascript:void(0);" onclick="$link" class="btn $saveClass">$actionLabel</button>
         <%}%>
-      </div>
+     </div>
   <%uiform.end()%>
 </div>
