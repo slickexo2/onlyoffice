@@ -39,7 +39,6 @@ public class NewDocumentManageComponent extends UIAbstractManagerComponent {
                                                                                                  new IsNotInTrashFilter(),
                                                                                                  new IsNotEditingDocumentFilter()
                                                                                                 });
-
   /**
    * The listener interface for receiving newDocumentAction events. The class
    * that is interested in processing a newDocumentAction event implements
@@ -73,7 +72,7 @@ public class NewDocumentManageComponent extends UIAbstractManagerComponent {
   public static void addDocument(Event<? extends UIComponent> event, UIJCRExplorer uiExplorer) throws Exception {
     UIPopupContainer UIPopupContainer = uiExplorer.getChild(UIPopupContainer.class);
     UINewDocumentForm documentForm = uiExplorer.createUIComponent(UINewDocumentForm.class, null, null);
-    UIPopupContainer.activate(documentForm, 420, 220, false);
+    UIPopupContainer.activate(documentForm, 530, 220, false);
     event.getRequestContext().addUIComponentToUpdateByAjax(UIPopupContainer);
   }
 

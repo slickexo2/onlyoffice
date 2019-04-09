@@ -82,7 +82,6 @@
       <module>onlyofficeRedux</module>
     </depends>
   </module>
-
   <portlet-skin>
     <application-name>onlyoffice</application-name>
     <portlet-name>OnlyofficeDocumentStatePortlet</portlet-name>
