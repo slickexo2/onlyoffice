@@ -282,6 +282,7 @@ public interface OnlyofficeEditorService {
    * @param userId the userId
    * @param clientId the clientId
    */
+  @Deprecated // TODO we don't need this on API level
   void removeClient(String key, String userId, String clientId);
   
   /**
@@ -291,6 +292,7 @@ public interface OnlyofficeEditorService {
    * @param userId the userId
    * @param clientId the clientId
    */
+  @Deprecated // TODO we don't need this on API level
   void addClient(String key, String userId, String clientId);
 
 }
