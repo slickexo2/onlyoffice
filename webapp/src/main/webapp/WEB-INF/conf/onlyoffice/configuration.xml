@@ -48,7 +48,57 @@
     <type>org.exoplatform.onlyoffice.cometd.CometdOnlyofficeService</type>
   </component>
 
-  <!-- DocumentTypePlugin -->
+  <component>
+    <type>org.exoplatform.onlyoffice.NewDocumentService</type>
+  </component>
+  
+  <!-- NewDocumentTypePlugin for NewDocumentService-->
+  <external-component-plugins>
+    <target-component>org.exoplatform.onlyoffice.NewDocumentService</target-component>
+    <component-plugin>
+      <name>documentTypePlugin</name>
+      <set-method>addTypePlugin</set-method>
+      <type>org.exoplatform.onlyoffice.NewDocumentTypePlugin</type>
+      <description>The document type plugin contains a list of mimetypes</description>
+      <init-params>
+        <object-param>
+          <name>document-types-configuration</name>
+          <object type="org.exoplatform.onlyoffice.NewDocumentService$NewDocumentTypesConfig">
+            <field name="types">
+              <map type="java.util.HashMap">
+                <entry>
+                  <key>
+                    <string>Word</string>
+                  </key>
+                  <value>
+                    <string>files/template.docx</string>
+                  </value>
+                </entry>
+                <entry>
+                  <key>
+                    <string>Excel</string>
+                  </key>
+                  <value>
+                    <string>files/template.xlsx</string>
+                  </value>
+                </entry>
+                <entry>
+                  <key>
+                    <string>PowerPoint</string>
+                  </key>
+                  <value>
+                    <string>files/template.pptx</string>
+                  </value>
+                </entry>
+              </map>
+            </field>
+          </object>
+        </object-param>
+      </init-params>
+    </component-plugin>
+  </external-component-plugins>
+
+  <!-- DocumentTypePlugin for OnlyOfficeEditorService -->
   <external-component-plugins>
     <target-component>org.exoplatform.onlyoffice.OnlyofficeEditorService</target-component>
     <component-plugin>

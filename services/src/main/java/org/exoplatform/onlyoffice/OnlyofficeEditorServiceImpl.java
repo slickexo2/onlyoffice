@@ -152,7 +152,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   public static final String    CACHE_NAME             = "onlyoffice.EditorCache".intern();
 
   /**
-   * DocumentTypesConfig.
+   * NewDocumentTypesConfig.
    */
   public static class DocumentTypesConfig {
 

@@ -33,7 +33,7 @@ import org.exoplatform.services.log.Log;
 public class DocumentTypePlugin extends BaseComponentPlugin {
 
   /** The Constant LOG. */
-  protected static final Log  LOG                          = ExoLogger.getLogger(OnlyofficeEditorServiceImpl.class);
+  protected static final Log  LOG                          = ExoLogger.getLogger(DocumentTypePlugin.class);
 
   /**  The DOCUMENT_TYPES_CONFIGURATION param *. */
   private static final String DOCUMENT_TYPES_CONFIGURATION = "document-types-configuration";

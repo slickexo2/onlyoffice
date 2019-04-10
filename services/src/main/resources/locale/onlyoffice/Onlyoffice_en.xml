@@ -28,6 +28,11 @@
     <label>
       <titleTextBox>Document Name:</titleTextBox>
       <typeSelectBox>Document Type:</typeSelectBox>
+      <option>
+        <Word>Microsoft Word Document (*.docx)</Word>
+        <Excel>Microsoft Excel Workbook (*.xlsx)</Excel>
+        <PowerPoint>Microsoft PowerPoint Presentation (*.pptx)</PowerPoint>
+      </option>
     </label>
   </UINewDocumentForm>  
   <!-- Messages -->
