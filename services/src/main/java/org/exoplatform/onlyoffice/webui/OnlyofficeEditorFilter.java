@@ -60,6 +60,8 @@ public class OnlyofficeEditorFilter implements Filter {
         app.getApplicationLifecycle().add(lifecycle);
         chain.doFilter(request, response);
       } finally {
+        // run restore for a case of exception in request processing
+        lifecycle.restore(app);
         app.getApplicationLifecycle().remove(lifecycle);
       }
     } else {
