@@ -72,7 +72,7 @@
                       <string>classpath:files/template.docx</string>
                     </field>
                     <field name="label">
-                      <string>Word</string>
+                      <string>MicrosoftOfficeDocument</string>
                     </field>
                     <field name="mimeType">
                       <string>application/vnd.openxmlformats-officedocument.wordprocessingml.document</string>
@@ -85,7 +85,7 @@
                       <string>classpath:files/template.xlsx</string>
                     </field>
                     <field name="label">
-                      <string>Excel</string>
+                      <string>MicrosoftOfficeSpreadsheet</string>
                     </field>
                     <field name="mimeType">
                       <string>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</string>
@@ -98,7 +98,7 @@
                       <string>classpath:files/template.pptx</string>
                     </field>
                     <field name="label">
-                      <string>PowerPoint</string>
+                      <string>MicrosoftOfficePresentation</string>
                     </field>
                     <field name="mimeType">
                       <string>application/vnd.openxmlformats-officedocument.presentationml.presentation</string>
