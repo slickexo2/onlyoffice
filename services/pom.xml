@@ -111,6 +111,9 @@
           <include>**/*.gif</include>
           <include>**/*.jpg</include>
           <include>**/*.png</include>
+          <include>**/*.docx</include>
+          <include>**/*.pptx</include>
+          <include>**/*.xlsx</include>
         </includes>
       </resource>
     </resources>    

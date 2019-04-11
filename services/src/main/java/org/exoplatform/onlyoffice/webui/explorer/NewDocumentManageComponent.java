@@ -24,6 +24,9 @@ import org.exoplatform.webui.ext.filter.UIExtensionFilters;
 import org.exoplatform.webui.ext.manager.UIAbstractManager;
 import org.exoplatform.webui.ext.manager.UIAbstractManagerComponent;
 
+/**
+ * The Class NewDocumentManageComponent.
+ */
 @ComponentConfig(events = { @EventConfig(listeners = NewDocumentManageComponent.NewDocumentActionListener.class) })
 public class NewDocumentManageComponent extends UIAbstractManagerComponent {
 
@@ -39,6 +42,7 @@ public class NewDocumentManageComponent extends UIAbstractManagerComponent {
                                                                                                  new IsNotInTrashFilter(),
                                                                                                  new IsNotEditingDocumentFilter()
                                                                                                 });
+  
   /**
    * The listener interface for receiving newDocumentAction events. The class
    * that is interested in processing a newDocumentAction event implements
@@ -47,6 +51,8 @@ public class NewDocumentManageComponent extends UIAbstractManagerComponent {
    * <code>addnewDocumentActionListener</code> method. When the
    * newDocumentAction event occurs, that object's appropriate method is
    * invoked.
+   *
+   * @see NewDocumentActionEvent
    */
   public static class NewDocumentActionListener extends UIActionBarActionListener<NewDocumentManageComponent> {
 
@@ -69,6 +75,13 @@ public class NewDocumentManageComponent extends UIAbstractManagerComponent {
     return FILTERS;
   }
 
+  /**
+   * Adds the document.
+   *
+   * @param event the event
+   * @param uiExplorer the ui explorer
+   * @throws Exception the exception
+   */
   public static void addDocument(Event<? extends UIComponent> event, UIJCRExplorer uiExplorer) throws Exception {
     UIPopupContainer UIPopupContainer = uiExplorer.getChild(UIPopupContainer.class);
     UINewDocumentForm documentForm = uiExplorer.createUIComponent(UINewDocumentForm.class, null, null);

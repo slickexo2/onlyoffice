@@ -65,32 +65,47 @@
           <name>document-types-configuration</name>
           <object type="org.exoplatform.onlyoffice.NewDocumentService$NewDocumentTypesConfig">
             <field name="types">
-              <map type="java.util.HashMap">
-                <entry>
-                  <key>
-                    <string>Word</string>
-                  </key>
-                  <value>
-                    <string>files/template.docx</string>
-                  </value>
-                </entry>
-                <entry>
-                  <key>
-                    <string>Excel</string>
-                  </key>
-                  <value>
-                    <string>files/template.xlsx</string>
-                  </value>
-                </entry>
-                <entry>
-                  <key>
-                    <string>PowerPoint</string>
-                  </key>
-                  <value>
-                    <string>files/template.pptx</string>
-                  </value>
-                </entry>
-              </map>
+             <collection type="java.util.ArrayList">
+                <value>
+                  <object type="org.exoplatform.onlyoffice.NewDocumentType">
+                    <field name="path">
+                      <string>classpath:files/template.docx</string>
+                    </field>
+                    <field name="label">
+                      <string>Word</string>
+                    </field>
+                    <field name="mimeType">
+                      <string>application/vnd.openxmlformats-officedocument.wordprocessingml.document</string>
+                    </field>
+                  </object>
+                </value>
+                <value>
+                  <object type="org.exoplatform.onlyoffice.NewDocumentType">
+                    <field name="path">
+                      <string>classpath:files/template.xlsx</string>
+                    </field>
+                    <field name="label">
+                      <string>Excel</string>
+                    </field>
+                    <field name="mimeType">
+                      <string>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</string>
+                    </field>
+                  </object>
+                </value>
+                <value>
+                  <object type="org.exoplatform.onlyoffice.NewDocumentType">
+                    <field name="path">
+                      <string>classpath:files/template.pptx</string>
+                    </field>
+                    <field name="label">
+                      <string>PowerPoint</string>
+                    </field>
+                    <field name="mimeType">
+                      <string>application/vnd.openxmlformats-officedocument.presentationml.presentation</string>
+                    </field>
+                  </object>
+                </value>
+              </collection>
             </field>
           </object>
         </object-param>
