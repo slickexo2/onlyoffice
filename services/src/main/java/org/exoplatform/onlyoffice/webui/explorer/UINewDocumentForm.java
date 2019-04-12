@@ -55,9 +55,8 @@ public class UINewDocumentForm extends UIForm implements UIPopupComponent {
   /**
    * Constructor.
    *
-   * @throws Exception the exception
    */
-  public UINewDocumentForm() throws Exception {
+  public UINewDocumentForm() {
     this.documentService = this.getApplicationComponent(NewDocumentService.class);
     // Title textbox
     UIFormStringInput titleTextBox = new UIFormStringInput(FIELD_TITLE_TEXT_BOX, FIELD_TITLE_TEXT_BOX, null);

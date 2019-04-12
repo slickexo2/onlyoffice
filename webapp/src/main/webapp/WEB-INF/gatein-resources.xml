@@ -86,7 +86,7 @@
     <application-name>onlyoffice</application-name>
     <portlet-name>OnlyofficeDocumentStatePortlet</portlet-name>
     <skin-name>Enterprise</skin-name>
-    <css-path>/skin/onlyoffice-stream.css</css-path>
+    <css-path>/skin/onlyoffice-extras.css</css-path>
     <overwrite>true</overwrite>
   </portlet-skin>
 
@@ -94,7 +94,7 @@
     <application-name>onlyoffice</application-name>
     <portlet-name>OnlyofficeDocumentStatePortlet</portlet-name>
     <skin-name>Default</skin-name>
-    <css-path>/skin/onlyoffice-stream.css</css-path>
+    <css-path>/skin/onlyoffice-extras.css</css-path>
     <overwrite>true</overwrite>
   </portlet-skin>
 </gatein-resources>

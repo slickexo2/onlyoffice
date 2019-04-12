@@ -1,6 +1,3 @@
-/*
- * 
- */
 package org.exoplatform.onlyoffice;
 
 import java.io.InputStream;
@@ -79,33 +76,6 @@ public class NewDocumentService implements Startable {
   }
 
   /**
-   * NewDocumentTypesConfig.
-   */
-  public static class NewDocumentTypesConfig {
-
-    /** The document types. */
-    protected List<NewDocumentType> types;
-
-    /**
-     * Gets the document types.
-     *
-     * @return the document types
-     */
-    public List<NewDocumentType> getTypes() {
-      return types;
-    }
-
-    /**
-     * Sets the document types.
-     *
-     * @param types the new types
-     */
-    public void setTypes(List<NewDocumentType> types) {
-      this.types = types;
-    }
-  }
-
-  /**
    * Creates the document.
    *
    * @param currentNode the current node
@@ -170,6 +140,33 @@ public class NewDocumentService implements Startable {
    */
   public NewDocumentType getDocumentTypeByLabel(String label) {
     return getTypes().stream().filter(type -> label.equals(type.getLabel())).findAny().orElse(null);
+  }
+  
+  /**
+   * NewDocumentTypesConfig.
+   */
+  public static class NewDocumentTypesConfig {
+
+    /** The document types. */
+    protected List<NewDocumentType> types;
+
+    /**
+     * Gets the document types.
+     *
+     * @return the document types
+     */
+    public List<NewDocumentType> getTypes() {
+      return types;
+    }
+
+    /**
+     * Sets the document types.
+     *
+     * @param types the new types
+     */
+    public void setTypes(List<NewDocumentType> types) {
+      this.types = types;
+    }
   }
 
 }

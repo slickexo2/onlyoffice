@@ -6,3 +6,7 @@
 .maskLayer .uiDocumentPreview .previewBtn .onlyOfficeEditBtn .uiIconEcmsOnlyofficeOpen {
   color: #ffffff;
 }
+
+#uiActionsBarContainer .uiIconEcmsNewDocument:before {
+    content: "\e637";
+}
