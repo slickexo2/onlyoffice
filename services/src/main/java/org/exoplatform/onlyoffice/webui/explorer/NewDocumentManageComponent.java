@@ -47,12 +47,10 @@ public class NewDocumentManageComponent extends UIAbstractManagerComponent {
    * The listener interface for receiving newDocumentAction events. The class
    * that is interested in processing a newDocumentAction event implements
    * this interface, and the object created with that class is registered with a
-   * component using the component's
-   * <code>addnewDocumentActionListener</code> method. When the
+   * component using the component's method. When the
    * newDocumentAction event occurs, that object's appropriate method is
    * invoked.
    *
-   * @see NewDocumentActionEvent
    */
   public static class NewDocumentActionListener extends UIActionBarActionListener<NewDocumentManageComponent> {
 
