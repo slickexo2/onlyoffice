@@ -1,5 +1,5 @@
 
-package org.exoplatform.onlyoffice;
+package org.exoplatform.onlyoffice.documents;
 
 /**
  * The Class NewDocumentType.

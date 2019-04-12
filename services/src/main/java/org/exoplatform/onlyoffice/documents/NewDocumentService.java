@@ -1,4 +1,4 @@
-package org.exoplatform.onlyoffice;
+package org.exoplatform.onlyoffice.documents;
 
 import java.io.InputStream;
 import java.util.GregorianCalendar;

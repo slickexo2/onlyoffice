@@ -32,7 +32,7 @@ import org.apache.commons.lang.StringUtils;
 
 import org.exoplatform.ecm.webui.component.explorer.UIJCRExplorer;
 import org.exoplatform.ecm.webui.utils.JCRExceptionManager;
-import org.exoplatform.onlyoffice.NewDocumentService;
+import org.exoplatform.onlyoffice.documents.NewDocumentService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.web.application.ApplicationMessage;

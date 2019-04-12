@@ -1,4 +1,4 @@
-package org.exoplatform.onlyoffice;
+package org.exoplatform.onlyoffice.documents;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,6 +6,7 @@ import java.util.List;
 import org.exoplatform.container.component.BaseComponentPlugin;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ObjectParameter;
+import org.exoplatform.onlyoffice.documents.NewDocumentService.NewDocumentTypesConfig;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 

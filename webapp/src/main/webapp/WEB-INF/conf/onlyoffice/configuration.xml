@@ -49,25 +49,25 @@
   </component>
 
   <component>
-    <type>org.exoplatform.onlyoffice.NewDocumentService</type>
+    <type>org.exoplatform.onlyoffice.documents.NewDocumentService</type>
   </component>
   
   <!-- NewDocumentTypePlugin for NewDocumentService-->
   <external-component-plugins>
-    <target-component>org.exoplatform.onlyoffice.NewDocumentService</target-component>
+    <target-component>org.exoplatform.onlyoffice.documents.NewDocumentService</target-component>
     <component-plugin>
       <name>documentTypePlugin</name>
       <set-method>addTypePlugin</set-method>
-      <type>org.exoplatform.onlyoffice.NewDocumentTypePlugin</type>
+      <type>org.exoplatform.onlyoffice.documents.NewDocumentTypePlugin</type>
       <description>The document type plugin contains a list of mimetypes</description>
       <init-params>
         <object-param>
           <name>document-types-configuration</name>
-          <object type="org.exoplatform.onlyoffice.NewDocumentService$NewDocumentTypesConfig">
+          <object type="org.exoplatform.onlyoffice.documents.NewDocumentService$NewDocumentTypesConfig">
             <field name="types">
              <collection type="java.util.ArrayList">
                 <value>
-                  <object type="org.exoplatform.onlyoffice.NewDocumentType">
+                  <object type="org.exoplatform.onlyoffice.documents.NewDocumentType">
                     <field name="path">
                       <string>classpath:files/template.docx</string>
                     </field>
@@ -80,7 +80,7 @@
                   </object>
                 </value>
                 <value>
-                  <object type="org.exoplatform.onlyoffice.NewDocumentType">
+                  <object type="org.exoplatform.onlyoffice.documents.NewDocumentType">
                     <field name="path">
                       <string>classpath:files/template.xlsx</string>
                     </field>
@@ -93,7 +93,7 @@
                   </object>
                 </value>
                 <value>
-                  <object type="org.exoplatform.onlyoffice.NewDocumentType">
+                  <object type="org.exoplatform.onlyoffice.documents.NewDocumentType">
                     <field name="path">
                       <string>classpath:files/template.pptx</string>
                     </field>
