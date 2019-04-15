@@ -26,9 +26,6 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
-import org.gatein.common.logging.Logger;
-import org.gatein.common.logging.LoggerFactory;
-
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.portal.application.PortalApplication;
 import org.exoplatform.web.WebAppController;
@@ -44,9 +41,6 @@ import org.exoplatform.webui.application.WebuiApplication;
  */
 public class OnlyofficeEditorFilter implements Filter {
 
-  /** The Constant LOG. */
-  protected static final Logger LOG = LoggerFactory.getLogger(OnlyofficeEditorFilter.class);
-
   /**
    * {@inheritDoc}
    */
@@ -61,7 +55,7 @@ public class OnlyofficeEditorFilter implements Filter {
         chain.doFilter(request, response);
       } finally {
         // run restore for a case of exception in request processing
-        lifecycle.restore(app);
+        lifecycle.restore();
         app.getApplicationLifecycle().remove(lifecycle);
       }
     } else {

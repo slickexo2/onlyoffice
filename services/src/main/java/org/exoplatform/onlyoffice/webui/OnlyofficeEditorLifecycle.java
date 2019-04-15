@@ -19,17 +19,14 @@
 
 package org.exoplatform.onlyoffice.webui;
 
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.exoplatform.portal.webui.portal.UIPortalComponent;
-import org.exoplatform.services.log.ExoLogger;
-import org.exoplatform.services.log.Log;
 import org.exoplatform.web.application.Application;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.core.UIApplication;
-import org.exoplatform.webui.core.UIComponent;
 import org.exoplatform.webui.core.UIContainer;
 
 /**
@@ -42,72 +39,14 @@ import org.exoplatform.webui.core.UIContainer;
  */
 public class OnlyofficeEditorLifecycle extends AbstractOnlyofficeLifecycle {
 
-  /** The Constant LOG. */
-  protected static final Log   LOG                     = ExoLogger.getLogger(OnlyofficeEditorLifecycle.class);
-
-  /** The Constant TOOLBAR_HIDDEN . */
-  public static final String   TOOLBAR_HIDDEN          = "TOOLBAR_HIDDEN";
-
-  public static final String   UI_PERMISSIONS_STORE_ID = "OnlyofficeEditorUIPermissionStore";
-
   /** The Constant EMPTY_PERMISSIONS. */
-  public static final String[] EMPTY_PERMISSIONS       = new String[0];
-
-  /**
-   * The Class PermissionStore.
-   */
-  @Deprecated
-  class PermissionStore extends UIComponent {
-
-    /** The saved permissions. */
-    final String[] permissions;
-
-    /**
-     * Instantiates a new permission store.
-     *
-     * @param permissions the permissions
-     */
-    PermissionStore(String[] permissions) {
-      this.permissions = permissions;
-      setId(UI_PERMISSIONS_STORE_ID);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean isRendered() {
-      return false;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void processDecode(WebuiRequestContext context) throws Exception {
-      // nothing
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void processAction(WebuiRequestContext context) throws Exception {
-      // nothing
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void processRender(WebuiRequestContext context) throws Exception {
-      // render nothing
-    }
-  }
+  public static final String[] EMPTY_PERMISSIONS = new String[0];
 
   interface RenderedState {
     void restore();
   }
+
+  private final Set<RenderedState> states = ConcurrentHashMap.newKeySet();
 
   /**
    * Instantiates a new Onlyoffice editor lifecycle.
@@ -123,13 +62,12 @@ public class OnlyofficeEditorLifecycle extends AbstractOnlyofficeLifecycle {
   public void onStartRequest(Application app, WebuiRequestContext context) throws Exception {
     super.onStartRequest(app, context);
 
-    Set<RenderedState> hidden = new HashSet<>();
     // We want hide left sidebar and toolbar, to left all the space for editor
     UIApplication uiApp = context.getUIApplication();
     final UIContainer toolbar = uiApp.findComponentById("UIToolbarContainer");
     if (toolbar != null) {
       toolbar.setRendered(false);
-      hidden.add(() -> toolbar.setRendered(true));
+      states.add(() -> toolbar.setRendered(true));
     }
     final UIContainer leftnav = uiApp.findComponentById("LeftNavigation");
     if (leftnav != null) {
@@ -141,15 +79,14 @@ public class OnlyofficeEditorLifecycle extends AbstractOnlyofficeLifecycle {
         UIPortalComponent portalComp = UIPortalComponent.class.cast(leftnav);
         String[] origPermissions = portalComp.getAccessPermissions();
         portalComp.setAccessPermissions(EMPTY_PERMISSIONS);
-        hidden.add(() -> {
+        states.add(() -> {
           leftnav.setRendered(true);
           portalComp.setAccessPermissions(origPermissions);
         });
       } else {
-        hidden.add(() -> leftnav.setRendered(true));
+        states.add(() -> leftnav.setRendered(true));
       }
     }
-    app.setAttribute(TOOLBAR_HIDDEN, hidden);
   }
 
   /**
@@ -157,24 +94,21 @@ public class OnlyofficeEditorLifecycle extends AbstractOnlyofficeLifecycle {
    */
   @Override
   public void onEndRequest(Application app, WebuiRequestContext context) throws Exception {
-    // Restore hidden bars for next requests
-    restore(app);
+    // Restore states bars for next requests
+    restore();
     super.onEndRequest(app, context);
   }
 
   /**
-   * Restore the app state.
-   *
-   * @param app the app
+   * Restore the state.
    */
-  void restore(Application app) {
-    @SuppressWarnings("unchecked")
-    Set<RenderedState> hidden = (Set<RenderedState>) app.getAttribute(TOOLBAR_HIDDEN);
-    if (hidden != null && hidden.size() > 0) {
-      for (RenderedState redered : hidden) {
-        redered.restore();
+  void restore() {
+    for (Iterator<RenderedState> siter = states.iterator(); siter.hasNext();) {
+      try {
+        siter.next().restore();
+      } finally {
+        siter.remove();
       }
-      app.setAttribute(TOOLBAR_HIDDEN, Collections.emptySet());
     }
   }
 }
