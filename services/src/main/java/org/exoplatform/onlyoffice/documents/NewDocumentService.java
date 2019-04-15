@@ -106,6 +106,7 @@ public class NewDocumentService implements Startable {
     content.setProperty("jcr:mimeType", selectedType.getMimeType());
     content.setProperty("jcr:lastModified", new GregorianCalendar());
     currentNode.save();
+    inputStream.close();
     return addedNode;
   }
 

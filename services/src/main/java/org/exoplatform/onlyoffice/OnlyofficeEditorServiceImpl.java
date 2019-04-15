@@ -1044,7 +1044,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       }
     }
     if (!res && LOG.isDebugEnabled()) {
-      LOG.debug("Cannot edit: {}", node.getPath());
+      LOG.debug("Cannot edit: {}", node != null ? node.getPath() : null);
     }
     return res;
   }
