@@ -30,12 +30,17 @@ import javax.jcr.nodetype.NodeDefinition;
 
 import org.apache.commons.lang.StringUtils;
 
+import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.ecm.webui.component.explorer.UIJCRExplorer;
 import org.exoplatform.ecm.webui.utils.JCRExceptionManager;
+import org.exoplatform.onlyoffice.OnlyofficeEditorService;
 import org.exoplatform.onlyoffice.documents.NewDocumentService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.web.application.ApplicationMessage;
+import org.exoplatform.web.application.JavascriptManager;
+import org.exoplatform.web.application.RequireJS;
+import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.EventConfig;
 import org.exoplatform.webui.core.UIApplication;
@@ -133,9 +138,9 @@ public class UINewDocumentForm extends UIForm implements UIPopupComponent {
       // It is used to check sameNameSiblings in case when the
       // RepositoryException is thrown
       title = uiDocumentForm.documentService.getFileName(title, typeSelectBox.getValue());
-
+      Node createdDocument = null;
       try {
-        uiDocumentForm.documentService.createDocument(currentNode, title, typeSelectBox.getValue());
+        createdDocument = uiDocumentForm.documentService.createDocument(currentNode, title, typeSelectBox.getValue());
       } catch (ConstraintViolationException cve) {
         Object[] arg = { typeSelectBox.getValue() };
         throw new MessageException(new ApplicationMessage("UINewDocumentForm.msg.constraint-violation",
@@ -171,7 +176,17 @@ public class UINewDocumentForm extends UIForm implements UIPopupComponent {
         JCRExceptionManager.process(uiApp, e);
       }
 
+      OnlyofficeEditorService editorService = ExoContainerContext.getCurrentContainer()
+                                                                 .getComponentInstanceOfType(OnlyofficeEditorService.class);
+      String link = editorService.getEditorLink(createdDocument);
+      link = link != null ? "'" + link + "'" : "null";
+
+      WebuiRequestContext requestContext = WebuiRequestContext.getCurrentInstance();
+      JavascriptManager js = requestContext.getJavascriptManager();
+      js.require("SHARED/onlyoffice", "onlyoffice").addScripts("onlyoffice.initEditorPage(" + link + ");");
+
       uiExplorer.updateAjax(event);
+
     }
   }
 
@@ -200,7 +215,9 @@ public class UINewDocumentForm extends UIForm implements UIPopupComponent {
    */
   @Override
   public void activate() {
-    // Nothing
+    WebuiRequestContext requestContext = WebuiRequestContext.getCurrentInstance();
+    JavascriptManager js = requestContext.getJavascriptManager();
+    js.require("SHARED/onlyoffice", "onlyoffice").addScripts("onlyoffice.initNewDocument();");
   }
 
   /**

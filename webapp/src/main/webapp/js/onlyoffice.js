@@ -125,7 +125,6 @@
   /* TODO not used
   var initRequest = function(request) {
     var process = $.Deferred();
-
     // stuff in textStatus is less interesting: it can be "timeout",
     // "error", "abort", and "parsererror",
     // "success" or smth like that
@@ -160,11 +159,9 @@
       }
       return jQueryStatusCode(map);
     };
-
     request.done(function(data, textStatus, jqXHR) {
       process.resolve(data, jqXHR.status, textStatus, jqXHR);
     });
-
     request.always(function(data, textStatus, errorThrown) {
       var status;
       if (data && data.status) {
@@ -177,7 +174,6 @@
       }
       process.always(status, textStatus);
     });
-
     // custom Promise target to provide an access to jqXHR object
     var processTarget = {
       request : request
@@ -194,14 +190,12 @@
     });
     return initRequest(request);
   };
-
   var configPost = function(workspace, path) {
     var request = $.ajax({
       type : "POST",
       url : prefixUrl + "/portal/rest/onlyoffice/editor/config/" + workspace + path,
       dataType : "json"
     });
-
     return initRequest(request);
   };
   
@@ -220,17 +214,14 @@
       url : prefixUrl + "/portal/rest/onlyoffice/editor/document/" + workspace + path,
       dataType : "json"
     });
-
     return initRequest(request);
   };
-
   var stateGet = function(userId, fileKey) {
     var request = $.ajax({
       type : "GET",
       url : prefixUrl + "/portal/rest/onlyoffice/editor/state/" + userId + "/" + fileKey,
       dataType : "json"
     });
-
     return initRequest(request);
   };
   */
@@ -725,6 +716,29 @@
         explorerDocId = docId;
       }
       UI.addEditorButtonToExplorer();
+    };
+    
+    /**
+     * Sets the onClick listener for Create Document button (used in creating a new document)
+     */
+    this.initNewDocument = function() {
+      $("#UINewDocumentForm .newDocumentButton").on('click', function(){
+        editorWindow = window.open();
+      });
+    };
+
+    /**
+     * Initializes the editor in the editorWindow. (used in creating a new document)
+     */
+    this.initEditorPage = function(link) {
+      if (editorWindow != null) {
+        if (link != null) {
+          editorWindow.location = link;
+        } else {
+          editorWindow.close();
+          editorWindow = null;
+        }
+      }
     };
 
     this.showInfo = function(title, text) {

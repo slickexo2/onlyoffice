@@ -83,7 +83,7 @@ public class NewDocumentService implements Startable {
    * @param label the label
    * @throws Exception the exception
    */
-  public void createDocument(Node currentNode, String title, String label) throws Exception {
+  public Node createDocument(Node currentNode, String title, String label) throws Exception {
 
     NewDocumentType selectedType = getDocumentTypeByLabel(label);
 
@@ -106,6 +106,7 @@ public class NewDocumentService implements Startable {
     content.setProperty("jcr:mimeType", selectedType.getMimeType());
     content.setProperty("jcr:lastModified", new GregorianCalendar());
     currentNode.save();
+    return addedNode;
   }
 
   /**
