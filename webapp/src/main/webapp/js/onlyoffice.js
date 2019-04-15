@@ -272,6 +272,9 @@
     // A time to issue document version save if no changes were done, but editor is open
     var autosaveTimer;
     
+    // The editor window is used while creating a new document.
+    var editorWindow;
+    
     // Redux store for dispatching document updates inside the app
     var store = redux.createStore(function (state, action) {
       if (dispatchableEvents.includes(action.type)) {
