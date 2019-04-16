@@ -406,7 +406,7 @@
               // Publish autosave version for download
               downloadVersion();
             }, 600000); // 10min for autosave
-          }, 30000); // 30sec to download a link
+          }, 60000); // 60sec to download a link
           
           // Since now we start collect this user changes (via channel) at server-side and
           // when another co-editor will fire the same event (this method by anotehr user), this 
