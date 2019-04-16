@@ -1147,9 +1147,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
-  /**
-   * Forcesave document
-   */
+  
+  @Override
   public void forceDownload(String userId, String key) {
 
     try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {

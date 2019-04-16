@@ -276,7 +276,7 @@ public interface OnlyofficeEditorService {
   void setLastModifier(String key, String userId);
 
   /**
-   * Downloads document.
+   * Forces downloading a document.
    * 
    * @param userId the userId
    * @param key the key
