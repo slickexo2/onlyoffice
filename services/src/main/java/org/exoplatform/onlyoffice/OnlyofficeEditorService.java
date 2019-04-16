@@ -276,23 +276,11 @@ public interface OnlyofficeEditorService {
   void setLastModifier(String key, String userId);
 
   /**
-   * Removes user's client.
+   * Downloads document.
    * 
-   * @param key the key
    * @param userId the userId
-   * @param clientId the clientId
-   */
-  @Deprecated // TODO we don't need this on API level
-  void removeClient(String key, String userId, String clientId);
-  
-  /**
-   * Adds user's client.
-   * 
    * @param key the key
-   * @param userId the userId
-   * @param clientId the clientId
    */
-  @Deprecated // TODO we don't need this on API level
-  void addClient(String key, String userId, String clientId);
+  void forceDownload(String userId, String key);
 
 }

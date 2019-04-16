@@ -29,7 +29,7 @@
    * Universal client ID for use in logging, services connectivity and related cases.
    */
   var clientId = "" + getRandomArbitrary(100000, 999998);
-  
+
   /**
    * Stuff grabbed from CW's commons.js
    */
@@ -234,23 +234,21 @@
     // Constants:
     var DOCUMENT_SAVED = "DOCUMENT_SAVED";
     var DOCUMENT_CHANGED = "DOCUMENT_CHANGED";
-    var DOCUMENT_DOWNLOAD = "DOCUMENT_DOWNLOAD";
     var DOCUMENT_VERSION = "DOCUMENT_VERSION";
     var EDITOR_CLOSED = "EDITOR_CLOSED";
-    var EDITOR_OPENED = "EDITOR_OPENED";
-    
+
     // Events that are dispatched to redux as actions
-    var dispatchableEvents = [DOCUMENT_SAVED, DOCUMENT_CHANGED, DOCUMENT_DOWNLOAD, DOCUMENT_VERSION];
-    
+    var dispatchableEvents = [ DOCUMENT_SAVED, DOCUMENT_CHANGED, DOCUMENT_VERSION ];
+
     // CometD transport bus
     var cometd, cometdContext;
 
     // Current config (actual for editor page only)
     var currentConfig;
-    
+
     // Indicate current changes are collected by the document server (only for editor page)
     var changesSaved = true;
-    
+
     // Indicates the last change is made by current user or another one.
     var currentUserChanges = false;
 
@@ -259,24 +257,15 @@
 
     // Current document ID (actual for Documents explorer)
     var explorerDocId;
-    
-    // Used to download document as another user in case, when they closed the editor
-    var downloadAsUser = null;
 
-    // The Deffered object for the getting document link process.
-    var downloadProcess;
-
-    // Used to setup changesTimer on the editor page
-    var changesTimer;
-    
     // A time to issue document version save if no changes were done, but editor is open
     var autosaveTimer;
-    
+
     // The editor window is used while creating a new document.
     var editorWindow;
-    
+
     // Redux store for dispatching document updates inside the app
-    var store = redux.createStore(function (state, action) {
+    var store = redux.createStore(function(state, action) {
       if (dispatchableEvents.includes(action.type)) {
         // TODO do we need merge with previous state as Redux assumes?
         return action;
@@ -320,14 +309,14 @@
     var unsubscribeDocument = function(docId) {
       var subscription = subscribedDocuments.docId;
       if (subscription) {
-        cometd.unsubscribe(subscription, {}, function (unsubscribeReply) {
+        cometd.unsubscribe(subscription, {}, function(unsubscribeReply) {
           if (unsubscribeReply.successful) {
             // The server successfully unsubscribed this client to the channel.
             log("Document updates unsubscribed successfully for: " + docId);
             delete subscribedDocuments.docId;
           } else {
-            var err = unsubscribeReply.error ? unsubscribeReply.error : (unsubscribeReply.failure ? unsubscribeReply.failure.reason
-              : "Undefined");
+            var err = unsubscribeReply.error ? unsubscribeReply.error
+                : (unsubscribeReply.failure ? unsubscribeReply.failure.reason : "Undefined");
             log("Document updates unsubscription failed for " + docId, err);
           }
         });
@@ -342,8 +331,7 @@
           // The server successfully subscribed this client to the channel.
           log("Document update published successfully: " + JSON.stringify(publishReply));
         } else {
-          var err = publishReply.error ? publishReply.error : (publishReply.failure ? publishReply.failure.reason
-              : "Undefined");
+          var err = publishReply.error ? publishReply.error : (publishReply.failure ? publishReply.failure.reason : "Undefined");
           log("Document updates publication failed for " + docId, err);
         }
       });
@@ -371,52 +359,40 @@
       } else {
         // We use this check to avoid publishing updates from other users 
         // and publishing when user hasn't made any changes yet (opened editor)
-        
+
         // New autosave should be done by a client that makes changes
         if (autosaveTimer && !currentUserChanges) {
           log("Reset autosave timer...");
           clearTimeout(autosaveTimer);
           autosaveTimer = null;
         }
-        
+
         if (!changesSaved) {
           log("ONLYOFFICE Changes are collected on document editing service");
           changesSaved = true;
           currentUserChanges = true;
-          
-          // We need a new link for new changes - reset it in the process stream.
-          downloadProcess.notify(null);
-          if (changesTimer) {
-            log("Reset changes timer...");
-            clearTimeout(changesTimer);
-            changesTimer = null;
-          }
-          changesTimer = setTimeout(function() {
-            log("Getting document link after a timeout...");
-            UI.downloadAs();
-            autosaveTimer = setTimeout(function() {
-              log("It's time to make autosave of document version...");
-              // Send fake DOCUMENT_CHANGED to make the server check for a version lifetime
-              /*publishDocument(currentConfig.docId, {
-                "type": DOCUMENT_CHANGED,
-                "userId": currentUserId,
-                "clientId": clientId,
-                "key": currentConfig.document.key
-              });*/
-              // Publish autosave version for download
-              downloadVersion();
-            }, 600000); // 10min for autosave
-          }, 60000); // 60sec to download a link
-          
-          // Since now we start collect this user changes (via channel) at server-side and
-          // when another co-editor will fire the same event (this method by anotehr user), this 
-          // user should save his changes in eXo storage version by calling UI.downloadAs()     
+          autosaveTimer = setTimeout(function() {
+            log("It's time to make autosave of document version...");
+            // Publish autosave version for download
+            if (currentConfig) {
+              publishDocument(currentConfig.docId, {
+                "type" : DOCUMENT_VERSION,
+                "userId" : currentUserId,
+                "clientId" : clientId,
+                "key" : currentConfig.document.key
+              });
+            } else {
+              log("WARN: Editor configuration not found. Cannot download document version.");
+            }
+          }, 600000); // 10min for autosave
+
+  
           // We are a editor page here: publish that the doc was changed by current user
           publishDocument(currentConfig.docId, {
-            "type": DOCUMENT_CHANGED,
-            "userId": currentUserId,
-            "clientId": clientId,
-            "key": currentConfig.document.key
+            "type" : DOCUMENT_CHANGED,
+            "userId" : currentUserId,
+            "clientId" : clientId,
+            "key" : currentConfig.document.key
           });
         } else {
           currentUserChanges = false;
@@ -424,51 +400,6 @@
       }
     };
 
-    var onDownloadAs = function(event) {
-      log("onDownloadAs: " + JSON.stringify(event));
-      if (event.data) {
-        log("ONLYOFFICE Document Editor download link: " + event.data);
-        downloadProcess.notify(event.data);
-      }
-    };
-    
-    var downloadVersion = function(userId) {
-      if (currentConfig) {
-        if (!userId) {
-          userId = currentUserId
-        }
-        // if no link have to this moment - ask for it
-        downloadProcess.progress(function(link) {
-          if (link) {
-            log("Can download version from: " + link);
-            downloadProcess.resolve(link);                    
-          } else {
-            log("Requesting fresh download link...");
-            // Force download link acquisition
-            UI.downloadAs();
-          }
-        });
-        downloadProcess.done(function(link) {
-          // A new deferred for next version
-          downloadProcess = $.Deferred();
-          // Cancel change download timer, but not autosave if already started
-          if (changesTimer) {
-            clearTimeout(changesTimer);
-          }
-          log("Sending DOCUMENT_VERSION event, link: " + link);
-          // Publish that the doc version ready for download
-          publishDocument(currentConfig.docId, {
-            "type" : DOCUMENT_VERSION,
-            "userId" : userId,
-            "documentLink" : link,
-            "clientId" : clientId,
-            "key" : currentConfig.document.key
-          });
-        });        
-      } else {
-        log("WARN: Editor configuration not found. Cannot download document version.");
-      }
-    };
 
     /**
      * Create an editor configuration (for use to create the editor client UI).
@@ -494,8 +425,7 @@
           "onDocumentStateChange" : onDocumentStateChange,
           "onError" : onError,
           "onReady" : onReady,
-          "onBack" : onBack,
-          "onDownloadAs": onDownloadAs
+          "onBack" : onBack
         };
         config.editorConfig.customization = {
           "chat" : false,
@@ -573,14 +503,14 @@
         }
         if (cometdConf) {
           cCometD.configure({
-            "url": prefixUrl + cometdConf.path,
-            "exoId": userId,
-            "exoToken": cometdConf.token,
-            "maxNetworkDelay": 30000,
-            "connectTimeout": 60000
+            "url" : prefixUrl + cometdConf.path,
+            "exoId" : userId,
+            "exoToken" : cometdConf.token,
+            "maxNetworkDelay" : 30000,
+            "connectTimeout" : 60000
           });
           cometdContext = {
-            "exoContainerName": cometdConf.containerName
+            "exoContainerName" : cometdConf.containerName
           };
           cometd = cCometD;
         }
@@ -598,41 +528,30 @@
       create(config).done(function(localConfig) {
         if (localConfig) {
           currentConfig = localConfig;
-          downloadProcess = $.Deferred();
-
+         
           store.subscribe(function() {
             var state = store.getState();
-            if (state.type === DOCUMENT_DOWNLOAD && state.docId === currentConfig.docId && state.userId === currentUserId) {
-              downloadVersion(state.asUserId);
-            }
           });
 
           // Establish a Comet/WebSocket channel from this point.
           // A new editor page will join the channel and notify when the doc will be saved
           // so we'll refresh this explorer view to reflect the edited content.
           subscribeDocument(currentConfig.docId);
-          
-          // We are a editor oage here: publish that the doc was changed by current user
-          publishDocument(currentConfig.docId, {
-            "type": EDITOR_OPENED,
-            "userId": currentUserId,
-            "clientId": clientId
-          });
 
-          window.addEventListener("beforeunload", function () {
+          // We are a editor oage here: publish that the doc was changed by current user
+
+          window.addEventListener("beforeunload", function() {
             UI.closeEditor(); // try this first, then in unload
           });
 
-          window.addEventListener("unload", function () {
+          window.addEventListener("unload", function() {
             UI.closeEditor();
             // We need to save current changes when user closes the editor
-            if (currentConfig) {
+            if (currentConfig && currentUserChanges) {
               publishDocument(currentConfig.docId, {
-                "type": EDITOR_CLOSED,
-                "userId": currentUserId,
-                "clientId": clientId,
-                "key": currentConfig.document.key,
-                "changes": currentUserChanges
+                "type" : EDITOR_CLOSED,
+                "userId" : currentUserId,
+                "key" : currentConfig.document.key
               });
             }
           });
@@ -643,7 +562,7 @@
             } catch (e) {
               log("Error initializing Onlyoffice client UI " + e, e);
             }
-          });          
+          });
         } else {
           log("ERROR: editor config not defined: " + localConfig);
           UI.showError(message("ErrorTitle"), message("ErrorConfigNotDefined"));
@@ -720,12 +639,12 @@
       }
       UI.addEditorButtonToExplorer();
     };
-    
+
     /**
      * Sets the onClick listener for Create Document button (used in creating a new document)
      */
     this.initNewDocument = function() {
-      $("#UINewDocumentForm .newDocumentButton").on('click', function(){
+      $("#UINewDocumentForm .newDocumentButton").on('click', function() {
         editorWindow = window.open();
       });
     };
@@ -766,16 +685,16 @@
      */
     var getEditorButton = function(editorLink) {
       return "<li><a href='" + editorLink
-          + "' target='_blank'><i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i> " + message("EditButtonTitle")
-          + "</a></li>";
+          + "' target='_blank'><i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i> "
+          + message("EditButtonTitle") + "</a></li>";
     };
 
     /**
      * Returns the html markup of the refresh banner;
      */
     var getRefreshBanner = function() {
-      return "<div class='documentRefreshBanner'><div class='refreshBannerContent'>" + message("UpdateBannerTitle") +
-        " <span class='refreshBannerLink'>" + message("ReloadButtonTitle") + "</span></div></div>";
+      return "<div class='documentRefreshBanner'><div class='refreshBannerContent'>" + message("UpdateBannerTitle")
+          + " <span class='refreshBannerLink'>" + message("ReloadButtonTitle") + "</span></div></div>";
     };
 
     /**
@@ -800,7 +719,7 @@
     var saveAndDestroy = function() {
       if (docEditor) {
         var theEditor = docEditor;
-        docEditor = null; 
+        docEditor = null;
         try {
           theEditor.processSaveResult(true);
           theEditor.destroyEditor();
@@ -897,11 +816,6 @@
       saveAndDestroy();
     };
 
-    this.downloadAs = function() {
-      // We request Document Server to preare a download link for the document state.
-      docEditor.downloadAs();      
-    };
-
     /**
      * Create an editor client UI on current page.
      */
@@ -958,7 +872,7 @@
     this.addRefreshBannerActivity = function(activityId) {
       var $previewParent = $("#Preview" + activityId + "-0").parent();
       // If there is no preview
-      if($previewParent.length === 0 || $previewParent.find(".mediaContent.docTypeContent.NoPreview").length !== 0){
+      if ($previewParent.length === 0 || $previewParent.find(".mediaContent.docTypeContent.NoPreview").length !== 0) {
         return;
       }
       // If the activity contains only one preview

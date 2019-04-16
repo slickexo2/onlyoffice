@@ -56,6 +56,11 @@ import javax.jcr.Value;
 import javax.jcr.lock.Lock;
 
 import org.apache.commons.io.input.AutoCloseInputStream;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.json.JSONObject;
 import org.picocontainer.Startable;
 
 import org.exoplatform.commons.utils.CommonsUtils;
@@ -281,6 +286,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /** The documentserver url. */
   protected final String                                          documentserverUrl;
 
+  /** The document command service url. */
+  protected final String                                          commandServiceUrl;
+
   /** The documentserver access only. */
   protected final boolean                                         documentserverAccessOnly;
 
@@ -446,6 +454,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
     this.uploadUrl = new StringBuilder(documentserverUrl).append("/FileUploader.ashx").toString();
     this.documentserverUrl = new StringBuilder(documentserverUrl).append("/OfficeWeb/").toString();
+    this.commandServiceUrl = new StringBuilder(documentserverUrl).append("/coauthoring/CommandService.ashx").toString();
   }
 
   /**
@@ -881,7 +890,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         } else if (statusCode == 6) {
           // TODO forcedsave done, save the version with its URL
           LOG.info("Received Onlyoffice forced saved document. Key: " + key + ". Users: " + Arrays.toString(status.getUsers())
-              + ". Document " + nodePath + ". URL: " + status.getUrl());
+              + ". Document " + nodePath + ". URL: " + status.getUrl() + ". Userdata: " + status.getUserdata());
+          
+          downloadVersion(key, status.getUserdata(), status.getUrl());
         } else if (statusCode == 7) {
           // forcedsave error, we may decide next step according
           // status.getError()
@@ -897,7 +908,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // 6 Invalid token.
           LOG.error("Received Onlyoffice error of forced saving of document. Key: " + key + ". Users: "
               + Arrays.toString(status.getUsers()) + ". Document: " + nodePath + ". Error: " + status.getError() + ". URL: "
-              + status.getUrl());
+              + status.getUrl() + ". Userdata: " + status.getUserdata());
         } else {
           // warn unexpected status, wait for next status
           LOG.warn("Received Onlyoffice unexpected status. Key: " + key + ". URL: " + status.getUrl() + ". Users: "
@@ -1092,6 +1103,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   public void downloadVersion(String key, String userId, String contentUrl) {
     String docId = null;
     try {
+
       Config config = getEditorByKey(userId, key);
       // we set it sooner to let clients see the save
       config.getEditorConfig().getUser().setLastSaved(System.currentTimeMillis());
@@ -1136,30 +1148,23 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   /**
-   * {@inheritDoc}
+   * Forcesave document
    */
-  @Override
-  public void removeClient(String key, String userId, String clientId) {
-    ConcurrentMap<String, Config> configs = activeCache.get(key);
-    if (configs != null && configs.containsKey(userId)) {
-      configs.get(userId).getEditorConfig().getUser().removeClient(clientId);
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Client clientId: " + clientId + " removed, user: " + userId + ", key: " + key);
-      }
-    }
-  }
+  public void forceDownload(String userId, String key) {
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void addClient(String key, String userId, String clientId) {
-    ConcurrentMap<String, Config> configs = activeCache.get(key);
-    if (configs != null && configs.containsKey(userId)) {
-      configs.get(userId).getEditorConfig().getUser().addClient(clientId);
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Client clientId: " + clientId + " added, user: " + userId + ", key: " + key);
-      }
+    try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {
+      HttpPost request = new HttpPost(commandServiceUrl);
+      String json = new JSONObject().put("c", "forcesave")
+                                    .put("key", key)
+                                    .put("userdata", userId)
+                                    .toString();
+      StringEntity params = new StringEntity(json);
+      request.addHeader("content-type", "application/x-www-form-urlencoded");
+      request.setEntity(params);
+      httpClient.execute(request);
+
+    } catch (Exception e) {
+      LOG.error("Error in sending forcesave command. UserId: " + userId + ". Key: " + key, e);
     }
   }
 

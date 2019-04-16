@@ -605,9 +605,6 @@ public class Config implements Externalizable {
       /** The last saved timestamp. */
       protected Long                  lastSaved = Long.valueOf(0);
 
-      /** The set of client ids. */
-      protected transient Set<String> clients = new HashSet<>();
-
       /** The lock token. */
       @Deprecated
       protected transient String      lockToken;
@@ -687,33 +684,6 @@ public class Config implements Externalizable {
        */
       public void setLastSaved(long lastSaved) {
         this.lastSaved = lastSaved;
-      }
-
-      /**
-       * Gets the clients.
-       * 
-       * @return the clients
-       */
-      public Set<String> getClients() {
-        return clients;
-      }
-
-      /**
-       * Adds a client.
-       * 
-       * @param clientId the clientId
-       */
-      public void addClient(String clientId) {
-        clients.add(clientId);
-      }
-
-      /**
-       * Removes a client.
-       * 
-       * @param clientId the clientId
-       */
-      public void removeClient(String clientId) {
-        clients.remove(clientId);
       }
 
       /**

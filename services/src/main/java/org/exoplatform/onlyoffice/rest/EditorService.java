@@ -204,6 +204,7 @@ public class EditorService implements ResourceContainer {
         Object obj = parser.parse(statusText);
         JSONObject jsonObj = (JSONObject) obj;
         String statusKey = (String) jsonObj.get("key");
+        String userdata = (String) jsonObj.get("userdata");
         long statusCode = (long) jsonObj.get("status");
         Object errorObj = jsonObj.get("error");
         long error = errorObj != null ? Long.parseLong(errorObj.toString()) : 0;  
@@ -222,6 +223,7 @@ public class EditorService implements ResourceContainer {
             status.setUrl(statusUrl);
             status.setUsers(statusUsers);
             status.setError(error);
+            status.setUserdata(userdata);
             try {
               editors.updateDocument(userId, status);
               resp.entity("{\"error\": 0}");

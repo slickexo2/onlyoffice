@@ -19,6 +19,7 @@
  */
 package org.exoplatform.onlyoffice;
 
+// TODO: Auto-generated Javadoc
 /**
  * Onlyoffice Config status as described in
  * <a href="http://api.onlyoffice.com/editors/callback">callback handler
@@ -46,6 +47,9 @@ public class DocumentStatus {
 
   /** The error. */
   protected long     error;
+
+  /** The userdata. */
+  protected String   userdata;
 
   /**
    * Gets the key.
@@ -163,5 +167,22 @@ public class DocumentStatus {
   public String getLastUser() {
     return users.length > 0 ? users[0] : null;
   }
+  
+  /**
+   * Gets the userdata.
+   *
+   * @return the userdata
+   */
+  public String getUserdata() {
+    return userdata;
+  }
 
+  /**
+   * Sets the userdata.
+   *
+   * @param userdata the new userdata
+   */
+  public void setUserdata(String userdata) {
+    this.userdata = userdata;
+  }
 }
