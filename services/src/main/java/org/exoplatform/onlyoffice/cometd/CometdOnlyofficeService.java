@@ -583,6 +583,10 @@ public class CometdOnlyofficeService implements Startable {
         // We download user version if another user started to change the
         // document or enough time passed since previous change by this user.
 
+        // TODO instead asking client to download a version, call DS's command
+        // service in editor service method. A version URL will come back via
+        // status REST call from the DS.
+
         publishDownloadEvent(docId, lastUser.getId());
         if (LOG.isDebugEnabled()) {
           LOG.debug("Download a new version of document: user " + lastUser.getId() + ", docId: " + docId);

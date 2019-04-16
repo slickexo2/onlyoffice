@@ -20,14 +20,12 @@
 package org.exoplatform.onlyoffice;
 
 /**
- * Onlyoffice Config status as described in <a href="http://api.onlyoffice.com/editors/callback">callback
- * handler documentation</a>.
- * 
- * Created by The eXo Platform SAS
+ * Onlyoffice Config status as described in
+ * <a href="http://api.onlyoffice.com/editors/callback">callback handler
+ * documentation</a>. Created by The eXo Platform SAS
  * 
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: DocumentStatus.java 00000 Feb 12, 2016 pnedonosko $
- * 
  */
 public class DocumentStatus {
 
@@ -42,9 +40,12 @@ public class DocumentStatus {
 
   /** The users. */
   protected String[] users;
-  
+
   /** The config. */
-  protected Config config;
+  protected Config   config;
+
+  /** The error. */
+  protected long     error;
 
   /**
    * Gets the key.
@@ -117,7 +118,7 @@ public class DocumentStatus {
   public void setUsers(String[] users) {
     this.users = users;
   }
-  
+
   /**
    * Gets the config.
    * 
@@ -134,6 +135,24 @@ public class DocumentStatus {
    */
   public void setConfig(Config config) {
     this.config = config;
+  }
+
+  /**
+   * Gets the error.
+   *
+   * @return the error
+   */
+  public long getError() {
+    return error;
+  }
+
+  /**
+   * Sets the error.
+   *
+   * @param error the error to set
+   */
+  public void setError(long error) {
+    this.error = error;
   }
 
   /**

@@ -205,10 +205,11 @@ public class EditorService implements ResourceContainer {
         JSONObject jsonObj = (JSONObject) obj;
         String statusKey = (String) jsonObj.get("key");
         long statusCode = (long) jsonObj.get("status");
+        Object errorObj = jsonObj.get("error");
+        long error = errorObj != null ? Long.parseLong(errorObj.toString()) : 0;  
         String statusUrl = (String) jsonObj.get("url");
         // Oct 2017: When Document server calls with status 4 (user closed w/o
-        // modification), the users array
-        // will be null
+        // modification), the users array will be null
         JSONArray statusUsersArray = (JSONArray) jsonObj.get("users");
         @SuppressWarnings("unchecked")
         String[] statusUsers = statusUsersArray != null ? (String[]) statusUsersArray.toArray(new String[statusUsersArray.size()])
@@ -220,7 +221,7 @@ public class EditorService implements ResourceContainer {
             status.setStatus(statusCode);
             status.setUrl(statusUrl);
             status.setUsers(statusUsers);
-
+            status.setError(error);
             try {
               editors.updateDocument(userId, status);
               resp.entity("{\"error\": 0}");
