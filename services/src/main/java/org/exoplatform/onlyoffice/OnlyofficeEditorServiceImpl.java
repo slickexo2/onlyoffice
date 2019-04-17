@@ -888,10 +888,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           activeCache.remove(key);
           activeCache.remove(nodePath);
         } else if (statusCode == 6) {
-          // TODO forcedsave done, save the version with its URL
-          LOG.info("Received Onlyoffice forced saved document. Key: " + key + ". Users: " + Arrays.toString(status.getUsers())
-              + ". Document " + nodePath + ". URL: " + status.getUrl() + ". Userdata: " + status.getUserdata());
-          
+          // forcedsave done, save the version with its URL
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Received Onlyoffice forced saved document. Key: " + key + ". Users: " + Arrays.toString(status.getUsers())
+                + ". Document " + nodePath + ". URL: " + status.getUrl() + ". Userdata: " + status.getUserdata());
+          }
           downloadVersion(key, status.getUserdata(), status.getUrl());
         } else if (statusCode == 7) {
           // forcedsave error, we may decide next step according
@@ -1147,21 +1148,16 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
-  
   @Override
   public void forceDownload(String userId, String key) {
-
+    // TODO use java.net HttpURLConnection for POST request
     try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {
       HttpPost request = new HttpPost(commandServiceUrl);
-      String json = new JSONObject().put("c", "forcesave")
-                                    .put("key", key)
-                                    .put("userdata", userId)
-                                    .toString();
+      String json = new JSONObject().put("c", "forcesave").put("key", key).put("userdata", userId).toString();
       StringEntity params = new StringEntity(json);
       request.addHeader("content-type", "application/x-www-form-urlencoded");
       request.setEntity(params);
       httpClient.execute(request);
-
     } catch (Exception e) {
       LOG.error("Error in sending forcesave command. UserId: " + userId + ". Key: " + key, e);
     }

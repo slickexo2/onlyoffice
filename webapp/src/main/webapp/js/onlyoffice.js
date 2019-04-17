@@ -385,7 +385,6 @@
               log("WARN: Editor configuration not found. Cannot download document version.");
             }
           }, 600000); // 10min for autosave
-
   
           // We are a editor page here: publish that the doc was changed by current user
           publishDocument(currentConfig.docId, {
@@ -399,7 +398,6 @@
         }
       }
     };
-
 
     /**
      * Create an editor configuration (for use to create the editor client UI).

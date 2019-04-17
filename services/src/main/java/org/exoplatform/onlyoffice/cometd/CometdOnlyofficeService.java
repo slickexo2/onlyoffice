@@ -77,7 +77,6 @@ public class CometdOnlyofficeService implements Startable {
   /** The editor closed event. */
   public static final String              EDITOR_CLOSED_EVENT        = "EDITOR_CLOSED";
 
-
   /** The Constant SAME_USER_VERSION_LIFETIME. */
   public static final long                SAME_USER_VERSION_LIFETIME = 10 * 60 * 1000;
 
@@ -166,7 +165,6 @@ public class CometdOnlyofficeService implements Startable {
       });
     }
   }
-
 
   /**
    * The CometService is responsible for sending messages to Cometd channels
@@ -265,7 +263,6 @@ public class CometdOnlyofficeService implements Startable {
 
     }
 
-
     /**
      * Handle editor closed event.
      *
@@ -308,9 +305,7 @@ public class CometdOnlyofficeService implements Startable {
         }
         return;
       }
-      
       editors.forceDownload(userId, key);
-      
     }
 
     /**
@@ -323,20 +318,14 @@ public class CometdOnlyofficeService implements Startable {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
       Editor.User lastUser = editors.getLastModifier(key);
-      if (lastUser != null // TODO reconsider and cleanup
-          && (!userId.equals(lastUser.getId()) /*
-                                                * || (lastUser.getLastSaved() >
-                                                * 0 &&
-                                                * lastUser.getLastModified() > 0
-                                                * && lastUser.getLastModified()
-                                                * - lastUser.getLastSaved() >
-                                                * SAME_USER_VERSION_LIFETIME &&
-                                                * System.currentTimeMillis() -
-                                                * lastUser.getLastModified() >
-                                                * SAME_USER_VERSION_LIFETIME)
-                                                */)) {
-        // We download user version if another user started to change the
-        // document or enough time passed since previous change by this user.
+      // We download user version if another user started to change the
+      // document or enough time passed since previous change by this user.
+      if (lastUser != null && (!userId.equals(lastUser.getId()) || (lastUser.getLastSaved() > 0 && lastUser.getLastModified() > 0
+          && lastUser.getLastModified() - lastUser.getLastSaved() > SAME_USER_VERSION_LIFETIME
+          && System.currentTimeMillis() - lastUser.getLastModified() > SAME_USER_VERSION_LIFETIME))) {
+        // TODO rethink the above if-clause for a right logic
+        // TODO if it's same user but lifetime not expired, do not download,
+        // just obtain a link for later download
         editors.forceDownload(lastUser.getId(), key);
         if (LOG.isDebugEnabled()) {
           LOG.debug("Download a new version of document: user " + lastUser.getId() + ", docId: " + docId);
@@ -344,12 +333,10 @@ public class CometdOnlyofficeService implements Startable {
         }
       }
       editors.setLastModifier(key, userId);
-
       if (LOG.isDebugEnabled()) {
         LOG.debug("Changes collected from: " + userId + ", docId: " + docId);
       }
     }
-
 
     /**
      * Publish saved event.
