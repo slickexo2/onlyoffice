@@ -591,23 +591,29 @@ public class Config implements Externalizable {
     public static class User {
 
       /** The id. */
-      protected final String          id;
+      protected final String     id;
 
       /** The firstname. */
-      protected final String          firstname;
+      protected final String     firstname;
 
       /** The lastname. */
-      protected final String          lastname;
+      protected final String     lastname;
 
       /** The lastModified timestamp. */
-      protected Long                  lastModified = Long.valueOf(0);
+      protected Long             lastModified = Long.valueOf(0);
 
       /** The last saved timestamp. */
-      protected Long                  lastSaved = Long.valueOf(0);
+      protected Long             lastSaved    = Long.valueOf(0);
+
+      /** The last link saved timestamp. */
+      protected Long             linkSaved    = Long.valueOf(0);
+
+      /** The download link. */
+      protected String           downloadLink;
 
       /** The lock token. */
       @Deprecated
-      protected transient String      lockToken;
+      protected transient String lockToken;
 
       /**
        * Instantiates a new user.
@@ -666,6 +672,42 @@ public class Config implements Externalizable {
        */
       public void setLastModified(long lastModified) {
         this.lastModified = lastModified;
+      }
+      
+      /**
+       * Gets the linkSaved.
+       * 
+       * @return the linkSaved
+       */
+      public long getLinkSaved() {
+        return linkSaved;
+      }
+
+      /**
+       * Sets the linkSaved.
+       * 
+       * @param linkSaved the linkSaved
+       */
+      public void setLinkSaved(long linkSaved) {
+        this.linkSaved = linkSaved;
+      }
+      
+      /**
+       * Gets the downloadLink.
+       * 
+       * @return the downloadLink
+        */
+      public String getDownloadLink() {
+        return downloadLink;
+      }
+
+      /**
+       * Sets the downloadLink.
+       * 
+       * @param downloadLink the downloadLink
+       */
+      public void setDownloadLink(String downloadLink) {
+        this.downloadLink = downloadLink;
       }
 
       /**

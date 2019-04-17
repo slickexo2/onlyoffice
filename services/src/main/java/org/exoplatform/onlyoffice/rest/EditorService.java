@@ -18,6 +18,7 @@
  */
 package org.exoplatform.onlyoffice.rest;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URI;
 import java.util.Locale;
@@ -45,6 +46,10 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.exoplatform.onlyoffice.BadParameterException;
 import org.exoplatform.onlyoffice.ChangeState;
 import org.exoplatform.onlyoffice.Config;
@@ -52,6 +57,7 @@ import org.exoplatform.onlyoffice.DocumentContent;
 import org.exoplatform.onlyoffice.DocumentStatus;
 import org.exoplatform.onlyoffice.OnlyofficeEditorException;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
+import org.exoplatform.onlyoffice.Userdata;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.rest.resource.ResourceContainer;
@@ -223,7 +229,9 @@ public class EditorService implements ResourceContainer {
             status.setUrl(statusUrl);
             status.setUsers(statusUsers);
             status.setError(error);
-            status.setUserdata(userdata);
+            if(userdata != null) {
+              status.setUserdata(new ObjectMapper().readValue(userdata, Userdata.class));
+            }
             try {
               editors.updateDocument(userId, status);
               resp.entity("{\"error\": 0}");
@@ -250,6 +258,15 @@ public class EditorService implements ResourceContainer {
       } catch (ParseException e) {
         LOG.warn("JSON parse error while handling status for " + key + ". JSON: " + statusText, e);
         resp.error("JSON parse error: " + e.getMessage()).status(Status.BAD_REQUEST);
+      } catch (JsonParseException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (JsonMappingException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
       }
     } else {
       LOG.warn("Attempt to update status by not allowed host: " + clientHost + "(" + clientIp + ")");

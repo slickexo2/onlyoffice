@@ -82,6 +82,7 @@ public class NewDocumentService implements Startable {
    * @param title the title
    * @param label the label
    * @throws Exception the exception
+   * @return the created node
    */
   public Node createDocument(Node currentNode, String title, String label) throws Exception {
 

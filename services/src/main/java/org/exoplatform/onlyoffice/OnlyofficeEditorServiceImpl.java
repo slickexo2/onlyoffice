@@ -18,6 +18,7 @@
  */
 package org.exoplatform.onlyoffice;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -25,6 +26,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -891,9 +893,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // forcedsave done, save the version with its URL
           if (LOG.isDebugEnabled()) {
             LOG.debug("Received Onlyoffice forced saved document. Key: " + key + ". Users: " + Arrays.toString(status.getUsers())
-                + ". Document " + nodePath + ". URL: " + status.getUrl() + ". Userdata: " + status.getUserdata());
+                + ". Document " + nodePath + ". URL: " + status.getUrl() + ". Download: " + status.getUserdata().getDownload());
           }
-          downloadVersion(key, status.getUserdata(), status.getUrl());
+          if (status.getUserdata().getDownload()) {
+            downloadVersion(status.getUserdata(), status.getUrl());
+          } else {
+            saveLink(status.getUserdata(), status.getUrl());
+          }
+
         } else if (statusCode == 7) {
           // forcedsave error, we may decide next step according
           // status.getError()
@@ -1096,23 +1103,21 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /**
    * Downloads document's content to the JCR node creating a new version.
    * 
-   * @param key the key
-   * @param userId the userId
+   * @param userdata the userdata
    * @param contentUrl the contentUrl
    */
   @Override
-  public void downloadVersion(String key, String userId, String contentUrl) {
+  public void downloadVersion(Userdata userdata, String contentUrl) {
     String docId = null;
     try {
-
-      Config config = getEditorByKey(userId, key);
+      Config config = getEditorByKey(userdata.getUserId(), userdata.getKey());
       // we set it sooner to let clients see the save
       config.getEditorConfig().getUser().setLastSaved(System.currentTimeMillis());
       docId = config.getDocId();
       DocumentStatus status = new DocumentStatus();
-      status.setKey(key);
+      status.setKey(userdata.getKey());
       status.setUrl(contentUrl);
-      status.setUsers(new String[] { userId });
+      status.setUsers(new String[] { userdata.getUserId() });
       download(config, status);
     } catch (OnlyofficeEditorException | RepositoryException e) {
       LOG.error("Error occured while downloading document content [Version]. docId: " + docId, e);
@@ -1149,21 +1154,57 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   @Override
-  public void forceDownload(String userId, String key) {
-    // TODO use java.net HttpURLConnection for POST request
+  public void forceSave(Userdata userdata) {
+    
     try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {
       HttpPost request = new HttpPost(commandServiceUrl);
-      String json = new JSONObject().put("c", "forcesave").put("key", key).put("userdata", userId).toString();
+      String json = new JSONObject().put("c", "forcesave").put("key", userdata.getKey()).put("userdata", userdata.toJSON()).toString();
       StringEntity params = new StringEntity(json);
       request.addHeader("content-type", "application/x-www-form-urlencoded");
       request.setEntity(params);
       httpClient.execute(request);
     } catch (Exception e) {
-      LOG.error("Error in sending forcesave command. UserId: " + userId + ". Key: " + key, e);
+      LOG.error("Error in sending forcesave command. UserId: " + userdata.getUserId() + ". Key: " + userdata.getKey(), e);
     }
+    
+    
+    // TODO : fix
+    /*HttpURLConnection connection = null;
+    try {
+      String json = new JSONObject().put("c", "forcesave")
+                                    .put("key", userdata.getKey())
+                                    .put("userdata", userdata.toJSON())
+                                    .toString();
+      byte[] postDataBytes = json.toString().getBytes("UTF-8");
+      
+      URL url = new URL(commandServiceUrl);
+      connection = (HttpURLConnection) url.openConnection();
+      connection.setRequestMethod("POST");
+      connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+      connection.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length));
+      connection.setDoOutput(true);
+      connection.getOutputStream().write(postDataBytes);
+    } catch (Exception e) {
+      LOG.error("Error in sending forcesave command. UserId: " + userdata.getUserId() + ". Key: " + userdata.getKey(), e);
+    } finally {
+      if (connection != null) {
+        connection.disconnect();
+      }
+    }*/
   }
 
   // *********************** implementation level ***************
+
+  protected void saveLink(Userdata userdata, String url) {
+    ConcurrentMap<String, Config> configs = activeCache.get(userdata.getKey());
+    if (configs != null) {
+      Config config = configs.get(userdata.getUserId());
+      config.getEditorConfig().getUser().setDownloadLink(url);
+      config.getEditorConfig().getUser().setLinkSaved(System.currentTimeMillis());
+      activeCache.put(userdata.getKey(), configs);
+      activeCache.put(nodePath(config), configs);
+    }
+  }
 
   /**
    * Downloads document's content to the JCR node when the editor is closed.

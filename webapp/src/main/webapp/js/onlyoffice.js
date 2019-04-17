@@ -235,6 +235,7 @@
     var DOCUMENT_SAVED = "DOCUMENT_SAVED";
     var DOCUMENT_CHANGED = "DOCUMENT_CHANGED";
     var DOCUMENT_VERSION = "DOCUMENT_VERSION";
+    var DOCUMENT_LINK = "DOCUMENT_LINK";
     var EDITOR_CLOSED = "EDITOR_CLOSED";
 
     // Events that are dispatched to redux as actions
@@ -258,6 +259,9 @@
     // Current document ID (actual for Documents explorer)
     var explorerDocId;
 
+    // Used to setup changesTimer on the editor page
+    var changesTimer;
+
     // A time to issue document version save if no changes were done, but editor is open
     var autosaveTimer;
 
@@ -270,7 +274,7 @@
         // TODO do we need merge with previous state as Redux assumes?
         return action;
       } else if (action.type.startsWith("@@redux/INIT")) {
-        // it's OK (at least for initialization) 
+        // it's OK (at least for initialization)
       } else {
         log("Unknown action type:" + action.type);
       }
@@ -357,7 +361,7 @@
         // Document changed locally, soon it will be sent to Document Server.
         // TODO We may get prepared here for a soon call of downloadAs().
       } else {
-        // We use this check to avoid publishing updates from other users 
+        // We use this check to avoid publishing updates from other users
         // and publishing when user hasn't made any changes yet (opened editor)
 
         // New autosave should be done by a client that makes changes
@@ -371,21 +375,23 @@
           log("ONLYOFFICE Changes are collected on document editing service");
           changesSaved = true;
           currentUserChanges = true;
-          autosaveTimer = setTimeout(function() {
-            log("It's time to make autosave of document version...");
-            // Publish autosave version for download
-            if (currentConfig) {
-              publishDocument(currentConfig.docId, {
-                "type" : DOCUMENT_VERSION,
-                "userId" : currentUserId,
-                "clientId" : clientId,
-                "key" : currentConfig.document.key
-              });
-            } else {
-              log("WARN: Editor configuration not found. Cannot download document version.");
-            }
-          }, 600000); // 10min for autosave
-  
+
+          if (changesTimer) {
+            log("Reset changes timer...");
+            clearTimeout(changesTimer);
+            changesTimer = null;
+          }
+
+          changesTimer = setTimeout(function() {
+            log("Getting document link after a timeout...");
+            saveDocumentLink();
+            autosaveTimer = setTimeout(function() {
+              log("It's time to make autosave of document version...");
+              // Publish autosave version for download
+              downloadVersion();
+            }, 600000); // 10min for autosave
+          }, 30000); // 30 sec to download link
+
           // We are a editor page here: publish that the doc was changed by current user
           publishDocument(currentConfig.docId, {
             "type" : DOCUMENT_CHANGED,
@@ -396,6 +402,32 @@
         } else {
           currentUserChanges = false;
         }
+      }
+    };
+
+    var downloadVersion = function() {
+      if (currentConfig) {
+        publishDocument(currentConfig.docId, {
+          "type" : DOCUMENT_VERSION,
+          "userId" : currentUserId,
+          "clientId" : clientId,
+          "key" : currentConfig.document.key
+        });
+      } else {
+        log("WARN: Editor configuration not found. Cannot download document version.");
+      }
+    };
+
+    var saveDocumentLink = function() {
+      if (currentConfig) {
+        publishDocument(currentConfig.docId, {
+          "type" : DOCUMENT_LINK,
+          "userId" : currentUserId,
+          "clientId" : clientId,
+          "key" : currentConfig.document.key
+        });
+      } else {
+        log("WARN: Editor configuration not found. Cannot save document document.");
       }
     };
 
@@ -526,7 +558,7 @@
       create(config).done(function(localConfig) {
         if (localConfig) {
           currentConfig = localConfig;
-         
+
           store.subscribe(function() {
             var state = store.getState();
           });
@@ -799,7 +831,7 @@
       // We may need this for some cases
       $("#LeftNavigation").parent(".LeftNavigationTDContainer").remove();
       // TODO cleanup
-      //$("#NavigationPortlet").remove();
+      // $("#NavigationPortlet").remove();
       $("#SharedLayoutRightBody").addClass("onlyofficeEditorBody");
     };
 

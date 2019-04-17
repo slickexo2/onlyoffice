@@ -49,7 +49,7 @@ public class DocumentStatus {
   protected long     error;
 
   /** The userdata. */
-  protected String   userdata;
+  protected Userdata   userdata;
 
   /**
    * Gets the key.
@@ -173,7 +173,7 @@ public class DocumentStatus {
    *
    * @return the userdata
    */
-  public String getUserdata() {
+  public Userdata getUserdata() {
     return userdata;
   }
 
@@ -182,7 +182,7 @@ public class DocumentStatus {
    *
    * @param userdata the new userdata
    */
-  public void setUserdata(String userdata) {
+  public void setUserdata(Userdata userdata) {
     this.userdata = userdata;
   }
 }

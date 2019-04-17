@@ -253,11 +253,10 @@ public interface OnlyofficeEditorService {
   /**
    * Creates a new version of a document.
    * 
-   * @param key the key
-   * @param userId the userId
+   * @param userdata the userdata
    * @param contentUrl the contentUrl
    */
-  void downloadVersion(String key, String userId, String contentUrl);
+  void downloadVersion(Userdata userdata, String contentUrl);
 
   /**
    * Gets the last modifier userId.
@@ -276,11 +275,10 @@ public interface OnlyofficeEditorService {
   void setLastModifier(String key, String userId);
 
   /**
-   * Forces downloading a document.
+   * Forces saving a document on document server.
    * 
-   * @param userId the userId
-   * @param key the key
+   * @param userdata the userdata
    */
-  void forceDownload(String userId, String key);
+  void forceSave(Userdata userdata);
 
 }

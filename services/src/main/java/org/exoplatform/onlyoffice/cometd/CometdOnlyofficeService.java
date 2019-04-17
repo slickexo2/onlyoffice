@@ -20,6 +20,13 @@ package org.exoplatform.onlyoffice.cometd;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -43,11 +50,16 @@ import org.mortbay.cometd.continuation.EXoContinuationBayeux;
 import org.picocontainer.Startable;
 
 import org.exoplatform.commons.utils.PropertyManager;
+import org.exoplatform.container.ExoContainer;
+import org.exoplatform.container.ExoContainerContext;
+import org.exoplatform.container.PortalContainer;
+import org.exoplatform.container.component.RequestLifeCycle;
 import org.exoplatform.onlyoffice.Config.Editor;
 import org.exoplatform.onlyoffice.DocumentStatus;
 import org.exoplatform.onlyoffice.OnlyofficeEditorException;
 import org.exoplatform.onlyoffice.OnlyofficeEditorListener;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
+import org.exoplatform.onlyoffice.Userdata;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
@@ -55,6 +67,115 @@ import org.exoplatform.services.log.Log;
  * The CometdOnlyofficeService.
  */
 public class CometdOnlyofficeService implements Startable {
+
+  /**
+   * Command thread factory adapted from {@link Executors#DefaultThreadFactory}.
+   */
+  static class CommandThreadFactory implements ThreadFactory {
+
+    /** The group. */
+    final ThreadGroup   group;
+
+    /** The thread number. */
+    final AtomicInteger threadNumber = new AtomicInteger(1);
+
+    /** The name prefix. */
+    final String        namePrefix;
+
+    /**
+     * Instantiates a new command thread factory.
+     *
+     * @param namePrefix the name prefix
+     */
+    CommandThreadFactory(String namePrefix) {
+      SecurityManager s = System.getSecurityManager();
+      this.group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
+      this.namePrefix = namePrefix;
+    }
+
+    public Thread newThread(Runnable r) {
+      Thread t = new Thread(group, r, namePrefix + threadNumber.getAndIncrement(), 0) {
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        protected void finalize() throws Throwable {
+          super.finalize();
+          threadNumber.decrementAndGet();
+        }
+
+      };
+      if (t.isDaemon()) {
+        t.setDaemon(false);
+      }
+      if (t.getPriority() != Thread.NORM_PRIORITY) {
+        t.setPriority(Thread.NORM_PRIORITY);
+      }
+      return t;
+    }
+  }
+
+  /**
+   * The Class ContainerCommand.
+   */
+  abstract class ContainerCommand implements Runnable {
+
+    /** The container name. */
+    final String containerName;
+
+    /**
+     * Instantiates a new container command.
+     *
+     * @param containerName the container name
+     */
+    ContainerCommand(String containerName) {
+      this.containerName = containerName;
+    }
+
+    /**
+     * Execute actual work of the commend (in extending class).
+     *
+     * @param exoContainer the exo container
+     */
+    abstract void execute(ExoContainer exoContainer);
+
+    /**
+     * Callback to execute on container error.
+     *
+     * @param error the error
+     */
+    abstract void onContainerError(String error);
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void run() {
+      // Do the work under eXo container context (for proper work of eXo apps
+      // and JPA storage)
+      ExoContainer exoContainer = ExoContainerContext.getContainerByName(containerName);
+      if (exoContainer != null) {
+        ExoContainer contextContainer = ExoContainerContext.getCurrentContainerIfPresent();
+        try {
+          // Container context
+          ExoContainerContext.setCurrentContainer(exoContainer);
+          RequestLifeCycle.begin(exoContainer);
+          // do the work here
+          execute(exoContainer);
+        } finally {
+          // Restore context
+          RequestLifeCycle.end();
+          ExoContainerContext.setCurrentContainer(contextContainer);
+        }
+      } else {
+        // LOG.warn("Container not found " + containerName + " for remote call "
+        // + contextName);
+        onContainerError("Container not found");
+      }
+
+    }
+  }
 
   /** The Constant LOG. */
   private static final Log                LOG                        = ExoLogger.getLogger(CometdOnlyofficeService.class);
@@ -74,6 +195,9 @@ public class CometdOnlyofficeService implements Startable {
   /** The document version event. */
   public static final String              DOCUMENT_VERSION_EVENT     = "DOCUMENT_VERSION";
 
+  /** The document link event. */
+  public static final String              DOCUMENT_LINK_EVENT        = "DOCUMENT_LINK";
+
   /** The editor closed event. */
   public static final String              EDITOR_CLOSED_EVENT        = "EDITOR_CLOSED";
 
@@ -83,6 +207,35 @@ public class CometdOnlyofficeService implements Startable {
   /** The Constant SAME_USER_VERSION_SKIPTIME. */
   public static final long                SAME_USER_VERSION_SKIPTIME = 5 * 1000;
 
+  /**
+   * Base minimum number of threads for document updates thread executors.
+   */
+  public static final int                 MIN_THREADS                = 2;
+
+  /**
+   * Minimal number of threads maximum possible for document updates thread
+   * executors.
+   */
+  public static final int                 MIN_MAX_THREADS            = 4;
+
+  /** Thread idle time for thread executors (in seconds). */
+  public static final int                 THREAD_IDLE_TIME           = 120;
+
+  /**
+   * Maximum threads per CPU for thread executors of document changes channel.
+   */
+  public static final int                 MAX_FACTOR                 = 20;
+
+  /**
+   * Queue size per CPU for thread executors of document updates channel.
+   */
+  public static final int                 QUEUE_FACTOR               = MAX_FACTOR * 2;
+
+  /**
+   * Thread name used for the executor.
+   */
+  public static final String              THREAD_PREFIX              = "onlyoffice-comet-thread-";
+
   /** The Onlyoffice editor service. */
   protected final OnlyofficeEditorService editors;
 
@@ -91,6 +244,9 @@ public class CometdOnlyofficeService implements Startable {
 
   /** The service. */
   protected final CometdService           service;
+  
+  /** The call handlers. */
+  protected final ExecutorService         eventsHandlers;
 
   /**
    * Instantiates the CometdOnlyofficeService.
@@ -102,6 +258,7 @@ public class CometdOnlyofficeService implements Startable {
     this.exoBayeux = exoBayeux;
     this.editors = onlyofficeEditorService;
     this.service = new CometdService();
+    this.eventsHandlers = createThreadExecutor(THREAD_PREFIX, MAX_FACTOR, QUEUE_FACTOR);
   }
 
   /**
@@ -253,6 +410,9 @@ public class CometdOnlyofficeService implements Startable {
       case DOCUMENT_VERSION_EVENT:
         handleDocumentVersionEvent(data, docId);
         break;
+      case DOCUMENT_LINK_EVENT:
+        handleDocumentLinkEvent(data, docId);
+        break;
       case EDITOR_CLOSED_EVENT:
         handleEditorClosedEvent(data, docId);
         break;
@@ -260,7 +420,19 @@ public class CometdOnlyofficeService implements Startable {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Event published in " + message.getChannel() + ", docId: " + docId + ", data: " + message.getJSON());
       }
+    }
 
+    /**
+     * Handle document link event.
+     *
+     * @param data the data
+     * @param docId the doc id
+     */
+    protected void handleDocumentLinkEvent(Map<String, Object> data, String docId) {
+      String userId = (String) data.get("userId");
+      String key = (String) data.get("key");
+      // Saving a link
+      editors.forceSave(new Userdata(userId, key, false));
     }
 
     /**
@@ -272,7 +444,7 @@ public class CometdOnlyofficeService implements Startable {
     protected void handleEditorClosedEvent(Map<String, Object> data, String docId) {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
-      editors.forceDownload(userId, key);
+      editors.forceSave(new Userdata(userId, key, true));
     }
 
     /**
@@ -305,7 +477,9 @@ public class CometdOnlyofficeService implements Startable {
         }
         return;
       }
-      editors.forceDownload(userId, key);
+      // TODO: download by existing link in User instead of requesting it from
+      // command server.
+      editors.forceSave(new Userdata(userId, key, true));
     }
 
     /**
@@ -326,7 +500,29 @@ public class CometdOnlyofficeService implements Startable {
         // TODO rethink the above if-clause for a right logic
         // TODO if it's same user but lifetime not expired, do not download,
         // just obtain a link for later download
-        editors.forceDownload(lastUser.getId(), key);
+
+        // If we have an actual link, download from it. Otherwise - ask the
+        // command server for the link.
+        
+        eventsHandlers.submit(new ContainerCommand(PortalContainer.getCurrentPortalContainerName()) {
+          @Override
+          void onContainerError(String error) {
+            LOG.error("An error has occured in container: {}", containerName);
+          }
+          @Override
+          void execute(ExoContainer exoContainer) {
+            if (lastUser.getLinkSaved() >= lastUser.getLastModified()) {
+              LOG.debug("Downloading from existing link. User: {}, Key: {}, Link: {}",
+                        lastUser.getId(),
+                        key,
+                        lastUser.getDownloadLink());
+              editors.downloadVersion(new Userdata(lastUser.getId(), key, false), lastUser.getDownloadLink());
+            } else {
+              editors.forceSave(new Userdata(lastUser.getId(), key, true));
+            }
+          }
+        });
+        
         if (LOG.isDebugEnabled()) {
           LOG.debug("Download a new version of document: user " + lastUser.getId() + ", docId: " + docId);
           LOG.debug("Started collecting changes for: " + userId + ", docId: " + docId);
@@ -402,4 +598,37 @@ public class CometdOnlyofficeService implements Startable {
     return exoBayeux.getUserToken(userId);
   }
 
+  /**
+   * Create a new thread executor service.
+   *
+   * @param threadNamePrefix the thread name prefix
+   * @param maxFactor - max processes per CPU core
+   * @param queueFactor - queue size per CPU core
+   * @return the executor service
+   */
+  protected ExecutorService createThreadExecutor(String threadNamePrefix, int maxFactor, int queueFactor) {
+    // Executor will queue all commands and run them in maximum set of threads.
+    // Minimum set of threads will be
+    // maintained online even idle, other inactive will be stopped in two
+    // minutes.
+    final int cpus = Runtime.getRuntime().availableProcessors();
+    int poolThreads = cpus / 4;
+    poolThreads = poolThreads < MIN_THREADS ? MIN_THREADS : poolThreads;
+    int maxThreads = Math.round(cpus * 1f * maxFactor);
+    maxThreads = maxThreads > 0 ? maxThreads : 1;
+    maxThreads = maxThreads < MIN_MAX_THREADS ? MIN_MAX_THREADS : maxThreads;
+    int queueSize = cpus * queueFactor;
+    queueSize = queueSize < queueFactor ? queueFactor : queueSize;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Creating thread executor " + threadNamePrefix + "* for " + poolThreads + ".." + maxThreads
+          + " threads, queue size " + queueSize);
+    }
+    return new ThreadPoolExecutor(poolThreads,
+                                  maxThreads,
+                                  THREAD_IDLE_TIME,
+                                  TimeUnit.SECONDS,
+                                  new LinkedBlockingQueue<Runnable>(queueSize),
+                                  new CommandThreadFactory(threadNamePrefix),
+                                  new ThreadPoolExecutor.CallerRunsPolicy());
+  }
 }
