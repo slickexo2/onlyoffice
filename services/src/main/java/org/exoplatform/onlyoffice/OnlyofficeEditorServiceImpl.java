@@ -18,15 +18,15 @@
  */
 package org.exoplatform.onlyoffice;
 
-import java.io.DataOutputStream;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -57,11 +57,8 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.lock.Lock;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.AutoCloseInputStream;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
 
@@ -1152,24 +1149,20 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       activeCache.put(nodePath(config), configs);
     }
   }
+  
+  @Override
+  public Editor.User getUser(String key, String userId) {
+    ConcurrentMap<String, Config> configs = activeCache.get(key);
+    if (configs != null && configs.containsKey(userId)) {
+        return configs.get(userId).getEditorConfig().getUser();
+    }
+    return null;
+  }
 
   @Override
   public void forceSave(Userdata userdata) {
-    
-    try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {
-      HttpPost request = new HttpPost(commandServiceUrl);
-      String json = new JSONObject().put("c", "forcesave").put("key", userdata.getKey()).put("userdata", userdata.toJSON()).toString();
-      StringEntity params = new StringEntity(json);
-      request.addHeader("content-type", "application/x-www-form-urlencoded");
-      request.setEntity(params);
-      httpClient.execute(request);
-    } catch (Exception e) {
-      LOG.error("Error in sending forcesave command. UserId: " + userdata.getUserId() + ". Key: " + userdata.getKey(), e);
-    }
-    
-    
-    // TODO : fix
-    /*HttpURLConnection connection = null;
+
+    HttpURLConnection connection = null;
     try {
       String json = new JSONObject().put("c", "forcesave")
                                     .put("key", userdata.getKey())
@@ -1180,17 +1173,24 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       URL url = new URL(commandServiceUrl);
       connection = (HttpURLConnection) url.openConnection();
       connection.setRequestMethod("POST");
-      connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+      connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
       connection.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length));
       connection.setDoOutput(true);
-      connection.getOutputStream().write(postDataBytes);
+      connection.setDoInput(true);
+      try(OutputStream outputStream = connection.getOutputStream()){
+        outputStream.write(postDataBytes);
+      }
+      // read the response
+      InputStream in = new BufferedInputStream(connection.getInputStream());
+      String response = IOUtils.toString(in, "UTF-8");
+      LOG.debug("Command service responded on forcesave command: " + response);
     } catch (Exception e) {
       LOG.error("Error in sending forcesave command. UserId: " + userdata.getUserId() + ". Key: " + userdata.getKey(), e);
     } finally {
       if (connection != null) {
         connection.disconnect();
       }
-    }*/
+    }
   }
 
   // *********************** implementation level ***************

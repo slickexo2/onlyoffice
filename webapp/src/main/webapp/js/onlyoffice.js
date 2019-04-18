@@ -370,18 +370,17 @@
           clearTimeout(autosaveTimer);
           autosaveTimer = null;
         }
+        
+        if (changesTimer) {
+          log("Reset changes timer...");
+          clearTimeout(changesTimer);
+          changesTimer = null;
+        }
 
         if (!changesSaved) {
           log("ONLYOFFICE Changes are collected on document editing service");
           changesSaved = true;
           currentUserChanges = true;
-
-          if (changesTimer) {
-            log("Reset changes timer...");
-            clearTimeout(changesTimer);
-            changesTimer = null;
-          }
-
           changesTimer = setTimeout(function() {
             log("Getting document link after a timeout...");
             saveDocumentLink();
@@ -390,7 +389,7 @@
               // Publish autosave version for download
               downloadVersion();
             }, 600000); // 10min for autosave
-          }, 30000); // 30 sec to download link
+          }, 30000); // 30 sec to save the download link
 
           // We are a editor page here: publish that the doc was changed by current user
           publishDocument(currentConfig.docId, {

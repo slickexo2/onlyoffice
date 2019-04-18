@@ -255,19 +255,10 @@ public class EditorService implements ResourceContainer {
         } else {
           resp.status(Status.BAD_REQUEST).error("Null or empty file key.");
         }
-      } catch (ParseException e) {
+      } catch (ParseException | IOException e) {
         LOG.warn("JSON parse error while handling status for " + key + ". JSON: " + statusText, e);
         resp.error("JSON parse error: " + e.getMessage()).status(Status.BAD_REQUEST);
-      } catch (JsonParseException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      } catch (JsonMappingException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      } catch (IOException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
+      } 
     } else {
       LOG.warn("Attempt to update status by not allowed host: " + clientHost + "(" + clientIp + ")");
       resp.error("Not a document server").status(Status.UNAUTHORIZED);

@@ -23,6 +23,7 @@ import javax.jcr.RepositoryException;
 
 import org.exoplatform.container.component.ComponentPlugin;
 import org.exoplatform.onlyoffice.Config.Editor;
+import org.exoplatform.onlyoffice.Config.Editor.User;
 
 /**
  * Created by The eXo Platform SAS.
@@ -280,5 +281,14 @@ public interface OnlyofficeEditorService {
    * @param userdata the userdata
    */
   void forceSave(Userdata userdata);
+
+  /**
+   * Gets a user.
+   * 
+   * @param key the key
+   * @param userId the userId
+   * @return the user
+   */
+  Editor.User getUser(String key, String userId);
 
 }

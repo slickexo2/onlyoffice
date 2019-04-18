@@ -244,7 +244,7 @@ public class CometdOnlyofficeService implements Startable {
 
   /** The service. */
   protected final CometdService           service;
-  
+
   /** The call handlers. */
   protected final ExecutorService         eventsHandlers;
 
@@ -468,18 +468,25 @@ public class CometdOnlyofficeService implements Startable {
           LOG.debug("Handle document version: {} for {}, lastUser: null", userId, docId);
         }
       }
-      if (lastUser != null && lastUser.getId().equals(userId) && lastUser.getLastSaved() > 0
-          && System.currentTimeMillis() - lastUser.getLastSaved() <= SAME_USER_VERSION_SKIPTIME) {
-        // XXX We don't want save same user version too often (case for many
-        // open editors by same user of same doc)
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Skipped same user version: {} for {}", userId, docId);
+
+      eventsHandlers.submit(new ContainerCommand(PortalContainer.getCurrentPortalContainerName()) {
+        @Override
+        void onContainerError(String error) {
+          LOG.error("An error has occured in container: {}", containerName);
         }
-        return;
-      }
-      // TODO: download by existing link in User instead of requesting it from
-      // command server.
-      editors.forceSave(new Userdata(userId, key, true));
+
+        @Override
+        void execute(ExoContainer exoContainer) {
+          Editor.User user = editors.getUser(key, userId);
+          if (user.getLinkSaved() >= user.getLastModified()) {
+            LOG.debug("Downloading from existing link. User: {}, Key: {}, Link: {}", user.getId(), key, user.getDownloadLink());
+            editors.downloadVersion(new Userdata(userId, key, false), user.getDownloadLink());
+          } else {
+            editors.forceSave(new Userdata(userId, key, true));
+          }
+        }
+      });
+
     }
 
     /**
@@ -492,25 +499,19 @@ public class CometdOnlyofficeService implements Startable {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
       Editor.User lastUser = editors.getLastModifier(key);
-      // We download user version if another user started to change the
-      // document or enough time passed since previous change by this user.
-      if (lastUser != null && (!userId.equals(lastUser.getId()) || (lastUser.getLastSaved() > 0 && lastUser.getLastModified() > 0
-          && lastUser.getLastModified() - lastUser.getLastSaved() > SAME_USER_VERSION_LIFETIME
-          && System.currentTimeMillis() - lastUser.getLastModified() > SAME_USER_VERSION_LIFETIME))) {
-        // TODO rethink the above if-clause for a right logic
-        // TODO if it's same user but lifetime not expired, do not download,
-        // just obtain a link for later download
+      // We download user version if another user started changing the document
+      if (lastUser != null && !userId.equals(lastUser.getId())) {
 
-        // If we have an actual link, download from it. Otherwise - ask the
-        // command server for the link.
-        
         eventsHandlers.submit(new ContainerCommand(PortalContainer.getCurrentPortalContainerName()) {
           @Override
           void onContainerError(String error) {
             LOG.error("An error has occured in container: {}", containerName);
           }
+
           @Override
           void execute(ExoContainer exoContainer) {
+            // If we have an actual link, download from it. Otherwise - ask the
+            // command server for the link.
             if (lastUser.getLinkSaved() >= lastUser.getLastModified()) {
               LOG.debug("Downloading from existing link. User: {}, Key: {}, Link: {}",
                         lastUser.getId(),
@@ -522,7 +523,7 @@ public class CometdOnlyofficeService implements Startable {
             }
           }
         });
-        
+
         if (LOG.isDebugEnabled()) {
           LOG.debug("Download a new version of document: user " + lastUser.getId() + ", docId: " + docId);
           LOG.debug("Started collecting changes for: " + userId + ", docId: " + docId);
