@@ -833,8 +833,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             activeCache.put(nodePath, configs);
           }
         } else if (statusCode == 2) {
-          // save as "document is ready for saving" (2)
-          downloadClosed(config, status);
+          Editor.User lastUser = getUser(key, status.getLastUser());
+          Editor.User lastModifier = getLastModifier(key);
+          // We download if there were modifications after the last saving.
+          if (lastModifier.getId().equals(lastUser.getId()) && lastUser.getLastModified() > lastUser.getLastSaved()) {
+            downloadClosed(config, status);
+          }     
           activeCache.remove(key);
           activeCache.remove(nodePath);
         } else if (statusCode == 3) {
@@ -913,7 +917,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // 6 Invalid token.
           LOG.error("Received Onlyoffice error of forced saving of document. Key: " + key + ". Users: "
               + Arrays.toString(status.getUsers()) + ". Document: " + nodePath + ". Error: " + status.getError() + ". URL: "
-              + status.getUrl() + ". Userdata: " + status.getUserdata());
+              + status.getUrl() + ". Download: " + status.getUserdata().getDownload());
         } else {
           // warn unexpected status, wait for next status
           LOG.warn("Received Onlyoffice unexpected status. Key: " + key + ". URL: " + status.getUrl() + ". Users: "
@@ -1149,19 +1153,18 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       activeCache.put(nodePath(config), configs);
     }
   }
-  
+
   @Override
   public Editor.User getUser(String key, String userId) {
     ConcurrentMap<String, Config> configs = activeCache.get(key);
     if (configs != null && configs.containsKey(userId)) {
-        return configs.get(userId).getEditorConfig().getUser();
+      return configs.get(userId).getEditorConfig().getUser();
     }
     return null;
   }
 
   @Override
   public void forceSave(Userdata userdata) {
-
     HttpURLConnection connection = null;
     try {
       String json = new JSONObject().put("c", "forcesave")
@@ -1169,7 +1172,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                     .put("userdata", userdata.toJSON())
                                     .toString();
       byte[] postDataBytes = json.toString().getBytes("UTF-8");
-      
+
       URL url = new URL(commandServiceUrl);
       connection = (HttpURLConnection) url.openConnection();
       connection.setRequestMethod("POST");
@@ -1177,7 +1180,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       connection.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length));
       connection.setDoOutput(true);
       connection.setDoInput(true);
-      try(OutputStream outputStream = connection.getOutputStream()){
+      try (OutputStream outputStream = connection.getOutputStream()) {
         outputStream.write(postDataBytes);
       }
       // read the response
@@ -1185,7 +1188,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       String response = IOUtils.toString(in, "UTF-8");
       LOG.debug("Command service responded on forcesave command: " + response);
     } catch (Exception e) {
-      LOG.error("Error in sending forcesave command. UserId: " + userdata.getUserId() + ". Key: " + userdata.getKey(), e);
+      LOG.error("Error in sending forcesave command. UserId: " + userdata.getUserId() + ". Key: " + userdata.getKey()
+          + ". Download: " + userdata.getDownload(), e);
     } finally {
       if (connection != null) {
         connection.disconnect();
@@ -1217,6 +1221,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     config.closing();
     try {
       download(config, status);
+      config.getEditorConfig().getUser().setLastSaved(System.currentTimeMillis());
       config.closed(); // reset transient closing state
     } catch (OnlyofficeEditorException | RepositoryException e) {
       LOG.error("Error occured while downloading document content [Closed]. docId: " + config.getDocId(), e);

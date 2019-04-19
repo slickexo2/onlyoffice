@@ -444,7 +444,16 @@ public class CometdOnlyofficeService implements Startable {
     protected void handleEditorClosedEvent(Map<String, Object> data, String docId) {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
-      editors.forceSave(new Userdata(userId, key, true));
+      try {
+        String[] users = editors.getState(userId, key).getUsers();
+        // Don't call forceSave if it's the last user.
+        if(users.length > 1) {
+          editors.forceSave(new Userdata(userId, key, true));
+        }
+      } catch (OnlyofficeEditorException e) {
+        LOG.error("Cannot get state of document key: " + key + ", user: " + userId);
+      }
+      
     }
 
     /**
@@ -459,7 +468,7 @@ public class CometdOnlyofficeService implements Startable {
       Editor.User lastUser = editors.getLastModifier(key);
       if (LOG.isDebugEnabled()) {
         if (lastUser != null) {
-          LOG.debug("Handle document version: {} for {}, lastUser: {}:{}",
+          LOG.debug("Handle document version: {} for {}, lastUser: {}. LastSaved: {}",
                     userId,
                     docId,
                     lastUser.getId(),
