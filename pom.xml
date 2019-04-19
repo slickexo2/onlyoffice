@@ -19,14 +19,15 @@
     02110-1301 USA, or see the FSF site: http://www.fsf.org.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <artifactId>addons-parent-pom</artifactId>
     <groupId>org.exoplatform.addons</groupId>
     <version>10</version>
   </parent>
-  
+
   <artifactId>exo-onlyoffice-editor-parent</artifactId>
   <groupId>org.exoplatform.addons.onlyoffice</groupId>
   <version>1.4.x-SNAPSHOT</version>
@@ -85,7 +86,7 @@
         <artifactId>exo-jcr-services</artifactId>
         <version>${org.exoplatform.platform.version}</version>
         <type>jar</type>
-      	<scope>test</scope>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>junit</groupId>
@@ -93,9 +94,15 @@
         <version>${junit.version}</version>
         <scope>test</scope>
       </dependency>
+      <dependency>
+        <groupId>com.auth0</groupId>
+        <artifactId>java-jwt</artifactId>
+        <version>3.8.0</version>
+        <type>jar</type>
+      </dependency>
     </dependencies>
   </dependencyManagement>
-  
+
   <modules>
     <module>services</module>
     <module>webapp</module>

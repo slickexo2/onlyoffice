@@ -655,7 +655,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // ECMS explorer page URL
           String ecmsPageLink = explorerLink(path);
           builder.explorerUri(explorerUri(schema, host, port, ecmsPageLink));
-
+          
           config = builder.build();
 
           // Create users' config map and add first user

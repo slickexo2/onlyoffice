@@ -25,10 +25,12 @@ import java.io.ObjectOutput;
 import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.HashSet;
-import java.util.Set;
 
 import javax.jcr.Node;
+
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTCreationException;
 
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -339,17 +341,27 @@ public class Config implements Externalizable {
       Document document = new Document(key, fileType, title, url, info, permissions);
       Editor.User user = new Editor.User(userId, firstname, lastname);
       Editor editor = new Editor(callbackUrl, lang, mode, user);
-      return new Config(documentserverUrl,
-                        platformRestUrl,
-                        editorUrl,
-                        explorerUri,
-                        documentType,
-                        workspace,
-                        path,
-                        docId,
-                        document,
-                        editor);
+      Config config = new Config(documentserverUrl,
+                                 platformRestUrl,
+                                 editorUrl,
+                                 explorerUri,
+                                 documentType,
+                                 workspace,
+                                 path,
+                                 docId,
+                                 document,
+                                 editor);
+
+      // TODO: add all config's fields as claims to the JWT token (payload)
+      // Move the secret key to the exo.properties
+      /*
+      Algorithm algorithm = Algorithm.HMAC256("secret");
+      String token = JWT.create().withIssuer("exo-onlyoffice").sign(algorithm);
+      config.setToken(token);
+       */
+      return config;
     }
+
   }
 
   /**
@@ -673,7 +685,7 @@ public class Config implements Externalizable {
       public void setLastModified(long lastModified) {
         this.lastModified = lastModified;
       }
-      
+
       /**
        * Gets the linkSaved.
        * 
@@ -691,7 +703,7 @@ public class Config implements Externalizable {
       public void setLinkSaved(long linkSaved) {
         this.linkSaved = linkSaved;
       }
-      
+
       /**
        * Gets the downloadLink.
        * 
@@ -906,6 +918,9 @@ public class Config implements Externalizable {
   /** The document type. */
   private String         documentType;
 
+  /** The token. */
+  private String         token;
+
   /** The document. */
   private Document       document;
 
@@ -1106,6 +1121,24 @@ public class Config implements Externalizable {
    */
   public String getDocumentserverUrl() {
     return documentserverUrl;
+  }
+
+  /**
+   * Gets the token.
+   *
+   * @return the token
+   */
+  public String getToken() {
+    return token;
+  }
+
+  /**
+   * Sets the token.
+   *
+   * @param token the token
+   */
+  public void setToken(String token) {
+    this.token = token;
   }
 
   /**
