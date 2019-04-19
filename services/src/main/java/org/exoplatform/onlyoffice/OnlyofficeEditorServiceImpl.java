@@ -838,7 +838,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // We download if there were modifications after the last saving.
           if (lastModifier.getId().equals(lastUser.getId()) && lastUser.getLastModified() > lastUser.getLastSaved()) {
             downloadClosed(config, status);
-          }     
+          }
           activeCache.remove(key);
           activeCache.remove(nodePath);
         } else if (statusCode == 3) {
