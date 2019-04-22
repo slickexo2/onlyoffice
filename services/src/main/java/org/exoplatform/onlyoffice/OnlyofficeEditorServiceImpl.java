@@ -125,6 +125,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /** The Constant CONFIG_DS_ACCESS_ONLY. */
   public static final String    CONFIG_DS_ACCESS_ONLY  = "documentserver-access-only";
 
+  /** The Constant CONFIG_DS_SECRET. */
+  public static final String    CONFIG_DS_SECRET       = "documentserver-secret";
+
   /**
    * Configuration key for Document Server's allowed hosts in requests from a DS
    * to eXo side.
@@ -287,6 +290,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
   /** The document command service url. */
   protected final String                                          commandServiceUrl;
+  
+  /** The document server secret. */
+  protected final String                                          documentserverSecret;
 
   /** The documentserver access only. */
   protected final boolean                                         documentserverAccessOnly;
@@ -430,6 +436,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
     this.documentserverAccessOnly = Boolean.parseBoolean(config.get(CONFIG_DS_ACCESS_ONLY));
 
+    this.documentserverSecret = config.get(CONFIG_DS_SECRET);
+    if(documentserverSecret == null || documentserverSecret.trim().isEmpty()) {
+      throw new ConfigurationException("Configuration of " + CONFIG_DS_SECRET + " required");
+    }
     String dsAllowedHost = config.get(CONFIG_DS_ALLOWEDHOSTS);
     if (dsAllowedHost != null && !dsAllowedHost.isEmpty()) {
       Set<String> allowedhosts = new HashSet<>();
@@ -655,7 +665,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // ECMS explorer page URL
           String ecmsPageLink = explorerLink(path);
           builder.explorerUri(explorerUri(schema, host, port, ecmsPageLink));
-          
+          builder.secret(documentserverSecret);
           config = builder.build();
 
           // Create users' config map and add first user

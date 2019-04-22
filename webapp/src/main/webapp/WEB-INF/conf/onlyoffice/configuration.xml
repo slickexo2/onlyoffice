@@ -33,6 +33,7 @@
         <property name="documentserver-schema" value="${onlyoffice.documentserver.schema:http}" />
         <property name="documentserver-access-only" value="${onlyoffice.documentserver.accessOnly:true}" />
         <property name="documentserver-allowedhosts" value="${onlyoffice.documentserver.allowedhosts:}" />
+        <property name="documentserver-secret" value="${onlyoffice.documentserver.secret:}" />
       </properties-param>
     </init-params>
   </component>

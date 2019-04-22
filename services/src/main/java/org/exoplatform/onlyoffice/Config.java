@@ -28,14 +28,14 @@ import java.util.Calendar;
 
 import javax.jcr.Node;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.JWTCreationException;
-
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.ws.frameworks.json.impl.JsonException;
 import org.exoplatform.ws.frameworks.json.impl.JsonGeneratorImpl;
+
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 
 /**
  * Onlyoffice editor config for its JS API. <br>
@@ -87,6 +87,9 @@ public class Config implements Externalizable {
 
     /** The editor page at platform URL. */
     protected String       editorUrl;
+
+    /** The document server secret key. **/
+    protected String       documentserverSecret;
 
     /** The ECMS explorer page URL. */
     @Deprecated
@@ -317,6 +320,11 @@ public class Config implements Externalizable {
       return this;
     }
 
+    public Builder secret(String documentServerSecret) {
+      this.documentserverSecret = documentServerSecret;
+      return this;
+    }
+
     /**
      * Builds the.
      *
@@ -352,13 +360,14 @@ public class Config implements Externalizable {
                                  document,
                                  editor);
 
-      // TODO: add all config's fields as claims to the JWT token (payload)
-      // Move the secret key to the exo.properties
-      /*
-      Algorithm algorithm = Algorithm.HMAC256("secret");
-      String token = JWT.create().withIssuer("exo-onlyoffice").sign(algorithm);
-      config.setToken(token);
-       */
+      String jwtToken = Jwts.builder()
+                       .setSubject("exo-onlyoffice")
+                       .claim("document", document)
+                       .claim("editorConfig", editor)
+                       .claim("documentType", documentType)
+                       .signWith(Keys.hmacShaKeyFor(documentserverSecret.getBytes()))
+                       .compact();
+      config.setToken(jwtToken);
       return config;
     }
 
