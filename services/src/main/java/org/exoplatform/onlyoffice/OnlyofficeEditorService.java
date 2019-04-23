@@ -291,4 +291,13 @@ public interface OnlyofficeEditorService {
    */
   Editor.User getUser(String key, String userId);
 
+  /**
+   * Checks a token received from the document server.
+   * 
+   * @param token the token
+   * @param key the document key
+   * @return true, if the token is correct, false otherwise
+   */
+  boolean isAllowedToken(String token, String key);
+
 }

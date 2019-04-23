@@ -207,15 +207,24 @@ public class EditorService implements ResourceContainer {
         JSONParser parser = new JSONParser();
         Object obj = parser.parse(statusText);
         JSONObject jsonObj = (JSONObject) obj;
+        String token = request.getHeader("Authorization").replace("Bearer", "").trim();
         String statusKey = (String) jsonObj.get("key");
         String userdata = (String) jsonObj.get("userdata");
         long statusCode = (long) jsonObj.get("status");
-        Object errorObj = jsonObj.get("error");
-        long error = errorObj != null ? Long.parseLong(errorObj.toString()) : 0;  
         String statusUrl = (String) jsonObj.get("url");
+        Object errorObj = jsonObj.get("error");
         // Oct 2017: When Document server calls with status 4 (user closed w/o
         // modification), the users array will be null
         JSONArray statusUsersArray = (JSONArray) jsonObj.get("users");
+
+        if (!editors.isAllowedToken(token, key)) {
+          LOG.warn("Error processing editor status. User not provided");
+          resp.error("The token is not valid").status(Status.UNAUTHORIZED);
+          return resp.build();
+        }
+
+        long error = errorObj != null ? Long.parseLong(errorObj.toString()) : 0;
+
         @SuppressWarnings("unchecked")
         String[] statusUsers = statusUsersArray != null ? (String[]) statusUsersArray.toArray(new String[statusUsersArray.size()])
                                                         : new String[0];
@@ -227,7 +236,7 @@ public class EditorService implements ResourceContainer {
             status.setUrl(statusUrl);
             status.setUsers(statusUsers);
             status.setError(error);
-            if(userdata != null) {
+            if (userdata != null) {
               status.setUserdata(new ObjectMapper().readValue(userdata, Userdata.class));
             }
             try {
@@ -256,7 +265,7 @@ public class EditorService implements ResourceContainer {
       } catch (ParseException | IOException e) {
         LOG.warn("JSON parse error while handling status for " + key + ". JSON: " + statusText, e);
         resp.error("JSON parse error: " + e.getMessage()).status(Status.BAD_REQUEST);
-      } 
+      }
     } else {
       LOG.warn("Attempt to update status by not allowed host: " + clientHost + "(" + clientIp + ")");
       resp.error("Not a document server").status(Status.UNAUTHORIZED);

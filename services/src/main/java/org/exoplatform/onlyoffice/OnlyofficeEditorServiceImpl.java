@@ -98,6 +98,12 @@ import org.exoplatform.services.wcm.utils.WCMCoreUtils;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.application.portlet.PortletRequestContext;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+
 /**
  * Service implementing {@link OnlyofficeEditorService} and {@link Startable}.
  * This component handles interactions with Onlyoffice Document Server and
@@ -290,7 +296,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
   /** The document command service url. */
   protected final String                                          commandServiceUrl;
-  
+
   /** The document server secret. */
   protected final String                                          documentserverSecret;
 
@@ -437,7 +443,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     this.documentserverAccessOnly = Boolean.parseBoolean(config.get(CONFIG_DS_ACCESS_ONLY));
 
     this.documentserverSecret = config.get(CONFIG_DS_SECRET);
-    if(documentserverSecret == null || documentserverSecret.trim().isEmpty()) {
+    if (documentserverSecret == null || documentserverSecret.trim().isEmpty()) {
       throw new ConfigurationException("Configuration of " + CONFIG_DS_SECRET + " required");
     }
     String dsAllowedHost = config.get(CONFIG_DS_ALLOWEDHOSTS);
@@ -1205,6 +1211,20 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         connection.disconnect();
       }
     }
+  }
+
+  @Override
+  public boolean isAllowedToken(String token, String key) {
+    try {
+      Jws<Claims> jws = Jwts.parser()
+                            .setSigningKey(Keys.hmacShaKeyFor(documentserverSecret.getBytes()))
+                            .parseClaimsJws(token);
+      Map<String, Object> claims = (Map) jws.getBody().get("payload");
+      return String.valueOf(claims.get("key")).equals(key);
+    } catch (JwtException e) {
+      LOG.error("Error occured while checking the token", e);
+    }
+    return false;
   }
 
   // *********************** implementation level ***************
