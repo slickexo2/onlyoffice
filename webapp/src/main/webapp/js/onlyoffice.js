@@ -703,7 +703,7 @@
     /**
      * Initializes JCRExplorer when a document is displayed.
      */
-    this.initExplorer = function(docId) {
+    this.initExplorer = function(docId, editorLink) {
       log("Initialize explorer with document: " + docId);
       // Listen document updated
       store.subscribe(function() {
@@ -724,7 +724,8 @@
         subscribeDocument(docId);
         explorerDocId = docId;
       }
-      UI.addEditorButtonToExplorer();
+      UI.addEditorButtonToExplorer(editorLink);
+
     };
 
     this.showInfo = function(title, text) {
@@ -751,6 +752,10 @@
       return "<li><a href='" + editorLink
           + "' target='_blank'><i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i> " + message("EditButtonTitle")
           + "</a></li>";
+    };
+    
+    var getNoPreviewEditorButton = function(editorLink) {
+      return "<a class='btn' href='#' onclick='javascript:window.open(\"" + editorLink +"\");'><i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i>Edit Online</a>";
     };
 
     /**
@@ -911,8 +916,12 @@
     /**
      * Ads the 'Edit Online' button to the JCRExplorer when a document is displayed.
      */
-    this.addEditorButtonToExplorer = function() {
+    this.addEditorButtonToExplorer = function(editorLink) {
       $("#UIJCRExplorer #uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen").addClass("uiIconEdit");
+      var $noPreviewContainer = $("#UIJCRExplorer .navigationContainer.noPreview");
+      if (editorLink != null && $noPreviewContainer.length != 0) {
+        $noPreviewContainer.find(".detailContainer").append(getNoPreviewEditorButton(editorLink));
+      }
     };
 
     /**
