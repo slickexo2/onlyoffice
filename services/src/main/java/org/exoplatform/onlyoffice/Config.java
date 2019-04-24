@@ -1258,17 +1258,29 @@ public class Config implements Externalizable {
    * @return {@link Config} an instance of config similar to this but with
    *         another user in the editor
    */
-  public Config forUser(String id, String firstName, String lastName, String lang) {
-    return new Config(documentserverUrl,
-                      platformRestUrl,
-                      editorUrl,
-                      explorerUri,
-                      documentType,
-                      workspace,
-                      path,
-                      docId,
-                      document.forUser(id, firstName, lastName, fileUrl(platformRestUrl, id, document.getKey())),
-                      editorConfig.forUser(id, firstName, lastName, lang, callbackUrl(platformRestUrl, id, document.getKey())));
+  public Config forUser(String id, String firstName, String lastName, String lang, String secretKey) {
+    Document userDocument = document.forUser(id, firstName, lastName, fileUrl(platformRestUrl, id, document.getKey()));
+    Editor userEditor = editorConfig.forUser(id, firstName, lastName, lang, callbackUrl(platformRestUrl, id, document.getKey()));
+    Config config = new Config(documentserverUrl,
+                           platformRestUrl,
+                           editorUrl,
+                           explorerUri,
+                           documentType,
+                           workspace,
+                           path,
+                           docId,
+                           userDocument,
+                           userEditor);
+    
+    String jwtToken = Jwts.builder()
+        .setSubject("exo-onlyoffice")
+        .claim("document", userDocument)
+        .claim("editorConfig", userEditor)
+        .claim("documentType", documentType)
+        .signWith(Keys.hmacShaKeyFor(secretKey.getBytes()))
+        .compact();
+    config.setToken(jwtToken);
+    return config;
   }
 
   /**

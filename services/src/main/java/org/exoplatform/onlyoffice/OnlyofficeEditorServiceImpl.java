@@ -536,7 +536,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           Config another = configs.values().iterator().next();
           User user = getUser(userId); // and use this user language
           if (user != null) {
-            config = another.forUser(user.getUserName(), user.getFirstName(), user.getLastName(), getUserLang(userId));
+            config = another.forUser(user.getUserName(), user.getFirstName(), user.getLastName(), getUserLang(userId), documentserverSecret);
             Config existing = configs.putIfAbsent(userId, config);
             if (existing == null) {
               // need update the configs in the cache (for replicated cache)
@@ -1187,6 +1187,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                     .put("key", userdata.getKey())
                                     .put("userdata", userdata.toJSON())
                                     .toString();
+      String jwtToken = Jwts.builder()
+          .setSubject("exo-onlyoffice")
+          .claim("c", "forcesave")
+          .claim("key", userdata.getKey())
+          .claim("userdata", userdata.toJSON())
+          .signWith(Keys.hmacShaKeyFor(documentserverSecret.getBytes()))
+          .compact();
       byte[] postDataBytes = json.toString().getBytes("UTF-8");
 
       URL url = new URL(commandServiceUrl);
@@ -1194,6 +1201,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       connection.setRequestMethod("POST");
       connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
       connection.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length));
+      connection.setRequestProperty("Authorization", "Bearer " + jwtToken);
       connection.setDoOutput(true);
       connection.setDoInput(true);
       try (OutputStream outputStream = connection.getOutputStream()) {
