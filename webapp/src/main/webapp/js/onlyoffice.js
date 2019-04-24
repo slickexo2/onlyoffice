@@ -920,7 +920,14 @@
       $("#UIJCRExplorer #uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen").addClass("uiIconEdit");
       var $noPreviewContainer = $("#UIJCRExplorer .navigationContainer.noPreview");
       if (editorLink != null && $noPreviewContainer.length != 0) {
-        $noPreviewContainer.find(".detailContainer").append(getNoPreviewEditorButton(editorLink));
+        var $detailContainer = $noPreviewContainer.find(".detailContainer");
+        var $downloadBtn = $detailContainer.find(".uiIconDownload").closest("a.btn");
+        if ($downloadBtn.length != 0) {
+          $downloadBtn.after(getNoPreviewEditorButton(editorLink));
+        }
+        else {
+          $detailContainer.append(getNoPreviewEditorButton(editorLink));
+        }
       }
     };
 
