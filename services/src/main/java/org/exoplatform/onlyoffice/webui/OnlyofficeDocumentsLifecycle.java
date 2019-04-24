@@ -76,10 +76,11 @@ public class OnlyofficeDocumentsLifecycle extends AbstractOnlyofficeLifecycle {
                                                          .getApplicationServiceContainer()
                                                          .getComponentInstanceOfType(OnlyofficeEditorService.class);
           String docId = editorService.getDocumentId(node);
+          String editorLink = editorService.getEditorLink(node);
           if (docId != null && editorService.isDocumentMimeSupported(node)) {
             // This will init explorer even for docs that cannot be edited
             // by the user (locked or lack of permissions)
-            callModule("initExplorer('" + docId + "');");
+            callModule("initExplorer('" + docId + "', '" + editorLink +"');");
           } else if (LOG.isDebugEnabled()) {
             LOG.debug("Document not initialized or not editable for {}, node: {}:{}, context: {}",
                       userName,
