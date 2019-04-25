@@ -781,6 +781,18 @@
         }
       } else {
         $elem.append("<div class='onlyOfficeEditBtn'>" + getEditorButton(editorLink) + "</div>");
+        var $noPreviewContainer = $("#documentPreviewContainer .navigationContainer.noPreview");
+
+        if ($noPreviewContainer.length != 0) {
+          var $detailContainer = $noPreviewContainer.find(".detailContainer");
+          var $downloadBtn = $detailContainer.find(".uiIconDownload").closest("a.btn");
+          if ($downloadBtn.length != 0) {
+            $downloadBtn.after(getNoPreviewEditorButton(editorLink));
+          }
+          else {
+            $detailContainer.append(getNoPreviewEditorButton(editorLink));
+          }
+        }
       }
     };
 
