@@ -645,7 +645,7 @@
     /**
      * Initializes JCRExplorer when a document is displayed.
      */
-    this.initExplorer = function(docId) {
+    this.initExplorer = function(docId, editorLink) {
       log("Initialize explorer with document: " + docId);
       // Listen document updated
       store.subscribe(function() {
@@ -666,7 +666,8 @@
         subscribeDocument(docId);
         explorerDocId = docId;
       }
-      UI.addEditorButtonToExplorer();
+      UI.addEditorButtonToExplorer(editorLink);
+
     };
 
     /**
@@ -717,6 +718,10 @@
           + "' target='_blank'><i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i> "
           + message("EditButtonTitle") + "</a></li>";
     };
+    
+    var getNoPreviewEditorButton = function(editorLink) {
+      return "<a class='btn editOnlineBtn' href='#' onclick='javascript:window.open(\"" + editorLink +"\");'><i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i>Edit Online</a>";
+    };
 
     /**
      * Returns the html markup of the refresh banner;
@@ -724,6 +729,31 @@
     var getRefreshBanner = function() {
       return "<div class='documentRefreshBanner'><div class='refreshBannerContent'>" + message("UpdateBannerTitle")
           + " <span class='refreshBannerLink'>" + message("ReloadButtonTitle") + "</span></div></div>";
+    };
+
+    /**
+     * Adds the 'Edit Online' button to No-preview screen (from the activity stream) when it's loaded.
+     */
+    var tryAddEditorButtonNoPreview = function(editorLink, attempts, delay) {
+      var $elem = $("#documentPreviewContainer .navigationContainer.noPreview");
+      if ($elem.length == 0 || !$elem.is(":visible")) {
+        if (attempts > 0) {
+          setTimeout(function() {
+            tryAddEditorButtonNoPreview(editorLink, attempts - 1, delay);
+          }, delay);
+        } else {
+          log("Cannot find element " + $elem);
+        }
+      } else {
+        var $detailContainer = $elem.find(".detailContainer");
+        var $downloadBtn = $detailContainer.find(".uiIconDownload").closest("a.btn");
+        if ($downloadBtn.length != 0) {
+          $downloadBtn.after(getNoPreviewEditorButton(editorLink));
+        }
+        else {
+           $detailContainer.append(getNoPreviewEditorButton(editorLink));
+        } 
+      }
     };
 
     /**
@@ -741,6 +771,7 @@
         }
       } else {
         $elem.append("<div class='onlyOfficeEditBtn'>" + getEditorButton(editorLink) + "</div>");
+        tryAddEditorButtonNoPreview(editorLink, 100, 100);
       }
     };
 
@@ -871,8 +902,19 @@
     /**
      * Ads the 'Edit Online' button to the JCRExplorer when a document is displayed.
      */
-    this.addEditorButtonToExplorer = function() {
+    this.addEditorButtonToExplorer = function(editorLink) {
       $("#UIJCRExplorer #uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen").addClass("uiIconEdit");
+      var $noPreviewContainer = $("#UIJCRExplorer .navigationContainer.noPreview");
+      if (editorLink != null && $noPreviewContainer.length != 0) {
+        var $detailContainer = $noPreviewContainer.find(".detailContainer");
+        var $downloadBtn = $detailContainer.find(".uiIconDownload").closest("a.btn");
+        if ($downloadBtn.length != 0) {
+          $downloadBtn.after(getNoPreviewEditorButton(editorLink));
+        }
+        else {
+          $detailContainer.append(getNoPreviewEditorButton(editorLink));
+        }
+      }
     };
 
     /**
