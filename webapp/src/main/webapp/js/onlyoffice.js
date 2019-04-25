@@ -755,7 +755,7 @@
     };
     
     var getNoPreviewEditorButton = function(editorLink) {
-      return "<a class='btn' href='#' onclick='javascript:window.open(\"" + editorLink +"\");'><i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i>Edit Online</a>";
+      return "<a class='btn editOnlineBtn' href='#' onclick='javascript:window.open(\"" + editorLink +"\");'><i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i>Edit Online</a>";
     };
 
     /**
@@ -764,6 +764,31 @@
     var getRefreshBanner = function() {
       return "<div class='documentRefreshBanner'><div class='refreshBannerContent'>" + message("UpdateBannerTitle") +
         " <span class='refreshBannerLink'>" + message("ReloadButtonTitle") + "</span></div></div>";
+    };
+
+    /**
+     * Adds the 'Edit Online' button to No-preview screen (from the activity stream) when it's loaded.
+     */
+    var tryAddEditorButtonNoPreview = function(editorLink, attempts, delay) {
+      var $elem = $("#documentPreviewContainer .navigationContainer.noPreview");
+      if ($elem.length == 0 || !$elem.is(":visible")) {
+        if (attempts > 0) {
+          setTimeout(function() {
+            tryAddEditorButtonNoPreview(editorLink, attempts - 1, delay);
+          }, delay);
+        } else {
+          log("Cannot find element " + $elem);
+        }
+      } else {
+        var $detailContainer = $elem.find(".detailContainer");
+        var $downloadBtn = $detailContainer.find(".uiIconDownload").closest("a.btn");
+        if ($downloadBtn.length != 0) {
+          $downloadBtn.after(getNoPreviewEditorButton(editorLink));
+        }
+        else {
+           $detailContainer.append(getNoPreviewEditorButton(editorLink));
+        } 
+      }
     };
 
     /**
@@ -781,18 +806,7 @@
         }
       } else {
         $elem.append("<div class='onlyOfficeEditBtn'>" + getEditorButton(editorLink) + "</div>");
-        var $noPreviewContainer = $("#documentPreviewContainer .navigationContainer.noPreview");
-
-        if ($noPreviewContainer.length != 0) {
-          var $detailContainer = $noPreviewContainer.find(".detailContainer");
-          var $downloadBtn = $detailContainer.find(".uiIconDownload").closest("a.btn");
-          if ($downloadBtn.length != 0) {
-            $downloadBtn.after(getNoPreviewEditorButton(editorLink));
-          }
-          else {
-            $detailContainer.append(getNoPreviewEditorButton(editorLink));
-          }
-        }
+        tryAddEditorButtonNoPreview(editorLink, 100, 100);
       }
     };
 
