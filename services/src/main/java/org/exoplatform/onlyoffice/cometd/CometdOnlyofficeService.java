@@ -447,7 +447,6 @@ public class CometdOnlyofficeService implements Startable {
       } catch (OnlyofficeEditorException e) {
         LOG.error("Cannot get state of document key: " + key + ", user: " + userId);
       }
-
     }
 
     /**
@@ -489,7 +488,6 @@ public class CometdOnlyofficeService implements Startable {
           }
         }
       });
-
     }
 
     /**
@@ -504,7 +502,6 @@ public class CometdOnlyofficeService implements Startable {
       Editor.User lastUser = editors.getLastModifier(key);
       // We download user version if another user started changing the document
       if (lastUser != null && !userId.equals(lastUser.getId())) {
-
         eventsHandlers.submit(new ContainerCommand(PortalContainer.getCurrentPortalContainerName()) {
           @Override
           void onContainerError(String error) {
@@ -522,13 +519,14 @@ public class CometdOnlyofficeService implements Startable {
                         lastUser.getDownloadLink());
               editors.downloadVersion(new Userdata(lastUser.getId(), key, false), lastUser.getDownloadLink());
             } else {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Download a new version of document: user " + lastUser.getId() + ", docId: " + docId);
+              }
               editors.forceSave(new Userdata(lastUser.getId(), key, true));
             }
           }
         });
-
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Download a new version of document: user " + lastUser.getId() + ", docId: " + docId);
           LOG.debug("Started collecting changes for: " + userId + ", docId: " + docId);
         }
       }
@@ -561,7 +559,6 @@ public class CometdOnlyofficeService implements Startable {
         data.append('}');
         channel.publish(localSession, data.toString());
       }
-
     }
   }
 

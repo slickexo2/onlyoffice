@@ -389,7 +389,7 @@
               // Publish autosave version for download
               downloadVersion();
             }, 600000); // 10min for autosave
-          }, 30000); // 30 sec to save the download link
+          }, 20000); // 20 sec to save the download link
 
           // We are a editor page here: publish that the doc was changed by current user
           publishDocument(currentConfig.docId, {
