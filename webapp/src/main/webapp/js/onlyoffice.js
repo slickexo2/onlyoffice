@@ -749,13 +749,13 @@
      * Returns the html markup of the 'Edit Online' button.
      */
     var getEditorButton = function(editorLink) {
-      return "<li><a href='" + editorLink
+      return "<li class='hidden-tabletL'><a href='" + editorLink
           + "' target='_blank'><i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i> " + message("EditButtonTitle")
           + "</a></li>";
     };
     
     var getNoPreviewEditorButton = function(editorLink) {
-      return "<a class='btn editOnlineBtn' href='#' onclick='javascript:window.open(\"" + editorLink +"\");'><i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i>Edit Online</a>";
+      return "<a class='btn editOnlineBtn hidden-tabletL' href='#' onclick='javascript:window.open(\"" + editorLink +"\");'><i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i>Edit Online</a>";
     };
 
     /**
@@ -943,7 +943,9 @@
      * Ads the 'Edit Online' button to the JCRExplorer when a document is displayed.
      */
     this.addEditorButtonToExplorer = function(editorLink) {
-      $("#UIJCRExplorer #uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen").addClass("uiIconEdit");
+      var $button = $("#UIJCRExplorer #uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen");
+      $button.addClass("uiIconEdit");
+      $button.closest("li").addClass("hidden-tabletL");
       var $noPreviewContainer = $("#UIJCRExplorer .navigationContainer.noPreview");
       if (editorLink != null && $noPreviewContainer.length != 0) {
         var $detailContainer = $noPreviewContainer.find(".detailContainer");
