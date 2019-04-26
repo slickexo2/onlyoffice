@@ -8,5 +8,9 @@
 }
 
 #uiActionsBarContainer .uiIconEcmsNewDocument:before {
-    content: "\e637";
+  content: "\e637";
+}
+
+.detailContainer .editOnlineBtn {
+  margin-left: 6px !important;
 }

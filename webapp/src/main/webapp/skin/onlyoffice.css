@@ -171,3 +171,8 @@
   top: 0;
   margin-left: 10px;
 }
+
+/* TODO same exists in onlyoffice-extras.css */
+.detailContainer .editOnlineBtn {
+  margin-left: 6px !important;
+}
