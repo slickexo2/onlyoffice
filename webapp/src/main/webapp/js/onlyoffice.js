@@ -576,11 +576,12 @@
           window.addEventListener("unload", function() {
             UI.closeEditor();
             // We need to save current changes when user closes the editor
-            if (currentConfig && currentUserChanges) {
+            if (currentConfig) {
               publishDocument(currentConfig.docId, {
                 "type" : EDITOR_CLOSED,
                 "userId" : currentUserId,
-                "key" : currentConfig.document.key
+                "key" : currentConfig.document.key,
+                "changes": currentUserChanges
               });
             }
           });

@@ -84,6 +84,7 @@ import org.exoplatform.services.cms.lock.LockService;
 import org.exoplatform.services.jcr.RepositoryService;
 import org.exoplatform.services.jcr.ext.app.SessionProviderService;
 import org.exoplatform.services.jcr.ext.common.SessionProvider;
+import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.OrganizationService;
@@ -97,6 +98,7 @@ import org.exoplatform.services.security.IdentityRegistry;
 import org.exoplatform.services.wcm.utils.WCMCoreUtils;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.application.portlet.PortletRequestContext;
+import org.exoplatform.ws.frameworks.json.impl.JsonException;
 
 /**
  * Service implementing {@link OnlyofficeEditorService} and {@link Startable}.
@@ -267,6 +269,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /** The lock service. */
   protected final LockService                                     lockService;
 
+  /** The listener service. */
+  protected final ListenerService                                 listenerService;
+
   /** Cache of Editing documents. */
   protected final ExoCache<String, ConcurrentMap<String, Config>> activeCache;
 
@@ -332,6 +337,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                      CacheService cacheService,
                                      DocumentService documentService,
                                      LockService lockService,
+                                     ListenerService listenerService,
                                      InitParams params)
       throws ConfigurationException {
     this.jcrService = jcrService;
@@ -342,6 +348,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     this.authenticator = authenticator;
     this.documentService = documentService;
     this.lockService = lockService;
+    this.listenerService = listenerService;
 
     this.activeCache = cacheService.getCacheInstance(CACHE_NAME);
     if (LOG.isDebugEnabled()) {
@@ -676,6 +683,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       status.setUrl(config.getEditorUrl());
       status.setKey(config.getDocument().getKey());
       fireCreated(status);
+      broadcastEvent(config, OnlyofficeEditorService.EDITOR_CREATE_EVENT);
     }
     return config;
   }
@@ -856,6 +864,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               activeCache.remove(nodePath);
               config.setError("Error in editor (" + status.getError() + "). Last change was successfully saved");
               fireError(status);
+              broadcastEvent(config, OnlyofficeEditorService.EDITOR_ERROR_EVENT);
               LOG.warn("Received Onlyoffice error of saving document. Key: " + key + ". Users: "
                   + Arrays.toString(status.getUsers()) + ". Error: " + status.getError()
                   + ". Last change was successfully saved for " + nodePath);
@@ -868,6 +877,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               activeCache.put(key, configs);
               activeCache.put(nodePath, configs);
               fireError(status);
+              broadcastEvent(config, OnlyofficeEditorService.EDITOR_ERROR_EVENT);
               // TODO no sense to throw an ex here: it will be caught by the
               // caller (REST) and returned to
               // the Onlyoffice server as 500 response, but it doesn't deal with
@@ -882,6 +892,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             activeCache.put(key, configs);
             activeCache.put(nodePath, configs);
             fireError(status);
+            broadcastEvent(config, OnlyofficeEditorService.EDITOR_ERROR_EVENT);
           }
         } else if (statusCode == 4) {
           // user(s) haven't changed the document but closed it: sync users to
@@ -1119,6 +1130,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       status.setKey(userdata.getKey());
       status.setUrl(contentUrl);
       status.setUsers(new String[] { userdata.getUserId() });
+      broadcastEvent(config, OnlyofficeEditorService.EDITOR_VERSION_EVENT);
       download(config, status);
     } catch (OnlyofficeEditorException | RepositoryException e) {
       LOG.error("Error occured while downloading document content [Version]. docId: " + docId, e);
@@ -1459,6 +1471,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // editor was (re)opened by user
           config.open();
           fireJoined(status);
+          broadcastEvent(config, OnlyofficeEditorService.EDITOR_JOIN_EVENT);
           updated = true;
         }
       } else {
@@ -1469,6 +1482,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // nothing edited
           config.closed();
           fireLeaved(status);
+          broadcastEvent(config, OnlyofficeEditorService.EDITOR_LEAVE_EVENT);
           updated = true;
         }
       }
@@ -1607,6 +1621,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
           status.setConfig(config);
           fireSaved(status);
+          broadcastEvent(config, OnlyofficeEditorService.EDITOR_SAVE_EVENT);
         } catch (RepositoryException e) {
           try {
             node.refresh(false); // rollback JCR modifications
@@ -1983,6 +1998,24 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     return new URI(platformRestUrl(schema, host, port).append("/jcr").toString());
   }
 
+  /**
+   * Broadcasts an event using the listenerService.
+   * 
+   * @param config the config
+   * @param eventType the eventType
+   */
+  protected void broadcastEvent(Config config, String eventType) {
+    try {
+      LOG.debug("Fire {} event. Config: {}", eventType, config.toJSON());
+      listenerService.broadcast(OnlyofficeEditorService.EDITOR_CREATE_EVENT, this, config);
+    } catch (Exception e) {
+      LOG.error("Error firing listener with Onlyoffice {} event for user: {}, document: {}",
+                OnlyofficeEditorService.EDITOR_CREATE_EVENT,
+                config.getEditorConfig().getUser().getId(),
+                config.getDocId(),
+                e);
+    }
+  }
   /**
    * Fire created.
    *

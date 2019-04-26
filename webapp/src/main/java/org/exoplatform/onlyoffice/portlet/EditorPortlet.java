@@ -119,7 +119,7 @@ public class EditorPortlet extends GenericPortlet {
                                                         .getComponentInstanceOfType(ListenerService.class);
           listenerService.broadcast(OnlyofficeEditorService.EDITOR_OPEN_EVENT, onlyoffice, config);
         } catch (Exception e) {
-          LOG.error("Error firing listener with Onlyoffice event for user: {}, document: {}", request.getRemoteUser(), docId, e);
+          LOG.error("Error firing listener with Onlyoffice {} event for user: {}, document: {}", OnlyofficeEditorService.EDITOR_OPEN_EVENT, request.getRemoteUser(), docId, e);
         }
       } catch (RepositoryException e) {
         LOG.error("Error reading document node by ID: {}", docId, e);

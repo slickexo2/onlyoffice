@@ -930,6 +930,12 @@ public class Config implements Externalizable {
    * data submitted from Onlyoffice DS.
    */
   private Boolean        closing;
+  
+  /** The open timestamp */
+  private Long openTime;
+  
+  /** The close timestamp */
+  private Long closeTime;
 
   /**
    * Instantiates a new config for use with {@link Externalizable} methods. User
@@ -976,6 +982,8 @@ public class Config implements Externalizable {
 
     this.document = document;
     this.editorConfig = editor;
+    
+    this.openTime = System.currentTimeMillis();
   }
 
   /**
@@ -1197,6 +1205,24 @@ public class Config implements Externalizable {
   public Document getDocument() {
     return document;
   }
+  
+  /**
+   * Gets the openTime.
+   *
+   * @return the openTime
+   */
+  public Long getOpenTime() {
+    return openTime;
+  }
+
+  /**
+   * Gets the closeTime.
+   *
+   * @return the closeTime
+   */
+  public Long getCloseTime() {
+    return closeTime;
+  }
 
   /**
    * Gets the editor config.
@@ -1285,6 +1311,7 @@ public class Config implements Externalizable {
     if (open != null && open.booleanValue()) {
       this.open = new Boolean(false);
       this.closing = new Boolean(true);
+      this.closeTime = System.currentTimeMillis();
     }
   }
 
@@ -1295,6 +1322,7 @@ public class Config implements Externalizable {
   public void closed() {
     this.open = new Boolean(false);
     this.closing = new Boolean(false);
+    this.closeTime = System.currentTimeMillis();
   }
 
   /**
@@ -1302,7 +1330,7 @@ public class Config implements Externalizable {
    *
    * @param error the new error
    */
-  public void setError(String error) {
+  protected void setError(String error) {
     this.error = error;
   }
 
