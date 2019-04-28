@@ -20,6 +20,7 @@
 package org.exoplatform.onlyoffice.webui;
 
 import java.io.IOException;
+import java.util.List;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -30,7 +31,7 @@ import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.web.WebAppController;
-import org.exoplatform.web.filter.Filter;
+import org.exoplatform.web.application.ApplicationLifecycle;
 import org.exoplatform.webui.application.WebuiApplication;
 
 /**
@@ -41,7 +42,7 @@ import org.exoplatform.webui.application.WebuiApplication;
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: OnlyofficeDocumentsFilter.java 00000 Mar 21, 2019 pnedonosko $
  */
-public class OnlyofficeDocumentsFilter implements Filter {
+public class OnlyofficeDocumentsFilter extends AbstractOnlyofficeWebFilter {
 
   /** The Constant LOG. */
   protected static final Log    LOG                  = ExoLogger.getLogger(OnlyofficeDocumentsLifecycle.class);
@@ -61,15 +62,17 @@ public class OnlyofficeDocumentsFilter implements Filter {
     // add the lifecycle and it will not initialize the app in the first
     // request.
     if (app != null) {
-      OnlyofficeDocumentsLifecycle lifecycle = new OnlyofficeDocumentsLifecycle();
-      try {
-        app.getApplicationLifecycle().add(lifecycle);
-        chain.doFilter(request, response);
-      } finally {
-        app.getApplicationLifecycle().remove(lifecycle);
+      // Initialize ECMS Explorer app, this will happen once per app lifetime
+      @SuppressWarnings("rawtypes")
+      final List<ApplicationLifecycle> lifecycles = app.getApplicationLifecycle();
+      if (canAddLifecycle(lifecycles, OnlyofficeDocumentsLifecycle.class)) {
+        synchronized (lifecycles) {
+          if (canAddLifecycle(lifecycles, OnlyofficeDocumentsLifecycle.class)) {
+            lifecycles.add(new OnlyofficeDocumentsLifecycle());
+          }
+        }
       }
-    } else {
-      chain.doFilter(request, response);
     }
+    chain.doFilter(request, response);
   }
 }

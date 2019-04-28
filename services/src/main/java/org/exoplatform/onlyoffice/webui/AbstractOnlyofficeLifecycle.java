@@ -19,8 +19,12 @@
 
 package org.exoplatform.onlyoffice.webui;
 
+import javax.servlet.ServletRequest;
+
+import org.exoplatform.portal.application.PortalRequestContext;
 import org.exoplatform.web.application.Application;
 import org.exoplatform.web.application.ApplicationLifecycle;
+import org.exoplatform.web.application.RequestContext;
 import org.exoplatform.web.application.RequestFailure;
 import org.exoplatform.webui.application.WebuiRequestContext;
 
@@ -79,5 +83,25 @@ public abstract class AbstractOnlyofficeLifecycle implements ApplicationLifecycl
   @Override
   public void onDestroy(Application app) throws Exception {
     // nothing
+  }
+  
+  /**
+   * Gets the servlet request associated with given context.
+   *
+   * @param context the context
+   * @return the servlet request
+   */
+  protected ServletRequest getServletRequest(WebuiRequestContext context) {
+    try {
+      // First we assume it's PortalRequestContext
+      return context.getRequest();
+    } catch(ClassCastException e) {
+      // Then try get portlet's parent context
+      RequestContext parentContext = context.getParentAppRequestContext();
+      if (parentContext != null && PortalRequestContext.class.isAssignableFrom(parentContext.getClass())) {
+        return PortalRequestContext.class.cast(parentContext).getRequest();
+      }
+    }
+    return null;
   }
 }

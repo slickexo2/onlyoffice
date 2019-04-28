@@ -19,7 +19,11 @@
 
 package org.exoplatform.onlyoffice.webui;
 
+import static org.exoplatform.onlyoffice.webui.OnlyofficeEditorLifecycle.EDITOR_STATES_ATTR_NAME;
+
 import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -29,7 +33,7 @@ import javax.servlet.ServletResponse;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.portal.application.PortalApplication;
 import org.exoplatform.web.WebAppController;
-import org.exoplatform.web.filter.Filter;
+import org.exoplatform.web.application.ApplicationLifecycle;
 import org.exoplatform.webui.application.WebuiApplication;
 
 /**
@@ -39,7 +43,7 @@ import org.exoplatform.webui.application.WebuiApplication;
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: OnlyofficeEditorFilter.java 00000 Mar 21, 2019 pnedonosko $
  */
-public class OnlyofficeEditorFilter implements Filter {
+public class OnlyofficeEditorFilter extends AbstractOnlyofficeWebFilter {
 
   /**
    * {@inheritDoc}
@@ -49,14 +53,26 @@ public class OnlyofficeEditorFilter implements Filter {
     WebAppController controller = ExoContainerContext.getCurrentContainer().getComponentInstanceOfType(WebAppController.class);
     WebuiApplication app = controller.getApplication(PortalApplication.PORTAL_APPLICATION_ID);
     if (app != null) {
-      OnlyofficeEditorLifecycle lifecycle = new OnlyofficeEditorLifecycle();
+      // Initialize portal app, this will happen once per app lifetime
+      @SuppressWarnings("rawtypes")
+      final List<ApplicationLifecycle> lifecycles = app.getApplicationLifecycle();
+      OnlyofficeEditorLifecycle lifecycle = getLifecycle(lifecycles, OnlyofficeEditorLifecycle.class);
+      if (lifecycle == null) {
+        synchronized (lifecycles) {
+          lifecycle = getLifecycle(lifecycles, OnlyofficeEditorLifecycle.class);
+          if (lifecycle == null) {
+            lifecycles.add(lifecycle = new OnlyofficeEditorLifecycle());
+          }
+        }
+      }
+      // Prepare env for lifecycle work 
+      request.setAttribute(EDITOR_STATES_ATTR_NAME, ConcurrentHashMap.newKeySet());
       try {
-        app.getApplicationLifecycle().add(lifecycle);
         chain.doFilter(request, response);
       } finally {
         // run restore for a case of exception in request processing
-        lifecycle.restore();
-        app.getApplicationLifecycle().remove(lifecycle);
+        lifecycle.restore(request);
+        request.removeAttribute(EDITOR_STATES_ATTR_NAME);
       }
     } else {
       chain.doFilter(request, response);
