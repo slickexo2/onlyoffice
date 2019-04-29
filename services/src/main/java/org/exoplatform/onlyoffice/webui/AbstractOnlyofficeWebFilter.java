@@ -72,10 +72,14 @@ public abstract class AbstractOnlyofficeWebFilter implements Filter {
       // the list
       int index = lifecycles.size() - 1;
       do {
-        ApplicationLifecycle lc = lifecycles.get(index);
-        if (lc != null && lifecycleClass.isAssignableFrom(lc.getClass())) {
-          return lifecycleClass.cast(lc);
-        } else {
+        try {
+          ApplicationLifecycle lc = lifecycles.get(index);
+          if (lc != null && lifecycleClass.isAssignableFrom(lc.getClass())) {
+            return lifecycleClass.cast(lc);
+          } else {
+            index--;
+          }
+        } catch (IndexOutOfBoundsException e) {
           index--;
         }
       } while (index >= 0);
