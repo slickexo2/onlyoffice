@@ -432,7 +432,7 @@ public class CometdOnlyofficeService implements Startable {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
       // Saving a link
-      editors.forceSave(new Userdata(userId, key, false));
+      editors.forceSave(new Userdata(userId, key, false, false));
     }
 
     /**
@@ -450,28 +450,13 @@ public class CometdOnlyofficeService implements Startable {
           String[] users = editors.getState(userId, key).getUsers();
           // Don't call forceSave if it's the last user.
           if (users.length > 1) {
-            editors.forceSave(new Userdata(userId, key, true));
-          }
+            editors.forceSave(new Userdata(userId, key, true, false));
+          } 
         } catch (OnlyofficeEditorException e) {
           LOG.error("Cannot get state of document key: " + key + ", user: " + userId);
         }
       }
 
-      // Notify listener
-      try {
-        Config config = editors.getEditorByKey(userId, key);
-        // We call the closing() method to set up the closeTime to config. Is it
-        // OK here?
-        config.closing();
-        LOG.debug("Fire {} event. Config: {}", OnlyofficeEditorService.EDITOR_CLOSE_EVENT, config.toJSON());
-        listenerService.broadcast(OnlyofficeEditorService.EDITOR_CLOSE_EVENT, editors, config);
-      } catch (Exception e) {
-        LOG.error("Error firing listener with Onlyoffice {} event for user: {}, document: {}",
-                  OnlyofficeEditorService.EDITOR_COEDIT_EVENT,
-                  userId,
-                  docId,
-                  e);
-      }
     }
 
     /**
@@ -507,9 +492,9 @@ public class CometdOnlyofficeService implements Startable {
           Editor.User user = editors.getUser(key, userId);
           if (user.getLinkSaved() >= user.getLastModified()) {
             LOG.debug("Downloading from existing link. User: {}, Key: {}, Link: {}", user.getId(), key, user.getDownloadLink());
-            editors.downloadVersion(new Userdata(userId, key, false), user.getDownloadLink());
+            editors.downloadVersion(new Userdata(userId, key, false, false), user.getDownloadLink());
           } else {
-            editors.forceSave(new Userdata(userId, key, true));
+            editors.forceSave(new Userdata(userId, key, true, false));
           }
         }
       });
@@ -543,26 +528,14 @@ public class CometdOnlyofficeService implements Startable {
                         lastUser.getId(),
                         key,
                         lastUser.getDownloadLink());
-              editors.downloadVersion(new Userdata(lastUser.getId(), key, false), lastUser.getDownloadLink());
+              editors.downloadVersion(new Userdata(lastUser.getId(), key, false, true), lastUser.getDownloadLink());
             } else {
               if (LOG.isDebugEnabled()) {
                 LOG.debug("Download a new version of document: user " + lastUser.getId() + ", docId: " + docId);
               }
-              editors.forceSave(new Userdata(lastUser.getId(), key, true));
+              editors.forceSave(new Userdata(lastUser.getId(), key, true, true));
             }
 
-            // Notify listener
-            try {
-              Config config = editors.getEditorByKey(userId, key);
-              LOG.debug("Fire {} event. Config: {}", OnlyofficeEditorService.EDITOR_COEDIT_EVENT, config.toJSON());
-              listenerService.broadcast(OnlyofficeEditorService.EDITOR_COEDIT_EVENT, editors, config);
-            } catch (Exception e) {
-              LOG.error("Error firing listener with Onlyoffice {} event for user: {}, document: {}",
-                        OnlyofficeEditorService.EDITOR_COEDIT_EVENT,
-                        userId,
-                        docId,
-                        e);
-            }
           }
         });
         if (LOG.isDebugEnabled()) {

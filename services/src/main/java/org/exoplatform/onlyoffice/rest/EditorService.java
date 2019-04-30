@@ -204,8 +204,6 @@ public class EditorService implements ResourceContainer {
     EditorResponse resp = new EditorResponse();
     if (editors.canDownloadBy(clientHost) || editors.canDownloadBy(clientIp)) {
       try {
-        DocumentStatus status = new DocumentStatus();
-
         JSONParser parser = new JSONParser();
         Object obj = parser.parse(statusText);
         JSONObject jsonObj = (JSONObject) obj;
@@ -213,7 +211,7 @@ public class EditorService implements ResourceContainer {
         String userdata = (String) jsonObj.get("userdata");
         long statusCode = (long) jsonObj.get("status");
         Object errorObj = jsonObj.get("error");
-        long error = errorObj != null ? Long.parseLong(errorObj.toString()) : 0;  
+        long error = errorObj != null ? Long.parseLong(errorObj.toString()) : 0;
         String statusUrl = (String) jsonObj.get("url");
         // Oct 2017: When Document server calls with status 4 (user closed w/o
         // modification), the users array will be null
@@ -224,16 +222,16 @@ public class EditorService implements ResourceContainer {
 
         if (key != null && key.length() > 0) {
           if (userId != null && userId.length() > 0) {
-            status.setKey(statusKey != null && statusKey.length() > 0 ? statusKey : key);
-            status.setStatus(statusCode);
-            status.setUrl(statusUrl);
-            status.setUsers(statusUsers);
-            status.setError(error);
-            if(userdata != null) {
-              status.setUserdata(new ObjectMapper().readValue(userdata, Userdata.class));
-            }
+            DocumentStatus.Builder statusBuilder = new DocumentStatus.Builder();
+            statusBuilder.key(statusKey != null && statusKey.length() > 0 ? statusKey : key)
+                         .status(statusCode)
+                         .url(statusUrl)
+                         .users(statusUsers)
+                         .error(error)
+                         .userdata(userdata != null ? new ObjectMapper().readValue(userdata, Userdata.class) : null);
+
             try {
-              editors.updateDocument(userId, status);
+              editors.updateDocument(userId, statusBuilder.build());
               resp.entity("{\"error\": 0}");
             } catch (BadParameterException e) {
               LOG.warn("Bad parameter to update status for " + key + ". " + e.getMessage());
@@ -258,7 +256,7 @@ public class EditorService implements ResourceContainer {
       } catch (ParseException | IOException e) {
         LOG.warn("JSON parse error while handling status for " + key + ". JSON: " + statusText, e);
         resp.error("JSON parse error: " + e.getMessage()).status(Status.BAD_REQUEST);
-      } 
+      }
     } else {
       LOG.warn("Attempt to update status by not allowed host: " + clientHost + "(" + clientIp + ")");
       resp.error("Not a document server").status(Status.UNAUTHORIZED);

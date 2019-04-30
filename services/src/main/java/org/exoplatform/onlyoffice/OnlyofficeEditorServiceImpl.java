@@ -98,7 +98,6 @@ import org.exoplatform.services.security.IdentityRegistry;
 import org.exoplatform.services.wcm.utils.WCMCoreUtils;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.application.portlet.PortletRequestContext;
-import org.exoplatform.ws.frameworks.json.impl.JsonException;
 
 /**
  * Service implementing {@link OnlyofficeEditorService} and {@link Startable}.
@@ -519,8 +518,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     ConcurrentMap<String, Config> configs = activeCache.get(nodePath);
     if (configs != null) {
       Config config = configs.get(userId);
-      DocumentStatus status = new DocumentStatus();
-      status.setUsers(new String[] { userId });
+      DocumentStatus.Builder statusBuilder = new DocumentStatus.Builder();
+      statusBuilder.users(new String[] { userId });
       if (config == null && createCoEditing) {
         // copy editor for this user from another entry in the configs map
         try {
@@ -536,10 +535,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             } else {
               config = existing;
             }
-            status.setConfig(config);
-            status.setUrl(config.getEditorUrl());
-            status.setKey(config.getDocument().getKey());
-            fireGet(status);
+            statusBuilder.config(config);
+            statusBuilder.url(config.getEditorUrl());
+            statusBuilder.key(config.getDocument().getKey());
+            fireGet(statusBuilder.build());
           } else {
             LOG.warn("Attempt to obtain document editor (" + nodePath(another) + ") under not existing user " + userId);
             throw new BadParameterException("User not found for " + another.getDocument().getTitle());
@@ -550,11 +549,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         }
       } else if (createCoEditing) {
         // otherwise: config already obtained
-        status.setConfig(config);
-        status.setUrl(config.getEditorUrl());
-        status.setKey(config.getDocument().getKey());
-        fireGet(status);
+        statusBuilder.config(config);
+        statusBuilder.url(config.getEditorUrl());
+        statusBuilder.key(config.getDocument().getKey());
+        fireGet(statusBuilder.build());
       }
+      
       return config; // can be null
     }
     return null;
@@ -677,13 +677,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       } finally {
         activeLock.unlock();
       }
-      DocumentStatus status = new DocumentStatus();
-      status.setConfig(config);
-      status.setUsers(new String[] { userId });
-      status.setUrl(config.getEditorUrl());
-      status.setKey(config.getDocument().getKey());
+      DocumentStatus status = new DocumentStatus.Builder().config(config)
+                                                          .users(new String[] { userId })
+                                                          .url(config.getEditorUrl())
+                                                          .key(config.getDocument().getKey())
+                                                          .build();
+
       fireCreated(status);
-      broadcastEvent(config, OnlyofficeEditorService.EDITOR_CREATE_EVENT);
     }
     return config;
   }
@@ -841,12 +841,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             activeCache.put(nodePath, configs);
           }
         } else if (statusCode == 2) {
+          broadcastEvent(status, OnlyofficeEditorService.EDITOR_CLOSED_EVENT);
           Editor.User lastUser = getUser(key, status.getLastUser());
           Editor.User lastModifier = getLastModifier(key);
+          
           // We download if there were modifications after the last saving.
           if (lastModifier.getId().equals(lastUser.getId()) && lastUser.getLastModified() > lastUser.getLastSaved()) {
             downloadClosed(config, status);
-          }
+          } 
           activeCache.remove(key);
           activeCache.remove(nodePath);
         } else if (statusCode == 3) {
@@ -864,7 +866,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               activeCache.remove(nodePath);
               config.setError("Error in editor (" + status.getError() + "). Last change was successfully saved");
               fireError(status);
-              broadcastEvent(config, OnlyofficeEditorService.EDITOR_ERROR_EVENT);
+              broadcastEvent(status, OnlyofficeEditorService.EDITOR_ERROR_EVENT);
               LOG.warn("Received Onlyoffice error of saving document. Key: " + key + ". Users: "
                   + Arrays.toString(status.getUsers()) + ". Error: " + status.getError()
                   + ". Last change was successfully saved for " + nodePath);
@@ -877,7 +879,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               activeCache.put(key, configs);
               activeCache.put(nodePath, configs);
               fireError(status);
-              broadcastEvent(config, OnlyofficeEditorService.EDITOR_ERROR_EVENT);
+              broadcastEvent(status, OnlyofficeEditorService.EDITOR_ERROR_EVENT);
               // TODO no sense to throw an ex here: it will be caught by the
               // caller (REST) and returned to
               // the Onlyoffice server as 500 response, but it doesn't deal with
@@ -892,7 +894,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             activeCache.put(key, configs);
             activeCache.put(nodePath, configs);
             fireError(status);
-            broadcastEvent(config, OnlyofficeEditorService.EDITOR_ERROR_EVENT);
+            broadcastEvent(status, OnlyofficeEditorService.EDITOR_ERROR_EVENT);
           }
         } else if (statusCode == 4) {
           // user(s) haven't changed the document but closed it: sync users to
@@ -1126,11 +1128,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       // we set it sooner to let clients see the save
       config.getEditorConfig().getUser().setLastSaved(System.currentTimeMillis());
       docId = config.getDocId();
-      DocumentStatus status = new DocumentStatus();
-      status.setKey(userdata.getKey());
-      status.setUrl(contentUrl);
-      status.setUsers(new String[] { userdata.getUserId() });
-      broadcastEvent(config, OnlyofficeEditorService.EDITOR_VERSION_EVENT);
+
+      DocumentStatus status = new DocumentStatus.Builder().config(config)
+                                                          .key(userdata.getKey())
+                                                          .url(contentUrl)
+                                                          .users(new String[] { userdata.getUserId() })
+                                                          .coEdited(userdata.getCoEdited())
+                                                          .build();
+      broadcastEvent(status, OnlyofficeEditorService.EDITOR_VERSION_EVENT);
       download(config, status);
     } catch (OnlyofficeEditorException | RepositoryException e) {
       LOG.error("Error occured while downloading document content [Version]. docId: " + docId, e);
@@ -1231,10 +1236,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   protected void downloadClosed(Config config, DocumentStatus status) {
     // First mark closing, then do actual download and save in storage
     config.closing();
+    broadcastEvent(status, OnlyofficeEditorService.EDITOR_CLOSED_EVENT);
     try {
       download(config, status);
       config.getEditorConfig().getUser().setLastSaved(System.currentTimeMillis());
       config.closed(); // reset transient closing state
+      fireSaved(status);
+      broadcastEvent(status, OnlyofficeEditorService.EDITOR_SAVED_EVENT);
     } catch (OnlyofficeEditorException | RepositoryException e) {
       LOG.error("Error occured while downloading document content [Closed]. docId: " + config.getDocId(), e);
     }
@@ -1461,17 +1469,19 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       Map.Entry<String, Config> ce = ceiter.next();
       String user = ce.getKey();
       Config config = ce.getValue();
-      DocumentStatus status = new DocumentStatus();
-      status.setConfig(config);
-      status.setKey(config.getDocument().getKey());
-      status.setUrl(config.getEditorUrl());
-      status.setUsers(users);
+
+      DocumentStatus status = new DocumentStatus.Builder().config(config)
+                                                          .key(config.getDocument().getKey())
+                                                          .url(config.getEditorUrl())
+                                                          .users(users)
+                                                          .build();
+
       if (editors.contains(user)) {
         if (config.isCreated() || config.isClosed()) {
           // editor was (re)opened by user
           config.open();
           fireJoined(status);
-          broadcastEvent(config, OnlyofficeEditorService.EDITOR_JOIN_EVENT);
+          broadcastEvent(status, OnlyofficeEditorService.EDITOR_OPENED_EVENT);
           updated = true;
         }
       } else {
@@ -1482,7 +1492,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // nothing edited
           config.closed();
           fireLeaved(status);
-          broadcastEvent(config, OnlyofficeEditorService.EDITOR_LEAVE_EVENT);
+          broadcastEvent(status, OnlyofficeEditorService.EDITOR_CLOSED_EVENT);
           updated = true;
         }
       }
@@ -1619,9 +1629,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             node.checkout();
           }
 
-          status.setConfig(config);
-          fireSaved(status);
-          broadcastEvent(config, OnlyofficeEditorService.EDITOR_SAVE_EVENT);
         } catch (RepositoryException e) {
           try {
             node.refresh(false); // rollback JCR modifications
@@ -2004,18 +2011,21 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @param config the config
    * @param eventType the eventType
    */
-  protected void broadcastEvent(Config config, String eventType) {
+  protected void broadcastEvent(DocumentStatus status, String eventType) {
     try {
-      LOG.debug("Fire {} event. Config: {}", eventType, config.toJSON());
-      listenerService.broadcast(OnlyofficeEditorService.EDITOR_CREATE_EVENT, this, config);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Fire {} event. Config: {}", eventType, status.toJSON());
+      }
+      listenerService.broadcast(eventType, this, config);
     } catch (Exception e) {
       LOG.error("Error firing listener with Onlyoffice {} event for user: {}, document: {}",
-                OnlyofficeEditorService.EDITOR_CREATE_EVENT,
-                config.getEditorConfig().getUser().getId(),
-                config.getDocId(),
+                eventType,
+                status.getConfig().getEditorConfig().getUser().getId(),
+                status.getConfig().getDocId(),
                 e);
     }
   }
+
   /**
    * Fire created.
    *

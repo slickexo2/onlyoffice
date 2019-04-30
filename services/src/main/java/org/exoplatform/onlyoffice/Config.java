@@ -25,8 +25,6 @@ import java.io.ObjectOutput;
 import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.HashSet;
-import java.util.Set;
 
 import javax.jcr.Node;
 
@@ -932,10 +930,10 @@ public class Config implements Externalizable {
   private Boolean        closing;
   
   /** The open timestamp */
-  private Long openTime;
+  private Long openedTime;
   
   /** The close timestamp */
-  private Long closeTime;
+  private Long closedTime;
 
   /**
    * Instantiates a new config for use with {@link Externalizable} methods. User
@@ -982,8 +980,6 @@ public class Config implements Externalizable {
 
     this.document = document;
     this.editorConfig = editor;
-    
-    this.openTime = System.currentTimeMillis();
   }
 
   /**
@@ -1207,21 +1203,39 @@ public class Config implements Externalizable {
   }
   
   /**
-   * Gets the openTime.
+   * Gets the openedTime.
    *
-   * @return the openTime
+   * @return the openedTime
    */
-  public Long getOpenTime() {
-    return openTime;
+  public Long getOpenedTime() {
+    return openedTime;
   }
 
   /**
-   * Gets the closeTime.
+   * Gets the closedTime.
    *
-   * @return the closeTime
+   * @return the closedTime
    */
-  public Long getCloseTime() {
-    return closeTime;
+  public Long getClosedTime() {
+    return closedTime;
+  }
+  
+  /**
+   * Sets the openedTime.
+   *
+   * @param openedTime the openedTime
+   */
+  protected void setOpenedTime(Long openedTime) {
+    this.openedTime = openedTime;
+  }
+  
+  /**
+   * Sets the closedTime.
+   *
+   * @param closedTime the closedTime
+   */
+  protected void setClosedTime(Long closedTime) {
+    this.closedTime = closedTime;
   }
 
   /**
@@ -1299,6 +1313,7 @@ public class Config implements Externalizable {
   public void open() {
     this.open = new Boolean(true);
     this.closing = new Boolean(false);
+    this.openedTime = System.currentTimeMillis();
   }
 
   /**
@@ -1311,7 +1326,7 @@ public class Config implements Externalizable {
     if (open != null && open.booleanValue()) {
       this.open = new Boolean(false);
       this.closing = new Boolean(true);
-      this.closeTime = System.currentTimeMillis();
+      this.closedTime = System.currentTimeMillis();
     }
   }
 
@@ -1322,7 +1337,6 @@ public class Config implements Externalizable {
   public void closed() {
     this.open = new Boolean(false);
     this.closing = new Boolean(false);
-    this.closeTime = System.currentTimeMillis();
   }
 
   /**
