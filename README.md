@@ -87,7 +87,7 @@ Allowing access from any host, if no other security protection implemented, **st
 
 ### Events
 
-OnlyOffice add-on publishes some eXo listener events to let end-user apps listen on them and build required data/output for collecting stats or other purposes.
+Onlyoffice add-on publishes some eXo listener events to let end-user apps listen on them and build required data/output for collecting stats or other purposes.
 
 The add-on broadcasts such events (the constants are available in OnlyofficeEditorService interface):
 
