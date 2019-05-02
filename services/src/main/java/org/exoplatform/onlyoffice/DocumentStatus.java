@@ -115,15 +115,6 @@ public class DocumentStatus {
   }
 
   /**
-   * Sets the error.
-   *
-   * @param error the error to set
-   */
-  public void setError(long error) {
-    this.error = error;
-  }
-
-  /**
    * Gets the last user (editor).
    *
    * @return the last user (editor)
@@ -140,14 +131,14 @@ public class DocumentStatus {
   public Userdata getUserdata() {
     return userdata;
   }
-
+  
   /**
-   * Sets the userdata.
+   * Gets the coEdited.
    *
-   * @param userdata the new userdata
+   * @return the coEdited
    */
-  public void setUserdata(Userdata userdata) {
-    this.userdata = userdata;
+  public Boolean isCoedited() {
+    return coEdited;
   }
 
   public static class Builder {

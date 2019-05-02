@@ -1337,6 +1337,9 @@ public class Config implements Externalizable {
   public void closed() {
     this.open = new Boolean(false);
     this.closing = new Boolean(false);
+    if(this.closedTime == null) {
+      this.closedTime = System.currentTimeMillis();
+    }
   }
 
   /**

@@ -841,14 +841,17 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             activeCache.put(nodePath, configs);
           }
         } else if (statusCode == 2) {
-          broadcastEvent(status, OnlyofficeEditorService.EDITOR_CLOSED_EVENT);
+          
           Editor.User lastUser = getUser(key, status.getLastUser());
           Editor.User lastModifier = getLastModifier(key);
           
           // We download if there were modifications after the last saving.
           if (lastModifier.getId().equals(lastUser.getId()) && lastUser.getLastModified() > lastUser.getLastSaved()) {
             downloadClosed(config, status);
-          } 
+          } else {
+            config.closed();
+            broadcastEvent(status, OnlyofficeEditorService.EDITOR_CLOSED_EVENT);
+          }
           activeCache.remove(key);
           activeCache.remove(nodePath);
         } else if (statusCode == 3) {
@@ -1135,8 +1138,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                                           .users(new String[] { userdata.getUserId() })
                                                           .coEdited(userdata.getCoEdited())
                                                           .build();
-      broadcastEvent(status, OnlyofficeEditorService.EDITOR_VERSION_EVENT);
       download(config, status);
+      broadcastEvent(status, OnlyofficeEditorService.EDITOR_VERSION_EVENT);
     } catch (OnlyofficeEditorException | RepositoryException e) {
       LOG.error("Error occured while downloading document content [Version]. docId: " + docId, e);
     }
@@ -1241,7 +1244,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       download(config, status);
       config.getEditorConfig().getUser().setLastSaved(System.currentTimeMillis());
       config.closed(); // reset transient closing state
-      fireSaved(status);
       broadcastEvent(status, OnlyofficeEditorService.EDITOR_SAVED_EVENT);
     } catch (OnlyofficeEditorException | RepositoryException e) {
       LOG.error("Error occured while downloading document content [Closed]. docId: " + config.getDocId(), e);
@@ -1628,7 +1630,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             // actions in ECMS appear on it
             node.checkout();
           }
-
+          fireSaved(status);
         } catch (RepositoryException e) {
           try {
             node.refresh(false); // rollback JCR modifications
