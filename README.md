@@ -84,3 +84,21 @@ Indeed, in some cases, it may be required to allow requests from any client host
     onlyoffice.documentserver.accessOnly=false
 
 Allowing access from any host, if no other security protection implemented, **strongly not recommended** as mentioned RESTful end-points can be accessed by anyone (doesn't check eXo credentials to allow the Document Server work with them). 
+
+### Events
+
+OnlyOffice add-on publishes some eXo listener events to let end-user apps listen on them and build required data/output for collecting stats or other purposes.
+
+The add-on broadcasts such events (the constants are available in OnlyofficeEditorService interface):
+
+    EDITOR_OPENED_EVENT - exo.onlyoffice.editor.opened
+    EDITOR_CLOSED_EVENT - exo.onlyoffice.editor.closed
+    EDITOR_SAVED_EVENT - exo.onlyoffice.editor.saved
+    EDITOR_VERSION_EVENT - exo.onlyoffice.editor.version
+    EDITOR_ERROR_EVENT - exo.onlyoffice.editor.error
+
+The opened and closed events are published when an user opens or closes the editor relatively. The saved event appears when the last user has closed a document and its content has been saved.
+The version event is published when a new version of a document has been created due to coediting or autosave time.
+The error event appears when an error has occured while working with the Document Server.
+
+The data object passed to the event has DocumentStatus class which contains some useful information for end-user apps. For example, it contains the config, that has a full information about the editor, including the opened and closed times (for the opened and closed events). The coEdited field helps to figure out the original reason of the version event (true means that the version has been created becouse of coediting, false - due to autosave timer)

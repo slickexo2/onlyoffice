@@ -2016,7 +2016,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   protected void broadcastEvent(DocumentStatus status, String eventType) {
     try {
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Fire {} event. Config: {}", eventType, status.toJSON());
+        LOG.debug("Fire {} event. DocumentStatus: {}", eventType, status.toJSON());
       }
       listenerService.broadcast(eventType, this, config);
     } catch (Exception e) {
