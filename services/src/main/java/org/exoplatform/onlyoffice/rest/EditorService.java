@@ -212,16 +212,10 @@ public class EditorService implements ResourceContainer {
         String statusUrl = (String) jsonObj.get("url");
         Object errorObj = jsonObj.get("error");
         long error = errorObj != null ? Long.parseLong(errorObj.toString()) : 0;
-            
+
         // Oct 2017: When Document server calls with status 4 (user closed w/o
         // modification), the users array will be null
         JSONArray statusUsersArray = (JSONArray) jsonObj.get("users");
-
-        if (!editors.isAllowedToken(token, key)) {
-          LOG.warn("Error processing editor status. User not provided");
-          resp.error("The token is not valid").status(Status.UNAUTHORIZED);
-          return resp.build();
-        }
 
         @SuppressWarnings("unchecked")
         String[] statusUsers = statusUsersArray != null ? (String[]) statusUsersArray.toArray(new String[statusUsersArray.size()])
@@ -229,29 +223,34 @@ public class EditorService implements ResourceContainer {
 
         if (key != null && key.length() > 0) {
           if (userId != null && userId.length() > 0) {
-            DocumentStatus.Builder statusBuilder = new DocumentStatus.Builder();
-            statusBuilder.key(statusKey != null && statusKey.length() > 0 ? statusKey : key)
-                         .status(statusCode)
-                         .url(statusUrl)
-                         .users(statusUsers)
-                         .error(error)
-                         .userdata(userdata != null ? new ObjectMapper().readValue(userdata, Userdata.class) : null);
+            if (editors.validateToken(token, key)) {
+              DocumentStatus.Builder statusBuilder = new DocumentStatus.Builder();
+              statusBuilder.key(statusKey != null && statusKey.length() > 0 ? statusKey : key)
+                           .status(statusCode)
+                           .url(statusUrl)
+                           .users(statusUsers)
+                           .error(error)
+                           .userdata(userdata != null ? new ObjectMapper().readValue(userdata, Userdata.class) : null);
 
-            try {
-              editors.updateDocument(userId, statusBuilder.build());
-              resp.entity("{\"error\": 0}");
-            } catch (BadParameterException e) {
-              LOG.warn("Bad parameter to update status for " + key + ". " + e.getMessage());
-              resp.error(e.getMessage()).status(Status.BAD_REQUEST);
-            } catch (OnlyofficeEditorException e) {
-              LOG.error("Error handling status for " + key, e);
-              resp.error("Error handling status. " + e.getMessage()).status(Status.INTERNAL_SERVER_ERROR);
-            } catch (RepositoryException e) {
-              LOG.error("Storage error while handling status for " + key, e);
-              resp.error("Storage error.").status(Status.INTERNAL_SERVER_ERROR);
-            } catch (Throwable e) {
-              LOG.error("Runtime error while handling status for " + key, e);
-              resp.error("Runtime error.").status(Status.INTERNAL_SERVER_ERROR);
+              try {
+                editors.updateDocument(userId, statusBuilder.build());
+                resp.entity("{\"error\": 0}");
+              } catch (BadParameterException e) {
+                LOG.warn("Bad parameter to update status for " + key + ". " + e.getMessage());
+                resp.error(e.getMessage()).status(Status.BAD_REQUEST);
+              } catch (OnlyofficeEditorException e) {
+                LOG.error("Error handling status for " + key, e);
+                resp.error("Error handling status. " + e.getMessage()).status(Status.INTERNAL_SERVER_ERROR);
+              } catch (RepositoryException e) {
+                LOG.error("Storage error while handling status for " + key, e);
+                resp.error("Storage error.").status(Status.INTERNAL_SERVER_ERROR);
+              } catch (Throwable e) {
+                LOG.error("Runtime error while handling status for " + key, e);
+                resp.error("Runtime error.").status(Status.INTERNAL_SERVER_ERROR);
+              }
+            } else {
+              LOG.warn("Error processing editor status. The token is not valid");
+              resp.error("The token is not valid").status(Status.UNAUTHORIZED);
             }
           } else {
             LOG.warn("Error processing editor status. User not provided");
@@ -298,26 +297,32 @@ public class EditorService implements ResourceContainer {
     EditorResponse resp = new EditorResponse();
     if (editors.canDownloadBy(clientHost) || editors.canDownloadBy(clientIp)) {
       if (key != null && key.length() > 0) {
-        try {
-          if (userId != null && userId.length() > 0) {
-            DocumentContent content = editors.getContent(userId, key);
-            resp.entity(content.getData()).type(content.getType()).ok();
-          } else {
-            LOG.error("Error downloading content. User identity not provided");
-            resp.error("User not provided").status(Status.BAD_REQUEST);
+        String token = request.getHeader("Authorization").replace("Bearer", "").trim();
+        if (editors.validateToken(token, key)) {
+          try {
+            if (userId != null && userId.length() > 0) {
+              DocumentContent content = editors.getContent(userId, key);
+              resp.entity(content.getData()).type(content.getType()).ok();
+            } else {
+              LOG.error("Error downloading content. User identity not provided");
+              resp.error("User not provided").status(Status.BAD_REQUEST);
+            }
+          } catch (BadParameterException e) {
+            LOG.warn("Bad parameter to downloading content for " + key + ". " + e.getMessage());
+            resp.error(e.getMessage()).status(Status.BAD_REQUEST);
+          } catch (OnlyofficeEditorException e) {
+            LOG.error("Error downloading content for " + key, e);
+            resp.error("Error downloading content. " + e.getMessage()).status(Status.INTERNAL_SERVER_ERROR);
+          } catch (RepositoryException e) {
+            LOG.error("Storage error while downloading content for " + key, e);
+            resp.error("Storage error.").status(Status.INTERNAL_SERVER_ERROR);
+          } catch (Throwable e) {
+            LOG.error("Runtime error while downloading content for " + key, e);
+            resp.error("Runtime error.").status(Status.INTERNAL_SERVER_ERROR);
           }
-        } catch (BadParameterException e) {
-          LOG.warn("Bad parameter to downloading content for " + key + ". " + e.getMessage());
-          resp.error(e.getMessage()).status(Status.BAD_REQUEST);
-        } catch (OnlyofficeEditorException e) {
-          LOG.error("Error downloading content for " + key, e);
-          resp.error("Error downloading content. " + e.getMessage()).status(Status.INTERNAL_SERVER_ERROR);
-        } catch (RepositoryException e) {
-          LOG.error("Storage error while downloading content for " + key, e);
-          resp.error("Storage error.").status(Status.INTERNAL_SERVER_ERROR);
-        } catch (Throwable e) {
-          LOG.error("Runtime error while downloading content for " + key, e);
-          resp.error("Runtime error.").status(Status.INTERNAL_SERVER_ERROR);
+        } else {
+          LOG.warn("Error downloading content. The token is not valid");
+          resp.error("The token is not valid").status(Status.UNAUTHORIZED);
         }
       } else {
         resp.status(Status.BAD_REQUEST).error("Null or empty file key.");

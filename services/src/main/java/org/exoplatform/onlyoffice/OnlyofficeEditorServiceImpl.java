@@ -1242,15 +1242,17 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   @Override
-  public boolean isAllowedToken(String token, String key) {
+  public boolean validateToken(String token, String key) {
     try {
       Jws<Claims> jws = Jwts.parser()
                             .setSigningKey(Keys.hmacShaKeyFor(documentserverSecret.getBytes()))
                             .parseClaimsJws(token);
       Map<String, Object> claims = (Map) jws.getBody().get("payload");
-      return String.valueOf(claims.get("key")).equals(key);
-    } catch (JwtException e) {
-      LOG.error("Error occured while checking the token", e);
+      if(claims != null && claims.containsKey("key")) {
+        return String.valueOf(claims.get("key")).equals(key);
+      }
+    } catch (Exception e) {
+      LOG.warn("Couldn't validate the token: {} key: {}", token, key, e);
     }
     return false;
   }
