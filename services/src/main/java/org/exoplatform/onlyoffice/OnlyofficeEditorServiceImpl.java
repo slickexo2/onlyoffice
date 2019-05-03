@@ -1248,8 +1248,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                             .setSigningKey(Keys.hmacShaKeyFor(documentserverSecret.getBytes()))
                             .parseClaimsJws(token);
       Map<String, Object> claims = (Map) jws.getBody().get("payload");
-      if(claims != null && claims.containsKey("key")) {
-        return String.valueOf(claims.get("key")).equals(key);
+      if(claims != null) {
+        if(claims.containsKey("key")) {
+          return String.valueOf(claims.get("key")).equals(key);
+        }
+        if(claims.containsKey("url")) {
+          return String.valueOf(claims.get("url")).endsWith(key);
+        }
       }
     } catch (Exception e) {
       LOG.warn("Couldn't validate the token: {} key: {}", token, key, e);

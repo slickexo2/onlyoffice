@@ -205,7 +205,10 @@ public class EditorService implements ResourceContainer {
         JSONParser parser = new JSONParser();
         Object obj = parser.parse(statusText);
         JSONObject jsonObj = (JSONObject) obj;
-        String token = request.getHeader("Authorization").replace("Bearer", "").trim();
+        String token = request.getHeader("Authorization");
+        if(token != null) {
+          token = token.replace("Bearer", "").trim();
+        }
         String statusKey = (String) jsonObj.get("key");
         String userdata = (String) jsonObj.get("userdata");
         long statusCode = (long) jsonObj.get("status");
@@ -297,7 +300,10 @@ public class EditorService implements ResourceContainer {
     EditorResponse resp = new EditorResponse();
     if (editors.canDownloadBy(clientHost) || editors.canDownloadBy(clientIp)) {
       if (key != null && key.length() > 0) {
-        String token = request.getHeader("Authorization").replace("Bearer", "").trim();
+        String token = request.getHeader("Authorization");
+        if(token != null) {
+          token = token.replace("Bearer", "").trim();
+        }
         if (editors.validateToken(token, key)) {
           try {
             if (userId != null && userId.length() > 0) {
