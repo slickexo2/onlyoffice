@@ -202,8 +202,6 @@ public class EditorService implements ResourceContainer {
     EditorResponse resp = new EditorResponse();
     if (editors.canDownloadBy(clientHost) || editors.canDownloadBy(clientIp)) {
       try {
-        DocumentStatus status = new DocumentStatus();
-
         JSONParser parser = new JSONParser();
         Object obj = parser.parse(statusText);
         JSONObject jsonObj = (JSONObject) obj;
@@ -213,6 +211,8 @@ public class EditorService implements ResourceContainer {
         long statusCode = (long) jsonObj.get("status");
         String statusUrl = (String) jsonObj.get("url");
         Object errorObj = jsonObj.get("error");
+        long error = errorObj != null ? Long.parseLong(errorObj.toString()) : 0;
+            
         // Oct 2017: When Document server calls with status 4 (user closed w/o
         // modification), the users array will be null
         JSONArray statusUsersArray = (JSONArray) jsonObj.get("users");
@@ -223,24 +223,22 @@ public class EditorService implements ResourceContainer {
           return resp.build();
         }
 
-        long error = errorObj != null ? Long.parseLong(errorObj.toString()) : 0;
-
         @SuppressWarnings("unchecked")
         String[] statusUsers = statusUsersArray != null ? (String[]) statusUsersArray.toArray(new String[statusUsersArray.size()])
                                                         : new String[0];
 
         if (key != null && key.length() > 0) {
           if (userId != null && userId.length() > 0) {
-            status.setKey(statusKey != null && statusKey.length() > 0 ? statusKey : key);
-            status.setStatus(statusCode);
-            status.setUrl(statusUrl);
-            status.setUsers(statusUsers);
-            status.setError(error);
-            if (userdata != null) {
-              status.setUserdata(new ObjectMapper().readValue(userdata, Userdata.class));
-            }
+            DocumentStatus.Builder statusBuilder = new DocumentStatus.Builder();
+            statusBuilder.key(statusKey != null && statusKey.length() > 0 ? statusKey : key)
+                         .status(statusCode)
+                         .url(statusUrl)
+                         .users(statusUsers)
+                         .error(error)
+                         .userdata(userdata != null ? new ObjectMapper().readValue(userdata, Userdata.class) : null);
+
             try {
-              editors.updateDocument(userId, status);
+              editors.updateDocument(userId, statusBuilder.build());
               resp.entity("{\"error\": 0}");
             } catch (BadParameterException e) {
               LOG.warn("Bad parameter to update status for " + key + ". " + e.getMessage());

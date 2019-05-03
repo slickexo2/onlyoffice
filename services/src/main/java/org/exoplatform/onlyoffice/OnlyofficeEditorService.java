@@ -23,7 +23,6 @@ import javax.jcr.RepositoryException;
 
 import org.exoplatform.container.component.ComponentPlugin;
 import org.exoplatform.onlyoffice.Config.Editor;
-import org.exoplatform.onlyoffice.Config.Editor.User;
 
 /**
  * Created by The eXo Platform SAS.
@@ -33,8 +32,12 @@ import org.exoplatform.onlyoffice.Config.Editor.User;
  */
 public interface OnlyofficeEditorService {
 
-  static String EDITOR_OPEN_EVENT = "exo.onlyoffice.editor.open";
-
+  static String EDITOR_OPENED_EVENT = "exo.onlyoffice.editor.opened";
+  static String EDITOR_CLOSED_EVENT = "exo.onlyoffice.editor.closed";
+  static String EDITOR_SAVED_EVENT = "exo.onlyoffice.editor.saved";
+  static String EDITOR_VERSION_EVENT = "exo.onlyoffice.editor.version";
+  static String EDITOR_ERROR_EVENT = "exo.onlyoffice.editor.error";
+  
   /**
    * Return existing editor configuration for given user and node. If editor not
    * open for given node or user then <code>null</code> will be returned. If

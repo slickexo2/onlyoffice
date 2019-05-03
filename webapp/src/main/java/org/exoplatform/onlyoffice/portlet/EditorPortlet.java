@@ -111,16 +111,6 @@ public class EditorPortlet extends GenericPortlet {
           showError(i18n.getString("OnlyofficeEditorClient.ErrorTitle"),
                     i18n.getString("OnlyofficeEditor.error.EditorCannotBeCreated"));
         }
-
-        // Notify listeners
-        try {
-          ListenerService listenerService = webuiContext.getApplication()
-                                                        .getApplicationServiceContainer()
-                                                        .getComponentInstanceOfType(ListenerService.class);
-          listenerService.broadcast(OnlyofficeEditorService.EDITOR_OPEN_EVENT, onlyoffice, config);
-        } catch (Exception e) {
-          LOG.error("Error firing listener with Onlyoffice event for user: {}, document: {}", request.getRemoteUser(), docId, e);
-        }
       } catch (RepositoryException e) {
         LOG.error("Error reading document node by ID: {}", docId, e);
         showError(i18n.getString("OnlyofficeEditorClient.ErrorTitle"),

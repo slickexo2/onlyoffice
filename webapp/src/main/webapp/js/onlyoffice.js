@@ -389,7 +389,7 @@
               // Publish autosave version for download
               downloadVersion();
             }, 600000); // 10min for autosave
-          }, 30000); // 30 sec to save the download link
+          }, 20000); // 20 sec to save the download link
 
           // We are a editor page here: publish that the doc was changed by current user
           publishDocument(currentConfig.docId, {
@@ -576,11 +576,12 @@
           window.addEventListener("unload", function() {
             UI.closeEditor();
             // We need to save current changes when user closes the editor
-            if (currentConfig && currentUserChanges) {
+            if (currentConfig) {
               publishDocument(currentConfig.docId, {
                 "type" : EDITOR_CLOSED,
                 "userId" : currentUserId,
-                "key" : currentConfig.document.key
+                "key" : currentConfig.document.key,
+                "changes": currentUserChanges
               });
             }
           });
@@ -714,13 +715,14 @@
      * Returns the html markup of the 'Edit Online' button.
      */
     var getEditorButton = function(editorLink) {
-      return "<li><a href='" + editorLink
-          + "' target='_blank'><i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i> "
-          + message("EditButtonTitle") + "</a></li>";
+      return "<li class='hidden-tabletL'><a href='" + editorLink + "' target='_blank'>"
+      		+ "<i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i>" + message("EditButtonTitle")
+          + "</a></li>";
     };
     
     var getNoPreviewEditorButton = function(editorLink) {
-      return "<a class='btn editOnlineBtn' href='#' onclick='javascript:window.open(\"" + editorLink +"\");'><i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i>Edit Online</a>";
+      return "<a class='btn editOnlineBtn hidden-tabletL' href='#' onclick='javascript:window.open(\"" + editorLink +"\");'>"
+      		+ "<i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i>" + message("EditButtonTitle") + "</a>";
     };
 
     /**
@@ -728,7 +730,7 @@
      */
     var getRefreshBanner = function() {
       return "<div class='documentRefreshBanner'><div class='refreshBannerContent'>" + message("UpdateBannerTitle")
-          + " <span class='refreshBannerLink'>" + message("ReloadButtonTitle") + "</span></div></div>";
+          + "<span class='refreshBannerLink'>" + message("ReloadButtonTitle") + "</span></div></div>";
     };
 
     /**
@@ -903,7 +905,9 @@
      * Ads the 'Edit Online' button to the JCRExplorer when a document is displayed.
      */
     this.addEditorButtonToExplorer = function(editorLink) {
-      $("#UIJCRExplorer #uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen").addClass("uiIconEdit");
+      var $button = $("#UIJCRExplorer #uiActionsBarContainer i.uiIconEcmsOnlyofficeOpen");
+      $button.addClass("uiIconEdit");
+      $button.closest("li").addClass("hidden-tabletL");
       var $noPreviewContainer = $("#UIJCRExplorer .navigationContainer.noPreview");
       if (editorLink != null && $noPreviewContainer.length != 0) {
         var $detailContainer = $noPreviewContainer.find(".detailContainer");

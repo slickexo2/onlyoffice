@@ -54,12 +54,14 @@ import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.component.RequestLifeCycle;
+import org.exoplatform.onlyoffice.Config;
 import org.exoplatform.onlyoffice.Config.Editor;
 import org.exoplatform.onlyoffice.DocumentStatus;
 import org.exoplatform.onlyoffice.OnlyofficeEditorException;
 import org.exoplatform.onlyoffice.OnlyofficeEditorListener;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
 import org.exoplatform.onlyoffice.Userdata;
+import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
@@ -326,21 +328,25 @@ public class CometdOnlyofficeService implements Startable {
 
     /** The bayeux. */
     @Inject
-    private BayeuxServer  bayeux;
+    private BayeuxServer    bayeux;
 
     /** The local session. */
     @Session
-    private LocalSession  localSession;
+    private LocalSession    localSession;
 
     /** The server session. */
     @Session
-    private ServerSession serverSession;
+    private ServerSession   serverSession;
+
+    /** The listener service */
+    private ListenerService listenerService;
 
     /**
      * Post construct.
      */
     @PostConstruct
     public void postConstruct() {
+      listenerService = PortalContainer.getInstance().getComponentInstanceOfType(ListenerService.class);
       editors.addListener(new OnlyofficeEditorListener() {
 
         @Override
@@ -426,7 +432,7 @@ public class CometdOnlyofficeService implements Startable {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
       // Saving a link
-      editors.forceSave(new Userdata(userId, key, false));
+      editors.forceSave(new Userdata(userId, key, false, false));
     }
 
     /**
@@ -438,14 +444,17 @@ public class CometdOnlyofficeService implements Startable {
     protected void handleEditorClosedEvent(Map<String, Object> data, String docId) {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
-      try {
-        String[] users = editors.getState(userId, key).getUsers();
-        // Don't call forceSave if it's the last user.
-        if (users.length > 1) {
-          editors.forceSave(new Userdata(userId, key, true));
+      Boolean changes = (Boolean) data.get("changes");
+      if (changes != null && changes.booleanValue()) {
+        try {
+          String[] users = editors.getState(userId, key).getUsers();
+          // Don't call forceSave if it's the last user.
+          if (users.length > 1) {
+            editors.forceSave(new Userdata(userId, key, true, false));
+          } 
+        } catch (OnlyofficeEditorException e) {
+          LOG.error("Cannot get state of document key: " + key + ", user: " + userId);
         }
-      } catch (OnlyofficeEditorException e) {
-        LOG.error("Cannot get state of document key: " + key + ", user: " + userId);
       }
 
     }
@@ -483,13 +492,12 @@ public class CometdOnlyofficeService implements Startable {
           Editor.User user = editors.getUser(key, userId);
           if (user.getLinkSaved() >= user.getLastModified()) {
             LOG.debug("Downloading from existing link. User: {}, Key: {}, Link: {}", user.getId(), key, user.getDownloadLink());
-            editors.downloadVersion(new Userdata(userId, key, false), user.getDownloadLink());
+            editors.downloadVersion(new Userdata(userId, key, false, false), user.getDownloadLink());
           } else {
-            editors.forceSave(new Userdata(userId, key, true));
+            editors.forceSave(new Userdata(userId, key, true, false));
           }
         }
       });
-
     }
 
     /**
@@ -502,9 +510,9 @@ public class CometdOnlyofficeService implements Startable {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
       Editor.User lastUser = editors.getLastModifier(key);
+
       // We download user version if another user started changing the document
       if (lastUser != null && !userId.equals(lastUser.getId())) {
-
         eventsHandlers.submit(new ContainerCommand(PortalContainer.getCurrentPortalContainerName()) {
           @Override
           void onContainerError(String error) {
@@ -520,15 +528,17 @@ public class CometdOnlyofficeService implements Startable {
                         lastUser.getId(),
                         key,
                         lastUser.getDownloadLink());
-              editors.downloadVersion(new Userdata(lastUser.getId(), key, false), lastUser.getDownloadLink());
+              editors.downloadVersion(new Userdata(lastUser.getId(), key, false, true), lastUser.getDownloadLink());
             } else {
-              editors.forceSave(new Userdata(lastUser.getId(), key, true));
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Download a new version of document: user " + lastUser.getId() + ", docId: " + docId);
+              }
+              editors.forceSave(new Userdata(lastUser.getId(), key, true, true));
             }
+
           }
         });
-
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Download a new version of document: user " + lastUser.getId() + ", docId: " + docId);
           LOG.debug("Started collecting changes for: " + userId + ", docId: " + docId);
         }
       }
@@ -561,7 +571,6 @@ public class CometdOnlyofficeService implements Startable {
         data.append('}');
         channel.publish(localSession, data.toString());
       }
-
     }
   }
 
