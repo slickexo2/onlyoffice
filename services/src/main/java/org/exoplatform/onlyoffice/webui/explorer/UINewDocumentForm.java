@@ -18,6 +18,8 @@
  */
 package org.exoplatform.onlyoffice.webui.explorer;
 
+import static org.exoplatform.onlyoffice.webui.OnlyofficeContext.editorLink;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,7 +41,6 @@ import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.web.application.ApplicationMessage;
 import org.exoplatform.web.application.JavascriptManager;
-import org.exoplatform.web.application.RequireJS;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.EventConfig;
@@ -179,7 +180,11 @@ public class UINewDocumentForm extends UIForm implements UIPopupComponent {
       OnlyofficeEditorService editorService = ExoContainerContext.getCurrentContainer()
                                                                  .getComponentInstanceOfType(OnlyofficeEditorService.class);
       String link = editorService.getEditorLink(createdDocument);
-      link = link != null ? "'" + link + "'" : "null";
+      if (link != null) {
+        link = "'" + editorLink(link, "documents") + "'";
+      } else {
+        link = "null";
+      }
 
       WebuiRequestContext requestContext = WebuiRequestContext.getCurrentInstance();
       JavascriptManager js = requestContext.getJavascriptManager();

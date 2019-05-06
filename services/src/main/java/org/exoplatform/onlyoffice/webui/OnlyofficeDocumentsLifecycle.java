@@ -19,6 +19,7 @@
 
 package org.exoplatform.onlyoffice.webui;
 
+import static org.exoplatform.onlyoffice.webui.OnlyofficeContext.editorLink;
 import static org.exoplatform.onlyoffice.webui.OnlyofficeContext.callModule;
 
 import javax.jcr.Node;
@@ -76,11 +77,11 @@ public class OnlyofficeDocumentsLifecycle extends AbstractOnlyofficeLifecycle {
                                                          .getApplicationServiceContainer()
                                                          .getComponentInstanceOfType(OnlyofficeEditorService.class);
           String docId = editorService.getDocumentId(node);
-          String editorLink = editorService.getEditorLink(node);
+          String editorLink = editorLink(editorService.getEditorLink(node), "documents");
           if (docId != null && editorService.isDocumentMimeSupported(node)) {
             // This will init explorer even for docs that cannot be edited
             // by the user (locked or lack of permissions)
-            callModule("initExplorer('" + docId + "', '" + editorLink +"');");
+            callModule("initExplorer('" + docId + "', '" + editorLink + "');");
           } else if (LOG.isDebugEnabled()) {
             LOG.debug("Document not initialized or not editable for {}, node: {}:{}, context: {}",
                       userName,
