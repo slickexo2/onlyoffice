@@ -18,6 +18,7 @@
  */
 package org.exoplatform.onlyoffice.cometd;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -441,7 +442,7 @@ public class CometdOnlyofficeService implements Startable {
       try {
         String[] users = editors.getState(userId, key).getUsers();
         // Don't call forceSave if it's the last user.
-        if (users.length > 1) {
+        if (users.length > 0) {
           editors.forceSave(new Userdata(userId, key, true));
         }
       } catch (OnlyofficeEditorException e) {
@@ -500,8 +501,9 @@ public class CometdOnlyofficeService implements Startable {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
       Editor.User lastUser = editors.getLastModifier(key);
+
       // We download user version if another user started changing the document
-      if (lastUser != null && !userId.equals(lastUser.getId())) {
+      if (lastUser != null && !userId.equals(lastUser.getId()) && lastUser.getLastModified() > lastUser.getLastSaved()) {
         eventsHandlers.submit(new ContainerCommand(PortalContainer.getCurrentPortalContainerName()) {
           @Override
           void onContainerError(String error) {
