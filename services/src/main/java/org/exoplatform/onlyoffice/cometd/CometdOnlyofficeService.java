@@ -449,7 +449,7 @@ public class CometdOnlyofficeService implements Startable {
         try {
           String[] users = editors.getState(userId, key).getUsers();
           // Don't call forceSave if it's the last user.
-          if (users.length > 1) {
+          if (users.length > 0) {
             editors.forceSave(new Userdata(userId, key, true, false));
           } 
         } catch (OnlyofficeEditorException e) {
