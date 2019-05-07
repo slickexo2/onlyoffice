@@ -744,16 +744,15 @@
             tryAddEditorButtonNoPreview(editorLink, attempts - 1, delay);
           }, delay);
         } else {
-          log("Cannot find element " + $elem);
+          log("Cannot find .noPreview element");
         }
       } else {
         var $detailContainer = $elem.find(".detailContainer");
         var $downloadBtn = $detailContainer.find(".uiIconDownload").closest("a.btn");
         if ($downloadBtn.length != 0) {
           $downloadBtn.after(getNoPreviewEditorButton(editorLink));
-        }
-        else {
-           $detailContainer.append(getNoPreviewEditorButton(editorLink));
+        } else {
+          $detailContainer.append(getNoPreviewEditorButton(editorLink));
         } 
       }
     };
@@ -773,7 +772,8 @@
         }
       } else {
         $elem.append("<div class='onlyOfficeEditBtn'>" + getEditorButton(editorLink) + "</div>");
-        tryAddEditorButtonNoPreview(editorLink, 100, 100);
+        // We need wait for about 2min when doc cannot generate its preview
+        tryAddEditorButtonNoPreview(editorLink, 600, 250);
       }
     };
 

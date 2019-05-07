@@ -27,6 +27,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -679,8 +681,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           String ecmsPageLink = explorerLink(path);
           builder.explorerUri(explorerUri(schema, host, port, ecmsPageLink));
           builder.secret(documentserverSecret);
-          config = builder.build();
 
+          config = builder.build();
           // Create users' config map and add first user
           configs = new ConcurrentHashMap<String, Config>();
           configs.put(userId, config);
@@ -1976,6 +1978,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   protected URI explorerUri(String schema, String host, int port, String ecmsLink) {
     URI uri;
     try {
+      ecmsLink = URLDecoder.decode(ecmsLink, StandardCharsets.UTF_8.name());
       String[] linkParts = ecmsLink.split("\\?");
       if (linkParts.length >= 2) {
         uri = new URI(schema, null, host, port, linkParts[0], linkParts[1], null);
