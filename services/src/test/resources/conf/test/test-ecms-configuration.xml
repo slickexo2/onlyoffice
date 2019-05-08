@@ -1634,8 +1634,7 @@
                         </value>
                       </collection>
                     </field>
-                    <field name="mixinTypes">
-                    </field>
+                    
                   </object>
                 </value>
               </collection>

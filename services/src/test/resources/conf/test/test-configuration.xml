@@ -367,8 +367,9 @@
   <import>jar:/conf/test/test-portal-configuration.xml</import>
   <import>jar:/conf/test/test-ecms-configuration.xml</import>
   <import>jar:/conf/test/test-social-configuration.xml</import>
-  <import>jar:/conf/test/test-onlyoffice-configuration.xml</import>
   <import>jar:/conf/test/exo.social.component.search.test.configuration.xml</import>
+  <import>jar:/conf/test/test-onlyoffice-configuration.xml</import>
+  
 
 <remove-configuration>org.exoplatform.wcm.ext.component.document.service.ContentViewerRESTService</remove-configuration>
 </configuration>
