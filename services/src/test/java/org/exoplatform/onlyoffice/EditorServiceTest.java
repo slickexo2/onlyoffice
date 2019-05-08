@@ -20,18 +20,13 @@ public class EditorServiceTest  extends BaseCommonsTestCase {
   
   @Override
   protected void beforeClass() {
-    // this.setForceContainerReload(true); // We don't want reload container!
     super.beforeClass();
-
     this.container = PortalContainer.getInstance();
     ExoContainerContext.setCurrentContainer(container);
     editorService = getService(EditorService.class);
   }
   @Test
   public void testREST() throws IOException {
-    OnlyofficeEditorService editor = getService(OnlyofficeEditorService.class);
-    editorService = getService(EditorService.class);
-    System.out.println("EDITOR SERVICE " + editorService);
-    System.out.println("EDIRODS " + editor);
+    
   }
 }

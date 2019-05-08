@@ -241,8 +241,8 @@
           <property name="driverClassName" value="com.mysql.jdbc.Driver" />
           <property name="url"
             value="jdbc:mysql://localhost:3306/test52?createDatabaseIfNotExist=true&amp;autoReconnect=true&amp;useSSL=false&amp;characterEncoding=utf8" />
-          <property name="username" value="vlad" />
-          <property name="password" value="vlad" />
+          <property name="username" value="exo" />
+          <property name="password" value="exo" />
         </properties-param>
       </init-params>
     </component-plugin>
@@ -366,7 +366,6 @@
   <import>jar:/conf/test/test-jcr-configuration.xml</import>
   <import>jar:/conf/test/test-portal-configuration.xml</import>
   <import>jar:/conf/test/test-ecms-configuration.xml</import>
-  <import>jar:/conf/test/test-social-configuration.xml</import>
   <import>jar:/conf/test/exo.social.component.search.test.configuration.xml</import>
   <import>jar:/conf/test/test-onlyoffice-configuration.xml</import>
   
