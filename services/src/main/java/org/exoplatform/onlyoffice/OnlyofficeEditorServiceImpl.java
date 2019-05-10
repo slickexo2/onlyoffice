@@ -2058,7 +2058,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /**
    * Broadcasts an event using the listenerService.
    * 
-   * @param config the config
+   * @param status the status
    * @param eventType the eventType
    */
   protected void broadcastEvent(DocumentStatus status, String eventType) {
