@@ -17,6 +17,8 @@ public class Userdata {
   /** The download. */
   protected Boolean download;
 
+  protected Boolean coEdited;
+  
   /**
    * Instantiates a new userdata.
    *
@@ -24,11 +26,12 @@ public class Userdata {
    * @param key the key
    * @param download the download
    */
-  public Userdata(String userId, String key, Boolean download) {
+  public Userdata(String userId, String key, Boolean download, Boolean coEdited) {
     super();
     this.userId = userId;
     this.key = key;
     this.download = download;
+    this.coEdited = coEdited;
   }
   
   /**
@@ -93,6 +96,24 @@ public class Userdata {
     this.download = download;
   }
   
+  /**
+   * Gets the coEdited.
+   *
+   * @return the coEdited
+   */
+  public Boolean getCoEdited() {
+    return coEdited;
+  }
+
+  /**
+   * Sets the coEdited.
+   *
+   * @param coEdited the coEdited
+   */
+  public void setCoEdited(Boolean coEdited) {
+    this.coEdited = coEdited;
+  }
+
   /**
    * Return this config as JSON string.
    *

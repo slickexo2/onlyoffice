@@ -19,6 +19,9 @@
  */
 package org.exoplatform.onlyoffice;
 
+import org.exoplatform.ws.frameworks.json.impl.JsonException;
+import org.exoplatform.ws.frameworks.json.impl.JsonGeneratorImpl;
+
 // TODO: Auto-generated Javadoc
 /**
  * Onlyoffice Config status as described in
@@ -49,8 +52,14 @@ public class DocumentStatus {
   protected long     error;
 
   /** The userdata. */
-  protected Userdata   userdata;
-
+  protected Userdata userdata;
+  
+  /** The coedited */
+  protected Boolean coEdited;
+   
+  protected void setConfig(Config config) {
+    this.config = config;
+  }
   /**
    * Gets the key.
    *
@@ -59,16 +68,6 @@ public class DocumentStatus {
   public String getKey() {
     return key;
   }
-
-  /**
-   * Sets the key.
-   *
-   * @param key the key to set
-   */
-  public void setKey(String key) {
-    this.key = key;
-  }
-
   /**
    * Gets the status.
    *
@@ -76,15 +75,6 @@ public class DocumentStatus {
    */
   public Long getStatus() {
     return status;
-  }
-
-  /**
-   * Sets the status.
-   *
-   * @param status the status to set
-   */
-  public void setStatus(Long status) {
-    this.status = status;
   }
 
   /**
@@ -97,30 +87,12 @@ public class DocumentStatus {
   }
 
   /**
-   * Sets the url.
-   *
-   * @param url the url to set
-   */
-  public void setUrl(String url) {
-    this.url = url;
-  }
-
-  /**
    * Gets the users.
    *
    * @return the users
    */
   public String[] getUsers() {
     return users;
-  }
-
-  /**
-   * Sets the users.
-   *
-   * @param users the users to set
-   */
-  public void setUsers(String[] users) {
-    this.users = users;
   }
 
   /**
@@ -132,14 +104,6 @@ public class DocumentStatus {
     return config;
   }
 
-  /**
-   * Sets the config.
-   * 
-   * @param config the config to set
-   */
-  public void setConfig(Config config) {
-    this.config = config;
-  }
 
   /**
    * Gets the error.
@@ -151,15 +115,6 @@ public class DocumentStatus {
   }
 
   /**
-   * Sets the error.
-   *
-   * @param error the error to set
-   */
-  public void setError(long error) {
-    this.error = error;
-  }
-
-  /**
    * Gets the last user (editor).
    *
    * @return the last user (editor)
@@ -167,7 +122,7 @@ public class DocumentStatus {
   public String getLastUser() {
     return users.length > 0 ? users[0] : null;
   }
-  
+
   /**
    * Gets the userdata.
    *
@@ -176,13 +131,79 @@ public class DocumentStatus {
   public Userdata getUserdata() {
     return userdata;
   }
-
+  
   /**
-   * Sets the userdata.
+   * Gets the coEdited.
    *
-   * @param userdata the new userdata
+   * @return the coEdited
    */
-  public void setUserdata(Userdata userdata) {
-    this.userdata = userdata;
+  public Boolean isCoedited() {
+    return coEdited;
+  }
+
+  public static class Builder {
+    private DocumentStatus documentStatus;
+
+    public Builder() {
+      documentStatus = new DocumentStatus();
+    }
+
+    public Builder key(String key) {
+      documentStatus.key = key;
+      return this;
+    }
+
+    public Builder status(Long status) {
+      documentStatus.status = status;
+      return this;
+    }
+
+    public Builder url(String url) {
+      documentStatus.url = url;
+      return this;
+    }
+
+    public Builder users(String[] users) {
+      documentStatus.users = users;
+      return this;
+    }
+
+    public Builder config(Config config) {
+      documentStatus.config = config;
+      return this;
+    }
+
+    public Builder error(long error) {
+      documentStatus.error = error;
+      return this;
+    }
+
+    public Builder userdata(Userdata userdata) {
+      documentStatus.userdata = userdata;
+      return this;
+    }
+    
+    public Builder coEdited(Boolean coEdited) {
+      documentStatus.coEdited = coEdited;
+      return this;
+    }
+
+    public DocumentStatus build() {
+      return documentStatus;
+    }
+    
+    public void reset() {
+      documentStatus = new DocumentStatus();
+    }
+  }
+  /**
+   * Return this config as JSON string.
+   *
+   * @return the string
+   * @throws JsonException the json exception
+   */
+  public String toJSON() throws JsonException {
+    JsonGeneratorImpl gen = new JsonGeneratorImpl();
+    return gen.createJsonObject(this).toString();
   }
 }

@@ -25,8 +25,6 @@ import java.io.ObjectOutput;
 import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.HashSet;
-import java.util.Set;
 
 import javax.jcr.Node;
 
@@ -930,6 +928,12 @@ public class Config implements Externalizable {
    * data submitted from Onlyoffice DS.
    */
   private Boolean        closing;
+  
+  /** The open timestamp */
+  private Long openedTime;
+  
+  /** The close timestamp */
+  private Long closedTime;
 
   /**
    * Instantiates a new config for use with {@link Externalizable} methods. User
@@ -1197,6 +1201,42 @@ public class Config implements Externalizable {
   public Document getDocument() {
     return document;
   }
+  
+  /**
+   * Gets the openedTime.
+   *
+   * @return the openedTime
+   */
+  public Long getOpenedTime() {
+    return openedTime;
+  }
+
+  /**
+   * Gets the closedTime.
+   *
+   * @return the closedTime
+   */
+  public Long getClosedTime() {
+    return closedTime;
+  }
+  
+  /**
+   * Sets the openedTime.
+   *
+   * @param openedTime the openedTime
+   */
+  protected void setOpenedTime(Long openedTime) {
+    this.openedTime = openedTime;
+  }
+  
+  /**
+   * Sets the closedTime.
+   *
+   * @param closedTime the closedTime
+   */
+  protected void setClosedTime(Long closedTime) {
+    this.closedTime = closedTime;
+  }
 
   /**
    * Gets the editor config.
@@ -1273,6 +1313,7 @@ public class Config implements Externalizable {
   public void open() {
     this.open = new Boolean(true);
     this.closing = new Boolean(false);
+    this.openedTime = System.currentTimeMillis();
   }
 
   /**
@@ -1285,6 +1326,7 @@ public class Config implements Externalizable {
     if (open != null && open.booleanValue()) {
       this.open = new Boolean(false);
       this.closing = new Boolean(true);
+      this.closedTime = System.currentTimeMillis();
     }
   }
 
@@ -1295,6 +1337,9 @@ public class Config implements Externalizable {
   public void closed() {
     this.open = new Boolean(false);
     this.closing = new Boolean(false);
+    if(this.closedTime == null) {
+      this.closedTime = System.currentTimeMillis();
+    }
   }
 
   /**
@@ -1302,7 +1347,7 @@ public class Config implements Externalizable {
    *
    * @param error the new error
    */
-  public void setError(String error) {
+  protected void setError(String error) {
     this.error = error;
   }
 
