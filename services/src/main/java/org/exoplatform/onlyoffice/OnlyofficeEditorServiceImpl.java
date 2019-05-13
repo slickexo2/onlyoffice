@@ -1261,7 +1261,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           }
         }
       } catch (Exception e) {
-        LOG.warn("Couldn't validate the token: {} key: {}", token, key, e);
+        LOG.warn("Couldn't validate the token: {} key: {} :", token, key, e.getMessage());
       }
     }
     return false;

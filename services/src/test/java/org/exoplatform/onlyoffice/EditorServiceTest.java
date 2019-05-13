@@ -11,8 +11,6 @@ import javax.ws.rs.core.MultivaluedMap;
 
 import org.junit.Test;
 
-import com.sun.xml.bind.Util;
-
 import org.exoplatform.commons.testing.BaseCommonsTestCase;
 import org.exoplatform.component.test.ConfigurationUnit;
 import org.exoplatform.component.test.ConfiguredBy;
@@ -32,31 +30,47 @@ import org.exoplatform.services.rest.tools.DummyContainerResponseWriter;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
+/**
+ * The Class EditorServiceTest.
+ */
 @ConfiguredBy({ @ConfigurationUnit(scope = ContainerScope.ROOT, path = "conf/test-configuration.xml"),
     @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/portal/configuration.xml"),
     @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/test/test-configuration.xml") })
 public class EditorServiceTest extends BaseCommonsTestCase {
 
+  /** The Constant RESOURCE_URL. */
   protected static final String RESOURCE_URL = "/onlyoffice/editor";
 
+  /** The Constant user. */
   protected static final String user         = "john";
 
+  /** The Constant key. */
   protected static final String key          = "666ea5ae-2732-32d8-862e-904ff56a16f9";
 
+  /** The editor service. */
   protected EditorService       editorService;
 
+  /** The request handler. */
   protected RequestHandlerImpl  requestHandler;
 
+  /** The status json payload. */
   protected String              statusJsonPayload;
 
+  /** The content token. */
   protected String              contentToken;
 
+  /** The status token. */
   protected String              statusToken;
 
+  /** The content wrong token. */
   protected String              contentWrongToken;
 
+  /** The status wrong token. */
   protected String              statusWrongToken;
 
+  /**
+   * Before class.
+   */
   @Override
   protected void beforeClass() {
     super.beforeClass();
@@ -103,9 +117,13 @@ public class EditorServiceTest extends BaseCommonsTestCase {
                            .compact();
   }
 
+  /**
+   * Test content.
+   *
+   * @throws Exception the exception
+   */
   @Test
   public void testContent() throws Exception {
-
     MultivaluedMap<String, String> headers = new MultivaluedMapImpl();
     headers.putSingle("authorization", "Bearer " + contentToken);
     ContainerResponse response = service("GET", RESOURCE_URL + "/content/" + user + "/" + key, "", headers, null);
@@ -114,9 +132,13 @@ public class EditorServiceTest extends BaseCommonsTestCase {
     assertEquals("{\"error\":\"File key not found " + key + "\"}", response.getEntity());
   }
 
+  /**
+   * Test content wrong token.
+   *
+   * @throws Exception the exception
+   */
   @Test
   public void testContentWrongToken() throws Exception {
-
     MultivaluedMap<String, String> headers = new MultivaluedMapImpl();
     headers.putSingle("authorization", "Bearer " + contentWrongToken);
     ContainerResponse response = service("GET", RESOURCE_URL + "/content/" + user + "/" + key, "", headers, null);
@@ -125,6 +147,11 @@ public class EditorServiceTest extends BaseCommonsTestCase {
     assertEquals("{\"error\":\"The token is not valid\"}", response.getEntity());
   }
 
+  /**
+   * Test content no token.
+   *
+   * @throws Exception the exception
+   */
   @Test
   public void testContentNoToken() throws Exception {
     ContainerResponse response = service("GET", RESOURCE_URL + "/content/" + user + "/" + key, "", null, null);
@@ -133,6 +160,11 @@ public class EditorServiceTest extends BaseCommonsTestCase {
     assertEquals("{\"error\":\"The token is not valid\"}", response.getEntity());
   }
 
+  /**
+   * Test status.
+   *
+   * @throws Exception the exception
+   */
   @Test
   public void testStatus() throws Exception {
     MultivaluedMap<String, String> headers = new MultivaluedMapImpl();
@@ -147,9 +179,13 @@ public class EditorServiceTest extends BaseCommonsTestCase {
     assertEquals("{\"error\":\"File key not found " + key + "\"}", response.getEntity());
   }
 
+  /**
+   * Test status wrong token.
+   *
+   * @throws Exception the exception
+   */
   @Test
   public void testStatusWrongToken() throws Exception {
-
     MultivaluedMap<String, String> headers = new MultivaluedMapImpl();
     headers.putSingle("authorization", "Bearer " + statusWrongToken);
     ContainerResponse response = service("POST",
@@ -162,9 +198,13 @@ public class EditorServiceTest extends BaseCommonsTestCase {
     assertEquals("{\"error\":\"The token is not valid\"}", response.getEntity());
   }
 
+  /**
+   * Test status no token.
+   *
+   * @throws Exception the exception
+   */
   @Test
   public void testStatusNoToken() throws Exception {
-
     ContainerResponse response = service("POST",
                                          RESOURCE_URL + "/status/" + user + "/" + key,
                                          "",
@@ -175,6 +215,17 @@ public class EditorServiceTest extends BaseCommonsTestCase {
     assertEquals("{\"error\":\"The token is not valid\"}", response.getEntity());
   }
 
+  /**
+   * Service.
+   *
+   * @param method the method
+   * @param requestURI the request URI
+   * @param baseURI the base URI
+   * @param headers the headers
+   * @param data the data
+   * @return the container response
+   * @throws Exception the exception
+   */
   protected ContainerResponse service(String method,
                                       String requestURI,
                                       String baseURI,
@@ -204,5 +255,5 @@ public class EditorServiceTest extends BaseCommonsTestCase {
     requestHandler.handleRequest(request, response);
     return response;
   }
-
+  
 }
