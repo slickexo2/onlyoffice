@@ -6,34 +6,51 @@ import java.util.Map;
 
 import org.exoplatform.services.test.mock.MockHttpServletRequest;
 
+/**
+ * The Class OnlyofficeMockHttpServletRequest.
+ */
 public class OnlyofficeMockHttpServletRequest extends MockHttpServletRequest {
+  
 
-
-  public OnlyofficeMockHttpServletRequest(String url, InputStream data, int length, String method, Map<String, List<String>> headers) {
+  /**
+   * Instantiates a new onlyoffice mock http servlet request.
+   *
+   * @param url the url
+   * @param data the data
+   * @param length the length
+   * @param method the method
+   * @param headers the headers
+   */
+  public OnlyofficeMockHttpServletRequest(String url,
+                                          InputStream data,
+                                          int length,
+                                          String method,
+                                          Map<String, List<String>> headers) {
     super(url, data, length, method, headers);
   }
-   /**
-    * {@inheritDoc}
-    */
-   public String getServerName() {
-     try {
+
+  /**
+   * {@inheritDoc}
+   */
+  public String getServerName() {
+    try {
       return super.getServerName();
-     } catch (Exception e) {
+    } catch (Exception e) {
 
-     }
-     return "localhost";
-   }
+    }
+    return "localhost";
+  }
 
-     /**
-    * {@inheritDoc}
-    */
-   public int getServerPort() {
-     try {
+  /**
+  * {@inheritDoc}
+  */
+  public int getServerPort() {
+    try {
       return super.getServerPort();
-     } catch (Exception e) {
+    } catch (Exception e) {
 
-     }
-     return 8080;
-   }
+    }
+    return 8080;
+  }
 
 }
