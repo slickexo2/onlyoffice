@@ -216,7 +216,7 @@ public class EditorServiceTest extends BaseCommonsTestCase {
   }
 
   /**
-   * Service.
+   * Sends a request to specified URI.
    *
    * @param method the method
    * @param requestURI the request URI
