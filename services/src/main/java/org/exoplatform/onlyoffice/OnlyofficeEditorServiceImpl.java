@@ -326,6 +326,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @param cacheService the cache service
    * @param documentService the document service (ECMS)
    * @param lockService the lock service
+   * @param listenerService the listener service
    * @param params the params
    * @throws ConfigurationException the configuration exception
    */
@@ -1145,6 +1146,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Editor.User getLastModifier(String key) {
     ConcurrentMap<String, Config> configs = activeCache.get(key);
@@ -1163,6 +1167,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     return lastUser;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void setLastModifier(String key, String userId) {
     ConcurrentMap<String, Config> configs = activeCache.get(key);
@@ -1174,6 +1181,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Editor.User getUser(String key, String userId) {
     ConcurrentMap<String, Config> configs = activeCache.get(key);
@@ -1183,6 +1193,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     return null;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void forceSave(Userdata userdata) {
     HttpURLConnection connection = null;
@@ -1219,6 +1232,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
   // *********************** implementation level ***************
 
+  /**
+   * Save link.
+   *
+   * @param userdata the userdata
+   * @param url the url
+   */
   protected void saveLink(Userdata userdata, String url) {
     ConcurrentMap<String, Config> configs = activeCache.get(userdata.getKey());
     if (configs != null) {
@@ -1928,6 +1947,15 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     return explorerUrl;
   }
 
+  /**
+   * Explorer uri.
+   *
+   * @param schema the schema
+   * @param host the host
+   * @param port the port
+   * @param ecmsLink the ecms link
+   * @return the uri
+   */
   protected URI explorerUri(String schema, String host, int port, String ecmsLink) {
     URI uri;
     try {
@@ -2010,8 +2038,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
   /**
    * Broadcasts an event using the listenerService.
-   * 
-   * @param config the config
+   *
+   * @param status the status
    * @param eventType the eventType
    */
   protected void broadcastEvent(DocumentStatus status, String eventType) {

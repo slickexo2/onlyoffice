@@ -108,6 +108,12 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
     super.end();
   }
 
+  /**
+   * Gets the editor link.
+   *
+   * @param docNode the doc node
+   * @return the editor link
+   */
   protected String getEditorLink(Node docNode) {
     try {
       return editorService.getEditorLink(docNode);
@@ -117,6 +123,13 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
     }
   }
 
+  /**
+   * Context editor link.
+   *
+   * @param node the node
+   * @param context the context
+   * @return the string
+   */
   private String contextEditorLink(Node node, String context) {
     String link = editorLinks.computeIfAbsent(node, n -> getEditorLink(n));
     if (link == null || link.isEmpty()) {

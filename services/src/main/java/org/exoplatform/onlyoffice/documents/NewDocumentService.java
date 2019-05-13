@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2003-2019 eXo Platform SAS.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.exoplatform.onlyoffice.documents;
 
 import java.io.InputStream;
@@ -32,6 +50,9 @@ public class NewDocumentService implements Startable {
   /** The document type plugin. */
   protected NewDocumentTypePlugin documentTypePlugin;
 
+  /**
+   * {@inheritDoc}
+   */
   /* (non-Javadoc)
    * @see org.picocontainer.Startable#start()
    */
@@ -41,6 +62,9 @@ public class NewDocumentService implements Startable {
 
   }
 
+  /**
+   * {@inheritDoc}
+   */
   /* (non-Javadoc)
    * @see org.picocontainer.Startable#stop()
    */
@@ -81,8 +105,8 @@ public class NewDocumentService implements Startable {
    * @param currentNode the current node
    * @param title the title
    * @param label the label
-   * @throws Exception the exception
    * @return the created node
+   * @throws Exception the exception
    */
   public Node createDocument(Node currentNode, String title, String label) throws Exception {
 

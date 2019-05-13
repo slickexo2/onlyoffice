@@ -24,8 +24,8 @@ import org.exoplatform.web.application.ApplicationLifecycle;
 import org.exoplatform.web.filter.Filter;
 
 /**
- * Created by The eXo Platform SAS
- * 
+ * Created by The eXo Platform SAS.
+ *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: AbstractOnlyofficeWebFilter.java 00000 Apr 27, 2019 pnedonosko
  *          $
@@ -33,7 +33,7 @@ import org.exoplatform.web.filter.Filter;
 public abstract class AbstractOnlyofficeWebFilter implements Filter {
 
   /**
-   * 
+   * Instantiates a new abstract onlyoffice web filter.
    */
   protected AbstractOnlyofficeWebFilter() {
   }
@@ -43,6 +43,7 @@ public abstract class AbstractOnlyofficeWebFilter implements Filter {
    * method is not blocking and thread safe, but as result of working over a
    * {@link List} of lifecycles, weakly consistent regarding its answer.
    *
+   * @param <C> the generic type
    * @param lifecycles the lifecycles list
    * @param lifecycleClass the lifecycle class to add
    * @return <code>true</code>, if can add, <code>false</code> otherwise

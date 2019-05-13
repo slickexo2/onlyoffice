@@ -498,6 +498,7 @@ public class EditorService implements ResourceContainer {
                    .entity("{\"user\": \"" + request.getRemoteUser() + "\",\n\"requestIP\": \"" + clientIp
                        + "\",\n\"requestHost\": \"" + clientHost + "\",\n\"product\":{ \"name\": \"" + title
                        + "\",\n\"version\": \"" + version + "\"},\n\"version\": \"" + API_VERSION + "\"}")
+                   .type(MediaType.APPLICATION_JSON)
                    .build();
   }
 

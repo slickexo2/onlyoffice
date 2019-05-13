@@ -107,6 +107,15 @@ public class OnlyofficeDocumentsLifecycle extends AbstractOnlyofficeLifecycle {
     super.onEndRequest(app, context);
   }
 
+  /**
+   * Checks if is not same user document.
+   *
+   * @param userName the user name
+   * @param nodeWs the node ws
+   * @param nodePath the node path
+   * @param parentContext the parent context
+   * @return true, if is not same user document
+   */
   private boolean isNotSameUserDocument(String userName, String nodeWs, String nodePath, RequestContext parentContext) {
     return !(userName.equals(parentContext.getAttribute(OnlyofficeContext.USERID_ATTRIBUTE))
         && nodeWs.equals(parentContext.getAttribute(OnlyofficeContext.DOCUMENT_WORKSPACE_ATTRIBUTE))

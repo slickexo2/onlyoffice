@@ -337,7 +337,7 @@ public class CometdOnlyofficeService implements Startable {
     @Session
     private ServerSession   serverSession;
 
-    /** The listener service */
+    /**  The listener service. */
     private ListenerService listenerService;
 
     /**
