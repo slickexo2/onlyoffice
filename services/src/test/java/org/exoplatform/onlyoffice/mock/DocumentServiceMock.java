@@ -35,7 +35,7 @@ public class DocumentServiceMock implements DocumentService {
    */
   @Override
   public String getShortLinkInDocumentsApp(String workspaceName, String nodeId) throws Exception {
-    return null;
+    return "/testlink";
   }
 
   /**
@@ -47,7 +47,7 @@ public class DocumentServiceMock implements DocumentService {
    */
   @Override
   public String getLinkInDocumentsApp(String nodePath) throws Exception {
-    return null;
+    return "/testlink";
   }
 
   /**
@@ -60,7 +60,7 @@ public class DocumentServiceMock implements DocumentService {
    */
   @Override
   public String getLinkInDocumentsApp(String nodePath, DriveData drive) throws Exception {
-    return null;
+    return "/testlink";
   }
 
   /**

@@ -1,20 +1,18 @@
 package org.exoplatform.onlyoffice;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.ws.rs.core.MultivaluedMap;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
-import org.exoplatform.container.ExoContainerContext;
-import org.exoplatform.container.PortalContainer;
-import org.exoplatform.onlyoffice.rest.EditorService;
 import org.exoplatform.onlyoffice.test.AbstractResourceTest;
-import org.exoplatform.services.jcr.ext.app.SessionProviderService;
 import org.exoplatform.services.rest.impl.ContainerResponse;
 import org.exoplatform.services.rest.impl.MultivaluedMapImpl;
-import org.exoplatform.services.rest.impl.RequestHandlerImpl;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -26,32 +24,28 @@ import io.jsonwebtoken.security.Keys;
 public class EditorServiceTest extends AbstractResourceTest {
 
   /** The Constant RESOURCE_URL. */
-  protected static final String RESOURCE_URL = "/onlyoffice/editor";
+  protected static final String RESOURCE_URL     = "/onlyoffice/editor";
 
-  /** The Constant user. */
-  protected static final String user         = "john";
+  /** The Constant USER. */
+  protected static final String USER             = "john";
 
-  /** The Constant key. */
-  protected static final String key          = "666ea5ae-2732-32d8-862e-904ff56a16f9";
+  /** The Constant SECRET_KEY. */
+  protected static final String SECRET_KEY       = "1fRW5pBZu3UIBEdebbpDpKJ4hwExSQoSe97tw8gyYNhqnM1biHb";
 
-  /** The editor service. */
-  protected EditorService       editorService;
+  /** The Constant WRONG_SECRET_KEY. */
+  protected static final String WRONG_SECRET_KEY = "WRONG-SECRET-KEY-94037466gKfv37jvfdG43";
 
-  
-  /** The status json payload. */
-  protected String              statusJsonPayload;
+  /** The key. */
+  protected String              key;
 
-  /** The content token. */
-  protected String              contentToken;
+  /** The content payload. */
+  protected Map<String, Object> contentPayload   = new HashMap<>();
 
-  /** The status token. */
-  protected String              statusToken;
+  /** The status payload. */
+  protected Map<String, Object> statusPayload    = new HashMap<>();
 
-  /** The content wrong token. */
-  protected String              contentWrongToken;
-
-  /** The status wrong token. */
-  protected String              statusWrongToken;
+  /** The status payload json. */
+  protected String              statusPayloadJson;
 
   /**
    * Before class.
@@ -59,48 +53,22 @@ public class EditorServiceTest extends AbstractResourceTest {
   @Override
   protected void beforeClass() {
     super.beforeClass();
-    this.sessionProviderService = getContainer().getComponentInstanceOfType(SessionProviderService.class);
-    this.container = PortalContainer.getInstance();
-    ExoContainerContext.setCurrentContainer(container);
-    requestHandler = getContainer().getComponentInstanceOfType(RequestHandlerImpl.class);
+    if (key == null) {
+      try {
+        startSessionAs(USER);
+        session = sessionProvider.getSession("portal-test", jcrService.getCurrentRepository());
+        key = createTestDocument(USER, "abc.docx", "Testing Content");
+        contentPayload.put("key", key);
 
-    Map<String, Object> contentPayload = new HashMap<>();
-    Map<String, Object> statusPayload = new HashMap<>();
-
-    contentPayload.put("key", key);
-
-    statusPayload.put("key", key);
-    statusPayload.put("satus", 1);
-    statusPayload.put("url", "localhost");
-    statusPayload.put("error", 0);
-    statusJsonPayload = "{ \"key\": \"" + key + "\", \"status\": 1, \"url\": \"localhost\", \"error\": 0 }";
-
-    String secretKey = "1fRW5pBZu3UIBEdebbpDpKJ4hwExSQoSe97tw8gyYNhqnM1biHb";
-    String wrongSecretKey = "000W5444u3UIBEdebbpDpKJ4hwExSQoSe97tw8gyYNhqnM10000";
-
-    contentToken = Jwts.builder()
-                       .setSubject("exo-onlyoffice")
-                       .claim("payload", contentPayload)
-                       .signWith(Keys.hmacShaKeyFor(secretKey.getBytes()))
-                       .compact();
-
-    statusToken = Jwts.builder()
-                      .setSubject("exo-onlyoffice")
-                      .claim("payload", statusPayload)
-                      .signWith(Keys.hmacShaKeyFor(secretKey.getBytes()))
-                      .compact();
-
-    contentWrongToken = Jwts.builder()
-                            .setSubject("exo-onlyoffice")
-                            .claim("payload", contentPayload)
-                            .signWith(Keys.hmacShaKeyFor(wrongSecretKey.getBytes()))
-                            .compact();
-
-    statusWrongToken = Jwts.builder()
-                           .setSubject("exo-onlyoffice")
-                           .claim("payload", statusPayload)
-                           .signWith(Keys.hmacShaKeyFor(wrongSecretKey.getBytes()))
-                           .compact();
+        statusPayload.put("key", key);
+        statusPayload.put("satus", 1);
+        statusPayload.put("url", "localhost");
+        statusPayload.put("error", 0);
+        statusPayloadJson = "{ \"key\": \"" + key + "\", \"status\": 1, \"url\": \"localhost\", \"error\": 0 }";
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
   }
 
   /**
@@ -110,12 +78,20 @@ public class EditorServiceTest extends AbstractResourceTest {
    */
   @Test
   public void testContent() throws Exception {
+    String token = Jwts.builder()
+                       .setSubject("exo-onlyoffice")
+                       .claim("payload", contentPayload)
+                       .signWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
+                       .compact();
+
     MultivaluedMap<String, String> headers = new MultivaluedMapImpl();
-    headers.putSingle("authorization", "Bearer " + contentToken);
-    ContainerResponse response = service("GET", RESOURCE_URL + "/content/" + user + "/" + key, "", headers, null);
+    headers.putSingle("authorization", "Bearer " + token);
+    ContainerResponse response = service("GET", RESOURCE_URL + "/content/" + USER + "/" + key, "", headers, null);
+    String content = IOUtils.toString((InputStream) response.getEntity(), StandardCharsets.UTF_8.name());
+    
     assertNotNull(response);
-    assertEquals(400, response.getStatus());
-    assertEquals("{\"error\":\"File key not found " + key + "\"}", response.getEntity());
+    assertEquals(200, response.getStatus());
+    assertEquals("Testing Content", content);
   }
 
   /**
@@ -125,9 +101,16 @@ public class EditorServiceTest extends AbstractResourceTest {
    */
   @Test
   public void testContentWrongToken() throws Exception {
+    String token = Jwts.builder()
+                       .setSubject("exo-onlyoffice")
+                       .claim("payload", contentPayload)
+                       .signWith(Keys.hmacShaKeyFor(WRONG_SECRET_KEY.getBytes()))
+                       .compact();
+
     MultivaluedMap<String, String> headers = new MultivaluedMapImpl();
-    headers.putSingle("authorization", "Bearer " + contentWrongToken);
-    ContainerResponse response = service("GET", RESOURCE_URL + "/content/" + user + "/" + key, "", headers, null);
+    headers.putSingle("authorization", "Bearer " + token);
+    ContainerResponse response = service("GET", RESOURCE_URL + "/content/" + USER + "/" + key, "", headers, null);
+    
     assertNotNull(response);
     assertEquals(401, response.getStatus());
     assertEquals("{\"error\":\"The token is not valid\"}", response.getEntity());
@@ -140,7 +123,8 @@ public class EditorServiceTest extends AbstractResourceTest {
    */
   @Test
   public void testContentNoToken() throws Exception {
-    ContainerResponse response = service("GET", RESOURCE_URL + "/content/" + user + "/" + key, "", null, null);
+    ContainerResponse response = service("GET", RESOURCE_URL + "/content/" + USER + "/" + key, "", null, null);
+    
     assertNotNull(response);
     assertEquals(401, response.getStatus());
     assertEquals("{\"error\":\"The token is not valid\"}", response.getEntity());
@@ -153,16 +137,23 @@ public class EditorServiceTest extends AbstractResourceTest {
    */
   @Test
   public void testStatus() throws Exception {
+    String token = Jwts.builder()
+                       .setSubject("exo-onlyoffice")
+                       .claim("payload", statusPayload)
+                       .signWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
+                       .compact();
+
     MultivaluedMap<String, String> headers = new MultivaluedMapImpl();
-    headers.putSingle("authorization", "Bearer " + statusToken);
+    headers.putSingle("authorization", "Bearer " + token);
     ContainerResponse response = service("POST",
-                                         RESOURCE_URL + "/status/" + user + "/" + key,
+                                         RESOURCE_URL + "/status/" + USER + "/" + key,
                                          "",
                                          headers,
-                                         statusJsonPayload.getBytes());
+                                         statusPayloadJson.getBytes());
+
     assertNotNull(response);
-    assertEquals(400, response.getStatus());
-    assertEquals("{\"error\":\"File key not found " + key + "\"}", response.getEntity());
+    assertEquals(200, response.getStatus());
+    assertEquals("{\"error\": 0}", response.getEntity());
   }
 
   /**
@@ -172,13 +163,19 @@ public class EditorServiceTest extends AbstractResourceTest {
    */
   @Test
   public void testStatusWrongToken() throws Exception {
+    String token = Jwts.builder()
+                       .setSubject("exo-onlyoffice")
+                       .claim("payload", statusPayload)
+                       .signWith(Keys.hmacShaKeyFor(WRONG_SECRET_KEY.getBytes()))
+                       .compact();
+    
     MultivaluedMap<String, String> headers = new MultivaluedMapImpl();
-    headers.putSingle("authorization", "Bearer " + statusWrongToken);
+    headers.putSingle("authorization", "Bearer " + token);
     ContainerResponse response = service("POST",
-                                         RESOURCE_URL + "/status/" + user + "/" + key,
+                                         RESOURCE_URL + "/status/" + USER + "/" + key,
                                          "",
                                          headers,
-                                         statusJsonPayload.getBytes());
+                                         statusPayloadJson.getBytes());
     assertNotNull(response);
     assertEquals(401, response.getStatus());
     assertEquals("{\"error\":\"The token is not valid\"}", response.getEntity());
@@ -192,14 +189,13 @@ public class EditorServiceTest extends AbstractResourceTest {
   @Test
   public void testStatusNoToken() throws Exception {
     ContainerResponse response = service("POST",
-                                         RESOURCE_URL + "/status/" + user + "/" + key,
+                                         RESOURCE_URL + "/status/" + USER + "/" + key,
                                          "",
                                          null,
-                                         statusJsonPayload.getBytes());
+                                         statusPayloadJson.getBytes());
     assertNotNull(response);
     assertEquals(401, response.getStatus());
     assertEquals("{\"error\":\"The token is not valid\"}", response.getEntity());
   }
 
-  
 }

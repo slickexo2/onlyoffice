@@ -1,14 +1,13 @@
-/*
- * 
- */
 package org.exoplatform.onlyoffice.test;
 
 import java.io.ByteArrayInputStream;
 import java.net.URI;
-import java.util.Collection;
+import java.util.Calendar;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import javax.jcr.Node;
 import javax.servlet.http.HttpServletRequest;
 
 import org.exoplatform.commons.testing.BaseCommonsTestCase;
@@ -17,6 +16,9 @@ import org.exoplatform.component.test.ConfiguredBy;
 import org.exoplatform.component.test.ContainerScope;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.PortalContainer;
+import org.exoplatform.onlyoffice.Config;
+import org.exoplatform.onlyoffice.OnlyofficeEditorService;
+import org.exoplatform.services.jcr.RepositoryService;
 import org.exoplatform.services.jcr.ext.app.SessionProviderService;
 import org.exoplatform.services.jcr.ext.common.SessionProvider;
 import org.exoplatform.services.rest.impl.ContainerRequest;
@@ -30,7 +32,7 @@ import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.security.MembershipEntry;
 
-
+// TODO: Auto-generated Javadoc
 /**
  * The Class AbstractResourceTest.
  */
@@ -40,13 +42,19 @@ import org.exoplatform.services.security.MembershipEntry;
 public class AbstractResourceTest extends BaseCommonsTestCase {
 
   /** The request handler. */
-  protected RequestHandlerImpl     requestHandler;
+  protected RequestHandlerImpl      requestHandler;
 
   /** The session provider service. */
-  protected SessionProviderService sessionProviderService;
+  protected SessionProviderService  sessionProviderService;
 
   /** The session provider. */
-  protected SessionProvider        sessionProvider;
+  protected SessionProvider         sessionProvider;
+
+  /** The onlyoffice editor service. */
+  protected OnlyofficeEditorService onlyofficeEditorService;
+
+  /** The jcr service. */
+  protected RepositoryService       jcrService;
 
   /**
    * Before class.
@@ -54,10 +62,12 @@ public class AbstractResourceTest extends BaseCommonsTestCase {
   @Override
   protected void beforeClass() {
     super.beforeClass();
+    ExoContainerContext.setCurrentContainer(container);
     this.sessionProviderService = getContainer().getComponentInstanceOfType(SessionProviderService.class);
     this.container = PortalContainer.getInstance();
-    ExoContainerContext.setCurrentContainer(container);
-    requestHandler = getContainer().getComponentInstanceOfType(RequestHandlerImpl.class);
+    this.requestHandler = getContainer().getComponentInstanceOfType(RequestHandlerImpl.class);
+    this.jcrService = getContainer().getComponentInstanceOfType(RepositoryService.class);
+    this.onlyofficeEditorService = getContainer().getComponentInstanceOfType(OnlyofficeEditorService.class);
   }
 
   /**
@@ -105,9 +115,10 @@ public class AbstractResourceTest extends BaseCommonsTestCase {
    * Start session as a user.
    *
    * @param user the user
-   * @param memberships the memberships
    */
-  protected void startSessionAs(String user, Collection<MembershipEntry> memberships) {
+  protected void startSessionAs(String user) {
+    HashSet<MembershipEntry> memberships = new HashSet<MembershipEntry>();
+    memberships.add(new MembershipEntry("/platform/administrators"));
     Identity identity = new Identity(user, memberships);
     ConversationState state = new ConversationState(identity);
     ConversationState.setCurrent(state);
@@ -116,12 +127,23 @@ public class AbstractResourceTest extends BaseCommonsTestCase {
   }
 
   /**
-   * End session.
+   * Creates the test document.
+   *
+   * @param user the user
+   * @param title the title
+   * @param content the content
+   * @return the string
+   * @throws Exception the exception
    */
-  protected void endSession() {
-    sessionProviderService.removeSessionProvider(null);
-    ConversationState.setCurrent(null);
-    sessionProvider = sessionProviderService.getSystemSessionProvider(null);
+  protected String createTestDocument(String user, String title, String content) throws Exception {
+    Node node = session.getRootNode().addNode(title, "nt:file");
+    Node contentNode = node.addNode("jcr:content", "nt:unstructured");
+    contentNode.setProperty("jcr:mimeType", "application/vnd.oasis.opendocument.text");
+    contentNode.setProperty("jcr:lastModified", Calendar.getInstance());
+    contentNode.setProperty("jcr:data", content);
+    session.save();
+    String docId = onlyofficeEditorService.initDocument(node);
+    Config config = onlyofficeEditorService.createEditor("http", "localhost", 8080, user, null, docId);
+    return config != null ? config.getDocument().getKey() : null;
   }
-
 }
