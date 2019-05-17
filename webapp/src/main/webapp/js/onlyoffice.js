@@ -384,6 +384,9 @@
           changesTimer = setTimeout(function() {
             log("Getting document link after a timeout...");
             saveDocumentLink();
+            if(autosaveTimer) {
+              clearTimeout(autosaveTimer);
+            }
             autosaveTimer = setTimeout(function() {
               log("It's time to make autosave of document version...");
               // Publish autosave version for download
