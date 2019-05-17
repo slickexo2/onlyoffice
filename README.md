@@ -44,29 +44,6 @@ When you have installed Docker, you need a single command to start the Document 
 
 The Document Server needs only port 80 by default, but you also can run in on HTTPS. Follow its guides for more detailed setup.
 
-The Document Server uses tokens generated using the JSON Web Tokens standard. For the validation setup it is necessary to edit the configuration file which can be found (or created) at the following path:
-
-For Linux - /etc/onlyoffice/documentserver/local.json.
-For Windows - %ProgramFiles%\ONLYOFFICE\DocumentServer\config\local.json.
-
-You need to enable tokens validation and set up the secret key.
-To enable tokens validation set true values to the params:
-
-    services.CoAuthoring.token.enable.request.outbox
-    services.CoAuthoring.token.enable.request.inbox
-    services.CoAuthoring.token.enable.browser
-    
-Specify the secret key in
-
-    services.CoAuthoring.secret.outbox.string
-    services.CoAuthoring.secret.inbox.string
-
-Save the local.json and restart the services: 
-
-    supervisorctl restart all
-
-For more detailed information check the [Onlyoffice API Documentation](https://api.onlyoffice.com/editors/signature/)
-
 To check you have running Document Server successfuly, open a page on its address [http://DOCUMENT\_SERVER\_HOST/OnlineEditorsExample/](http://localhost/OnlineEditorsExample/), it will show you simple demo page where you can upload a document, or use their sample, and try to edit online in your browser. After you'll see it works well, you are ready to install the add-on in eXo Platform.
 
 ### eXo Platform Add-on
@@ -108,6 +85,29 @@ Indeed, in some cases, it may be required to allow requests from any client host
     onlyoffice.documentserver.accessOnly=false
 
 Allowing access from any host, if no other security protection implemented, **strongly not recommended** as mentioned RESTful end-points can be accessed by anyone (doesn't check eXo credentials to allow the Document Server work with them). 
+
+The Document Server uses tokens generated using the JSON Web Tokens standard to secure access. For the validation setup it is necessary to edit the configuration file which can be found (or created) at the following path:
+
+For Linux - /etc/onlyoffice/documentserver/local.json.
+For Windows - %ProgramFiles%\ONLYOFFICE\DocumentServer\config\local.json.
+
+You need to enable tokens validation and set up the secret key.
+To enable tokens validation set true values to the params:
+
+    services.CoAuthoring.token.enable.request.outbox
+    services.CoAuthoring.token.enable.request.inbox
+    services.CoAuthoring.token.enable.browser
+    
+Specify the secret key in
+
+    services.CoAuthoring.secret.outbox.string
+    services.CoAuthoring.secret.inbox.string
+
+Save the local.json and restart the services: 
+
+    supervisorctl restart all
+
+For more detailed information check the [Onlyoffice API Documentation](https://api.onlyoffice.com/editors/signature/)
 
 ### Events
 
