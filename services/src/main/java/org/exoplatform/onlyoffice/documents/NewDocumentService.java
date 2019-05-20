@@ -128,7 +128,7 @@ public class NewDocumentService implements Startable {
       addedNode.addMixin(Utils.EXO_RSS_ENABLE);
     }
     // Enable versioning
-    if (!addedNode.isNodeType(MIX_VERSIONABLE) && addedNode.canAddMixin(MIX_VERSIONABLE)) {
+    if (addedNode.canAddMixin(MIX_VERSIONABLE)) {
       addedNode.addMixin(MIX_VERSIONABLE);
     }
     
