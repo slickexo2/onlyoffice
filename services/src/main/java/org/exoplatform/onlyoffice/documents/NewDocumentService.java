@@ -42,10 +42,13 @@ import org.exoplatform.webui.application.WebuiRequestContext;
 public class NewDocumentService implements Startable {
 
   /** The Constant LOG. */
-  protected static final Log      LOG          = ExoLogger.getLogger(NewDocumentService.class);
+  protected static final Log      LOG             = ExoLogger.getLogger(NewDocumentService.class);
 
   /** The Constant DEFAULT_NAME. */
-  private static final String     DEFAULT_NAME = "untitled";
+  private static final String     DEFAULT_NAME    = "untitled";
+
+  /** The Constant MIX_VERSIONABLE */
+  public static final String      MIX_VERSIONABLE = "mix:versionable";
 
   /** The document type plugin. */
   protected NewDocumentTypePlugin documentTypePlugin;
@@ -124,6 +127,11 @@ public class NewDocumentService implements Startable {
     if (!addedNode.hasProperty(Utils.EXO_TITLE)) {
       addedNode.addMixin(Utils.EXO_RSS_ENABLE);
     }
+    // Enable versioning
+    if (!addedNode.isNodeType(MIX_VERSIONABLE) && addedNode.canAddMixin(MIX_VERSIONABLE)) {
+      addedNode.addMixin(MIX_VERSIONABLE);
+    }
+    
     addedNode.setProperty(Utils.EXO_TITLE, title);
     Node content = addedNode.addNode("jcr:content", "nt:resource");
 
@@ -168,7 +176,7 @@ public class NewDocumentService implements Startable {
   public NewDocumentType getDocumentTypeByLabel(String label) {
     return getTypes().stream().filter(type -> label.equals(type.getLabel())).findAny().orElse(null);
   }
-  
+
   /**
    * NewDocumentTypesConfig.
    */
