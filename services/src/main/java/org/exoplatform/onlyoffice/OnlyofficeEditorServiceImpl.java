@@ -451,9 +451,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     this.documentserverAccessOnly = Boolean.parseBoolean(config.get(CONFIG_DS_ACCESS_ONLY));
 
     this.documentserverSecret = config.get(CONFIG_DS_SECRET);
-    if (documentserverSecret == null || documentserverSecret.trim().isEmpty()) {
-      throw new ConfigurationException("Configuration of " + CONFIG_DS_SECRET + " required");
-    }
     String dsAllowedHost = config.get(CONFIG_DS_ALLOWEDHOSTS);
     if (dsAllowedHost != null && !dsAllowedHost.isEmpty()) {
       Set<String> allowedhosts = new HashSet<>();
@@ -1224,13 +1221,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                     .put("key", userdata.getKey())
                                     .put("userdata", userdata.toJSON())
                                     .toString();
-      String jwtToken = Jwts.builder()
-                            .setSubject("exo-onlyoffice")
-                            .claim("c", "forcesave")
-                            .claim("key", userdata.getKey())
-                            .claim("userdata", userdata.toJSON())
-                            .signWith(Keys.hmacShaKeyFor(documentserverSecret.getBytes()))
-                            .compact();
       byte[] postDataBytes = json.toString().getBytes("UTF-8");
 
       URL url = new URL(commandServiceUrl);
@@ -1238,9 +1228,20 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       connection.setRequestMethod("POST");
       connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
       connection.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length));
-      connection.setRequestProperty("Authorization", "Bearer " + jwtToken);
       connection.setDoOutput(true);
       connection.setDoInput(true);
+      
+      if (documentserverSecret != null && !documentserverSecret.trim().isEmpty()) {
+        String jwtToken = Jwts.builder()
+                              .setSubject("exo-onlyoffice")
+                              .claim("c", "forcesave")
+                              .claim("key", userdata.getKey())
+                              .claim("userdata", userdata.toJSON())
+                              .signWith(Keys.hmacShaKeyFor(documentserverSecret.getBytes()))
+                              .compact();
+        connection.setRequestProperty("Authorization", "Bearer " + jwtToken);
+      }
+
       try (OutputStream outputStream = connection.getOutputStream()) {
         outputStream.write(postDataBytes);
       }
@@ -1260,6 +1261,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
   @Override
   public boolean validateToken(String token, String key) {
+    if (documentserverSecret == null || documentserverSecret.trim().isEmpty()) {
+      return true;
+    }
     if (token != null && key != null) {
       try {
         Jws<Claims> jws = Jwts.parser().setSigningKey(Keys.hmacShaKeyFor(documentserverSecret.getBytes())).parseClaimsJws(token);

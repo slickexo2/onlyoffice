@@ -358,15 +358,17 @@ public class Config implements Externalizable {
                                  docId,
                                  document,
                                  editor);
+      if (documentserverSecret != null && !documentserverSecret.trim().isEmpty()) {
+        String jwtToken = Jwts.builder()
+                              .setSubject("exo-onlyoffice")
+                              .claim("document", document)
+                              .claim("editorConfig", editor)
+                              .claim("documentType", documentType)
+                              .signWith(Keys.hmacShaKeyFor(documentserverSecret.getBytes()))
+                              .compact();
+        config.setToken(jwtToken);
+      }
 
-      String jwtToken = Jwts.builder()
-                       .setSubject("exo-onlyoffice")
-                       .claim("document", document)
-                       .claim("editorConfig", editor)
-                       .claim("documentType", documentType)
-                       .signWith(Keys.hmacShaKeyFor(documentserverSecret.getBytes()))
-                       .compact();
-      config.setToken(jwtToken);
       return config;
     }
 
@@ -953,12 +955,12 @@ public class Config implements Externalizable {
    * data submitted from Onlyoffice DS.
    */
   private Boolean        closing;
-  
+
   /**  The open timestamp. */
-  private Long openedTime;
-  
+  private Long           openedTime;
+
   /**  The close timestamp. */
-  private Long closedTime;
+  private Long           closedTime;
 
   /**
    * Instantiates a new config for use with {@link Externalizable} methods. User
@@ -1244,7 +1246,7 @@ public class Config implements Externalizable {
   public Document getDocument() {
     return document;
   }
-  
+
   /**
    * Gets the openedTime.
    *
@@ -1262,7 +1264,7 @@ public class Config implements Externalizable {
   public Long getClosedTime() {
     return closedTime;
   }
-  
+
   /**
    * Sets the openedTime.
    *
@@ -1271,7 +1273,7 @@ public class Config implements Externalizable {
   protected void setOpenedTime(Long openedTime) {
     this.openedTime = openedTime;
   }
-  
+
   /**
    * Sets the closedTime.
    *
@@ -1300,28 +1302,30 @@ public class Config implements Externalizable {
    * @return {@link Config} an instance of config similar to this but with
    *         another user in the editor
    */
-  public Config forUser(String id, String firstName, String lastName, String lang, String secretKey) {
+  public Config forUser(String id, String firstName, String lastName, String lang, String documentserverSecret) {
     Document userDocument = document.forUser(id, firstName, lastName, fileUrl(platformRestUrl, id, document.getKey()));
     Editor userEditor = editorConfig.forUser(id, firstName, lastName, lang, callbackUrl(platformRestUrl, id, document.getKey()));
     Config config = new Config(documentserverUrl,
-                           platformRestUrl,
-                           editorUrl,
-                           explorerUri,
-                           documentType,
-                           workspace,
-                           path,
-                           docId,
-                           userDocument,
-                           userEditor);
-    
-    String jwtToken = Jwts.builder()
-        .setSubject("exo-onlyoffice")
-        .claim("document", userDocument)
-        .claim("editorConfig", userEditor)
-        .claim("documentType", documentType)
-        .signWith(Keys.hmacShaKeyFor(secretKey.getBytes()))
-        .compact();
-    config.setToken(jwtToken);
+                               platformRestUrl,
+                               editorUrl,
+                               explorerUri,
+                               documentType,
+                               workspace,
+                               path,
+                               docId,
+                               userDocument,
+                               userEditor);
+    if (documentserverSecret != null && !documentserverSecret.trim().isEmpty()) {
+      String jwtToken = Jwts.builder()
+                            .setSubject("exo-onlyoffice")
+                            .claim("document", userDocument)
+                            .claim("editorConfig", userEditor)
+                            .claim("documentType", documentType)
+                            .signWith(Keys.hmacShaKeyFor(documentserverSecret.getBytes()))
+                            .compact();
+      config.setToken(jwtToken);
+    }
+
     return config;
   }
 
@@ -1392,7 +1396,7 @@ public class Config implements Externalizable {
   public void closed() {
     this.open = new Boolean(false);
     this.closing = new Boolean(false);
-    if(this.closedTime == null) {
+    if (this.closedTime == null) {
       this.closedTime = System.currentTimeMillis();
     }
   }
