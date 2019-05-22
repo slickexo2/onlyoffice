@@ -103,7 +103,6 @@ import org.exoplatform.webui.application.portlet.PortletRequestContext;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
@@ -544,7 +543,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           Config another = configs.values().iterator().next();
           User user = getUser(userId); // and use this user language
           if (user != null) {
-            config = another.forUser(user.getUserName(), user.getFirstName(), user.getLastName(), getUserLang(userId), documentserverSecret);
+            config = another.forUser(user.getUserName(),
+                                     user.getFirstName(),
+                                     user.getLastName(),
+                                     getUserLang(userId),
+                                     documentserverSecret);
             Config existing = configs.putIfAbsent(userId, config);
             if (existing == null) {
               // need update the configs in the cache (for replicated cache)
@@ -572,7 +575,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         statusBuilder.key(config.getDocument().getKey());
         fireGet(statusBuilder.build());
       }
-      
+
       return config; // can be null
     }
     return null;
@@ -859,10 +862,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             activeCache.put(nodePath, configs);
           }
         } else if (statusCode == 2) {
-          
+
           Editor.User lastUser = getUser(key, status.getLastUser());
           Editor.User lastModifier = getLastModifier(key);
-          
+
           // We download if there were modifications after the last saving.
           if (lastModifier.getId().equals(lastUser.getId()) && lastUser.getLastModified() > lastUser.getLastSaved()) {
             downloadClosed(config, status);
@@ -1210,12 +1213,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                     .put("userdata", userdata.toJSON())
                                     .toString();
       String jwtToken = Jwts.builder()
-          .setSubject("exo-onlyoffice")
-          .claim("c", "forcesave")
-          .claim("key", userdata.getKey())
-          .claim("userdata", userdata.toJSON())
-          .signWith(Keys.hmacShaKeyFor(documentserverSecret.getBytes()))
-          .compact();
+                            .setSubject("exo-onlyoffice")
+                            .claim("c", "forcesave")
+                            .claim("key", userdata.getKey())
+                            .claim("userdata", userdata.toJSON())
+                            .signWith(Keys.hmacShaKeyFor(documentserverSecret.getBytes()))
+                            .compact();
       byte[] postDataBytes = json.toString().getBytes("UTF-8");
 
       URL url = new URL(commandServiceUrl);
@@ -1245,21 +1248,21 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
   @Override
   public boolean validateToken(String token, String key) {
-    try {
-      Jws<Claims> jws = Jwts.parser()
-                            .setSigningKey(Keys.hmacShaKeyFor(documentserverSecret.getBytes()))
-                            .parseClaimsJws(token);
-      Map<String, Object> claims = (Map) jws.getBody().get("payload");
-      if(claims != null) {
-        if(claims.containsKey("key")) {
-          return String.valueOf(claims.get("key")).equals(key);
+    if (token != null && key != null) {
+      try {
+        Jws<Claims> jws = Jwts.parser().setSigningKey(Keys.hmacShaKeyFor(documentserverSecret.getBytes())).parseClaimsJws(token);
+        Map<String, Object> claims = (Map) jws.getBody().get("payload");
+        if (claims != null) {
+          if (claims.containsKey("key")) {
+            return String.valueOf(claims.get("key")).equals(key);
+          }
+          if (claims.containsKey("url")) {
+            return String.valueOf(claims.get("url")).endsWith(key);
+          }
         }
-        if(claims.containsKey("url")) {
-          return String.valueOf(claims.get("url")).endsWith(key);
-        }
+      } catch (Exception e) {
+        LOG.warn("Couldn't validate the token: {} key: {} :", token, key, e.getMessage());
       }
-    } catch (Exception e) {
-      LOG.warn("Couldn't validate the token: {} key: {}", token, key, e);
     }
     return false;
   }
