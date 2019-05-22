@@ -42,26 +42,32 @@ import org.exoplatform.ws.frameworks.json.impl.JsonException;
 import org.exoplatform.ws.frameworks.json.impl.JsonGeneratorImpl;
 
 /**
- * Created by The eXo Platform SAS
- * 
+ * Created by The eXo Platform SAS.
+ *
  * @author <a href="mailto:pnedonosko@exoplatform.com">Peter Nedonosko</a>
  * @version $Id: OnlyofficeClientContext.java 00000 Mar 18, 2019 pnedonosko $
  */
 public class OnlyofficeContext {
 
+  /** The Constant USERID_ATTRIBUTE. */
   public static final String    USERID_ATTRIBUTE = "OnlyofficeContext.userId";
   
+  /** The Constant DOCUMENT_WORKSPACE_ATTRIBUTE. */
   public static final String    DOCUMENT_WORKSPACE_ATTRIBUTE = "OnlyofficeContext.document.workspace";
 
+  /** The Constant DOCUMENT_PATH_ATTRIBUTE. */
   public static final String    DOCUMENT_PATH_ATTRIBUTE      = "OnlyofficeContext.document.path";
 
   /** The Constant JAVASCRIPT. */
   protected static final String JAVASCRIPT                   = "OnlyofficeContext_Javascript".intern();
 
+  /** The Constant CLIENT_RESOURCE_PREFIX. */
   protected static final String CLIENT_RESOURCE_PREFIX       = "OnlyofficeEditorClient.";
 
+  /** The Constant LOG. */
   protected static final Log    LOG                          = ExoLogger.getLogger(OnlyofficeContext.class);
 
+  /** The require. */
   private final RequireJS       require;
 
   /**
@@ -119,18 +125,40 @@ public class OnlyofficeContext {
     }
   }
 
+  /**
+   * App require JS.
+   *
+   * @return the require JS
+   */
   private RequireJS appRequireJS() {
     return require;
   }
 
+  /**
+   * Call on module.
+   *
+   * @param code the code
+   */
   private void callOnModule(String code) {
     require.addScripts(new StringBuilder("onlyoffice.").append(code).append("\n").toString());
   }
 
+  /**
+   * Show client error.
+   *
+   * @param title the title
+   * @param message the message
+   */
   private void showClientError(String title, String message) {
     callOnModule(new StringBuilder("showError('").append(title).append("', '" + message + "');").toString());
   }
 
+  /**
+   * Context.
+   *
+   * @return the onlyoffice context
+   * @throws Exception the exception
+   */
   private static OnlyofficeContext context() throws Exception {
     OnlyofficeContext context;
     WebuiRequestContext requestContext = WebuiRequestContext.getCurrentInstance();

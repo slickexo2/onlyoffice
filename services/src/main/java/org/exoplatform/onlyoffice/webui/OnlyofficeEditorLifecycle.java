@@ -45,15 +45,24 @@ public class OnlyofficeEditorLifecycle extends AbstractOnlyofficeLifecycle {
   /** The Constant EMPTY_PERMISSIONS. */
   public static final String[] EMPTY_PERMISSIONS       = new String[0];
 
+  /** The Constant EDITOR_STATES_ATTR_NAME. */
   public static final String   EDITOR_STATES_ATTR_NAME = "OnlyofficeContext.editor.states";
 
   /** The Constant LOG. */
   protected static final Log   LOG                     = ExoLogger.getLogger(OnlyofficeEditorLifecycle.class);
 
+  /**
+   * The Interface RenderedState.
+   */
   interface RenderedState {
+    
+    /**
+     * Restore.
+     */
     void restore();
   }
 
+  /** The enabled. */
   private final AtomicBoolean enabled = new AtomicBoolean();
 
   /**
@@ -128,6 +137,8 @@ public class OnlyofficeEditorLifecycle extends AbstractOnlyofficeLifecycle {
 
   /**
    * Restore the state.
+   *
+   * @param servletRequest the servlet request
    */
   void restore(ServletRequest servletRequest) {
     @SuppressWarnings("unchecked")

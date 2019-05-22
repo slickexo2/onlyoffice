@@ -53,9 +53,9 @@ public class DocumentStatePortlet extends GenericPortlet {
       // These attributes saved in portal context by
       // OnlyofficeDocumentsLifecycle
       String userId = (String) context.getAttribute(OnlyofficeContext.USERID_ATTRIBUTE);
-      String nodeWs = (String) context.getAttribute(OnlyofficeContext.DOCUMENT_WORKSPACE_ATTRIBUTE);
-      String nodePath = (String) context.getAttribute(OnlyofficeContext.DOCUMENT_PATH_ATTRIBUTE);
       if (userId != null) {
+        String nodeWs = (String) context.getAttribute(OnlyofficeContext.DOCUMENT_WORKSPACE_ATTRIBUTE);
+        String nodePath = (String) context.getAttribute(OnlyofficeContext.DOCUMENT_PATH_ATTRIBUTE);
         LOG.debug("Work in documents explorer for {} ({}), node: {}:{}", userId, request.getRemoteUser(), nodeWs, nodePath);
       }
     }

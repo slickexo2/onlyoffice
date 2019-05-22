@@ -32,10 +32,19 @@ import org.exoplatform.onlyoffice.Config.Editor;
  */
 public interface OnlyofficeEditorService {
 
+  /** The editor opened event. */
   static String EDITOR_OPENED_EVENT = "exo.onlyoffice.editor.opened";
+  
+  /** The editor closed event. */
   static String EDITOR_CLOSED_EVENT = "exo.onlyoffice.editor.closed";
+  
+  /** The editor saved event. */
   static String EDITOR_SAVED_EVENT = "exo.onlyoffice.editor.saved";
+  
+  /** The editor version event. */
   static String EDITOR_VERSION_EVENT = "exo.onlyoffice.editor.version";
+  
+  /** The editor error event. */
   static String EDITOR_ERROR_EVENT = "exo.onlyoffice.editor.error";
   
   /**

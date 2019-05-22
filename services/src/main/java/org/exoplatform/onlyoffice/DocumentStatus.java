@@ -54,9 +54,14 @@ public class DocumentStatus {
   /** The userdata. */
   protected Userdata userdata;
   
-  /** The coedited */
+  /**  The coedited. */
   protected Boolean coEdited;
    
+  /**
+   * Sets the config.
+   *
+   * @param config the new config
+   */
   protected void setConfig(Config config) {
     this.config = config;
   }
@@ -141,57 +146,121 @@ public class DocumentStatus {
     return coEdited;
   }
 
+  /**
+   * The Class Builder.
+   */
   public static class Builder {
+    
+    /** The document status. */
     private DocumentStatus documentStatus;
 
+    /**
+     * Instantiates a new builder.
+     */
     public Builder() {
       documentStatus = new DocumentStatus();
     }
 
+    /**
+     * Key.
+     *
+     * @param key the key
+     * @return the builder
+     */
     public Builder key(String key) {
       documentStatus.key = key;
       return this;
     }
 
+    /**
+     * Status.
+     *
+     * @param status the status
+     * @return the builder
+     */
     public Builder status(Long status) {
       documentStatus.status = status;
       return this;
     }
 
+    /**
+     * Url.
+     *
+     * @param url the url
+     * @return the builder
+     */
     public Builder url(String url) {
       documentStatus.url = url;
       return this;
     }
 
+    /**
+     * Users.
+     *
+     * @param users the users
+     * @return the builder
+     */
     public Builder users(String[] users) {
       documentStatus.users = users;
       return this;
     }
 
+    /**
+     * Config.
+     *
+     * @param config the config
+     * @return the builder
+     */
     public Builder config(Config config) {
       documentStatus.config = config;
       return this;
     }
 
+    /**
+     * Error.
+     *
+     * @param error the error
+     * @return the builder
+     */
     public Builder error(long error) {
       documentStatus.error = error;
       return this;
     }
 
+    /**
+     * Userdata.
+     *
+     * @param userdata the userdata
+     * @return the builder
+     */
     public Builder userdata(Userdata userdata) {
       documentStatus.userdata = userdata;
       return this;
     }
     
+    /**
+     * Co edited.
+     *
+     * @param coEdited the co edited
+     * @return the builder
+     */
     public Builder coEdited(Boolean coEdited) {
       documentStatus.coEdited = coEdited;
       return this;
     }
 
+    /**
+     * Builds the.
+     *
+     * @return the document status
+     */
     public DocumentStatus build() {
       return documentStatus;
     }
     
+    /**
+     * Reset.
+     */
     public void reset() {
       documentStatus = new DocumentStatus();
     }

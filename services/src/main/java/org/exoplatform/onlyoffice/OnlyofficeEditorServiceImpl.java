@@ -337,6 +337,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @param cacheService the cache service
    * @param documentService the document service (ECMS)
    * @param lockService the lock service
+   * @param listenerService the listener service
    * @param params the params
    * @throws ConfigurationException the configuration exception
    */
@@ -1160,12 +1161,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                                           .coEdited(userdata.getCoEdited())
                                                           .build();
       download(config, status);
-      broadcastEvent(status, OnlyofficeEditorService.EDITOR_VERSION_EVENT);
     } catch (OnlyofficeEditorException | RepositoryException e) {
       LOG.error("Error occured while downloading document content [Version]. docId: " + docId, e);
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Editor.User getLastModifier(String key) {
     ConcurrentMap<String, Config> configs = activeCache.get(key);
@@ -1184,6 +1187,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     return lastUser;
   }
 
+  /**
+  * {@inheritDoc}
+  */
   @Override
   public void setLastModifier(String key, String userId) {
     ConcurrentMap<String, Config> configs = activeCache.get(key);
@@ -1195,6 +1201,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Editor.User getUser(String key, String userId) {
     ConcurrentMap<String, Config> configs = activeCache.get(key);
@@ -1204,6 +1213,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     return null;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void forceSave(Userdata userdata) {
     HttpURLConnection connection = null;
@@ -1269,6 +1281,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
   // *********************** implementation level ***************
 
+  /**
+   * Save link.
+   *
+   * @param userdata the userdata
+   * @param url the url
+   */
   protected void saveLink(Userdata userdata, String url) {
     ConcurrentMap<String, Config> configs = activeCache.get(userdata.getKey());
     if (configs != null) {
@@ -1294,7 +1312,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       download(config, status);
       config.getEditorConfig().getUser().setLastSaved(System.currentTimeMillis());
       config.closed(); // reset transient closing state
-      broadcastEvent(status, OnlyofficeEditorService.EDITOR_SAVED_EVENT);
     } catch (OnlyofficeEditorException | RepositoryException e) {
       LOG.error("Error occured while downloading document content [Closed]. docId: " + config.getDocId(), e);
     }
@@ -1647,9 +1664,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       // user (will throw exception)
       final LockState lock = lock(node, config);
       if (lock.canEdit()) {
-        // manage version only if node already mix:versionable
-        boolean checkIn = checkout(node);
-
         try {
           // update document
           content.setProperty("jcr:data", data);
@@ -1668,19 +1682,34 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           if (node.hasProperty("exo:dateModified")) {
             node.setProperty("exo:dateModified", editedTime);
           }
+
           if (node.hasProperty("exo:lastModifier")) {
             node.setProperty("exo:lastModifier", userId);
           }
 
           node.save();
-          if (checkIn) {
-            // Make a new version from the downloaded state
-            node.checkin();
-            // Since 1.2.0-RC01 we check-out the document to let (more) other
-            // actions in ECMS appear on it
-            node.checkout();
+          long statusCode = status.getStatus() != null ? status.getStatus() : -1;
+          Editor.User lastModifier = getLastModifier(status.getKey());
+          if (lastModifier == null || !userId.equals(lastModifier.getId()) || config.isClosed() || config.isClosing()) {
+            // manage version only if node already mix:versionable
+            if (checkout(node)) {
+              // Make a new version from the downloaded state
+              node.checkin();
+              // Since 1.2.0-RC01 we check-out the document to let (more) other
+              // actions in ECMS appear on it
+              node.checkout();
+              // If the status code == 2, the EDITOR_SAVED_EVENT should be
+              // thrown.
+              if (statusCode != 2) {
+                broadcastEvent(status, OnlyofficeEditorService.EDITOR_VERSION_EVENT);
+              }
+            }
           }
+
           fireSaved(status);
+          if (statusCode == 2) {
+            broadcastEvent(status, OnlyofficeEditorService.EDITOR_SAVED_EVENT);
+          }
         } catch (RepositoryException e) {
           try {
             node.refresh(false); // rollback JCR modifications
@@ -1978,6 +2007,15 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     return explorerUrl;
   }
 
+  /**
+   * Explorer uri.
+   *
+   * @param schema the schema
+   * @param host the host
+   * @param port the port
+   * @param ecmsLink the ecms link
+   * @return the uri
+   */
   protected URI explorerUri(String schema, String host, int port, String ecmsLink) {
     URI uri;
     try {

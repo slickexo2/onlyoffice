@@ -384,6 +384,9 @@
           changesTimer = setTimeout(function() {
             log("Getting document link after a timeout...");
             saveDocumentLink();
+            if(autosaveTimer) {
+              clearTimeout(autosaveTimer);
+            }
             autosaveTimer = setTimeout(function() {
               log("It's time to make autosave of document version...");
               // Publish autosave version for download
@@ -716,13 +719,13 @@
      */
     var getEditorButton = function(editorLink) {
       return "<li class='hidden-tabletL'><a href='" + editorLink + "' target='_blank'>"
-      		+ "<i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i>" + message("EditButtonTitle")
+          + "<i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i>" + message("EditButtonTitle")
           + "</a></li>";
     };
     
     var getNoPreviewEditorButton = function(editorLink) {
       return "<a class='btn editOnlineBtn hidden-tabletL' href='#' onclick='javascript:window.open(\"" + editorLink +"\");'>"
-      		+ "<i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i>" + message("EditButtonTitle") + "</a>";
+          + "<i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i>" + message("EditButtonTitle") + "</a>";
     };
 
     /**
@@ -746,7 +749,7 @@
         } else {
           log("Cannot find .noPreview element");
         }
-      } else {
+      } else if($elem.find("a.editOnlineBtn").length == 0){
         var $detailContainer = $elem.find(".detailContainer");
         var $downloadBtn = $detailContainer.find(".uiIconDownload").closest("a.btn");
         if ($downloadBtn.length != 0) {
@@ -772,8 +775,6 @@
         }
       } else {
         $elem.append("<div class='onlyOfficeEditBtn'>" + getEditorButton(editorLink) + "</div>");
-        // We need wait for about 2min when doc cannot generate its preview
-        tryAddEditorButtonNoPreview(editorLink, 600, 250);
       }
     };
 
@@ -937,6 +938,8 @@
         // We set timeout here to avoid the case when the element is rendered but is going to be updated soon
         setTimeout(function() {
           tryAddEditorButtonToPreview(editorLink, 100, 100);
+          // We need wait for about 2min when doc cannot generate its preview
+          tryAddEditorButtonNoPreview(editorLink, 600, 250);
         }, 100);
       });
     };

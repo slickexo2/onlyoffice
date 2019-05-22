@@ -19,8 +19,8 @@
 
 package org.exoplatform.onlyoffice.webui;
 
-import static org.exoplatform.onlyoffice.webui.OnlyofficeContext.editorLink;
 import static org.exoplatform.onlyoffice.webui.OnlyofficeContext.callModule;
+import static org.exoplatform.onlyoffice.webui.OnlyofficeContext.editorLink;
 
 import javax.jcr.Node;
 
@@ -67,20 +67,20 @@ public class OnlyofficeDocumentsLifecycle extends AbstractOnlyofficeLifecycle {
         String nodeWs = node.getSession().getWorkspace().getName();
         String nodePath = node.getPath();
         if (isNotSameUserDocument(userName, nodeWs, nodePath, parentContext)) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Init documents explorer for {}, node: {}:{}, context: {}", userName, nodeWs, nodePath, parentContext);
-          }
-          parentContext.setAttribute(OnlyofficeContext.USERID_ATTRIBUTE, userName);
-          parentContext.setAttribute(OnlyofficeContext.DOCUMENT_WORKSPACE_ATTRIBUTE, nodeWs);
-          parentContext.setAttribute(OnlyofficeContext.DOCUMENT_PATH_ATTRIBUTE, nodePath);
           OnlyofficeEditorService editorService = context.getApplication()
                                                          .getApplicationServiceContainer()
                                                          .getComponentInstanceOfType(OnlyofficeEditorService.class);
           String docId = editorService.getDocumentId(node);
-          String editorLink = editorLink(editorService.getEditorLink(node), "documents");
           if (docId != null && editorService.isDocumentMimeSupported(node)) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Init documents explorer for {}, node: {}:{}, context: {}", userName, nodeWs, nodePath, parentContext);
+            }
+            parentContext.setAttribute(OnlyofficeContext.USERID_ATTRIBUTE, userName);
+            parentContext.setAttribute(OnlyofficeContext.DOCUMENT_WORKSPACE_ATTRIBUTE, nodeWs);
+            parentContext.setAttribute(OnlyofficeContext.DOCUMENT_PATH_ATTRIBUTE, nodePath);
             // This will init explorer even for docs that cannot be edited
             // by the user (locked or lack of permissions)
+            String editorLink = editorLink(editorService.getEditorLink(node), "documents");
             callModule("initExplorer('" + docId + "', '" + editorLink + "');");
           } else if (LOG.isDebugEnabled()) {
             LOG.debug("Document not initialized or not editable for {}, node: {}:{}, context: {}",
@@ -107,6 +107,15 @@ public class OnlyofficeDocumentsLifecycle extends AbstractOnlyofficeLifecycle {
     super.onEndRequest(app, context);
   }
 
+  /**
+   * Checks if is not same user document.
+   *
+   * @param userName the user name
+   * @param nodeWs the node ws
+   * @param nodePath the node path
+   * @param parentContext the parent context
+   * @return true, if is not same user document
+   */
   private boolean isNotSameUserDocument(String userName, String nodeWs, String nodePath, RequestContext parentContext) {
     return !(userName.equals(parentContext.getAttribute(OnlyofficeContext.USERID_ATTRIBUTE))
         && nodeWs.equals(parentContext.getAttribute(OnlyofficeContext.DOCUMENT_WORKSPACE_ATTRIBUTE))

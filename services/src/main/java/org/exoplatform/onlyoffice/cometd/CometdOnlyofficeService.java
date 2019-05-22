@@ -54,7 +54,6 @@ import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.component.RequestLifeCycle;
-import org.exoplatform.onlyoffice.Config;
 import org.exoplatform.onlyoffice.Config.Editor;
 import org.exoplatform.onlyoffice.DocumentStatus;
 import org.exoplatform.onlyoffice.OnlyofficeEditorException;
@@ -338,7 +337,7 @@ public class CometdOnlyofficeService implements Startable {
     @Session
     private ServerSession   serverSession;
 
-    /** The listener service */
+    /**  The listener service. */
     private ListenerService listenerService;
 
     /**
@@ -449,14 +448,16 @@ public class CometdOnlyofficeService implements Startable {
         try {
           String[] users = editors.getState(userId, key).getUsers();
           // Don't call forceSave if it's the last user.
+          // Sometimes the number of users equals 1, even if it's the last
+          // user. In that case the Command Service will respond with error 3,
+          // and we just ignore it
           if (users.length > 0) {
             editors.forceSave(new Userdata(userId, key, true, false));
-          } 
+          }
         } catch (OnlyofficeEditorException e) {
           LOG.error("Cannot get state of document key: " + key + ", user: " + userId);
         }
       }
-
     }
 
     /**
@@ -512,7 +513,7 @@ public class CometdOnlyofficeService implements Startable {
       Editor.User lastUser = editors.getLastModifier(key);
 
       // We download user version if another user started changing the document
-      if (lastUser != null && !userId.equals(lastUser.getId())) {
+      if (lastUser != null && !userId.equals(lastUser.getId()) && lastUser.getLastModified() > lastUser.getLastSaved()) {
         eventsHandlers.submit(new ContainerCommand(PortalContainer.getCurrentPortalContainerName()) {
           @Override
           void onContainerError(String error) {

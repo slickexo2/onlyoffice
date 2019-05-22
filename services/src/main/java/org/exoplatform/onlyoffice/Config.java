@@ -954,10 +954,10 @@ public class Config implements Externalizable {
    */
   private Boolean        closing;
   
-  /** The open timestamp */
+  /**  The open timestamp. */
   private Long openedTime;
   
-  /** The close timestamp */
+  /**  The close timestamp. */
   private Long closedTime;
 
   /**
