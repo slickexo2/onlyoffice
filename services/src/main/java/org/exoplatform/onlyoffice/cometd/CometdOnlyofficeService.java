@@ -443,20 +443,43 @@ public class CometdOnlyofficeService implements Startable {
     protected void handleEditorClosedEvent(Map<String, Object> data, String docId) {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
+      Editor.User lastUser = editors.getLastModifier(key);
       Boolean changes = (Boolean) data.get("changes");
       if (changes != null && changes.booleanValue()) {
+        
+        String[] users;
         try {
-          String[] users = editors.getState(userId, key).getUsers();
-          // Don't call forceSave if it's the last user.
-          // Sometimes the number of users equals 1, even if it's the last
-          // user. In that case the Command Service will respond with error 3,
-          // and we just ignore it
-          if (users.length > 0) {
-            editors.forceSave(new Userdata(userId, key, true, false));
-          }
+          users = editors.getState(userId, key).getUsers();
         } catch (OnlyofficeEditorException e) {
           LOG.error("Cannot get state of document key: " + key + ", user: " + userId);
+          users = new String[] {};
         }
+        // Don't call forceSave if it's the last user.
+        // Sometimes the number of users equals 1, even if it's the last
+        // user. In that case the Command Service will respond with error 3,
+        // and we just ignore it
+        if (users.length > 0) {
+          eventsHandlers.submit(new ContainerCommand(PortalContainer.getCurrentPortalContainerName()) {
+            @Override
+            void onContainerError(String error) {
+              LOG.error("An error has occured in container: {}", containerName);
+            }
+            
+            @Override
+            void execute(ExoContainer exoContainer) {
+              if (lastUser.getLinkSaved() >= lastUser.getLastModified()) {
+                LOG.debug("Downloading from existing link. User: {}, Key: {}, Link: {}",
+                          lastUser.getId(),
+                          key,
+                          lastUser.getDownloadLink());
+                editors.downloadVersion(new Userdata(lastUser.getId(), key, false, false), lastUser.getDownloadLink());
+              } else {
+                editors.forceSave(new Userdata(lastUser.getId(), key, true, false));
+              }
+            }
+          });
+        }
+
       }
     }
 
