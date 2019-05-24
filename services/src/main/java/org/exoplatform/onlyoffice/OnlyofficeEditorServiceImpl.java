@@ -1230,7 +1230,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       connection.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length));
       connection.setDoOutput(true);
       connection.setDoInput(true);
-      
+
       if (documentserverSecret != null && !documentserverSecret.trim().isEmpty()) {
         String jwtToken = Jwts.builder()
                               .setSubject("exo-onlyoffice")
@@ -1669,8 +1669,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       final LockState lock = lock(node, config);
       if (lock.canEdit()) {
         try {
-          // update document
-          content.setProperty("jcr:data", data);
+
           // update modified date (this will force PDFViewer to regenerate its
           // images)
           content.setProperty("jcr:lastModified", editedTime);
@@ -1690,7 +1689,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           if (node.hasProperty("exo:lastModifier")) {
             node.setProperty("exo:lastModifier", userId);
           }
-
+          // update document
+          content.setProperty("jcr:data", data);
+          
           node.save();
           long statusCode = status.getStatus() != null ? status.getStatus() : -1;
           Editor.User lastModifier = getLastModifier(status.getKey());
