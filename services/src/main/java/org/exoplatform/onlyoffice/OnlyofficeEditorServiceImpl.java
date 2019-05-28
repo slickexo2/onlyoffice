@@ -58,6 +58,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.lock.Lock;
+import javax.portlet.PortalContext;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.AutoCloseInputStream;
@@ -1613,6 +1614,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
     // Assuming a single user here (last modifier)
     String userId = status.getLastUser();
+
     validateUser(userId, config);
 
     String contentUrl = status.getUrl();
@@ -1668,10 +1670,19 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       // user (will throw exception)
       final LockState lock = lock(node, config);
       if (lock.canEdit()) {
+        // This modifierConfig can be different from 'config'
+        Config modifierConfig = getEditor(userId, nodePath, false);
         try {
-
           // update modified date (this will force PDFViewer to regenerate its
           // images)
+          boolean sameModifier = false;
+          if (node.hasProperty("exo:lastModifier")) {
+            sameModifier = userId.equals(node.getProperty("exo:lastModifier").getString());
+            node.setProperty("exo:lastModifier", userId);
+          }
+          modifierConfig.setSameModifier(sameModifier);
+          modifierConfig.setPreviousModified(content.getProperty("jcr:lastModified").getDate());
+          
           content.setProperty("jcr:lastModified", editedTime);
           if (content.hasProperty("exo:dateModified")) {
             content.setProperty("exo:dateModified", editedTime);
@@ -1684,10 +1695,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           }
           if (node.hasProperty("exo:dateModified")) {
             node.setProperty("exo:dateModified", editedTime);
-          }
-
-          if (node.hasProperty("exo:lastModifier")) {
-            node.setProperty("exo:lastModifier", userId);
           }
           // update document
           content.setProperty("jcr:data", data);
@@ -1724,6 +1731,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           throw e; // let the caller handle it further
         } finally {
           try {
+            modifierConfig.setPreviousModified(null);
+            modifierConfig.setSameModifier(null);
             data.close();
           } catch (Throwable e) {
             LOG.warn("Error closing exported content stream for " + nodePath, e);

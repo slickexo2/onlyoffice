@@ -1,15 +1,14 @@
 package org.exoplatform.onlyoffice;
 
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Calendar;
+import java.util.concurrent.TimeUnit;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
 
 import org.apache.commons.chain.Context;
 
+import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.services.ext.action.InvocationContext;
 import org.exoplatform.services.listener.Event;
 import org.exoplatform.services.log.ExoLogger;
@@ -30,15 +29,15 @@ import org.exoplatform.wcm.ext.component.activity.listener.FileUpdateActivityLis
  */
 public class DocumentUpdateActivityListener extends FileUpdateActivityListener {
 
-  /** The Constant LOG. */
-  private static final Log              LOG           = ExoLogger.getLogger(DocumentUpdateActivityListener.class);
+  /** The Constant EVENT_DELAY in min. */
+  protected static final long     EVENT_DELAY = 30;
 
-  /** The pending events. */
-  protected Map<Node, FileUpdatedEvent> pendingEvents = new ConcurrentHashMap<>();
+  private OnlyofficeEditorService editorService;
 
- 
-  /** The Constant EVENT_DELAY in ms. */
-  protected static final long           EVENT_DELAY   = 120000;
+  public DocumentUpdateActivityListener() {
+    editorService = (OnlyofficeEditorService) ExoContainerContext.getCurrentContainer()
+                                                                 .getComponentInstanceOfType(OnlyofficeEditorService.class);
+  }
 
   /**
    * Event handler.
@@ -53,47 +52,15 @@ public class DocumentUpdateActivityListener extends FileUpdateActivityListener {
     Node currentNode = currentProperty.getParent().getParent();
     String lastModifier = currentNode.getProperty("exo:lastModifier").getString();
 
-    // Schedule task for this event
-    Timer timer = new Timer();
-    timer.schedule(createTimerTask(event, currentNode), EVENT_DELAY);
-
-    FileUpdatedEvent pendingEvent = pendingEvents.get(currentNode);
-    if (pendingEvent != null) {
-      // Reset timer for new event
-      pendingEvent.getTimer().cancel();
-      pendingEvent.setTimer(timer);
-
-      if (!lastModifier.equals(pendingEvent.getLastModifier())) {
-        // Send event and change lastModifier for pending one.
-        super.onEvent(pendingEvent.getEvent());
-        pendingEvent.setLastModifier(lastModifier);
-        pendingEvent.setEvent(event);
-      }
-    } else {
-      pendingEvents.put(currentNode, new FileUpdatedEvent(lastModifier, timer, event));
+    String workspace = currentNode.getSession().getWorkspace().getName();
+    String path = currentNode.getPath();
+    Config config = editorService.getEditor(lastModifier, workspace, path);
+    boolean sameModifier = config.getSameModifier();
+    Calendar previousModified = config.getPreviousModified();
+    long difference = Calendar.getInstance().getTimeInMillis() - previousModified.getTimeInMillis();
+    if (!sameModifier || TimeUnit.MILLISECONDS.toMinutes(difference) > EVENT_DELAY) {
+      super.onEvent(event);
     }
   }
 
-  /**
-   * Creates the timer task.
-   *
-   * @param event the event
-   * @param node the node
-   * @return the timer task
-   */
-  public TimerTask createTimerTask(Event<Context, String> event, Node node) {
-    // TODO: wrap to Container Commant to obtain portal context
-    return new TimerTask() {
-      @Override
-      public void run() {
-        try {
-          LOG.info("Sending event...");
-          DocumentUpdateActivityListener.super.onEvent(event);
-          pendingEvents.remove(node);
-        } catch (Exception e) {
-          LOG.error("Couldn't send the event: ", e);
-        }
-      }
-    };
-  }
 }
