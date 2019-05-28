@@ -171,8 +171,3 @@
   top: 0;
   margin-left: 10px;
 }
-
-body.expand-left-bar {
-  overflow-x: hidden;
-  overflow-y: hidden;
-}
