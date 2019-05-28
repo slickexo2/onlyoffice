@@ -174,4 +174,5 @@
 
 body.expand-left-bar {
   overflow-x: hidden;
+  overflow-y: hidden;
 }
