@@ -894,7 +894,6 @@
           // show editor
           $container.find(".editor").show("blind");
           $container.find(".loading").hide("blind");
-          $container.closest("body.expand-left-bar").css({"overflow-x" : "hidden", "overflow-y" : "hidden"});
         } else {
           log("WARN: Editor client already initialized");
         }
