@@ -57,6 +57,7 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
+import javax.jcr.ValueFormatException;
 import javax.jcr.lock.Lock;
 
 import org.apache.commons.io.IOUtils;
@@ -81,7 +82,9 @@ import org.exoplatform.services.cache.CacheListener;
 import org.exoplatform.services.cache.CacheListenerContext;
 import org.exoplatform.services.cache.CacheService;
 import org.exoplatform.services.cache.ExoCache;
+import org.exoplatform.services.cms.documents.AutoVersionService;
 import org.exoplatform.services.cms.documents.DocumentService;
+import org.exoplatform.services.cms.documents.VersionHistoryUtils;
 import org.exoplatform.services.cms.lock.LockService;
 import org.exoplatform.services.jcr.RepositoryService;
 import org.exoplatform.services.jcr.ext.app.SessionProviderService;
@@ -1230,7 +1233,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       connection.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length));
       connection.setDoOutput(true);
       connection.setDoInput(true);
-      
+
       if (documentserverSecret != null && !documentserverSecret.trim().isEmpty()) {
         String jwtToken = Jwts.builder()
                               .setSubject("exo-onlyoffice")
@@ -1669,6 +1672,16 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       final LockState lock = lock(node, config);
       if (lock.canEdit()) {
         try {
+          // If there are changes not included to the last version - create a
+          // version
+          Calendar versionDate = node.getBaseVersion().getCreated();
+          Calendar lastModifiedDate = node.getProperty("exo:lastModifiedDate").getDate();
+          LOG.info("Version date: " + versionDate.toString() + " lastModified: " + lastModifiedDate);
+          if (versionDate.before(lastModifiedDate)) {
+            LOG.info("Creating vesion from draft");
+            createVersionOfDraft(node);
+          }
+
           // update document
           content.setProperty("jcr:data", data);
           // update modified date (this will force PDFViewer to regenerate its
@@ -1690,23 +1703,23 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           if (node.hasProperty("exo:lastModifier")) {
             node.setProperty("exo:lastModifier", userId);
           }
-
           node.save();
           long statusCode = status.getStatus() != null ? status.getStatus() : -1;
           Editor.User lastModifier = getLastModifier(status.getKey());
           if (lastModifier == null || !userId.equals(lastModifier.getId()) || config.isClosed() || config.isClosing()) {
-            // manage version only if node already mix:versionable
-            if (checkout(node)) {
-              // Make a new version from the downloaded state
-              node.checkin();
-              // Since 1.2.0-RC01 we check-out the document to let (more) other
-              // actions in ECMS appear on it
-              node.checkout();
-              // If the status code == 2, the EDITOR_SAVED_EVENT should be
-              // thrown.
-              if (statusCode != 2) {
-                broadcastEvent(status, OnlyofficeEditorService.EDITOR_VERSION_EVENT);
+            try {
+              if (checkout(node)) {
+                node.checkin();
+                node.checkout();
+                // If the status code == 2, the EDITOR_SAVED_EVENT should be
+                // thrown.
+                if (statusCode != 2) {
+                  broadcastEvent(status, OnlyofficeEditorService.EDITOR_VERSION_EVENT);
+                }
               }
+            } catch (Exception e) {
+              LOG.error("Couldnl't create a version");
+              node.refresh(false);
             }
           }
 
@@ -1740,14 +1753,50 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             LOG.warn("Error unlocking edited document " + nodePath(workspace, path), e);
           }
         }
-      } else {
+      } else
+
+      {
         throw new OnlyofficeEditorException("Document locked " + nodePath);
       }
-    } finally {
+    } finally
+
+    {
       // restore context env
       ConversationState.setCurrent(contextState);
       sessionProviders.setSessionProvider(null, contextProvider);
     }
+  }
+
+  protected void createVersionOfDraft(Node node) throws RepositoryException, OnlyofficeEditorException {
+    ConversationState contextState = ConversationState.getCurrent();
+    SessionProvider contextProvider = sessionProviders.getSessionProvider(null);
+    String userId = node.getProperty("exo:lastModifier").getString();
+    Identity userIdentity = userIdentity(userId);
+    if (userIdentity != null) {
+      ConversationState state = new ConversationState(userIdentity);
+      // Keep subject as attribute in ConversationState.
+      state.setAttribute(ConversationState.SUBJECT, userIdentity.getSubject());
+      ConversationState.setCurrent(state);
+      SessionProvider userProvider = new SessionProvider(state);
+      sessionProviders.setSessionProvider(null, userProvider);
+
+      try {
+        if (checkout(node)) {
+          node.checkin();
+          node.checkout();
+        }
+      } catch (Exception e) {
+        LOG.error("Couldnl't create a version from draft for user: " + userId);
+      }
+      // Restore context env
+      ConversationState.setCurrent(contextState);
+      sessionProviders.setSessionProvider(null, contextProvider);
+
+    } else {
+      LOG.warn("User identity not found " + userId + " for creating a version from draft");
+      throw new OnlyofficeEditorException("User identity not found " + userId);
+    }
+
   }
 
   /**
