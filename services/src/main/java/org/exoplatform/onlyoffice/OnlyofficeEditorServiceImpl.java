@@ -1672,13 +1672,20 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       final LockState lock = lock(node, config);
       if (lock.canEdit()) {
         try {
-          // If there are changes not included to the last version - create a
-          // version
-          Calendar versionDate = node.getBaseVersion().getCreated();
-          Calendar lastModifiedDate = node.getProperty("exo:lastModifiedDate").getDate();
-          LOG.info("Version date: " + versionDate.toString() + " lastModified: " + lastModifiedDate);
-          if (versionDate.before(lastModifiedDate)) {
-            LOG.info("Creating vesion from draft");
+          if (node.canAddMixin("exo:onlyofficeFile")) {
+            node.addMixin("exo:onlyofficeFile");
+          }
+          
+          Node frozen = node.getBaseVersion().getNode("jcr:frozenNode");
+          String versionOwner = null;
+          if (frozen.hasProperty("exo:versionOwner")) {
+            versionOwner = frozen.getProperty("exo:versionOwner").getString();
+          }
+          
+          Calendar lastModified = node.getProperty("exo:lastModifiedDate").getDate();
+          Calendar versionDate = frozen.getProperty("exo:lastModifiedDate").getDate();
+          // Uploaded version
+          if (versionDate.before(lastModified) && versionOwner == null) {
             createVersionOfDraft(node);
           }
 
@@ -1696,6 +1703,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           if (node.hasProperty("exo:lastModifiedDate")) {
             node.setProperty("exo:lastModifiedDate", editedTime);
           }
+
           if (node.hasProperty("exo:dateModified")) {
             node.setProperty("exo:dateModified", editedTime);
           }
@@ -1703,23 +1711,41 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           if (node.hasProperty("exo:lastModifier")) {
             node.setProperty("exo:lastModifier", userId);
           }
-          node.save();
+
           long statusCode = status.getStatus() != null ? status.getStatus() : -1;
-          Editor.User lastModifier = getLastModifier(status.getKey());
-          if (lastModifier == null || !userId.equals(lastModifier.getId()) || config.isClosed() || config.isClosing()) {
-            try {
-              if (checkout(node)) {
-                node.checkin();
-                node.checkout();
-                // If the status code == 2, the EDITOR_SAVED_EVENT should be
-                // thrown.
-                if (statusCode != 2) {
-                  broadcastEvent(status, OnlyofficeEditorService.EDITOR_VERSION_EVENT);
-                }
-              }
-            } catch (Exception e) {
-              LOG.error("Couldnl't create a version");
-              node.refresh(false);
+         
+          
+          if (userId.equals(versionOwner)) {
+            String versionName = node.getBaseVersion().getName();
+            LOG.debug("Removig version " + versionName + " from node " + node.getPath());
+            node.getVersionHistory().removeVersion(versionName);
+          }
+          
+          if(statusCode != 2) {
+            node.setProperty("exo:versionOwner", userId);
+          } else {
+            node.setProperty("exo:versionOwner", (String) null);
+          }
+
+          node.save();
+          // manage version only if node already mix:versionable
+          if (checkout(node)) {
+            // Make a new version from the downloaded state
+            node.checkin();
+            // Since 1.2.0-RC01 we check-out the document to let (more) other
+            // actions in ECMS appear on it
+            node.checkout();
+            Calendar before = node.getProperty("exo:lastModifiedDate").getDate();
+            node.setProperty("exo:versionOwner", (String) null);
+            node.setProperty("exo:lastModifiedDate", editedTime);
+            node.save();
+            Calendar after = node.getProperty("exo:lastModifiedDate").getDate();
+            // PROBLEB: calendars are different
+            // If the status code == 2, the EDITOR_SAVED_EVENT should be
+            // thrown.
+            if (statusCode != 2) {
+              broadcastEvent(status, OnlyofficeEditorService.EDITOR_VERSION_EVENT);
+
             }
           }
 
@@ -1779,7 +1805,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       ConversationState.setCurrent(state);
       SessionProvider userProvider = new SessionProvider(state);
       sessionProviders.setSessionProvider(null, userProvider);
-
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Creating a version from draft. Path: " + node.getPath() + " user: " + userId);
+      }
       try {
         if (checkout(node)) {
           node.checkin();
