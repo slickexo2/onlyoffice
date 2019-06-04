@@ -942,7 +942,11 @@ public class Config implements Externalizable {
 
   /** The node. */
   private transient Node node;
+  
+  private transient ThreadLocal<Boolean> sameModifier = new  ThreadLocal<>();
 
+  private transient ThreadLocal<Calendar> previousModified = new  ThreadLocal<>();
+  
   /**
    * Marker of editor state. By default editor state is undefined and will be
    * treated as not open nor not closed. When editor will be open in Onlyoffice
@@ -1290,6 +1294,22 @@ public class Config implements Externalizable {
    */
   public Editor getEditorConfig() {
     return editorConfig;
+  }
+  
+  public void setPreviousModified(Calendar previousModified) {
+    this.previousModified.set(previousModified);
+  }
+  
+  public Calendar getPreviousModified() {
+    return this.previousModified.get();
+  }
+  
+  public void setSameModifier(Boolean samemodifier) {
+    this.sameModifier.set(samemodifier);
+  }
+  
+  public Boolean getSameModifier() {
+    return this.sameModifier.get();
   }
 
   /**
