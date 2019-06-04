@@ -18,19 +18,22 @@ import org.exoplatform.wcm.ext.component.activity.listener.FileUpdateActivityLis
  * The class that is interested in processing a documentUpdateActivity
  * event implements this interface, and the object created
  * with that class is registered with a component using the
- * component's <code>addDocumentUpdateActivityListener<code> method. When
+ * component's addDocumentUpdateActivityListener method. When
  * the documentUpdateActivity event occurs, that object's appropriate
  * method is invoked.
  *
- * @see DocumentUpdateActivityEvent
  */
 public class DocumentUpdateActivityListener extends FileUpdateActivityListener {
 
   /** The Constant EVENT_DELAY in min. */
   protected static final long     EVENT_DELAY = 10;
-
+  
+  /** The editor service. */
   private OnlyofficeEditorService editorService;
 
+  /**
+   * Instantiates a new document update activity listener.
+   */
   public DocumentUpdateActivityListener() {
     editorService = (OnlyofficeEditorService) ExoContainerContext.getCurrentContainer()
                                                                  .getComponentInstanceOfType(OnlyofficeEditorService.class);
