@@ -66,7 +66,7 @@
           <name>document-types-configuration</name>
           <object type="org.exoplatform.onlyoffice.documents.NewDocumentService$NewDocumentTypesConfig">
             <field name="types">
-             <collection type="java.util.ArrayList">
+              <collection type="java.util.ArrayList">
                 <value>
                   <object type="org.exoplatform.onlyoffice.documents.NewDocumentType">
                     <field name="path">
@@ -653,9 +653,20 @@
       </init-params>
     </component-plugin>
   </external-component-plugins>
-  
+
   <external-component-plugins>
     <target-component>org.exoplatform.services.jcr.RepositoryService</target-component>
+    <component-plugin>
+      <name>add.namespaces</name>
+      <set-method>addPlugin</set-method>
+      <type>org.exoplatform.services.jcr.impl.AddNamespacesPlugin</type>
+      <init-params>
+        <properties-param>
+          <name>namespaces</name>
+          <property name="eoo" value="http://www.exoplatform.com/jcr/onlyoffice/1.0/" />
+        </properties-param>
+      </init-params>
+    </component-plugin>
     <component-plugin>
       <name>add.gadget.services.nodeType</name>
       <set-method>addPlugin</set-method>

@@ -1150,10 +1150,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     String docId = null;
     try {
       Config config = getEditorByKey(userdata.getUserId(), userdata.getKey());
-      // we set it sooner to let clients see the save
-      config.getEditorConfig().getUser().setLastSaved(System.currentTimeMillis());
       docId = config.getDocId();
-
       DocumentStatus status = new DocumentStatus.Builder().config(config)
                                                           .key(userdata.getKey())
                                                           .url(contentUrl)
@@ -1161,6 +1158,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                                           .coEdited(userdata.getCoEdited())
                                                           .build();
       download(config, status);
+      // we set it sooner to let clients see the save
+      config.getEditorConfig().getUser().setLastSaved(System.currentTimeMillis());
     } catch (OnlyofficeEditorException | RepositoryException e) {
       LOG.error("Error occured while downloading document content [Version]. docId: " + docId, e);
     }
@@ -1672,23 +1671,27 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       final LockState lock = lock(node, config);
       if (lock.canEdit()) {
         try {
-          if (node.canAddMixin("exo:onlyofficeFile")) {
-            node.addMixin("exo:onlyofficeFile");
-          }
-          
-          Node frozen = node.getBaseVersion().getNode("jcr:frozenNode");
-          String versionOwner = null;
-          if (frozen.hasProperty("exo:versionOwner")) {
-            versionOwner = frozen.getProperty("exo:versionOwner").getString();
-          }
-          
-          Calendar lastModified = node.getProperty("exo:lastModifiedDate").getDate();
-          Calendar versionDate = frozen.getProperty("exo:lastModifiedDate").getDate();
-          // Uploaded version
-          if (versionDate.before(lastModified) && versionOwner == null) {
-            createVersionOfDraft(node);
+          if (node.canAddMixin("eoo:onlyofficeFile")) {
+            node.addMixin("eoo:onlyofficeFile");
           }
 
+          // Use current node insted of frozen one when it doesn't exist yet.
+          Node frozen = node;
+          if (node.getBaseVersion().hasNode("jcr:frozenNode")) {
+            frozen = node.getBaseVersion().getNode("jcr:frozenNode");
+          }
+
+          Boolean onlyofficeVersion = false;
+          if (frozen.hasProperty("eoo:onlyofficeVersion")) {
+            onlyofficeVersion = frozen.getProperty("eoo:onlyofficeVersion").getBoolean();
+          }
+
+          Calendar lastModified = node.getProperty("exo:lastModifiedDate").getDate();
+          Calendar versionDate = frozen.getProperty("exo:lastModifiedDate").getDate();
+          // Create a version of the manually uploaded draft if exists
+          if (versionDate.before(lastModified) && !onlyofficeVersion) {
+            createVersionOfDraft(node);
+          }
           // update document
           content.setProperty("jcr:data", data);
           // update modified date (this will force PDFViewer to regenerate its
@@ -1713,19 +1716,24 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           }
 
           long statusCode = status.getStatus() != null ? status.getStatus() : -1;
-         
-          
-          if (userId.equals(versionOwner)) {
+
+          String versioningUser = null;
+          if (frozen.hasProperty("eoo:versionOwner")) {
+            versioningUser = frozen.getProperty("eoo:versionOwner").getString();
+          }
+          // Version accumulation for same user
+          if (userId.equals(versioningUser)) {
             String versionName = node.getBaseVersion().getName();
             LOG.debug("Removig version " + versionName + " from node " + node.getPath());
             node.getVersionHistory().removeVersion(versionName);
           }
-          
-          if(statusCode != 2) {
-            node.setProperty("exo:versionOwner", userId);
+
+          if (statusCode != 2) {
+            node.setProperty("eoo:versionOwner", userId);
           } else {
-            node.setProperty("exo:versionOwner", (String) null);
+            node.setProperty("eoo:versionOwner", (String) null);
           }
+          node.setProperty("eoo:onlyofficeVersion", true);
 
           node.save();
           // manage version only if node already mix:versionable
@@ -1735,17 +1743,15 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             // Since 1.2.0-RC01 we check-out the document to let (more) other
             // actions in ECMS appear on it
             node.checkout();
-            Calendar before = node.getProperty("exo:lastModifiedDate").getDate();
-            node.setProperty("exo:versionOwner", (String) null);
-            node.setProperty("exo:lastModifiedDate", editedTime);
+            // Remove properties from node
+            node.setProperty("eoo:versionOwner", (String) null);
+            node.setProperty("eoo:onlyofficeVersion", false);
             node.save();
-            Calendar after = node.getProperty("exo:lastModifiedDate").getDate();
             // PROBLEB: calendars are different
             // If the status code == 2, the EDITOR_SAVED_EVENT should be
             // thrown.
             if (statusCode != 2) {
               broadcastEvent(status, OnlyofficeEditorService.EDITOR_VERSION_EVENT);
-
             }
           }
 
@@ -1793,6 +1799,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * Creates a version of draft. Used to create version after manually uploaded content.
+   *
+   * @param node the node
+   * @throws RepositoryException the repository exception
+   * @throws OnlyofficeEditorException the onlyoffice exception
+   */
   protected void createVersionOfDraft(Node node) throws RepositoryException, OnlyofficeEditorException {
     ConversationState contextState = ConversationState.getCurrent();
     SessionProvider contextProvider = sessionProviders.getSessionProvider(null);
@@ -1824,7 +1837,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       LOG.warn("User identity not found " + userId + " for creating a version from draft");
       throw new OnlyofficeEditorException("User identity not found " + userId);
     }
-
   }
 
   /**

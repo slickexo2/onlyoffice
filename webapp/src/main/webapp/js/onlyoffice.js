@@ -391,6 +391,7 @@
               log("It's time to make autosave of document version...");
               // Publish autosave version for download
               downloadVersion();
+              currentUserChanges = false;
             }, 600000); // 10min for autosave
           }, 20000); // 20 sec to save the download link
 
