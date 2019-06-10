@@ -1688,7 +1688,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           Calendar lastModified = node.getProperty("exo:lastModifiedDate").getDate();
           Calendar versionDate = frozen.getProperty("exo:lastModifiedDate").getDate();
           // Create a version of the manually uploaded draft if exists
-          if (versionDate.before(lastModified) && !onlyofficeVersion) {
+          if (versionDate.getTimeInMillis() <= lastModified.getTimeInMillis() && !onlyofficeVersion) {
             createVersionOfDraft(node);
           }
 
@@ -1828,6 +1828,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         LOG.debug("Creating a version from draft. Path: " + node.getPath() + " user: " + userId);
       }
       try {
+        node.save();
         if (checkout(node)) {
           node.checkin();
           node.checkout();
