@@ -50,8 +50,8 @@ import org.exoplatform.ws.frameworks.json.impl.JsonGeneratorImpl;
 public class OnlyofficeContext {
 
   /** The Constant USERID_ATTRIBUTE. */
-  public static final String    USERID_ATTRIBUTE = "OnlyofficeContext.userId";
-  
+  public static final String    USERID_ATTRIBUTE             = "OnlyofficeContext.userId";
+
   /** The Constant DOCUMENT_WORKSPACE_ATTRIBUTE. */
   public static final String    DOCUMENT_WORKSPACE_ATTRIBUTE = "OnlyofficeContext.document.workspace";
 
@@ -237,18 +237,21 @@ public class OnlyofficeContext {
    * @return the string with link URL
    */
   public static String editorLink(String link, String source) {
-    StringBuilder linkBuilder = new StringBuilder(link).append("&source=").append(source);
-    // Owner space (actual in FileUIActivity):
-    // Space space =
-    // getApplicationComponent(SpaceService.class).getSpaceById(getOwnerIdentity().getRemoteId());
-    // Context space:
-    // XXX context space will be null for space doc links in form:
-    // /portal/intranet/documents?path=.spaces.test_onlyoffice%2FGroups%2Fspaces%2Ftest_onlyoffice%2FDocuments%2FSimple+Document.docx
-    Space space = SpaceUtils.getSpaceByContext();
-    if (space != null) {
-      linkBuilder.append("&space=").append(space.getPrettyName());
+    if (link != null && source != null) {
+      StringBuilder linkBuilder = new StringBuilder(link).append("&source=").append(source);
+      // Owner space (actual in FileUIActivity):
+      // Space space =
+      // getApplicationComponent(SpaceService.class).getSpaceById(getOwnerIdentity().getRemoteId());
+      // Context space:
+      // XXX context space will be null for space doc links in form:
+      // /portal/intranet/documents?path=.spaces.test_onlyoffice%2FGroups%2Fspaces%2Ftest_onlyoffice%2FDocuments%2FSimple+Document.docx
+      Space space = SpaceUtils.getSpaceByContext();
+      if (space != null) {
+        linkBuilder.append("&space=").append(space.getPrettyName());
+      }
+      return linkBuilder.toString();
     }
-    return linkBuilder.toString();
+    return null;
   }
 
 }
