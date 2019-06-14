@@ -551,6 +551,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               // need update the configs in the cache (for replicated cache)
               activeCache.put(nodePath, configs);
               activeCache.put(config.getDocument().getKey(), configs);
+              activeCache.put(config.getDocId(), configs);
             } else {
               config = existing;
             }
@@ -609,14 +610,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       throw new OnlyofficeEditorException("Cannot edit document: " + nodePath);
     }
 
-    Config config = getEditor(userId, nodePath, true);
+    Config config = getEditor(userId, docId, true);
     if (config == null) {
       // we should care about concurrent calls here
       activeLock.lock();
       try {
-        ConcurrentMap<String, Config> configs = activeCache.get(nodePath);
+        ConcurrentMap<String, Config> configs = activeCache.get(docId);
         if (configs != null) {
-          config = getEditor(userId, nodePath, true);
+          config = getEditor(userId, config.getDocId(), true);
           if (config == null) {
             // it's unexpected state as existing map SHOULD contain a config and
             // it must be copied for given user in getEditor(): client will need
@@ -688,10 +689,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           configs = new ConcurrentHashMap<String, Config>();
           configs.put(userId, config);
 
-          // mapping by node path for getEditor()
+          // mapping by node path for )
           activeCache.put(nodePath, configs);
           // mapping by unique file key for updateDocument()
           activeCache.put(key, configs);
+          activeCache.put(docId, configs);
         }
       } finally {
         activeLock.unlock();
@@ -840,6 +842,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // and raise an error
           activeCache.remove(key);
           activeCache.remove(nodePath);
+          activeCache.remove(config.getDocId());
           LOG.warn("Received Onlyoffice status: no document with the key identifier could be found. Key: " + key + ". Document: "
               + nodePath);
           throw new OnlyofficeEditorException("Error editing document: document ID not found");
@@ -858,6 +861,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             // Update cached (for replicated cache)
             activeCache.put(key, configs);
             activeCache.put(nodePath, configs);
+            activeCache.put(config.getDocId(), configs);
           }
         } else if (statusCode == 2) {
 
@@ -873,6 +877,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           }
           activeCache.remove(key);
           activeCache.remove(nodePath);
+          activeCache.remove(config.getDocId());
         } else if (statusCode == 3) {
           // it's an error of saving in Onlyoffice
           // we sync to remote editors list first
@@ -886,6 +891,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               downloadClosed(config, status);
               activeCache.remove(key);
               activeCache.remove(nodePath);
+              activeCache.remove(config.getDocId());
               config.setError("Error in editor (" + status.getError() + "). Last change was successfully saved");
               fireError(status);
               broadcastEvent(status, OnlyofficeEditorService.EDITOR_ERROR_EVENT);
@@ -900,6 +906,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               // Update cached (for replicated cache)
               activeCache.put(key, configs);
               activeCache.put(nodePath, configs);
+              activeCache.put(config.getDocId(), configs);
               fireError(status);
               broadcastEvent(status, OnlyofficeEditorService.EDITOR_ERROR_EVENT);
               // TODO no sense to throw an ex here: it will be caught by the
@@ -915,6 +922,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             // Update cached (for replicated cache)
             activeCache.put(key, configs);
             activeCache.put(nodePath, configs);
+            activeCache.put(config.getDocId(), configs);
             fireError(status);
             broadcastEvent(status, OnlyofficeEditorService.EDITOR_ERROR_EVENT);
           }
@@ -925,6 +933,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // and remove this document from active configs
           activeCache.remove(key);
           activeCache.remove(nodePath);
+          activeCache.remove(config.getDocId());
         } else if (statusCode == 6) {
           // forcedsave done, save the version with its URL
           if (LOG.isDebugEnabled()) {
@@ -1194,6 +1203,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       config.getEditorConfig().getUser().setLastModified(System.currentTimeMillis());
       activeCache.put(key, configs);
       activeCache.put(nodePath(config), configs);
+      activeCache.put(config.getDocId(), configs);
     }
   }
 
@@ -1298,6 +1308,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       config.getEditorConfig().getUser().setLinkSaved(System.currentTimeMillis());
       activeCache.put(userdata.getKey(), configs);
       activeCache.put(nodePath(config), configs);
+      activeCache.put(config.getDocId(), configs);
     }
   }
 
@@ -1604,10 +1615,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   protected void download(Config config, DocumentStatus status) throws OnlyofficeEditorException, RepositoryException {
     String workspace = config.getWorkspace();
     String path = config.getPath();
-    String nodePath = nodePath(workspace, path);
-
+    
     if (LOG.isDebugEnabled()) {
-      LOG.debug(">> download(" + nodePath + ", " + config.getDocument().getKey() + ")");
+      LOG.debug(">> download(" + path + ", " + config.getDocument().getKey() + ")");
     }
 
     // Assuming a single user here (last modifier)
@@ -1628,9 +1638,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         throw new OnlyofficeEditorException("Content stream is null");
       }
     } catch (MalformedURLException e) {
-      throw new OnlyofficeEditorException("Error parsing content URL " + contentUrl + " for " + nodePath, e);
+      throw new OnlyofficeEditorException("Error parsing content URL " + contentUrl + " for " + path, e);
     } catch (IOException e) {
-      throw new OnlyofficeEditorException("Error reading content stream " + contentUrl + " for " + nodePath, e);
+      throw new OnlyofficeEditorException("Error reading content stream " + contentUrl + " for " + path, e);
     }
 
     // remember real context state and session provider to restore them at the
@@ -1652,31 +1662,32 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         SessionProvider userProvider = new SessionProvider(state);
         sessionProviders.setSessionProvider(null, userProvider);
         if (LOG.isDebugEnabled()) {
-          LOG.debug(">>> download under user " + userIdentity.getUserId() + " (" + nodePath + ", " + config.getDocument().getKey()
+          LOG.debug(">>> download under user " + userIdentity.getUserId() + " (" + path + ", " + config.getDocument().getKey()
               + ")");
         }
       } else {
-        LOG.warn("User identity not found " + userId + " for downloading " + config.getDocument().getKey() + " " + nodePath);
+        LOG.warn("User identity not found " + userId + " for downloading " + config.getDocument().getKey() + " " + path);
         throw new OnlyofficeEditorException("User identity not found " + userId);
       }
 
       // work in user session
-      Node node = node(workspace, path);
+      Node node = getDocumentById(workspace, config.getDocId());
       Node content = nodeContent(node);
-
+      String nodePath = nodePath(workspace, node.getPath());
       // lock node first, this also will check if node isn't locked by another
       // user (will throw exception)
       final LockState lock = lock(node, config);
       if (lock.canEdit()) {
         // This modifierConfig can be different from 'config'
-        Config modifierConfig = getEditor(userId, nodePath, false);
+        Config modifierConfig = getEditor(userId, config.getDocId(), false);
         try {
           if (node.canAddMixin("eoo:onlyofficeFile")) {
             node.addMixin("eoo:onlyofficeFile");
           }
           // Use current node insted of frozen one when it doesn't exist yet.
           Node frozen = node;
-          if (node.getBaseVersion().hasNode("jcr:frozenNode")) {
+          boolean versionable = node.isNodeType("mix:versionable") ;
+          if (versionable && node.getBaseVersion().hasNode("jcr:frozenNode")) {
             frozen = node.getBaseVersion().getNode("jcr:frozenNode");
           }
 
@@ -1726,9 +1737,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             versioningUser = frozen.getProperty("eoo:versionOwner").getString();
           }
           // Version accumulation for same user
-          if (userId.equals(versioningUser)) {
+          if (versionable && userId.equals(versioningUser)) {
             String versionName = node.getBaseVersion().getName();
-            LOG.debug("Removig version " + versionName + " from node " + node.getPath());
+            LOG.debug("Removig version " + versionName + " from node " + nodePath);
             node.getVersionHistory().removeVersion(versionName);
           }
 
@@ -1788,7 +1799,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               unlock(node, lock);
             }
           } catch (Throwable e) {
-            LOG.warn("Error unlocking edited document " + nodePath(workspace, path), e);
+            LOG.warn("Error unlocking edited document " + nodePath, e);
           }
         }
       } else
