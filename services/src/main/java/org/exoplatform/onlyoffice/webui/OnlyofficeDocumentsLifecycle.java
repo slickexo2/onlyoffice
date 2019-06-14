@@ -78,19 +78,15 @@ public class OnlyofficeDocumentsLifecycle extends AbstractOnlyofficeLifecycle {
             parentContext.setAttribute(OnlyofficeContext.USERID_ATTRIBUTE, userName);
             parentContext.setAttribute(OnlyofficeContext.DOCUMENT_WORKSPACE_ATTRIBUTE, nodeWs);
             parentContext.setAttribute(OnlyofficeContext.DOCUMENT_PATH_ATTRIBUTE, nodePath);
+            String editorLink = editorService.getEditorLink(node);
+            if (editorLink == null || editorLink.isEmpty()) {
+              editorLink = "null".intern();
+            } else {
+              editorLink = new StringBuilder().append('\'').append(editorLink(editorLink, "documents")).append('\'').toString();
+            }
             // This will init explorer even for docs that cannot be edited
             // by the user (locked or lack of permissions)
-            String editorLink = editorLink(editorService.getEditorLink(node), "documents");
-            if(editorLink != null) {
-              callModule("initExplorer('" + docId + "', '" + editorLink + "');");
-            }
-            else if(LOG.isDebugEnabled()) {
-              LOG.debug("Document link is null for {}, node: {}:{}, context: {}",
-                        userName,
-                        nodeWs,
-                        nodePath,
-                        parentContext);
-            }
+            callModule("initExplorer('" + docId + "', " + editorLink + ");");
           } else if (LOG.isDebugEnabled()) {
             LOG.debug("Document not initialized or not editable for {}, node: {}:{}, context: {}",
                       userName,
