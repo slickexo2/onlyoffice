@@ -1695,6 +1695,18 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           if (frozen.hasProperty("eoo:onlyofficeVersion")) {
             onlyofficeVersion = frozen.getProperty("eoo:onlyofficeVersion").getBoolean();
           }
+          
+          // Used in DocumentUpdateActivityListener
+          boolean sameModifier = false;
+          Calendar created = content.getProperty("exo:dateCreated").getDate();
+          Calendar modified = content.getProperty("exo:dateModified").getDate();
+          if (node.hasProperty("exo:lastModifier") && !created.equals(modified)) {
+            sameModifier = userId.equals(node.getProperty("exo:lastModifier").getString());
+            node.setProperty("exo:lastModifier", userId);
+          }
+
+          modifierConfig.setSameModifier(sameModifier);
+          modifierConfig.setPreviousModified(content.getProperty("jcr:lastModified").getDate());
 
           Calendar lastModified = node.getProperty("exo:lastModifiedDate").getDate();
           Calendar versionDate = frozen.getProperty("exo:lastModifiedDate").getDate();
@@ -1702,15 +1714,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           if (versionDate.getTimeInMillis() <= lastModified.getTimeInMillis() && !onlyofficeVersion) {
             createVersionOfDraft(node);
           }
-
-          boolean sameModifier = false;
-          if (node.hasProperty("exo:lastModifier")) {
-            sameModifier = userId.equals(node.getProperty("exo:lastModifier").getString());
-            node.setProperty("exo:lastModifier", userId);
-          }
-          modifierConfig.setSameModifier(sameModifier);
-          modifierConfig.setPreviousModified(content.getProperty("jcr:lastModified").getDate());
-
+          
           content.setProperty("jcr:lastModified", editedTime);
           if (content.hasProperty("exo:dateModified")) {
             content.setProperty("exo:dateModified", editedTime);
