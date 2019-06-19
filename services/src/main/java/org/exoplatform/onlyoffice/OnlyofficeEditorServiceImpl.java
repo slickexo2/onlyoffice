@@ -82,6 +82,7 @@ import org.exoplatform.services.cache.CacheListenerContext;
 import org.exoplatform.services.cache.CacheService;
 import org.exoplatform.services.cache.ExoCache;
 import org.exoplatform.services.cms.documents.DocumentService;
+import org.exoplatform.services.cms.documents.TrashService;
 import org.exoplatform.services.cms.lock.LockService;
 import org.exoplatform.services.jcr.RepositoryService;
 import org.exoplatform.services.jcr.ext.app.SessionProviderService;
@@ -281,6 +282,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /** The listener service. */
   protected final ListenerService                                 listenerService;
 
+  /** The trash service. */
+  protected final TrashService                                    trashService;
+
   /** Cache of Editing documents. */
   protected final ExoCache<String, ConcurrentMap<String, Config>> activeCache;
 
@@ -351,6 +355,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                      DocumentService documentService,
                                      LockService lockService,
                                      ListenerService listenerService,
+                                     TrashService trashService,
                                      InitParams params)
       throws ConfigurationException {
     this.jcrService = jcrService;
@@ -362,6 +367,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     this.documentService = documentService;
     this.lockService = lockService;
     this.listenerService = listenerService;
+    this.trashService = trashService;
 
     this.activeCache = cacheService.getCacheInstance(CACHE_NAME);
     if (LOG.isDebugEnabled()) {
@@ -1615,19 +1621,16 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   protected void download(Config config, DocumentStatus status) throws OnlyofficeEditorException, RepositoryException {
     String workspace = config.getWorkspace();
     String path = config.getPath();
-    
+
     if (LOG.isDebugEnabled()) {
       LOG.debug(">> download(" + path + ", " + config.getDocument().getKey() + ")");
     }
 
     // Assuming a single user here (last modifier)
     String userId = status.getLastUser();
-
     validateUser(userId, config);
-
     String contentUrl = status.getUrl();
     Calendar editedTime = Calendar.getInstance();
-
     HttpURLConnection connection;
     InputStream data;
     try {
@@ -1671,7 +1674,24 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       }
 
       // work in user session
-      Node node = getDocumentById(workspace, config.getDocId());
+      Node node = null;
+      try {
+        node = getDocumentById(workspace, config.getDocId());
+      } catch (AccessDeniedException e) {
+        DocumentStatus errorStatus = new DocumentStatus.Builder().config(config)
+                                                                 .error(OnlyofficeEditorListener.FILE_DELETED_ERROR)
+                                                                 .build();
+        fireError(errorStatus);
+        throw new OnlyofficeEditorException("The document " + config.getDocId() + " has been deleted", e);
+      }
+
+      if (trashService.isInTrash(node)) {
+        DocumentStatus errorStatus = new DocumentStatus.Builder().config(config)
+                                                                 .error(OnlyofficeEditorListener.FILE_DELETED_ERROR)
+                                                                 .build();
+        fireError(errorStatus);
+        throw new OnlyofficeEditorException("The document " + config.getDocId() + " has been deleted");
+      }
       Node content = nodeContent(node);
       String nodePath = nodePath(workspace, node.getPath());
       // lock node first, this also will check if node isn't locked by another
@@ -1686,30 +1706,31 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           }
           // Use current node insted of frozen one when it doesn't exist yet.
           Node frozen = node;
-          boolean versionable = node.isNodeType("mix:versionable") ;
+          boolean versionable = node.isNodeType("mix:versionable");
           if (versionable && node.getBaseVersion().hasNode("jcr:frozenNode")) {
             frozen = node.getBaseVersion().getNode("jcr:frozenNode");
           }
+          // Used in DocumentUpdateActivityListener
+          boolean sameModifier = false;
+          Calendar created = content.getProperty("exo:dateCreated").getDate();
+          Calendar modified = content.getProperty("exo:dateModified").getDate();
+          if (node.hasProperty("exo:lastModifier") && !created.equals(modified)) {
+            sameModifier = userId.equals(node.getProperty("exo:lastModifier").getString());
+            node.setProperty("exo:lastModifier", userId);
+          }
+          modifierConfig.setSameModifier(sameModifier);
+          modifierConfig.setPreviousModified(content.getProperty("jcr:lastModified").getDate());
 
           Boolean onlyofficeVersion = false;
           if (frozen.hasProperty("eoo:onlyofficeVersion")) {
             onlyofficeVersion = frozen.getProperty("eoo:onlyofficeVersion").getBoolean();
           }
-
           Calendar lastModified = node.getProperty("exo:lastModifiedDate").getDate();
           Calendar versionDate = frozen.getProperty("exo:lastModifiedDate").getDate();
           // Create a version of the manually uploaded draft if exists
           if (versionDate.getTimeInMillis() <= lastModified.getTimeInMillis() && !onlyofficeVersion) {
             createVersionOfDraft(node);
           }
-
-          boolean sameModifier = false;
-          if (node.hasProperty("exo:lastModifier")) {
-            sameModifier = userId.equals(node.getProperty("exo:lastModifier").getString());
-            node.setProperty("exo:lastModifier", userId);
-          }
-          modifierConfig.setSameModifier(sameModifier);
-          modifierConfig.setPreviousModified(content.getProperty("jcr:lastModified").getDate());
 
           content.setProperty("jcr:lastModified", editedTime);
           if (content.hasProperty("exo:dateModified")) {
@@ -1782,9 +1803,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           }
           throw e; // let the caller handle it further
         } finally {
+          modifierConfig.setPreviousModified(null);
+          modifierConfig.setSameModifier(null);
           try {
-            modifierConfig.setPreviousModified(null);
-            modifierConfig.setSameModifier(null);
             data.close();
           } catch (Throwable e) {
             LOG.warn("Error closing exported content stream for " + nodePath, e);
