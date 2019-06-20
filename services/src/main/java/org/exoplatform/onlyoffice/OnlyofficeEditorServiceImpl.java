@@ -1680,21 +1680,18 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       Node node = null;
       try {
         node = getDocumentById(workspace, config.getDocId());
-      } catch (AccessDeniedException e) {
+        if (trashService.isInTrash(node)) {
+          throw new OnlyofficeEditorException("The document " + config.getDocId() + " has been deleted");
+        }
+      } catch (AccessDeniedException | OnlyofficeEditorException e) {
         DocumentStatus errorStatus = new DocumentStatus.Builder().config(config)
                                                                  .error(OnlyofficeEditorListener.FILE_DELETED_ERROR)
                                                                  .build();
         fireError(errorStatus);
-        throw new OnlyofficeEditorException("The document " + config.getDocId() + " has been deleted", e);
+        logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "Document has been deleted or access denied");
+        throw new OnlyofficeEditorException("The document " + config.getDocId() + " has been deleted or access denied", e);
       }
-
-      if (trashService.isInTrash(node)) {
-        DocumentStatus errorStatus = new DocumentStatus.Builder().config(config)
-                                                                 .error(OnlyofficeEditorListener.FILE_DELETED_ERROR)
-                                                                 .build();
-        fireError(errorStatus);
-        throw new OnlyofficeEditorException("The document " + config.getDocId() + " has been deleted");
-      }
+      
       Node content = nodeContent(node);
       String nodePath = nodePath(workspace, node.getPath());
       // lock node first, this also will check if node isn't locked by another
@@ -1703,6 +1700,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       if (lock.canEdit()) {
         // This modifierConfig can be different from 'config'
         Config modifierConfig = getEditor(userId, config.getDocId(), false);
+        if(modifierConfig == null) {
+          modifierConfig = config;
+        }
+        
         try {
           if (node.canAddMixin("eoo:onlyofficeFile")) {
             node.addMixin("eoo:onlyofficeFile");
@@ -1789,7 +1790,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             node.setProperty("eoo:versionOwner", (String) null);
             node.setProperty("eoo:onlyofficeVersion", false);
             node.save();
-            // PROBLEB: calendars are different
+
             // If the status code == 2, the EDITOR_SAVED_EVENT should be
             // thrown.
             if (statusCode != 2) {
