@@ -1838,9 +1838,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                      "Error unlocking edited document");
           }
         }
-      } else
-
-      {
+      } else {
         logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "Document locked");
         throw new OnlyofficeEditorException("Document locked " + nodePath);
       }
@@ -2430,7 +2428,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @param reason the reason
    */
   protected void logError(String userId, String path, String docId, String key, String reason) {
-    LOG.error("Editor error: " + reason + " [UserId: " + userId + ", docId: " + docId + ", path: " + path + ", key: " + key);
+    LOG.error("Editor error: " + reason + " [UserId: " + userId + ", docId: " + docId + ", path: " + path + ", key: " + key + "]");
   }
 
 }

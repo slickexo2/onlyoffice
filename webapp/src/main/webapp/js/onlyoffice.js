@@ -568,7 +568,7 @@
             var state = store.getState();
             console.log("STATE CHANGED: " + state.type);
             if (state.type === DOCUMENT_DELETED) {
-              UI.showNotice("error", "Error", "File has been deleted");
+              UI.showError("File is not available", "File has been deleted. You can save it (File -> Save)");
             }
           });
 
@@ -668,6 +668,9 @@
             UI.addRefreshBannerPDF();
           }
         }
+        if(state.type === DOCUMENT_DELETED) {
+          UI.showError("File is not available", "File has been deleted. You can save it (File -> Save)");
+        }
       });
       if (docId != explorerDocId) {
         // We need unsubscribe from previous doc
@@ -720,6 +723,8 @@
     var NOTICE_WIDTH = "380px";
 
     var docEditor;
+
+    var notification;
 
     /**
      * Returns the html markup of the 'Edit Online' button.
@@ -1007,8 +1012,13 @@
           }
         }
       };
+      console.log(notification);
+      if (notification) {
+        notification.remove();
+      }
 
-      return $.pnotify(noticeOptions);
+      notification = $.pnotify(noticeOptions);
+      return notification;
     };
 
     /**
