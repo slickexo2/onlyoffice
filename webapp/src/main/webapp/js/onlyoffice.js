@@ -1012,7 +1012,6 @@
           }
         }
       };
-      console.log(notification);
       if (notification) {
         notification.remove();
       }
