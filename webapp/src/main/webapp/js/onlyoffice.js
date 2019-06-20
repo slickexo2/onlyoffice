@@ -558,6 +558,7 @@
      */
     this.initEditor = function(config) {
       log("Initialize editor for document: " + config.docId);
+      window.document.title = config.document.title + " - " + window.document.title;
       UI.initEditor();
       create(config).done(function(localConfig) {
         if (localConfig) {

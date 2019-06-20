@@ -1638,11 +1638,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       connection = (HttpURLConnection) url.openConnection();
       data = connection.getInputStream();
       if (data == null) {
+        logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "Content stream is null");
         throw new OnlyofficeEditorException("Content stream is null");
       }
     } catch (MalformedURLException e) {
+      logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "Error parsing content URL");
       throw new OnlyofficeEditorException("Error parsing content URL " + contentUrl + " for " + path, e);
     } catch (IOException e) {
+      logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "Error reading content stream");
       throw new OnlyofficeEditorException("Error reading content stream " + contentUrl + " for " + path, e);
     }
 
@@ -1669,7 +1672,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               + ")");
         }
       } else {
-        LOG.warn("User identity not found " + userId + " for downloading " + config.getDocument().getKey() + " " + path);
+        logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "User identity not found");
         throw new OnlyofficeEditorException("User identity not found " + userId);
       }
 
@@ -1725,6 +1728,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           if (frozen.hasProperty("eoo:onlyofficeVersion")) {
             onlyofficeVersion = frozen.getProperty("eoo:onlyofficeVersion").getBoolean();
           }
+
           Calendar lastModified = node.getProperty("exo:lastModifiedDate").getDate();
           Calendar versionDate = frozen.getProperty("exo:lastModifiedDate").getDate();
           // Create a version of the manually uploaded draft if exists
@@ -1760,7 +1764,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // Version accumulation for same user
           if (versionable && userId.equals(versioningUser)) {
             String versionName = node.getBaseVersion().getName();
-            LOG.debug("Removig version " + versionName + " from node " + nodePath);
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Removig version " + versionName + " from node " + nodePath);
+            }
             node.getVersionHistory().removeVersion(versionName);
           }
 
@@ -1799,7 +1805,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           try {
             node.refresh(false); // rollback JCR modifications
           } catch (Throwable re) {
-            LOG.warn("Error rolling back failed change for " + nodePath, re);
+            logError(userId, nodePath, config.getDocId(), config.getDocument().getKey(), "Error rolling back failed change");
           }
           throw e; // let the caller handle it further
         } finally {
@@ -1808,7 +1814,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           try {
             data.close();
           } catch (Throwable e) {
-            LOG.warn("Error closing exported content stream for " + nodePath, e);
+            logError(userId,
+                     nodePath,
+                     config.getDocId(),
+                     config.getDocument().getKey(),
+                     "Error closing exported content stream for");
           }
           try {
             connection.disconnect();
@@ -1820,12 +1830,17 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               unlock(node, lock);
             }
           } catch (Throwable e) {
-            LOG.warn("Error unlocking edited document " + nodePath, e);
+            logError(userId,
+                     config.getPath(),
+                     config.getDocId(),
+                     config.getDocument().getKey(),
+                     "Error unlocking edited document");
           }
         }
       } else
 
       {
+        logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "Document locked");
         throw new OnlyofficeEditorException("Document locked " + nodePath);
       }
     } finally
@@ -1874,6 +1889,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
     } else {
       LOG.warn("User identity not found " + userId + " for creating a version from draft");
+      logError(userId, node.getPath(), node.getUUID(), null, "Document locked");
       throw new OnlyofficeEditorException("User identity not found " + userId);
     }
   }
@@ -1968,6 +1984,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       if (RepositoryException.class.isAssignableFrom(e.getClass())) {
         throw RepositoryException.class.cast(e);
       } else {
+        logError(null, node.getPath(), node.getUUID(), null, "Error removing document lock");
         throw new OnlyofficeEditorException("Error removing document lock", e);
       }
     }
@@ -2007,6 +2024,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             if (RepositoryException.class.isAssignableFrom(e.getClass())) {
               throw RepositoryException.class.cast(e);
             } else {
+              logError(config.getEditorConfig().getUser().getId(),
+                       node.getPath(),
+                       node.getUUID(),
+                       config.getDocument().getKey(),
+                       "Error reading document lock");
               throw new OnlyofficeEditorException("Error reading document lock", e);
             }
           }
@@ -2029,6 +2051,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             if (RepositoryException.class.isAssignableFrom(e.getClass())) {
               throw RepositoryException.class.cast(e);
             } else {
+              logError(config.getEditorConfig().getUser().getId(),
+                       node.getPath(),
+                       node.getUUID(),
+                       config.getDocument().getKey(),
+                       "Error saving document lock");
               throw new OnlyofficeEditorException("Error saving document lock", e);
             }
           }
@@ -2037,6 +2064,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       } while (lock == null && attempts <= LOCK_WAIT_ATTEMTS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
+      logError(config.getEditorConfig().getUser().getId(),
+               node.getPath(),
+               node.getUUID(),
+               config.getDocument().getKey(),
+               "Error waiting for a lock");
       throw new OnlyofficeEditorException("Error waiting for lock of " + nodePath(config.getWorkspace(), config.getPath()), e);
     }
     return lock == null ? new LockState() : lock;
@@ -2385,6 +2417,19 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                               .append("/oeditor?docId=")
                               .append(docId)
                               .toString();
+  }
+
+  /**
+   * Logs editor errors.
+   *
+   * @param userId the userId
+   * @param nodePath  the nodePath
+   * @param docId the docId
+   * @param key the key
+   * @param reason the reason
+   */
+  protected void logError(String userId, String path, String docId, String key, String reason) {
+    LOG.error("Editor error: " + reason + " [UserId: " + userId + ", docId: " + docId + ", path: " + path + ", key: " + key);
   }
 
 }
