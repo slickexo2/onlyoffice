@@ -1716,20 +1716,20 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           }
           // Used in DocumentUpdateActivityListener
           boolean sameModifier = false;
-          Calendar created = content.getProperty("exo:dateCreated").getDate();
-          Calendar modified = content.getProperty("exo:dateModified").getDate();
-          if (node.hasProperty("exo:lastModifier") && !created.equals(modified)) {
+          Calendar contentCreated = content.getProperty("exo:dateCreated").getDate();
+          Calendar contentModified = content.getProperty("exo:dateModified").getDate();
+          if (node.hasProperty("exo:lastModifier") && !contentCreated.equals(contentModified)) {
             sameModifier = userId.equals(node.getProperty("exo:lastModifier").getString());
             node.setProperty("exo:lastModifier", userId);
           }
           modifierConfig.setSameModifier(sameModifier);
           modifierConfig.setPreviousModified(content.getProperty("jcr:lastModified").getDate());
 
+          
           Boolean onlyofficeVersion = false;
           if (frozen.hasProperty("eoo:onlyofficeVersion")) {
             onlyofficeVersion = frozen.getProperty("eoo:onlyofficeVersion").getBoolean();
           }
-
           Calendar lastModified = node.getProperty("exo:lastModifiedDate").getDate();
           Calendar versionDate = frozen.getProperty("exo:lastModifiedDate").getDate();
           // Create a version of the manually uploaded draft if exists
@@ -1810,6 +1810,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           }
           throw e; // let the caller handle it further
         } finally {
+          // Remove values after usage in DocumentUdateActivityListener
           modifierConfig.setPreviousModified(null);
           modifierConfig.setSameModifier(null);
           try {
@@ -1819,12 +1820,16 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                      nodePath,
                      config.getDocId(),
                      config.getDocument().getKey(),
-                     "Error closing exported content stream for");
+                     "Error closing exported content stream");
           }
           try {
             connection.disconnect();
           } catch (Throwable e) {
-            LOG.warn("Error closing export connection for " + nodePath, e);
+            logError(userId,
+                     nodePath,
+                     config.getDocId(),
+                     config.getDocument().getKey(),
+                     "Error closing export connection");
           }
           try {
             if (node.isLocked() && lock.wasLocked()) {
@@ -1842,9 +1847,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "Document locked");
         throw new OnlyofficeEditorException("Document locked " + nodePath);
       }
-    } finally
-
-    {
+    } finally {
       // restore context env
       ConversationState.setCurrent(contextState);
       sessionProviders.setSessionProvider(null, contextProvider);

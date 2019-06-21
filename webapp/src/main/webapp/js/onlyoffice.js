@@ -568,7 +568,7 @@
             var state = store.getState();
             console.log("STATE CHANGED: " + state.type);
             if (state.type === DOCUMENT_DELETED) {
-              UI.showError("File is not available", "File has been deleted. You can save it (File -> Save)");
+              UI.showError(message("ErrorTitle"), message("ErrorFileDeletedEditor"));
             }
           });
 
@@ -669,7 +669,7 @@
           }
         }
         if(state.type === DOCUMENT_DELETED) {
-          UI.showError("File is not available", "File has been deleted. You can save it (File -> Save)");
+          UI.showError(message("ErrorTitle"), message("ErrorFileDeletedECMS"));
         }
       });
       if (docId != explorerDocId) {
@@ -1001,7 +1001,8 @@
         hide : options && typeof options.hide != "undefined" ? options.hide : false,
         closer : options && typeof options.closer != "undefined" ? options.closer : true,
         sticker : false,
-        opacity : .75,
+        opacity : .9,
+        addclass : 'onlyoffice-notification',
         shadow : true,
         width : options && options.width ? options.width : NOTICE_WIDTH,
         nonblock : options && typeof options.nonblock != "undefined" ? options.nonblock : false,
