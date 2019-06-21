@@ -342,6 +342,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @param documentService the document service (ECMS)
    * @param lockService the lock service
    * @param listenerService the listener service
+   * @param trashService the trashService
    * @param params the params
    * @throws ConfigurationException the configuration exception
    */
@@ -2425,7 +2426,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * Logs editor errors.
    *
    * @param userId the userId
-   * @param nodePath  the nodePath
+   * @param path the path
    * @param docId the docId
    * @param key the key
    * @param reason the reason
