@@ -1319,6 +1319,7 @@ public class Config implements Externalizable {
    * @param firstName {@link String}
    * @param lastName {@link String}
    * @param lang {@link String}
+   * @param documentserverSecret the documentserverSecret
    * @return {@link Config} an instance of config similar to this but with
    *         another user in the editor
    */
