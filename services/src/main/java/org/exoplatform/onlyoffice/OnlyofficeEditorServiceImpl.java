@@ -623,7 +623,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       try {
         ConcurrentMap<String, Config> configs = activeCache.get(docId);
         if (configs != null) {
-          config = getEditor(userId, config.getDocId(), true);
+          config = getEditor(userId, docId, true);
           if (config == null) {
             // it's unexpected state as existing map SHOULD contain a config and
             // it must be copied for given user in getEditor(): client will need
