@@ -49,6 +49,10 @@
   margin-bottom: 15px;
 }
 
+.ui-pnotify.onlyoffice-notification {
+  top: 70px !important;
+}
+
 .onlyofficeContainer>#editor>iframe, .onlyofficeContainer>.editor>iframe {
   position: absolute;
   width: 100%;

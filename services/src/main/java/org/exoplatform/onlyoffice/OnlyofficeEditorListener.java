@@ -26,42 +26,45 @@ package org.exoplatform.onlyoffice;
  * @version $Id: OnlyofficeEditorListener.java 00000 Mar 4, 2016 pnedonosko $
  */
 public interface OnlyofficeEditorListener {
-  
+
+  /** The FILE_DELEDED_ERROR code. */
+  long FILE_DELETED_ERROR = -1;
+
   /**
    * New editor just created.
    *
    * @param status the status
    */
   void onCreate(DocumentStatus status);
-  
+
   /**
    * Existing editor obtained by user.
    *
    * @param status the status
    */
   void onGet(DocumentStatus status);
-  
+
   /**
    * User joined co-editing document (it's second or more user). 
    *
    * @param status the status
    */
   void onJoined(DocumentStatus status);
-  
+
   /**
    * User leaved co-editing document (it's at least second user gone). 
    *
    * @param status the status
    */
   void onLeaved(DocumentStatus status);
-  
+
   /**
    * Document was saved and editor released.
    *
    * @param status the status
    */
   void onSaved(DocumentStatus status);
-  
+
   /**
    * Error saving document in editor. Error message if found, will be set in the {@link Config#getError()}.
    *

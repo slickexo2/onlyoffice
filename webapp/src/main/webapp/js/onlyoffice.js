@@ -234,12 +234,13 @@
     // Constants:
     var DOCUMENT_SAVED = "DOCUMENT_SAVED";
     var DOCUMENT_CHANGED = "DOCUMENT_CHANGED";
+    var DOCUMENT_DELETED = "DOCUMENT_DELETED";
     var DOCUMENT_VERSION = "DOCUMENT_VERSION";
     var DOCUMENT_LINK = "DOCUMENT_LINK";
     var EDITOR_CLOSED = "EDITOR_CLOSED";
 
     // Events that are dispatched to redux as actions
-    var dispatchableEvents = [ DOCUMENT_SAVED, DOCUMENT_CHANGED, DOCUMENT_VERSION ];
+    var dispatchableEvents = [ DOCUMENT_SAVED, DOCUMENT_CHANGED, DOCUMENT_DELETED, DOCUMENT_VERSION ];
 
     // CometD transport bus
     var cometd, cometdContext;
@@ -370,7 +371,7 @@
           clearTimeout(autosaveTimer);
           autosaveTimer = null;
         }
-        
+
         if (changesTimer) {
           log("Reset changes timer...");
           clearTimeout(changesTimer);
@@ -384,7 +385,7 @@
           changesTimer = setTimeout(function() {
             log("Getting document link after a timeout...");
             saveDocumentLink();
-            if(autosaveTimer) {
+            if (autosaveTimer) {
               clearTimeout(autosaveTimer);
             }
             autosaveTimer = setTimeout(function() {
@@ -565,6 +566,10 @@
 
           store.subscribe(function() {
             var state = store.getState();
+            console.log("STATE CHANGED: " + state.type);
+            if (state.type === DOCUMENT_DELETED) {
+              UI.showError(message("ErrorTitle"), message("ErrorFileDeletedEditor"));
+            }
           });
 
           // Establish a Comet/WebSocket channel from this point.
@@ -586,7 +591,7 @@
                 "type" : EDITOR_CLOSED,
                 "userId" : currentUserId,
                 "key" : currentConfig.document.key,
-                "changes": currentUserChanges
+                "changes" : currentUserChanges
               });
             }
           });
@@ -663,6 +668,9 @@
             UI.addRefreshBannerPDF();
           }
         }
+        if(state.type === DOCUMENT_DELETED) {
+          UI.showError(message("ErrorTitle"), message("ErrorFileDeletedECMS"));
+        }
       });
       if (docId != explorerDocId) {
         // We need unsubscribe from previous doc
@@ -716,17 +724,18 @@
 
     var docEditor;
 
+    var notification;
+
     /**
      * Returns the html markup of the 'Edit Online' button.
      */
     var getEditorButton = function(editorLink) {
       return "<li class='hidden-tabletL'><a href='" + editorLink + "' target='_blank'>"
-          + "<i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i>" + message("EditButtonTitle")
-          + "</a></li>";
+          + "<i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i>" + message("EditButtonTitle") + "</a></li>";
     };
-    
+
     var getNoPreviewEditorButton = function(editorLink) {
-      return "<a class='btn editOnlineBtn hidden-tabletL' href='#' onclick='javascript:window.open(\"" + editorLink +"\");'>"
+      return "<a class='btn editOnlineBtn hidden-tabletL' href='#' onclick='javascript:window.open(\"" + editorLink + "\");'>"
           + "<i class='uiIconEcmsOnlyofficeOpen uiIconEcmsLightGray uiIconEdit'></i>" + message("EditButtonTitle") + "</a>";
     };
 
@@ -751,14 +760,14 @@
         } else {
           log("Cannot find .noPreview element");
         }
-      } else if($elem.find("a.editOnlineBtn").length == 0){
+      } else if ($elem.find("a.editOnlineBtn").length == 0) {
         var $detailContainer = $elem.find(".detailContainer");
         var $downloadBtn = $detailContainer.find(".uiIconDownload").closest("a.btn");
         if ($downloadBtn.length != 0) {
           $downloadBtn.after(getNoPreviewEditorButton(editorLink));
         } else {
           $detailContainer.append(getNoPreviewEditorButton(editorLink));
-        } 
+        }
       }
     };
 
@@ -917,8 +926,7 @@
         var $downloadBtn = $detailContainer.find(".uiIconDownload").closest("a.btn");
         if ($downloadBtn.length != 0) {
           $downloadBtn.after(getNoPreviewEditorButton(editorLink));
-        }
-        else {
+        } else {
           $detailContainer.append(getNoPreviewEditorButton(editorLink));
         }
       }
@@ -993,7 +1001,8 @@
         hide : options && typeof options.hide != "undefined" ? options.hide : false,
         closer : options && typeof options.closer != "undefined" ? options.closer : true,
         sticker : false,
-        opacity : .75,
+        opacity : .9,
+        addclass : 'onlyoffice-notification',
         shadow : true,
         width : options && options.width ? options.width : NOTICE_WIDTH,
         nonblock : options && typeof options.nonblock != "undefined" ? options.nonblock : false,
@@ -1004,8 +1013,12 @@
           }
         }
       };
+      if (notification) {
+        notification.remove();
+      }
 
-      return $.pnotify(noticeOptions);
+      notification = $.pnotify(noticeOptions);
+      return notification;
     };
 
     /**

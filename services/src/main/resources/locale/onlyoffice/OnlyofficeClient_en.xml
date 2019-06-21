@@ -8,8 +8,10 @@
 
     <ErrorTitle>Error</ErrorTitle>
     <InfoTitle>Information</InfoTitle>
-    
+
     <ErrorConfigNotDefined>Editor configuration not defined</ErrorConfigNotDefined>
     <ErrorCreateConfig>Failed to create editor configuration</ErrorCreateConfig>
+    <ErrorFileDeletedECMS>The file has been deleted. You can try to restore it from Trash</ErrorFileDeletedECMS>
+    <ErrorFileDeletedEditor>The file has been deleted. You can save it using File -> Save</ErrorFileDeletedEditor>
   </OnlyofficeEditorClient>
 </bundle>

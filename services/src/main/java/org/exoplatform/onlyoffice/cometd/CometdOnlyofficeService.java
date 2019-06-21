@@ -190,6 +190,9 @@ public class CometdOnlyofficeService implements Startable {
   /** The document saved event. */
   public static final String              DOCUMENT_SAVED_EVENT   = "DOCUMENT_SAVED";
 
+  /** The document deleted event. */
+  public static final String              DOCUMENT_DELETED_EVENT = "DOCUMENT_DELETED";
+
   /** The document changed event. */
   public static final String              DOCUMENT_CHANGED_EVENT = "DOCUMENT_CHANGED";
 
@@ -370,7 +373,9 @@ public class CometdOnlyofficeService implements Startable {
 
         @Override
         public void onError(DocumentStatus status) {
-          // Nothing
+          if (status.getError() == OnlyofficeEditorListener.FILE_DELETED_ERROR) {
+            publishDeletedEvent(status.getConfig().getDocId());
+          }
         }
 
         @Override
@@ -446,7 +451,7 @@ public class CometdOnlyofficeService implements Startable {
       Editor.User lastUser = editors.getLastModifier(key);
       Boolean changes = (Boolean) data.get("changes");
       if (changes != null && changes.booleanValue()) {
-        
+
         String[] users;
         try {
           users = editors.getState(userId, key).getUsers();
@@ -464,7 +469,7 @@ public class CometdOnlyofficeService implements Startable {
             void onContainerError(String error) {
               LOG.error("An error has occured in container: {}", containerName);
             }
-            
+
             @Override
             void execute(ExoContainer exoContainer) {
               if (lastUser.getLinkSaved() >= lastUser.getLastModified()) {
@@ -591,6 +596,27 @@ public class CometdOnlyofficeService implements Startable {
         data.append("\", ");
         data.append("\"userId\": \"");
         data.append(userId);
+        data.append("\"");
+        data.append('}');
+        channel.publish(localSession, data.toString());
+      }
+    }
+
+    /**
+     * Publish deleted event.
+     *
+     * @param docId the doc id
+     */
+    protected void publishDeletedEvent(String docId) {
+      ServerChannel channel = bayeux.getChannel(CHANNEL_NAME + docId);
+      if (channel != null) {
+        StringBuilder data = new StringBuilder();
+        data.append('{');
+        data.append("\"type\": \"");
+        data.append(DOCUMENT_DELETED_EVENT);
+        data.append("\", ");
+        data.append("\"docId\": \"");
+        data.append(docId);
         data.append("\"");
         data.append('}');
         channel.publish(localSession, data.toString());
