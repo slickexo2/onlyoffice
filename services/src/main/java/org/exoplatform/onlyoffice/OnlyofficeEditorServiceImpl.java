@@ -372,63 +372,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
     this.activeCache = cacheService.getCacheInstance(CACHE_NAME);
     if (LOG.isDebugEnabled()) {
-      activeCache.addCacheListener(new CacheListener<String, ConcurrentMap<String, Config>>() {
-
-        @Override
-        public void onExpire(CacheListenerContext context, String key, ConcurrentMap<String, Config> obj) throws Exception {
-          LOG.debug(CACHE_NAME + " onExpire > " + key + ": " + obj);
-        }
-
-        @Override
-        public void onRemove(CacheListenerContext context, String key, ConcurrentMap<String, Config> obj) throws Exception {
-          LOG.debug(CACHE_NAME + " onRemove > " + key + ": " + obj);
-        }
-
-        @Override
-        public void onPut(CacheListenerContext context, String key, ConcurrentMap<String, Config> obj) throws Exception {
-          LOG.debug(CACHE_NAME + " onPut > " + key + ": " + obj);
-        }
-
-        @Override
-        public void onGet(CacheListenerContext context, String key, ConcurrentMap<String, Config> obj) throws Exception {
-          LOG.debug(CACHE_NAME + " onGet > " + key + ": " + obj);
-        }
-
-        @Override
-        public void onClearCache(CacheListenerContext context) throws Exception {
-          LOG.debug(CACHE_NAME + " onClearCache");
-        }
-      });
+      addDebugCacheListener();
     }
-
-    // predefined file types
-    // TODO keep map of type configurations with need of conversion to modern
-    // format and back
-    // FYI we enable editor for only modern office formats (e.g. docx or odt)
-    // Text formats
-    fileTypes.put("docx", TYPE_TEXT);
-    fileTypes.put("doc", TYPE_TEXT);
-    fileTypes.put("odt", TYPE_TEXT);
-    fileTypes.put("txt", TYPE_TEXT);
-    fileTypes.put("rtf", TYPE_TEXT);
-    fileTypes.put("mht", TYPE_TEXT);
-    fileTypes.put("html", TYPE_TEXT);
-    fileTypes.put("htm", TYPE_TEXT);
-    fileTypes.put("epub", TYPE_TEXT);
-    fileTypes.put("pdf", TYPE_TEXT);
-    fileTypes.put("djvu", TYPE_TEXT);
-    fileTypes.put("xps", TYPE_TEXT);
-    // Speadsheet formats
-    fileTypes.put("xlsx", TYPE_SPREADSHEET);
-    fileTypes.put("xls", TYPE_SPREADSHEET);
-    fileTypes.put("ods", TYPE_SPREADSHEET);
-    // Presentation formats
-    fileTypes.put("pptx", TYPE_PRESENTATION);
-    fileTypes.put("ppt", TYPE_PRESENTATION);
-    fileTypes.put("ppsx", TYPE_PRESENTATION);
-    fileTypes.put("pps", TYPE_PRESENTATION);
-    fileTypes.put("odp", TYPE_PRESENTATION);
-
+    initFileTypes();
     // configuration
     PropertiesParam param = params.getPropertiesParam("editor-configuration");
 
@@ -439,41 +385,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
 
     String dsSchema = config.get(CONFIG_DS_SCHEMA);
-    if (dsSchema == null || (dsSchema = dsSchema.trim()).length() == 0) {
-      dsSchema = "http";
-    }
-
     String dsHost = config.get(CONFIG_DS_HOST);
-    if (dsHost == null || (dsHost = dsHost.trim()).length() == 0) {
-      throw new ConfigurationException("Configuration of " + CONFIG_DS_HOST + " required");
-    }
-    int portIndex = dsHost.indexOf(HTTP_PORT_DELIMITER);
-    if (portIndex > 0) {
-      // cut port from DS host to use in canDownloadBy() method
-      this.documentserverHostName = dsHost.substring(0, portIndex);
-    } else {
-      this.documentserverHostName = dsHost;
-    }
-
-    this.documentserverAccessOnly = Boolean.parseBoolean(config.get(CONFIG_DS_ACCESS_ONLY));
-
-    this.documentserverSecret = config.get(CONFIG_DS_SECRET);
-    String dsAllowedHost = config.get(CONFIG_DS_ALLOWEDHOSTS);
-    if (dsAllowedHost != null && !dsAllowedHost.isEmpty()) {
-      Set<String> allowedhosts = new HashSet<>();
-      for (String ahost : dsAllowedHost.split(",")) {
-        ahost = ahost.trim();
-        if (!ahost.isEmpty()) {
-          allowedhosts.add(lowerCase(ahost));
-        }
-      }
-      this.documentserverAllowedhosts = Collections.unmodifiableSet(allowedhosts);
-    } else {
-      this.documentserverAllowedhosts = Collections.emptySet();
-    }
-
+    this.documentserverHostName = getDocumentserverHost(dsSchema, dsHost);
     // base parameters for API
-
     StringBuilder documentserverUrl = new StringBuilder();
     documentserverUrl.append(dsSchema);
     documentserverUrl.append("://");
@@ -482,6 +396,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     this.uploadUrl = new StringBuilder(documentserverUrl).append("/FileUploader.ashx").toString();
     this.documentserverUrl = new StringBuilder(documentserverUrl).append("/OfficeWeb/").toString();
     this.commandServiceUrl = new StringBuilder(documentserverUrl).append("/coauthoring/CommandService.ashx").toString();
+    this.documentserverAccessOnly = Boolean.parseBoolean(config.get(CONFIG_DS_ACCESS_ONLY));
+    this.documentserverSecret = config.get(CONFIG_DS_SECRET);
+    this.documentserverAllowedhosts = getDocumentserverAllowedHosts(config.get(CONFIG_DS_ALLOWEDHOSTS));
+
   }
 
   /**
@@ -505,7 +423,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    */
   @Override
   public Config getEditor(String userId, String workspace, String path) throws OnlyofficeEditorException, RepositoryException {
-    return getEditor(userId, nodePath(workspace, path), false);
+    Node node = getDocument(workspace, path);
+    return node != null ? getEditor(userId, node.getUUID(), false) : null;
   }
 
   /**
@@ -527,7 +446,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * Gets the editor.
    *
    * @param userId the user id
-   * @param nodePath the node path
+   * @param docId the node docId
    * @param createCoEditing if <code>true</code> and has no editor for given
    *          user, create a copy for co-editing if document already editing by
    *          other users
@@ -535,9 +454,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @throws OnlyofficeEditorException the onlyoffice editor exception
    * @throws RepositoryException the repository exception
    */
-  protected Config getEditor(String userId, String nodePath, boolean createCoEditing) throws OnlyofficeEditorException,
-                                                                                      RepositoryException {
-    ConcurrentMap<String, Config> configs = activeCache.get(nodePath);
+  protected Config getEditor(String userId, String docId, boolean createCoEditing) throws OnlyofficeEditorException,
+                                                                                   RepositoryException {
+    ConcurrentMap<String, Config> configs = activeCache.get(docId);
     if (configs != null) {
       Config config = configs.get(userId);
       DocumentStatus.Builder statusBuilder = new DocumentStatus.Builder();
@@ -556,7 +475,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             Config existing = configs.putIfAbsent(userId, config);
             if (existing == null) {
               // need update the configs in the cache (for replicated cache)
-              activeCache.put(nodePath, configs);
               activeCache.put(config.getDocument().getKey(), configs);
               activeCache.put(config.getDocId(), configs);
             } else {
@@ -605,7 +523,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       // it's path as docId
       docId = initDocument(workspace, docId);
     }
-    Node node = nodeByUUID(workspace, docId);
+    Node node = getDocumentById(workspace, docId);
     String path = node.getPath();
     String nodePath = nodePath(workspace, path);
 
@@ -696,8 +614,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           configs = new ConcurrentHashMap<String, Config>();
           configs.put(userId, config);
 
-          // mapping by node path for )
-          activeCache.put(nodePath, configs);
           // mapping by unique file key for updateDocument()
           activeCache.put(key, configs);
           activeCache.put(docId, configs);
@@ -735,20 +651,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         SessionProvider contextProvider = sessionProviders.getSessionProvider(null);
         try {
           // XXX we want do all the job under actual (requester) user here
-          Identity userIdentity = userIdentity(userId);
-          if (userIdentity != null) {
-            ConversationState state = new ConversationState(userIdentity);
-            // Keep subject as attribute in ConversationState.
-            state.setAttribute(ConversationState.SUBJECT, userIdentity.getSubject());
-            ConversationState.setCurrent(state);
-            SessionProvider userProvider = new SessionProvider(state);
-            sessionProviders.setSessionProvider(null, userProvider);
-          } else {
-            LOG.warn("User identity not found " + userId + " for content of " + config.getDocument().getKey() + " "
-                + config.getPath());
-            throw new OnlyofficeEditorException("User identity not found " + userId);
+          if (!setUserConvoState(userId)) {
+            logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "Cannot set conversation state");
+            throw new OnlyofficeEditorException("Cannot set conversation state " + userId);
           }
-
           // work in user session
           Node node = node(config.getWorkspace(), config.getPath());
           Node content = nodeContent(node);
@@ -768,9 +674,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             }
           };
         } finally {
-          // restore context env
-          ConversationState.setCurrent(contextState);
-          sessionProviders.setSessionProvider(null, contextProvider);
+          restoreConvoState(contextState, contextProvider);
         }
       } else {
         throw new BadParameterException("User editor not found or already closed " + userId);
@@ -848,7 +752,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // Onlyoffice doesn't know about such document: we clean our records
           // and raise an error
           activeCache.remove(key);
-          activeCache.remove(nodePath);
           activeCache.remove(config.getDocId());
           LOG.warn("Received Onlyoffice status: no document with the key identifier could be found. Key: " + key + ". Document: "
               + nodePath);
@@ -867,7 +770,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           if (syncUsers(configs, users)) {
             // Update cached (for replicated cache)
             activeCache.put(key, configs);
-            activeCache.put(nodePath, configs);
             activeCache.put(config.getDocId(), configs);
           }
         } else if (statusCode == 2) {
@@ -883,7 +785,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             broadcastEvent(status, OnlyofficeEditorService.EDITOR_CLOSED_EVENT);
           }
           activeCache.remove(key);
-          activeCache.remove(nodePath);
           activeCache.remove(config.getDocId());
         } else if (statusCode == 3) {
           // it's an error of saving in Onlyoffice
@@ -897,7 +798,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               // successful modification the same behaviour as for status (2)
               downloadClosed(config, status);
               activeCache.remove(key);
-              activeCache.remove(nodePath);
               activeCache.remove(config.getDocId());
               config.setError("Error in editor (" + status.getError() + "). Last change was successfully saved");
               fireError(status);
@@ -912,7 +812,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               config.setError("Error in editor (" + status.getError() + "). No changes saved");
               // Update cached (for replicated cache)
               activeCache.put(key, configs);
-              activeCache.put(nodePath, configs);
               activeCache.put(config.getDocId(), configs);
               fireError(status);
               broadcastEvent(status, OnlyofficeEditorService.EDITOR_ERROR_EVENT);
@@ -928,7 +827,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             config.setError("Error in editor. Document still in editing state");
             // Update cached (for replicated cache)
             activeCache.put(key, configs);
-            activeCache.put(nodePath, configs);
             activeCache.put(config.getDocId(), configs);
             fireError(status);
             broadcastEvent(status, OnlyofficeEditorService.EDITOR_ERROR_EVENT);
@@ -939,7 +837,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           syncUsers(configs, status.getUsers());
           // and remove this document from active configs
           activeCache.remove(key);
-          activeCache.remove(nodePath);
           activeCache.remove(config.getDocId());
         } else if (statusCode == 6) {
           // forcedsave done, save the version with its URL
@@ -1209,7 +1106,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       Config config = configs.get(userId);
       config.getEditorConfig().getUser().setLastModified(System.currentTimeMillis());
       activeCache.put(key, configs);
-      activeCache.put(nodePath(config), configs);
       activeCache.put(config.getDocId(), configs);
     }
   }
@@ -1314,7 +1210,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       config.getEditorConfig().getUser().setDownloadLink(url);
       config.getEditorConfig().getUser().setLinkSaved(System.currentTimeMillis());
       activeCache.put(userdata.getKey(), configs);
-      activeCache.put(nodePath(config), configs);
       activeCache.put(config.getDocId(), configs);
     }
   }
@@ -1660,23 +1555,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       // user will be anonymous
       // TODO but it seems looks as nasty thing for security, it should be
       // carefully reviewed for production
-      Identity userIdentity = userIdentity(userId);
-      if (userIdentity != null) {
-        ConversationState state = new ConversationState(userIdentity);
-        // Keep subject as attribute in ConversationState.
-        state.setAttribute(ConversationState.SUBJECT, userIdentity.getSubject());
-        ConversationState.setCurrent(state);
-        SessionProvider userProvider = new SessionProvider(state);
-        sessionProviders.setSessionProvider(null, userProvider);
-        if (LOG.isDebugEnabled()) {
-          LOG.debug(">>> download under user " + userIdentity.getUserId() + " (" + path + ", " + config.getDocument().getKey()
-              + ")");
-        }
-      } else {
-        logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "User identity not found");
-        throw new OnlyofficeEditorException("User identity not found " + userId);
+      if (!setUserConvoState(userId)) {
+        logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "Cannot set conversation state");
+        throw new OnlyofficeEditorException("Cannot set conversation state " + userId);
       }
 
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(">>> download under user " + userId + " (" + path + ", " + config.getDocument().getKey() + ")");
+      }
       // work in user session
       Node node = null;
       try {
@@ -1689,10 +1575,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                                                  .error(OnlyofficeEditorListener.FILE_DELETED_ERROR)
                                                                  .build();
         fireError(errorStatus);
-        logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "Document has been deleted or access denied");
+        logError(userId,
+                 config.getPath(),
+                 config.getDocId(),
+                 config.getDocument().getKey(),
+                 "Document has been deleted or access denied");
         throw new OnlyofficeEditorException("The document " + config.getDocId() + " has been deleted or access denied", e);
       }
-      
+
       Node content = nodeContent(node);
       String nodePath = nodePath(workspace, node.getPath());
       // lock node first, this also will check if node isn't locked by another
@@ -1701,10 +1591,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       if (lock.canEdit()) {
         // This modifierConfig can be different from 'config'
         Config modifierConfig = getEditor(userId, config.getDocId(), false);
-        if(modifierConfig == null) {
+        if (modifierConfig == null) {
           modifierConfig = config;
         }
-        
+
         try {
           if (node.canAddMixin("eoo:onlyofficeFile")) {
             node.addMixin("eoo:onlyofficeFile");
@@ -1726,7 +1616,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           modifierConfig.setSameModifier(sameModifier);
           modifierConfig.setPreviousModified(content.getProperty("jcr:lastModified").getDate());
 
-          
           Boolean onlyofficeVersion = false;
           if (frozen.hasProperty("eoo:onlyofficeVersion")) {
             onlyofficeVersion = frozen.getProperty("eoo:onlyofficeVersion").getBoolean();
@@ -1817,20 +1706,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           try {
             data.close();
           } catch (Throwable e) {
-            logError(userId,
-                     nodePath,
-                     config.getDocId(),
-                     config.getDocument().getKey(),
-                     "Error closing exported content stream");
+            logError(userId, nodePath, config.getDocId(), config.getDocument().getKey(), "Error closing exported content stream");
           }
           try {
             connection.disconnect();
           } catch (Throwable e) {
-            logError(userId,
-                     nodePath,
-                     config.getDocId(),
-                     config.getDocument().getKey(),
-                     "Error closing export connection");
+            logError(userId, nodePath, config.getDocId(), config.getDocument().getKey(), "Error closing export connection");
           }
           try {
             if (node.isLocked() && lock.wasLocked()) {
@@ -1849,9 +1730,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         throw new OnlyofficeEditorException("Document locked " + nodePath);
       }
     } finally {
-      // restore context env
-      ConversationState.setCurrent(contextState);
-      sessionProviders.setSessionProvider(null, contextProvider);
+      restoreConvoState(contextState, contextProvider);
     }
   }
 
@@ -1866,14 +1745,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     ConversationState contextState = ConversationState.getCurrent();
     SessionProvider contextProvider = sessionProviders.getSessionProvider(null);
     String userId = node.getProperty("exo:lastModifier").getString();
-    Identity userIdentity = userIdentity(userId);
-    if (userIdentity != null) {
-      ConversationState state = new ConversationState(userIdentity);
-      // Keep subject as attribute in ConversationState.
-      state.setAttribute(ConversationState.SUBJECT, userIdentity.getSubject());
-      ConversationState.setCurrent(state);
-      SessionProvider userProvider = new SessionProvider(state);
-      sessionProviders.setSessionProvider(null, userProvider);
+    if (setUserConvoState(userId)) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Creating a version from draft. Path: " + node.getPath() + " user: " + userId);
       }
@@ -1886,15 +1758,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       } catch (Exception e) {
         LOG.error("Couldnl't create a version from draft for user: " + userId);
       }
-      // Restore context env
-      ConversationState.setCurrent(contextState);
-      sessionProviders.setSessionProvider(null, contextProvider);
-
     } else {
-      LOG.warn("User identity not found " + userId + " for creating a version from draft");
-      logError(userId, node.getPath(), node.getUUID(), null, "Document locked");
-      throw new OnlyofficeEditorException("User identity not found " + userId);
+      logError(userId, node.getPath(), node.getUUID(), null, "Cannot set conversation state");
+      throw new OnlyofficeEditorException("Cannot set conversation state " + userId);
     }
+    restoreConvoState(contextState, contextProvider);
   }
 
   /**
@@ -1966,9 +1834,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         node.checkout();
       }
       return true;
-    } else {
-      return false;
     }
+    return false;
   }
 
   /**
@@ -2432,7 +2299,145 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @param reason the reason
    */
   protected void logError(String userId, String path, String docId, String key, String reason) {
-    LOG.error("Editor error: " + reason + " [UserId: " + userId + ", docId: " + docId + ", path: " + path + ", key: " + key + "]");
+    LOG.error("Editor error: " + reason + " [UserId: " + userId + ", docId: " + docId + ", path: " + path + ", key: " + key
+        + "]");
+  }
+
+  /**
+   * Sets ConversationState by userId.
+   *
+   * @param userId the userId
+   * @return true if successful, false when the user is not found
+   */
+  protected boolean setUserConvoState(String userId) {
+    Identity userIdentity = userIdentity(userId);
+    if (userIdentity != null) {
+      ConversationState state = new ConversationState(userIdentity);
+      // Keep subject as attribute in ConversationState.
+      state.setAttribute(ConversationState.SUBJECT, userIdentity.getSubject());
+      ConversationState.setCurrent(state);
+      SessionProvider userProvider = new SessionProvider(state);
+      sessionProviders.setSessionProvider(null, userProvider);
+      return true;
+    }
+    LOG.warn("User identity not found " + userId + " for setting conversation state");
+    return false;
+  }
+
+  /**
+   * Restores the conversation state.
+   * 
+   * @param contextState the contextState
+   * @param contextProvider the contextProvider
+   */
+  protected void restoreConvoState(ConversationState contextState, SessionProvider contextProvider) {
+    ConversationState.setCurrent(contextState);
+    sessionProviders.setSessionProvider(null, contextProvider);
+  }
+
+  /**
+   * Initializes fileTypes map
+   */
+  protected void initFileTypes() {
+    fileTypes.put("docx", TYPE_TEXT);
+    fileTypes.put("doc", TYPE_TEXT);
+    fileTypes.put("odt", TYPE_TEXT);
+    fileTypes.put("txt", TYPE_TEXT);
+    fileTypes.put("rtf", TYPE_TEXT);
+    fileTypes.put("mht", TYPE_TEXT);
+    fileTypes.put("html", TYPE_TEXT);
+    fileTypes.put("htm", TYPE_TEXT);
+    fileTypes.put("epub", TYPE_TEXT);
+    fileTypes.put("pdf", TYPE_TEXT);
+    fileTypes.put("djvu", TYPE_TEXT);
+    fileTypes.put("xps", TYPE_TEXT);
+    // Speadsheet formats
+    fileTypes.put("xlsx", TYPE_SPREADSHEET);
+    fileTypes.put("xls", TYPE_SPREADSHEET);
+    fileTypes.put("ods", TYPE_SPREADSHEET);
+    // Presentation formats
+    fileTypes.put("pptx", TYPE_PRESENTATION);
+    fileTypes.put("ppt", TYPE_PRESENTATION);
+    fileTypes.put("ppsx", TYPE_PRESENTATION);
+    fileTypes.put("pps", TYPE_PRESENTATION);
+    fileTypes.put("odp", TYPE_PRESENTATION);
+  }
+
+  /**
+   * Adds debug listener to active cache
+   */
+  protected void addDebugCacheListener() {
+    activeCache.addCacheListener(new CacheListener<String, ConcurrentMap<String, Config>>() {
+
+      @Override
+      public void onExpire(CacheListenerContext context, String key, ConcurrentMap<String, Config> obj) throws Exception {
+        LOG.debug(CACHE_NAME + " onExpire > " + key + ": " + obj);
+      }
+
+      @Override
+      public void onRemove(CacheListenerContext context, String key, ConcurrentMap<String, Config> obj) throws Exception {
+        LOG.debug(CACHE_NAME + " onRemove > " + key + ": " + obj);
+      }
+
+      @Override
+      public void onPut(CacheListenerContext context, String key, ConcurrentMap<String, Config> obj) throws Exception {
+        LOG.debug(CACHE_NAME + " onPut > " + key + ": " + obj);
+      }
+
+      @Override
+      public void onGet(CacheListenerContext context, String key, ConcurrentMap<String, Config> obj) throws Exception {
+        LOG.debug(CACHE_NAME + " onGet > " + key + ": " + obj);
+      }
+
+      @Override
+      public void onClearCache(CacheListenerContext context) throws Exception {
+        LOG.debug(CACHE_NAME + " onClearCache");
+      }
+    });
+  }
+
+  /**
+   * Gets documentserver host name.
+   *
+   * @param dsSchema the dsSchema
+   * @param dsHost the dsHost
+   * @return hostname
+   * @throws ConfigurationException the configurationException
+   */
+  protected String getDocumentserverHost(String dsSchema, String dsHost) throws ConfigurationException {
+    if (dsSchema == null || (dsSchema = dsSchema.trim()).length() == 0) {
+      dsSchema = "http";
+    }
+    if (dsHost == null || (dsHost = dsHost.trim()).length() == 0) {
+      throw new ConfigurationException("Configuration of " + CONFIG_DS_HOST + " required");
+    }
+    int portIndex = dsHost.indexOf(HTTP_PORT_DELIMITER);
+    if (portIndex > 0) {
+      // cut port from DS host to use in canDownloadBy() method
+      return dsHost.substring(0, portIndex);
+    }
+    return dsHost;
+  }
+
+  /**
+   * Gets allowed hosts.
+   *
+   * @param dsAllowedHost the dsAllowedHost
+   * @return allowed hosts
+   */
+  protected Set<String> getDocumentserverAllowedHosts(String dsAllowedHost) {
+    if (dsAllowedHost != null && !dsAllowedHost.isEmpty()) {
+      Set<String> allowedhosts = new HashSet<>();
+      for (String ahost : dsAllowedHost.split(",")) {
+        ahost = ahost.trim();
+        if (!ahost.isEmpty()) {
+          allowedhosts.add(lowerCase(ahost));
+        }
+      }
+      return Collections.unmodifiableSet(allowedhosts);
+    } else {
+      return Collections.emptySet();
+    }
   }
 
 }
