@@ -566,7 +566,6 @@
 
           store.subscribe(function() {
             var state = store.getState();
-            console.log("STATE CHANGED: " + state.type);
             if (state.type === DOCUMENT_DELETED) {
               UI.showError(message("ErrorTitle"), message("ErrorFileDeletedEditor"));
             }
