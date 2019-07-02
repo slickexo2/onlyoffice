@@ -232,7 +232,8 @@
             <java.security.auth.login.config>${project.build.directory}/test-classes/conf/jaas.conf</java.security.auth.login.config>
           </systemPropertyVariables>
           <includes>
-            <include>**/**/EditorServiceTest.java</include>
+            <!-- include>**/**/EditorServiceTest.java</include -->
+             <include>**/**/OnlyofficeEditorServiceTest.java</include>
           </includes>
           <forkCount>0</forkCount>
         </configuration>

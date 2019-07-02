@@ -132,7 +132,7 @@ public class AbstractResourceTest extends BaseCommonsTestCase {
    * @param user the user
    * @param title the title
    * @param content the content
-   * @return the string
+   * @return the key
    * @throws Exception the exception
    */
   protected String createTestDocument(String user, String title, String content) throws Exception {
