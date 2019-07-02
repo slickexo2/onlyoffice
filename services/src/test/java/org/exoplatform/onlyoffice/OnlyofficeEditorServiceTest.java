@@ -79,13 +79,20 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
     assertEquals("Smith", config.getEditorConfig().getUser().getLastname());
   }
   
-  @Test(expected = OnlyofficeEditorException.class)
+  @Test
   public void testCreateEditorIncorrectFile() throws Exception {
     startSessionAs("john");
     Node node = session.getRootNode().addNode("Test Document.docx", "nt:base");
     node.addMixin("mix:referenceable");
     session.save();
-    editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());  
+    try {
+      editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());  
+    } catch (OnlyofficeEditorException e) {
+      // Ok
+      return;
+    }
+    // Fail if the exception wasn't thrown
+    fail();
   }
 
   protected void startSessionAs(String user) {
