@@ -2141,7 +2141,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       if (LOG.isDebugEnabled()) {
         LOG.debug("Fire {} event. DocumentStatus: {}", eventType, status.toJSON());
       }
-      listenerService.broadcast(eventType, this, config);
+      listenerService.broadcast(eventType, this, status.getConfig());
     } catch (Exception e) {
       LOG.error("Error firing listener with Onlyoffice {} event for user: {}, document: {}",
                 eventType,
