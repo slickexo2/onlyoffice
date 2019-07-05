@@ -776,7 +776,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
           Editor.User lastUser = getUser(key, status.getLastUser());
           Editor.User lastModifier = getLastModifier(key);
-
           // We download if there were modifications after the last saving.
           if (lastModifier.getId().equals(lastUser.getId()) && lastUser.getLastModified() > lastUser.getLastSaved()) {
             downloadClosed(config, status);
