@@ -1,7 +1,6 @@
 package org.exoplatform.onlyoffice;
 
-import static org.mockito.Matchers.contains;
-
+import java.io.InputStream;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,8 +16,10 @@ import org.exoplatform.component.test.ConfigurationUnit;
 import org.exoplatform.component.test.ConfiguredBy;
 import org.exoplatform.component.test.ContainerScope;
 import org.exoplatform.container.ExoContainerContext;
+import org.exoplatform.services.jcr.access.PermissionType;
 import org.exoplatform.services.jcr.ext.app.SessionProviderService;
 import org.exoplatform.services.jcr.ext.common.SessionProvider;
+import org.exoplatform.services.jcr.impl.core.NodeImpl;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.security.ConversationState;
@@ -143,7 +144,6 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
   public void testCanEditDocument() throws Exception {
     startSessionAs("john");
     Node node = createDocument("Test Document.docx", "nt:file", "testContent");
-
     assertTrue(editorService.canEditDocument(node));
     node.lock(true, false);
     assertFalse(editorService.canEditDocument(node));
@@ -157,7 +157,7 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
     Config config = editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());
     String key = config.getDocument().getKey();
     Map<String, Object> payload = new HashMap<>();
-    
+
     payload.put("key", key);
 
     String token = Jwts.builder()
@@ -165,60 +165,123 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
                        .claim("payload", payload)
                        .signWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
                        .compact();
-    
-    String wrongSignToken= Jwts.builder()
-        .setSubject("exo-onlyoffice")
-        .claim("payload", payload)
-        .signWith(Keys.hmacShaKeyFor("WRONG-SECRET-KEY-hwExSQoSe97tw8gyYNhqnM1biHb".getBytes()))
-        .compact();
-    
+
+    String wrongSignToken = Jwts.builder()
+                                .setSubject("exo-onlyoffice")
+                                .claim("payload", payload)
+                                .signWith(Keys.hmacShaKeyFor("WRONG-SECRET-KEY-hwExSQoSe97tw8gyYNhqnM1biHb".getBytes()))
+                                .compact();
+
     payload.replace("key", "wrong-document-key");
     String wrongKeyToken = Jwts.builder()
-        .setSubject("exo-onlyoffice")
-        .claim("payload", payload)
-        .signWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
-        .compact();
-    
+                               .setSubject("exo-onlyoffice")
+                               .claim("payload", payload)
+                               .signWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
+                               .compact();
+
     assertTrue(editorService.validateToken(token, key));
-    
+
     assertFalse(editorService.validateToken(wrongSignToken, key));
     assertFalse(editorService.validateToken(wrongKeyToken, key));
-    
+
     payload.clear();
     // URL should end with key
     payload.put("url", "http://127.0.0.1:8080/editor/" + key);
-    
-    token = Jwts.builder()
-        .setSubject("exo-onlyoffice")
-        .claim("payload", payload)
-        .signWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
-        .compact();
-    assertTrue(editorService.validateToken(token, key));
-  }
-  
-  
 
-  protected void startSessionAs(String user) {
+    token = Jwts.builder()
+                .setSubject("exo-onlyoffice")
+                .claim("payload", payload)
+                .signWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
+                .compact();
+    assertTrue(editorService.validateToken(token, key));
+    node.remove();
+  }
+
+  /* Tests for updateDocument(String userId, DocumentStatus status) */
+
+  // Status 1 and 4
+  @Test
+  public void testUserJoinedAndLeaved() throws Exception {
+    Node node = createDocument("Test Document.docx", "nt:file", "testContent");
+    Config config = editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());
+    DocumentStatus status = new DocumentStatus.Builder().status(1L)
+                                                        .users(new String[] { "john" })
+                                                        .key(config.getDocument().getKey())
+                                                        .build();
+    assertFalse(config.isOpen());
+    editorService.updateDocument("john", status);
+    assertTrue(config.isOpen());
+    assertFalse(config.isClosed());
+    status = new DocumentStatus.Builder().status(4L).users(new String[] {}).key(config.getDocument().getKey()).build();
+    editorService.updateDocument("john", status);
+    assertFalse(config.isOpen());
+    assertTrue(config.isClosed());
+    node.remove();
+  }
+
+  @Test
+  public void testEditedAndClosed() throws Exception {
+    startSessionAs("john");
+    NodeImpl node = createDocument("Test Document.docx", "nt:file", "testContent");
+    Config config = editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());
+    // Open a document
+    DocumentStatus status = new DocumentStatus.Builder().status(1L)
+                                                        .users(new String[] { "john" })
+                                                        .key(config.getDocument().getKey())
+                                                        .build();
+    editorService.updateDocument("john", status);
+    
+    // Edited doc
+    editorService.setLastModifier(config.getDocument().getKey(), "john");
+    
+    status = new DocumentStatus.Builder().status(2L)
+        .users(new String[] { "john" })
+        .key(config.getDocument().getKey())
+        .config(config)
+        .url("http://www.mocky.io/v2/5d1e04da300000369dd72483")
+        .build();
+    editorService.updateDocument("john", status);
+    InputStream dataStream = node.getNode("jcr:content").getProperty("jcr:data").getStream();
+    String data = IOUtils.toString(dataStream, "UTF-8"); 
+    assertEquals("Updated Content", data);
+  }
+
+  protected void startSessionAs(String user) throws Exception {
     HashSet<MembershipEntry> memberships = new HashSet<MembershipEntry>();
     memberships.add(new MembershipEntry("/platform/administrators"));
     Identity identity = new Identity(user, memberships);
     ConversationState state = new ConversationState(identity);
+    state.setAttribute(ConversationState.SUBJECT, identity.getSubject());
     ConversationState.setCurrent(state);
-    sessionProviderService.setSessionProvider(null, new SessionProvider(state));
+    SessionProvider provider = new SessionProvider(state);
+    sessionProviderService.setSessionProvider(null, provider);
+    session = provider.getSession(WORKSPACE_NAME, repositoryService.getCurrentRepository());
   }
+ 
 
-  protected Node createDocument(String title, String type, String data) throws Exception {
-    Node node = session.getRootNode().addNode(title, type);
-    node.addMixin("mix:lockable");
-    node.addMixin("mix:referenceable");
+  protected NodeImpl createDocument(String title, String type, String data) throws Exception {
+    NodeImpl rootNode = (NodeImpl) session.getRootNode();
+    rootNode.setPermission("john", new String[]{PermissionType.SET_PROPERTY});
+    NodeImpl node = (NodeImpl) rootNode.addNode(title, type);
+   
     if (type.equals("nt:file")) {
       Node contentNode = node.addNode("jcr:content", "nt:unstructured");
       contentNode.setProperty("jcr:mimeType", "application/vnd.oasis.opendocument.text");
       contentNode.setProperty("jcr:lastModified", Calendar.getInstance());
       contentNode.setProperty("jcr:data", data);
+      contentNode.setProperty("exo:dateCreated", Calendar.getInstance());
+      contentNode.setProperty("exo:dateModified", Calendar.getInstance());
     }
-
     session.save();
+    node.addMixin("mix:lockable");
+    node.addMixin("mix:referenceable");
+    node.addMixin("exo:privilegeable");
+    node.addMixin("exo:datetime");
+    node.addMixin("exo:modify");
+    node.addMixin("exo:sortable");
+    node.setProperty("exo:lastModifier", "john");
+    node.setProperty("exo:lastModifiedDate", Calendar.getInstance());
+    node.save();
     return node;
   }
 
