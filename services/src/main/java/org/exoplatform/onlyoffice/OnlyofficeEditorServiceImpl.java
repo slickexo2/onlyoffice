@@ -1615,14 +1615,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           modifierConfig.setSameModifier(sameModifier);
           modifierConfig.setPreviousModified(content.getProperty("jcr:lastModified").getDate());
 
-          Boolean wasEdited = false;
-          if (frozen.hasProperty("eoo:wasEdited")) {
-            wasEdited = frozen.getProperty("eoo:wasEdited").getBoolean();
+          Boolean onlyofficeVersion = false;
+          if (frozen.hasProperty("eoo:onlyofficeVersion")) {
+            onlyofficeVersion = frozen.getProperty("eoo:onlyofficeVersion").getBoolean();
           }
           Calendar lastModified = node.getProperty("exo:lastModifiedDate").getDate();
           Calendar versionDate = frozen.getProperty("exo:lastModifiedDate").getDate();
           // Create a version of the manually uploaded draft if exists
-          if (versionDate.getTimeInMillis() <= lastModified.getTimeInMillis() && !wasEdited) {
+          if (versionDate.getTimeInMillis() <= lastModified.getTimeInMillis() && !onlyofficeVersion) {
             createVersionOfDraft(node);
           }
 
@@ -1665,7 +1665,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           } else {
             node.setProperty("eoo:versionOwner", (String) null);
           }
-          node.setProperty("eoo:wasEdited", true);
+          node.setProperty("eoo:onlyofficeVersion", true);
 
           node.save();
           // manage version only if node already mix:versionable
@@ -1677,7 +1677,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             node.checkout();
             // Remove properties from node
             node.setProperty("eoo:versionOwner", (String) null);
-            node.setProperty("eoo:wasEdited", false);
+            node.setProperty("eoo:onlyofficeVersion", false);
             node.save();
 
             // If the status code == 2, the EDITOR_SAVED_EVENT should be
