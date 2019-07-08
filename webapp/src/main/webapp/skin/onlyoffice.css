@@ -6,7 +6,17 @@
 }
 
 .onlyofficeEditorBody #RightBody, .onlyofficeEditorBody .onlyofficeContainer>.editor {
-  height: 100vh;
+  height: calc(100vh - 30px);
+}
+
+.onlyofficeEditorBody #editor-top-bar {
+  height: 20px;
+  background-color: #FFF;
+  padding: 5px 10px;
+}
+
+.onlyofficeEditorBody #editor-top-bar div {
+  display: inline-block;
 }
 
 .onlyofficeEditorBody .RightBodyTDContainer {

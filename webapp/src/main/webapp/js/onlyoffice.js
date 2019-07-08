@@ -557,6 +557,7 @@
      * Initialize an editor page in current browser window.
      */
     this.initEditor = function(config) {
+      UI.initBar(config.path);
       log("Initialize editor for document: " + config.docId);
       window.document.title = config.document.title + " - " + window.document.title;
       UI.initEditor();
@@ -877,6 +878,26 @@
       // $("#NavigationPortlet").remove();
       $("#SharedLayoutRightBody").addClass("onlyofficeEditorBody");
     };
+
+    this.initBar = function(path) {
+      var folders = path.split("/");
+      folders.shift();
+      var title = folders.pop();
+      if(folders[0] === "Users"){
+        while(folders[1].endsWith('_')){
+          folders.splice(1,1);
+        }
+        folders.splice(1,1);
+        folders[0] = "Personal Documents"
+      }
+      var $pathElem = $("#editor-top-bar .document-path");
+      folders.forEach(function(folder) {
+      $pathElem.append(folder + " / ");
+    });
+
+      $("#editor-top-bar .document-title").append(title);
+
+    }
 
     this.isEditorLoaded = function() {
       return $("#UIPage .onlyofficeContainer").length > 0;

@@ -6,6 +6,16 @@
   <%-- div class="exitWindow onlyofficeEditorClose" style="display: none;">
     <a class="uiIconClose uiIconWhite" title="Close"></a>
   </div --%>
+  <div id="editor-top-bar">
+    <div class="document-path">
+    </div>
+    <div class="document-title"></div>
+    <div class="last-edited"></div>
+    <div class="editors-comment"></div>
+    <div class="forcesave-btn"></div>
+    <div class="comment"></div>
+    <div class="close-btn"></div>
+  </div>
   <div class="editor" style="display: none;">
     <div id="onlyoffice"></div>
   </div>
