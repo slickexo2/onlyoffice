@@ -20,8 +20,8 @@
 
 -->
 <gatein-resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.exoplatform.org/xml/ns/gatein_resources_1_4 http://www.exoplatform.org/xml/ns/gatein_resources_1_4"
-	xmlns="http://www.exoplatform.org/xml/ns/gatein_resources_1_4">
+  xsi:schemaLocation="http://www.exoplatform.org/xml/ns/gatein_resources_1_4 http://www.exoplatform.org/xml/ns/gatein_resources_1_4"
+  xmlns="http://www.exoplatform.org/xml/ns/gatein_resources_1_4">
 
   <!-- Javascript for Onlyoffice editor in WCM -->
   <module>
@@ -30,6 +30,18 @@
     <script>
       <minify>false</minify>
       <path>/js/jquery.pnotify.min.js</path>
+    </script>
+    <depends>
+      <module>jquery</module>
+      <as>jQuery</as>
+    </depends>
+  </module>
+  <module>
+    <name>onlyofficeJqueryEIP</name>
+    <load-group>onlyofficeGRP</load-group>
+    <script>
+      <minify>false</minify>
+      <path>/js/eip.js</path>
     </script>
     <depends>
       <module>jquery</module>
@@ -78,11 +90,14 @@
     <depends>
       <module>onlyofficeJqueryUI</module>
     </depends>
-        <depends>
+    <depends>
+      <module>onlyofficeJqueryEIP</module>
+    </depends>
+    <depends>
       <module>onlyofficeRedux</module>
     </depends>
   </module>
-  
+
   <portlet-skin>
     <application-name>onlyoffice</application-name>
     <portlet-name>OnlyofficeDocumentStatePortlet</portlet-name>

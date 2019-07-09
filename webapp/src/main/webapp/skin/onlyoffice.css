@@ -19,6 +19,11 @@
   display: inline-block;
 }
 
+.onlyofficeEditorBody #editor-top-bar .eip-editable, 
+.onlyofficeEditorBody #editor-top-bar div.form-group {
+  height: 25px;
+}
+
 .onlyofficeEditorBody .RightBodyTDContainer {
   padding-top: 0px;
 }

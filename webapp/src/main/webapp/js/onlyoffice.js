@@ -236,6 +236,7 @@
     var DOCUMENT_CHANGED = "DOCUMENT_CHANGED";
     var DOCUMENT_DELETED = "DOCUMENT_DELETED";
     var DOCUMENT_VERSION = "DOCUMENT_VERSION";
+    var DOCUMENT_TITLE_UPDATED = "DOCUMENT_TITLE_UPDATED";
     var DOCUMENT_LINK = "DOCUMENT_LINK";
     var EDITOR_CLOSED = "EDITOR_CLOSED";
 
@@ -352,6 +353,16 @@
 
     var onBack = function() {
       log("ONLYOFFICE Document Editor on Back");
+    };
+
+    var updateTitle = function(event) {
+     publishDocument(currentConfig.docId, {
+        "type" : DOCUMENT_TITLE_UPDATED,
+        "userId" : currentUserId,
+        "clientId" : clientId,
+        "title" : event.newValue,
+        "workspace": currentConfig.workspace
+     });
     };
 
     var onDocumentStateChange = function(event) {
@@ -557,10 +568,14 @@
      * Initialize an editor page in current browser window.
      */
     this.initEditor = function(config) {
-      UI.initBar(config.path);
+      UI.initBar(config.displayPath);
       log("Initialize editor for document: " + config.docId);
       window.document.title = config.document.title + " - " + window.document.title;
       UI.initEditor();
+      // Edit title
+      $(".editable-title").editable({
+        onChange: updateTitle
+      });
       create(config).done(function(localConfig) {
         if (localConfig) {
           currentConfig = localConfig;
@@ -880,24 +895,23 @@
     };
 
     this.initBar = function(path) {
-      var folders = path.split("/");
-      folders.shift();
+      var drive = path.split(':')[0];
+      var folders = path.split(':')[1].split('/');
       var title = folders.pop();
-      if(folders[0] === "Users"){
-        while(folders[1].endsWith('_')){
-          folders.splice(1,1);
-        }
-        folders.splice(1,1);
-        folders[0] = "Personal Documents"
-      }
       var $pathElem = $("#editor-top-bar .document-path");
+      $pathElem.append(drive + " : ");
+      if(folders.length >= 2){
+        var formattedFolders = [];
+        formattedFolders.push("...");
+        formattedFolders.push(folders[folders.length - 1]);
+        folders = formattedFolders;
+      }
       folders.forEach(function(folder) {
-      $pathElem.append(folder + " / ");
-    });
-
-      $("#editor-top-bar .document-title").append(title);
-
-    }
+        $pathElem.append(folder + " <i class='uiIconArrowRight'></i> ");
+      });
+      var $titleElem = $("#editor-top-bar .document-title");
+      $titleElem.append("<span class='editable-title'>" + title + "</span>");
+    };
 
     this.isEditorLoaded = function() {
       return $("#UIPage .onlyofficeContainer").length > 0;
@@ -923,6 +937,7 @@
           // create and start editor (this also will re-use an existing editor config from the server)
           docEditor = new DocsAPI.DocEditor("onlyoffice", localConfig);
           // show editor
+          $container.find("#editor-top-bar").show("blind");
           $container.find(".editor").show("blind");
           $container.find(".loading").hide("blind");
         } else {

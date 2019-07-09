@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -99,6 +100,9 @@ import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.security.IdentityRegistry;
 import org.exoplatform.services.wcm.utils.WCMCoreUtils;
+import org.exoplatform.social.core.space.SpaceException;
+import org.exoplatform.social.core.space.model.Space;
+import org.exoplatform.social.core.space.spi.SpaceService;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.application.portlet.PortletRequestContext;
 
@@ -285,6 +289,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /** The trash service. */
   protected final TrashService                                    trashService;
 
+  /** The space service */
+  protected final SpaceService                                    spaceService;
+
   /** Cache of Editing documents. */
   protected final ExoCache<String, ConcurrentMap<String, Config>> activeCache;
 
@@ -357,6 +364,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                      LockService lockService,
                                      ListenerService listenerService,
                                      TrashService trashService,
+                                     SpaceService spaceService,
                                      InitParams params)
       throws ConfigurationException {
     this.jcrService = jcrService;
@@ -369,6 +377,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     this.lockService = lockService;
     this.listenerService = listenerService;
     this.trashService = trashService;
+    this.spaceService = spaceService;
 
     this.activeCache = cacheService.getCacheInstance(CACHE_NAME);
     if (LOG.isDebugEnabled()) {
@@ -526,7 +535,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     Node node = getDocumentById(workspace, docId);
     String path = node.getPath();
     String nodePath = nodePath(workspace, path);
-
+    // The path in form of Drive:path/to/node/nodeTitle
     // TODO other node types?
     if (!node.isNodeType("nt:file")) {
       throw new OnlyofficeEditorException("Document should be a nt:file node: " + nodePath);
@@ -562,6 +571,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           builder.author(userId);
           builder.fileType(fileType);
           builder.created(nodeCreated(node));
+          builder.displayPath(getDisplayPath(node));
           try {
             builder.folder(node.getParent().getName());
           } catch (AccessDeniedException e) {
@@ -1192,6 +1202,31 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       }
     }
     return false;
+  }
+
+  @Override
+  public void updateTitle(String docId, String workspace, String userId, String title) {
+    if(title == null || title.trim().isEmpty()) {
+      LOG.warn("Cannot rename document {}, the title is empty", docId);
+      return;
+    }
+    try {
+      Node node = getDocumentById(workspace, docId);
+      if(node != null) {
+        ConversationState contextState = ConversationState.getCurrent();
+        SessionProvider contextProvider = sessionProviders.getSessionProvider(null);
+        if(setUserConvoState(userId)) {
+          
+          // TODO: rename node
+          
+          restoreConvoState(contextState, contextProvider);
+        } else {
+          LOG.error("Cannot set user conversation state {}", userId);
+        }
+      }
+    } catch (RepositoryException e) {
+      LOG.error("Cannot update document title. docId: {}, title: {}, userId: {}", docId, title, userId);
+    }
   }
 
   // *********************** implementation level ***************
@@ -2437,6 +2472,47 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     } else {
       return Collections.emptySet();
     }
+  }
+
+  /**
+   * Gets display path. 
+   *
+   * @param node the node
+   * @return the display path
+   * @throws RepositoryException 
+   */
+  protected String getDisplayPath(Node node) throws RepositoryException {
+    String nodePath = node.getPath();
+    String[] foldersArr = nodePath.substring(1, nodePath.length() - 1).split("/");
+    LinkedList<String> folders = new LinkedList<>(Arrays.asList(foldersArr));
+    if (folders.size() < 2) {
+      return nodePath;
+    }
+    // Personal documents
+    if (folders.get(0).equals("Users")) {
+      folders.set(0, "Personal Documents");
+      Iterator<String> iterator = folders.iterator();
+      // Skip first element
+      iterator.next();
+      while (iterator.hasNext()) {
+        String folder = iterator.next();
+        iterator.remove();
+        if (!folder.endsWith("_")) {
+          break;
+        }
+      }
+    } else if (folders.get(0).equals("Groups")) {
+      // Remove "Groups/spaces/"
+      folders.remove(0);
+      folders.remove(0);
+      Space space = spaceService.getSpaceByPrettyName(folders.get(0));
+      if (space != null) {
+        folders.set(0, space.getDisplayName());
+      } else {
+        LOG.warn("Cannot find space: {}" + folders.get(0));
+      }
+    }
+    return String.join("/", folders).replaceFirst("/", ":");
   }
 
 }

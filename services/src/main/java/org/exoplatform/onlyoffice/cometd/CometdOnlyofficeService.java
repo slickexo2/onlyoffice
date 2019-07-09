@@ -201,6 +201,9 @@ public class CometdOnlyofficeService implements Startable {
 
   /** The document link event. */
   public static final String              DOCUMENT_LINK_EVENT    = "DOCUMENT_LINK";
+  
+  /** The document title updated event. */
+  public static final String              DOCUMENT_TITLE_UPDATED    = "DOCUMENT_TITLE_UPDATED";
 
   /** The editor closed event. */
   public static final String              EDITOR_CLOSED_EVENT    = "EDITOR_CLOSED";
@@ -417,6 +420,8 @@ public class CometdOnlyofficeService implements Startable {
       case DOCUMENT_LINK_EVENT:
         handleDocumentLinkEvent(data, docId);
         break;
+      case DOCUMENT_TITLE_UPDATED:
+        handleDocumentTitleUpdatedEvent(data, docId);
       case EDITOR_CLOSED_EVENT:
         handleEditorClosedEvent(data, docId);
         break;
@@ -437,6 +442,30 @@ public class CometdOnlyofficeService implements Startable {
       String key = (String) data.get("key");
       // Saving a link
       editors.forceSave(new Userdata(userId, key, false, false));
+    }
+    
+    /**
+     * Handle document title updated.
+     *
+     * @param data the data
+     * @param docId the doc id
+     */
+    protected void handleDocumentTitleUpdatedEvent(Map<String, Object> data, String docId) {
+      String userId = (String) data.get("userId");
+      String title = (String) data.get("title");
+      String workspace = (String) data.get("workspace");
+      
+      eventsHandlers.submit(new ContainerCommand(PortalContainer.getCurrentPortalContainerName()) {
+        @Override
+        void onContainerError(String error) {
+          LOG.error("An error has occured in container: {}", containerName);
+        }
+
+        @Override
+        void execute(ExoContainer exoContainer) {
+          editors.updateTitle(docId, workspace, userId, title);
+        }
+      });
     }
 
     /**

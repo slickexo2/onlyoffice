@@ -312,4 +312,14 @@ public interface OnlyofficeEditorService {
    */
   boolean validateToken(String token, String key);
 
+  /**
+   * Updates title of a document.
+   * 
+   * @param docId the docId
+   * @param workspace the workspace
+   * @param userId the userId
+   * @param title the title
+   */
+  void updateTitle(String docId, String workspace, String userId, String title);
+
 }

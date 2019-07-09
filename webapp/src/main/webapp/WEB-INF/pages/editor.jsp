@@ -6,7 +6,7 @@
   <%-- div class="exitWindow onlyofficeEditorClose" style="display: none;">
     <a class="uiIconClose uiIconWhite" title="Close"></a>
   </div --%>
-  <div id="editor-top-bar">
+  <div id="editor-top-bar" style="display:none">
     <div class="document-path">
     </div>
     <div class="document-title"></div>
