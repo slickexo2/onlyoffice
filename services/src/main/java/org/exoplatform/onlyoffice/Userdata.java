@@ -25,43 +25,38 @@ import org.exoplatform.ws.frameworks.json.impl.JsonGeneratorImpl;
  * The Class Userdata.
  */
 public class Userdata {
-  
+
   /** The user id. */
   protected String  userId;
-
-  /** The key. */
-  protected String  key;
 
   /** The download. */
   protected Boolean download;
 
   /** The co edited. */
   protected Boolean coEdited;
-  
+
   /**
    * Instantiates a new userdata.
    *
    * @param userId the user id
-   * @param key the key
    * @param download the download
    * @param coEdited the co edited
    */
-  public Userdata(String userId, String key, Boolean download, Boolean coEdited) {
+  public Userdata(String userId, Boolean download, Boolean coEdited) {
     super();
     this.userId = userId;
-    this.key = key;
     this.download = download;
     this.coEdited = coEdited;
   }
-  
+
   /**
    * Instantiates a new userdata.
-   * 
    */
   public Userdata() {
-    
-  }
 
+  }
+  
+  
   /**
    * Gets the user id.
    *
@@ -81,29 +76,11 @@ public class Userdata {
   }
 
   /**
-   * Gets the key.
-   *
-   * @return the key
-   */
-  public String getKey() {
-    return key;
-  }
-
-  /**
-   * Sets the key.
-   *
-   * @param key the new key
-   */
-  public void setKey(String key) {
-    this.key = key;
-  }
-
-  /**
    * Gets the download.
    *
    * @return the download
    */
-  public Boolean getDownload() {
+  public Boolean isDownload() {
     return download;
   }
 
@@ -115,20 +92,20 @@ public class Userdata {
   public void setDownload(Boolean download) {
     this.download = download;
   }
-  
+
   /**
-   * Gets the coEdited.
+   * Gets the co edited.
    *
-   * @return the coEdited
+   * @return the co edited
    */
   public Boolean getCoEdited() {
     return coEdited;
   }
 
   /**
-   * Sets the coEdited.
+   * Sets the co edited.
    *
-   * @param coEdited the coEdited
+   * @param coEdited the new co edited
    */
   public void setCoEdited(Boolean coEdited) {
     this.coEdited = coEdited;

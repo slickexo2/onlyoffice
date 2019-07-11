@@ -59,8 +59,6 @@ import org.exoplatform.onlyoffice.DocumentStatus;
 import org.exoplatform.onlyoffice.OnlyofficeEditorException;
 import org.exoplatform.onlyoffice.OnlyofficeEditorListener;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
-import org.exoplatform.onlyoffice.Userdata;
-import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
@@ -330,25 +328,21 @@ public class CometdOnlyofficeService implements Startable {
 
     /** The bayeux. */
     @Inject
-    private BayeuxServer    bayeux;
+    private BayeuxServer  bayeux;
 
     /** The local session. */
     @Session
-    private LocalSession    localSession;
+    private LocalSession  localSession;
 
     /** The server session. */
     @Session
-    private ServerSession   serverSession;
-
-    /**  The listener service. */
-    private ListenerService listenerService;
+    private ServerSession serverSession;
 
     /**
      * Post construct.
      */
     @PostConstruct
     public void postConstruct() {
-      listenerService = PortalContainer.getInstance().getComponentInstanceOfType(ListenerService.class);
       editors.addListener(new OnlyofficeEditorListener() {
 
         @Override
@@ -436,7 +430,7 @@ public class CometdOnlyofficeService implements Startable {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
       // Saving a link
-      editors.forceSave(new Userdata(userId, key, false, false));
+      editors.forceSave(userId, key, false, false);
     }
 
     /**
@@ -473,13 +467,15 @@ public class CometdOnlyofficeService implements Startable {
             @Override
             void execute(ExoContainer exoContainer) {
               if (lastUser.getLinkSaved() >= lastUser.getLastModified()) {
-                LOG.debug("Downloading from existing link. User: {}, Key: {}, Link: {}",
-                          lastUser.getId(),
-                          key,
-                          lastUser.getDownloadLink());
-                editors.downloadVersion(new Userdata(lastUser.getId(), key, false, false), lastUser.getDownloadLink());
+                if (LOG.isDebugEnabled()) {
+                  LOG.debug("Downloading from existing link. User: {}, Key: {}, Link: {}",
+                            lastUser.getId(),
+                            key,
+                            lastUser.getDownloadLink());
+                }
+                editors.downloadVersion(lastUser.getId(), key, false, lastUser.getDownloadLink());
               } else {
-                editors.forceSave(new Userdata(lastUser.getId(), key, true, false));
+                editors.forceSave(lastUser.getId(), key, true, false);
               }
             }
           });
@@ -520,10 +516,12 @@ public class CometdOnlyofficeService implements Startable {
         void execute(ExoContainer exoContainer) {
           Editor.User user = editors.getUser(key, userId);
           if (user.getLinkSaved() >= user.getLastModified()) {
-            LOG.debug("Downloading from existing link. User: {}, Key: {}, Link: {}", user.getId(), key, user.getDownloadLink());
-            editors.downloadVersion(new Userdata(userId, key, false, false), user.getDownloadLink());
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Downloading from existing link. User: {}, Key: {}, Link: {}", user.getId(), key, user.getDownloadLink());
+            }
+            editors.downloadVersion(userId, key, false, user.getDownloadLink());
           } else {
-            editors.forceSave(new Userdata(userId, key, true, false));
+            editors.forceSave(userId, key, true, false);
           }
         }
       });
@@ -553,16 +551,18 @@ public class CometdOnlyofficeService implements Startable {
             // If we have an actual link, download from it. Otherwise - ask the
             // command server for the link.
             if (lastUser.getLinkSaved() >= lastUser.getLastModified()) {
-              LOG.debug("Downloading from existing link. User: {}, Key: {}, Link: {}",
-                        lastUser.getId(),
-                        key,
-                        lastUser.getDownloadLink());
-              editors.downloadVersion(new Userdata(lastUser.getId(), key, false, true), lastUser.getDownloadLink());
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Downloading from existing link. User: {}, Key: {}, Link: {}",
+                          lastUser.getId(),
+                          key,
+                          lastUser.getDownloadLink());
+              }
+              editors.downloadVersion(lastUser.getId(), key, true, lastUser.getDownloadLink());
             } else {
               if (LOG.isDebugEnabled()) {
                 LOG.debug("Download a new version of document: user " + lastUser.getId() + ", docId: " + docId);
               }
-              editors.forceSave(new Userdata(lastUser.getId(), key, true, true));
+              editors.forceSave(lastUser.getId(), key, true, true);
             }
 
           }

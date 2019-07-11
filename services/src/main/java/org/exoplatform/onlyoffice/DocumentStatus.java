@@ -50,56 +50,14 @@ public class DocumentStatus {
   /** The error. */
   protected long     error;
 
-  /** The userdata. */
-  protected Userdata userdata;
-
   /** The coedited. */
   protected Boolean  coEdited;
 
-  /**
-   * Sets the config.
-   *
-   * @param config the new config
-   */
-  protected void setConfig(Config config) {
-    this.config = config;
-  }
+  /** The saved */
+  protected Boolean  saved;
 
-  /**
-   * Gets the key.
-   *
-   * @return the key
-   */
-  protected String getKey() {
-    return key;
-  }
-
-  /**
-   * Gets the status.
-   *
-   * @return the status
-   */
-  public Long getStatus() {
-    return status;
-  }
-
-  /**
-   * Gets the url.
-   *
-   * @return the url
-   */
-  public String getUrl() {
-    return url;
-  }
-
-  /**
-   * Gets the users.
-   *
-   * @return the users
-   */
-  public String[] getUsers() {
-    return users;
-  }
+  /** The userId (used for saving the document content under this user) */
+  protected String   userId;
 
   /**
    * Gets the config.
@@ -129,12 +87,48 @@ public class DocumentStatus {
   }
 
   /**
-   * Gets the userdata.
+   * Sets the config.
    *
-   * @return the userdata
+   * @param config the new config
    */
-  public Userdata getUserdata() {
-    return userdata;
+  protected void setConfig(Config config) {
+    this.config = config;
+  }
+
+  /**
+   * Gets the key.
+   *
+   * @return the key
+   */
+  protected String getKey() {
+    return key;
+  }
+
+  /**
+   * Gets the status.
+   *
+   * @return the status
+   */
+  protected Long getStatus() {
+    return status;
+  }
+
+  /**
+   * Gets the url.
+   *
+   * @return the url
+   */
+  protected String getUrl() {
+    return url;
+  }
+
+  /**
+   * Gets the users.
+   *
+   * @return the users
+   */
+  protected String[] getUsers() {
+    return users;
   }
 
   /**
@@ -142,8 +136,26 @@ public class DocumentStatus {
    *
    * @return the coEdited
    */
-  public Boolean isCoedited() {
+  protected Boolean isCoedited() {
     return coEdited;
+  }
+
+  /**
+   * Gets the isSaved.
+   *
+   * @return the isSaved
+   */
+  protected Boolean isSaved() {
+    return saved;
+  }
+
+  /**
+   * Gets the userId.
+   *
+   * @return the userId
+   */
+  protected String getUserId() {
+    return userId;
   }
 
   /**
@@ -228,17 +240,6 @@ public class DocumentStatus {
     }
 
     /**
-     * Userdata.
-     *
-     * @param userdata the userdata
-     * @return the builder
-     */
-    public Builder userdata(Userdata userdata) {
-      documentStatus.userdata = userdata;
-      return this;
-    }
-
-    /**
      * Co edited.
      *
      * @param coEdited the co edited
@@ -246,6 +247,15 @@ public class DocumentStatus {
      */
     public Builder coEdited(Boolean coEdited) {
       documentStatus.coEdited = coEdited;
+      return this;
+    }
+
+    public Builder userdata(Userdata userdata) {
+      if (userdata != null) {
+        documentStatus.userId = userdata.userId;
+        documentStatus.coEdited = userdata.coEdited;
+        documentStatus.saved = userdata.isDownload();
+      }
       return this;
     }
 

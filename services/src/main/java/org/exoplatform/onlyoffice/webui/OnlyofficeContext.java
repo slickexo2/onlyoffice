@@ -114,10 +114,7 @@ public class OnlyofficeContext {
 
       String userId = convo.getIdentity().getUserId();
 
-      CometdConfig cometdConf = new CometdConfig();
-      cometdConf.setPath(cometdService.getCometdServerPath());
-      cometdConf.setToken(cometdService.getUserToken(userId));
-      cometdConf.setContainerName(PortalContainer.getCurrentPortalContainerName());
+      CometdConfig cometdConf = new CometdConfig(cometdService.getCometdServerPath(), cometdService.getUserToken(userId), PortalContainer.getCurrentPortalContainerName());
 
       callOnModule("init('" + userId + "', " + cometdConf.toJSON() + ", " + messagesJson + ");");
     } else {

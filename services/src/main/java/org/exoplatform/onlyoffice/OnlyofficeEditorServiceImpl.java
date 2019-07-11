@@ -29,7 +29,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
@@ -632,7 +631,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /**
    * {@inheritDoc}
    */
-  @SuppressWarnings("deprecation")
   @Override
   public DocumentContent getContent(String userId, String key) throws OnlyofficeEditorException, RepositoryException {
     ConcurrentMap<String, Config> configs = activeCache.get(key);
@@ -838,12 +836,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // forcedsave done, save the version with its URL
           if (LOG.isDebugEnabled()) {
             LOG.debug("Received Onlyoffice forced saved document. Key: " + key + ". Users: " + Arrays.toString(status.getUsers())
-                + ". Document " + nodePath + ". URL: " + status.getUrl() + ". Download: " + status.getUserdata().getDownload());
+                + ". Document " + nodePath + ". URL: " + status.getUrl() + ". Download: " + status.isSaved());
           }
-          if (status.getUserdata().getDownload()) {
-            downloadVersion(status.getUserdata(), status.getUrl());
+          // Here we decide if we need to download content or just save the link
+          if (status.isSaved()) {
+            downloadVersion(status.getUserId(), key, status.isCoedited(), status.getUrl());
           } else {
-            saveLink(status.getUserdata(), status.getUrl());
+            saveLink(status.getUserId(), key, status.getUrl());
           }
 
         } else if (statusCode == 7) {
@@ -861,7 +860,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // 6 Invalid token.
           LOG.error("Received Onlyoffice error of forced saving of document. Key: " + key + ". Users: "
               + Arrays.toString(status.getUsers()) + ". Document: " + nodePath + ". Error: " + status.getError() + ". URL: "
-              + status.getUrl() + ". Download: " + status.getUserdata().getDownload());
+              + status.getUrl() + ". Download: " + status.isSaved());
         } else {
           // warn unexpected status, wait for next status
           LOG.warn("Received Onlyoffice unexpected status. Key: " + key + ". URL: " + status.getUrl() + ". Users: "
@@ -1064,16 +1063,16 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @param contentUrl the contentUrl
    */
   @Override
-  public void downloadVersion(Userdata userdata, String contentUrl) {
+  public void downloadVersion(String userId, String key, Boolean coEdited, String contentUrl) {
     String docId = null;
     try {
-      Config config = getEditorByKey(userdata.getUserId(), userdata.getKey());
+      Config config = getEditorByKey(userId, key);
       docId = config.getDocId();
       DocumentStatus status = new DocumentStatus.Builder().config(config)
-                                                          .key(userdata.getKey())
+                                                          .key(key)
                                                           .url(contentUrl)
-                                                          .users(new String[] { userdata.getUserId() })
-                                                          .coEdited(userdata.getCoEdited())
+                                                          .users(new String[] { userId })
+                                                          .coEdited(coEdited)
                                                           .build();
       download(config, status);
       // we set it sooner to let clients see the save
@@ -1134,13 +1133,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * {@inheritDoc}
    */
   @Override
-  public void forceSave(Userdata userdata) {
+  public void forceSave(String userId, String key, Boolean download, Boolean coEdit) {
     HttpURLConnection connection = null;
     try {
-      String json = new JSONObject().put("c", "forcesave")
-                                    .put("key", userdata.getKey())
-                                    .put("userdata", userdata.toJSON())
-                                    .toString();
+      Userdata userdata = new Userdata(userId, download, coEdit);
+      String json = new JSONObject().put("c", "forcesave").put("key", key).put("userdata", userdata.toJSON()).toString();
       byte[] postDataBytes = json.toString().getBytes("UTF-8");
 
       URL url = new URL(commandServiceUrl);
@@ -1155,7 +1152,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         String jwtToken = Jwts.builder()
                               .setSubject("exo-onlyoffice")
                               .claim("c", "forcesave")
-                              .claim("key", userdata.getKey())
+                              .claim("key", key)
                               .claim("userdata", userdata.toJSON())
                               .signWith(Keys.hmacShaKeyFor(documentserverSecret.getBytes()))
                               .compact();
@@ -1168,10 +1165,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       // read the response
       InputStream in = new BufferedInputStream(connection.getInputStream());
       String response = IOUtils.toString(in, "UTF-8");
-      LOG.debug("Command service responded on forcesave command: " + response);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Command service responded on forcesave command: " + response);
+      }
     } catch (Exception e) {
-      LOG.error("Error in sending forcesave command. UserId: " + userdata.getUserId() + ". Key: " + userdata.getKey()
-          + ". Download: " + userdata.getDownload(), e);
+      LOG.error("Error in sending forcesave command. UserId: " + userId + ". Key: " + key + ". Download: " + download, e);
     } finally {
       if (connection != null) {
         connection.disconnect();
@@ -1209,16 +1207,17 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /**
    * Save link.
    *
-   * @param userdata the userdata
+   * @param userId the userId
+   * @param key the key
    * @param url the url
    */
-  protected void saveLink(Userdata userdata, String url) {
-    ConcurrentMap<String, Config> configs = activeCache.get(userdata.getKey());
+  protected void saveLink(String userId, String key, String url) {
+    ConcurrentMap<String, Config> configs = activeCache.get(key);
     if (configs != null) {
-      Config config = configs.get(userdata.getUserId());
+      Config config = configs.get(userId);
       config.getEditorConfig().getUser().setDownloadLink(url);
       config.getEditorConfig().getUser().setLinkSaved(System.currentTimeMillis());
-      activeCache.put(userdata.getKey(), configs);
+      activeCache.put(key, configs);
       activeCache.put(config.getDocId(), configs);
     }
   }
@@ -2151,7 +2150,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       if (LOG.isDebugEnabled()) {
         LOG.debug("Fire {} event. DocumentStatus: {}", eventType, status.toJSON());
       }
-      listenerService.broadcast(eventType, this, status.getConfig());
+      listenerService.broadcast(eventType, this, status);
     } catch (Exception e) {
       LOG.error("Error firing listener with Onlyoffice {} event for user: {}, document: {}",
                 eventType,
@@ -2319,6 +2318,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @param userId the userId
    * @return true if successful, false when the user is not found
    */
+  @SuppressWarnings("deprecation")
   protected boolean setUserConvoState(String userId) {
     Identity userIdentity = userIdentity(userId);
     if (userIdentity != null) {
