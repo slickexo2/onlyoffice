@@ -229,10 +229,10 @@ public class EditorService implements ResourceContainer {
             if (editors.validateToken(token, key)) {
               DocumentStatus.Builder statusBuilder = new DocumentStatus.Builder();
               // TODO mapping to Userdata.class from Onlyoffice's userdata may
-              // fail if they'll change the API/format need make field by field
-              // reading and throw and error/warn if something not expected and
-              // attempt to do not fail when possible (if some filed could be
-              // omitted or assumed etc)
+              // fail if they'll change the API/format.
+              // Need make field by field reading and throw and error/warn if
+              // something not expected and attempt to do not fail when possible
+              // (if some field could be omitted or assumed etc)
               statusBuilder.key(statusKey != null && statusKey.length() > 0 ? statusKey : key)
                            .status(statusCode)
                            .url(statusUrl)
