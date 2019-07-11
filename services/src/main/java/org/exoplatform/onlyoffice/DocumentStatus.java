@@ -75,7 +75,10 @@ public class DocumentStatus {
   }
 
   /**
-   * Gets the status.
+   * Gets the status returned by Onlyoffice Document Server. <br>
+   * See <a href=
+   * "https://api.onlyoffice.com/editors/callback#status">https://api.onlyoffice.com/editors/callback#status</a>
+   * for details.
    *
    * @return the status
    */
