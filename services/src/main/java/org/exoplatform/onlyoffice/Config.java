@@ -90,6 +90,12 @@ public class Config implements Externalizable {
     /** The document server secret key. **/
     protected String       documentserverSecret;
 
+    /** The last modifier. **/
+    protected  String lastModifier;
+    
+    /** The lastModified. **/
+    protected  Long lastModified;
+
     /** The ECMS explorer page URL. */
     @Deprecated
     protected String       explorerUrl;
@@ -253,7 +259,6 @@ public class Config implements Externalizable {
      */
     public Builder displayPath(String displayPath) {
       this.displayPath = displayPath;
-      ;
       return this;
     }
 
@@ -334,10 +339,32 @@ public class Config implements Externalizable {
       return this;
     }
 
+    /**
+     * Secret
+     * 
+     * @param documentServerSecret the document server secret
+     * @return the builder
+     */
     public Builder secret(String documentServerSecret) {
       this.documentserverSecret = documentServerSecret;
       return this;
     }
+    
+    /**
+     * 
+     * @param lastModifier
+     * @return
+     */
+    public Builder lastModifier(String lastModifier) {
+      this.lastModifier = lastModifier;
+      return this;
+    }
+    
+    public Builder lastModified(Long lastModified) {
+      this.lastModified = lastModified;
+      return this;
+    }
+
 
     /**
      * Builds the.
@@ -360,7 +387,7 @@ public class Config implements Externalizable {
 
       Document.Info info = new Document.Info(author, created, folder);
       Document.Permissions permissions = new Document.EditPermissions();
-      Document document = new Document(key, fileType, title, url, info, permissions);
+      Document document = new Document(key, fileType, title, url, info, permissions,lastModifier, lastModified);
       Editor.User user = new Editor.User(userId, firstname, lastname);
       Editor editor = new Editor(callbackUrl, lang, mode, user);
       Config config = new Config(documentserverUrl,
@@ -528,6 +555,12 @@ public class Config implements Externalizable {
 
     /** The permissions. */
     protected final Permissions permissions;
+     
+    /** The last modifier */
+    protected String lastModifier;
+
+    /** The last modified timestamp */
+    protected Long lastModified;
 
     /**
      * Instantiates a new document.
@@ -539,7 +572,7 @@ public class Config implements Externalizable {
      * @param info the info
      * @param permissions the permissions
      */
-    protected Document(String key, String fileType, String title, String url, Info info, Permissions permissions) {
+    protected Document(String key, String fileType, String title, String url, Info info, Permissions permissions, String lastModifier, Long lastModified) {
       super();
       this.fileType = fileType;
       this.key = key;
@@ -547,6 +580,8 @@ public class Config implements Externalizable {
       this.url = url;
       this.info = info;
       this.permissions = permissions;
+      this.lastModifier = lastModifier;
+      this.lastModified = lastModified;
     }
 
     /**
@@ -559,7 +594,7 @@ public class Config implements Externalizable {
      * @return the document
      */
     protected Document forUser(String id, String firstName, String lastName, String url) {
-      return new Document(key, fileType, title, url, info, permissions);
+      return new Document(key, fileType, title, url, info, permissions, lastModifier, lastModified);
     }
 
     /**
@@ -615,7 +650,24 @@ public class Config implements Externalizable {
     public Permissions getPermissions() {
       return permissions;
     }
-
+    
+    /**
+     * Gets the lastModifier. 
+     *
+     * @return the last modifier
+     */
+    public String getLastModifier() {
+      return lastModifier;
+    }
+    
+    /**
+     * Gets the lastModified.
+     *
+     * @return the last modified
+     */
+    public Long getLastModified() {
+      return lastModified;
+    }
   }
 
   /**
@@ -1063,9 +1115,12 @@ public class Config implements Externalizable {
     out.writeUTF(document.getFileType());
     out.writeUTF(document.getTitle());
     out.writeUTF(document.getUrl());
+    out.writeUTF(document.getLastModifier());
+    out.writeLong(document.getLastModified());
     out.writeUTF(document.getInfo().getAuthor());
     out.writeUTF(document.getInfo().getCreated());
     out.writeUTF(document.getInfo().getFolder());
+    
 
     // Editor: callbackUrl, lang, mode, user(userId, firstname, lastname)
     out.writeUTF(editorConfig.getCallbackUrl());
@@ -1122,11 +1177,13 @@ public class Config implements Externalizable {
     String dfileType = in.readUTF();
     String dtitle = in.readUTF();
     String durl = in.readUTF();
+    String dmodifier = in.readUTF();
+    Long dmodified = in.readLong();
     String diauthor = in.readUTF();
     String dicreated = in.readUTF();
     String difolder = in.readUTF();
     Document.Info dinfo = new Document.Info(diauthor, dicreated, difolder);
-    this.document = new Document(dkey, dfileType, dtitle, durl, dinfo, new Document.EditPermissions());
+    this.document = new Document(dkey, dfileType, dtitle, durl, dinfo, new Document.EditPermissions(), dmodifier, dmodified);
 
     // Editor: callbackUrl, lang, mode, user(userId, firstname, lastname)
     String ecallbackUrl = in.readUTF();

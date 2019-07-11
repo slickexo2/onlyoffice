@@ -454,7 +454,7 @@ public class CometdOnlyofficeService implements Startable {
       String userId = (String) data.get("userId");
       String title = (String) data.get("title");
       String workspace = (String) data.get("workspace");
-      
+      String path = (String) data.get("path");
       eventsHandlers.submit(new ContainerCommand(PortalContainer.getCurrentPortalContainerName()) {
         @Override
         void onContainerError(String error) {
@@ -463,7 +463,7 @@ public class CometdOnlyofficeService implements Startable {
 
         @Override
         void execute(ExoContainer exoContainer) {
-          editors.updateTitle(docId, workspace, userId, title);
+          editors.updateTitle(workspace + ":" + path , title, userId);
         }
       });
     }
