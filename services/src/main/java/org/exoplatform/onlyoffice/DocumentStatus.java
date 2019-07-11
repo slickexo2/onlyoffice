@@ -22,7 +22,6 @@ package org.exoplatform.onlyoffice;
 import org.exoplatform.ws.frameworks.json.impl.JsonException;
 import org.exoplatform.ws.frameworks.json.impl.JsonGeneratorImpl;
 
-// TODO: Auto-generated Javadoc
 /**
  * Onlyoffice Config status as described in
  * <a href="http://api.onlyoffice.com/editors/callback">callback handler
@@ -53,10 +52,10 @@ public class DocumentStatus {
 
   /** The userdata. */
   protected Userdata userdata;
-  
-  /**  The coedited. */
-  protected Boolean coEdited;
-   
+
+  /** The coedited. */
+  protected Boolean  coEdited;
+
   /**
    * Sets the config.
    *
@@ -65,14 +64,16 @@ public class DocumentStatus {
   protected void setConfig(Config config) {
     this.config = config;
   }
+
   /**
    * Gets the key.
    *
    * @return the key
    */
-  public String getKey() {
+  protected String getKey() {
     return key;
   }
+
   /**
    * Gets the status.
    *
@@ -109,7 +110,6 @@ public class DocumentStatus {
     return config;
   }
 
-
   /**
    * Gets the error.
    *
@@ -136,7 +136,7 @@ public class DocumentStatus {
   public Userdata getUserdata() {
     return userdata;
   }
-  
+
   /**
    * Gets the coEdited.
    *
@@ -150,7 +150,7 @@ public class DocumentStatus {
    * The Class Builder.
    */
   public static class Builder {
-    
+
     /** The document status. */
     private DocumentStatus documentStatus;
 
@@ -237,7 +237,7 @@ public class DocumentStatus {
       documentStatus.userdata = userdata;
       return this;
     }
-    
+
     /**
      * Co edited.
      *
@@ -257,7 +257,7 @@ public class DocumentStatus {
     public DocumentStatus build() {
       return documentStatus;
     }
-    
+
     /**
      * Reset.
      */
@@ -265,6 +265,7 @@ public class DocumentStatus {
       documentStatus = new DocumentStatus();
     }
   }
+
   /**
    * Return this config as JSON string.
    *

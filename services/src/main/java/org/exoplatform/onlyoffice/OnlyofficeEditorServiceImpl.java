@@ -47,6 +47,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import javax.jcr.AccessDeniedException;
 import javax.jcr.Item;
@@ -289,7 +290,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   protected final ExoCache<String, ConcurrentMap<String, Config>> activeCache;
 
   /** Lock for updating Editing documents cache. */
-  protected final ReentrantLock                                   activeLock   = new ReentrantLock();
+  protected final ReentrantLock                                   activeLock = new ReentrantLock();
 
   /** The config. */
   protected final Map<String, String>                             config;
@@ -316,14 +317,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   protected final Set<String>                                     documentserverAllowedhosts;
 
   /** The file types. */
-  protected final Map<String, String>                             fileTypes    = new ConcurrentHashMap<String, String>();
-
-  /** The upload params. */
-  protected final MessageFormat                                   uploadParams =
-                                                                               new MessageFormat("?url={0}&outputtype={1}&filetype={2}&title={3}&key={4}");
+  protected final Map<String, String>                             fileTypes  = new ConcurrentHashMap<String, String>();
 
   /** The listeners. */
-  protected final ConcurrentLinkedQueue<OnlyofficeEditorListener> listeners    =
+  protected final ConcurrentLinkedQueue<OnlyofficeEditorListener> listeners  =
                                                                             new ConcurrentLinkedQueue<OnlyofficeEditorListener>();
 
   /** The document type plugin. */
@@ -999,7 +996,15 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   public void addTypePlugin(ComponentPlugin plugin) {
     Class<DocumentTypePlugin> pclass = DocumentTypePlugin.class;
     if (pclass.isAssignableFrom(plugin.getClass())) {
-      documentTypePlugin = pclass.cast(plugin);
+      DocumentTypePlugin newPlugin = pclass.cast(plugin);
+      if (this.documentTypePlugin != null) {
+        LOG.info("Replace existing DocumentTypePlugin {} with new one {}",
+                 this.documentTypePlugin.getMimeTypes().stream().collect(Collectors.joining(",")),
+                 newPlugin.getMimeTypes().stream().collect(Collectors.joining(",")));
+      } else {
+        LOG.info("Use DocumentTypePlugin {}", newPlugin.getMimeTypes().stream().collect(Collectors.joining(",")));
+      }
+      this.documentTypePlugin = newPlugin;
       if (LOG.isDebugEnabled()) {
         LOG.debug("Set documentTypePlugin instance of {}", plugin.getClass().getName());
       }
@@ -1036,16 +1041,20 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    */
   @Override
   public boolean isDocumentMimeSupported(Node node) throws RepositoryException {
-    if (node != null) {
-      String mimeType;
-      if (node.isNodeType(Utils.NT_FILE)) {
-        mimeType = node.getNode(Utils.JCR_CONTENT).getProperty(Utils.JCR_MIMETYPE).getString();
+    if (this.documentTypePlugin != null) {
+      if (node != null) {
+        String mimeType;
+        if (node.isNodeType(Utils.NT_FILE)) {
+          mimeType = node.getNode(Utils.JCR_CONTENT).getProperty(Utils.JCR_MIMETYPE).getString();
+        } else {
+          mimeType = new MimeTypeResolver().getMimeType(node.getName());
+        }
+        return this.documentTypePlugin.getMimeTypes().contains(mimeType);
       } else {
-        mimeType = new MimeTypeResolver().getMimeType(node.getName());
+        return false;
       }
-      return documentTypePlugin.getMimeTypes().contains(mimeType);
     }
-    return false;
+    return true;
   }
 
   /**
@@ -1096,8 +1105,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   /**
-  * {@inheritDoc}
-  */
+   * {@inheritDoc}
+   */
   @Override
   public void setLastModifier(String key, String userId) {
     ConcurrentMap<String, Config> configs = activeCache.get(key);
@@ -1178,7 +1187,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     if (token != null && key != null) {
       try {
         Jws<Claims> jws = Jwts.parser().setSigningKey(Keys.hmacShaKeyFor(documentserverSecret.getBytes())).parseClaimsJws(token);
-        Map<String, Object> claims = (Map) jws.getBody().get("payload");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> claims = (Map<String, Object>) jws.getBody().get("payload");
         if (claims != null) {
           if (claims.containsKey("key")) {
             return String.valueOf(claims.get("key")).equals(key);
@@ -1394,6 +1404,20 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     } catch (Exception e) {
       throw new OnlyofficeEditorException("Error searching user " + username, e);
     }
+  }
+
+  /**
+   * Webdav uri.
+   *
+   * @param schema the schema
+   * @param host the host
+   * @param port the port
+   * @return the uri
+   * @throws URISyntaxException the URI syntax exception
+   */
+  @Deprecated
+  protected URI webdavUri(String schema, String host, int port) throws URISyntaxException {
+    return new URI(platformRestUrl(schema, host, port).append("/jcr").toString());
   }
 
   /**
@@ -1734,7 +1758,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   /**
-   * Creates a version of draft. Used to create version after manually uploaded content.
+   * Creates a version of draft. Used to create version after manually uploaded
+   * content.
    *
    * @param node the node
    * @throws RepositoryException the repository exception
@@ -2113,20 +2138,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   @Deprecated
   protected StringBuilder platformRestUrl(String schema, String host, int port) {
     return platformRestUrl(platformUrl(schema, host, port));
-  }
-
-  /**
-   * Webdav uri.
-   *
-   * @param schema the schema
-   * @param host the host
-   * @param port the port
-   * @return the uri
-   * @throws URISyntaxException the URI syntax exception
-   */
-  @Deprecated
-  protected URI webdavUri(String schema, String host, int port) throws URISyntaxException {
-    return new URI(platformRestUrl(schema, host, port).append("/jcr").toString());
   }
 
   /**
