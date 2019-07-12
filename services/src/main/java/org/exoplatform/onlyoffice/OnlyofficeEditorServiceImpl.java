@@ -1066,7 +1066,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /**
    * Downloads document's content to the JCR node creating a new version.
    * 
-   * @param userdata the userdata
+   * @param userId the userId
+   * @param key the key
+   * @param coEdited the coEdited
    * @param contentUrl the contentUrl
    */
   @Override
