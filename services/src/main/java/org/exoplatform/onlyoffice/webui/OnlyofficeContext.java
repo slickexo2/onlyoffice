@@ -177,9 +177,7 @@ public class OnlyofficeContext {
   }
 
   /**
-   * Inits the context (current user, CometD settings, etc). This method called
-   * from
-   * {@link OnlyofficePortalLifecycle#onStartRequest(org.exoplatform.web.application.Application, WebuiRequestContext)},
+   * Inits the context (current user, CometD settings, etc).
    * on Platform app request start.
    *
    * @throws Exception the exception
