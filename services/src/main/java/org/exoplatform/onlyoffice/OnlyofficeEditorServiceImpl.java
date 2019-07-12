@@ -520,7 +520,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       docId = initDocument(workspace, docId);
     }
     Node node = getDocumentById(workspace, docId);
-    // TODO can be null here, check and throw DocumentNotFoundException
+    if (node == null) {
+      throw new DocumentNotFoundException("The document is not found. docId: " + docId + ", workspace: " + workspace);
+    }
     String path = node.getPath();
     String nodePath = nodePath(workspace, path);
 
@@ -715,14 +717,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * {@inheritDoc}
    */
   @Override
-  public void updateDocument(String userId, DocumentStatus status) throws OnlyofficeEditorException, RepositoryException {
+  public void updateDocument(DocumentStatus status) throws OnlyofficeEditorException, RepositoryException {
     String key = status.getKey();
     ConcurrentMap<String, Config> configs = activeCache.get(key);
     if (configs != null) {
-      Config config = configs.get(userId);
+      Config config = configs.get(status.getUserId());
       if (config != null) {
         status.setConfig(config);
-        validateUser(userId, config);
+        validateUser(status.getUserId(), config);
 
         String nodePath = nodePath(config.getWorkspace(), config.getPath());
 
@@ -866,7 +868,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               + status.getUsers() + ". Document: " + nodePath);
         }
       } else {
-        throw new BadParameterException("User editor not found " + userId);
+        throw new BadParameterException("User editor not found " + status.getUserId());
       }
     } else {
       throw new BadParameterException("File key not found " + key);
@@ -952,7 +954,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     try {
       return nodeByUUID(workspace, uuid);
     } catch (ItemNotFoundException e) {
-      // TODO A good idea to do LOG.debug here.
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("The node is not found. Workspace: {}, UUID: {}", workspace, uuid);
+      }
       return null;
     }
   }
@@ -968,7 +972,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     try {
       return node(workspace, path);
     } catch (ItemNotFoundException e) {
-      // TODO A good idea to do LOG.debug here.
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("The node is not found. Workspace: {}, path: {}", workspace, path);
+      }
       return null;
     }
   }
@@ -1064,7 +1070,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @param contentUrl the contentUrl
    */
   @Override
-  public void downloadVersion(String userId, String key, Boolean coEdited, String contentUrl) {
+  public void downloadVersion(String userId, String key, boolean coEdited, String contentUrl) {
     String docId = null;
     try {
       Config config = getEditorByKey(userId, key);
@@ -1072,7 +1078,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       DocumentStatus status = new DocumentStatus.Builder().config(config)
                                                           .key(key)
                                                           .url(contentUrl)
-                                                          .users(new String[] { userId })
+                                                          .userId(userId)
                                                           .coEdited(coEdited)
                                                           .build();
       download(config, status);
@@ -1134,7 +1140,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * {@inheritDoc}
    */
   @Override
-  public void forceSave(String userId, String key, Boolean download, Boolean coEdit) {
+  public void forceSave(String userId, String key, boolean download, boolean coEdit) {
     HttpURLConnection connection = null;
     try {
       Userdata userdata = new Userdata(userId, download, coEdit);
@@ -1545,8 +1551,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       LOG.debug(">> download(" + path + ", " + config.getDocument().getKey() + ")");
     }
 
-    // Assuming a single user here (last modifier)
-    String userId = status.getLastUser();
+    String userId = status.getUserId();
     validateUser(userId, config);
     String contentUrl = status.getUrl();
     Calendar editedTime = Calendar.getInstance();
@@ -1590,32 +1595,39 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       Node node = null;
       // TODO rework the code to throw DocumentNotFoundException once after all
       // checks
-      DocumentNotFoundException notFoundEx;
+      DocumentNotFoundException notFoundEx = null;
       try {
         node = getDocumentById(workspace, config.getDocId());
         // TODO node can be null here, check it, create
         // DocumentNotFoundException if it is and go out the try-catch
-        if (trashService.isInTrash(node)) {
-          // TODO assign notFoundEx and go out
-          throw new OnlyofficeEditorException("The document " + config.getDocId() + " has been moved to trash");
+        if (node == null) {
+          notFoundEx = new DocumentNotFoundException("The document is not found. docId: " + config.getDocId() + ", workspace: "
+              + workspace);
+          throw notFoundEx;
         }
-      } catch (AccessDeniedException | OnlyofficeEditorException e) {
-        // TODO Separate two cases: access and not found for clear messages in
-        // the log
+        if (trashService.isInTrash(node)) {
+          notFoundEx = new DocumentNotFoundException("The document is in trash. docId: " + config.getDocId() + ", workspace: "
+              + workspace);
+          throw notFoundEx;
+        }
+      } catch (AccessDeniedException e) {
         DocumentStatus errorStatus = new DocumentStatus.Builder().config(config)
                                                                  .error(OnlyofficeEditorListener.FILE_DELETED_ERROR)
                                                                  .build();
         fireError(errorStatus);
-        logError(userId,
-                 config.getPath(),
-                 config.getDocId(),
-                 config.getDocument().getKey(),
-                 "Document has been deleted or access denied");
-        // TODO assign notFoundEx and go out
-        throw new OnlyofficeEditorException("The document " + config.getDocId() + " has been deleted or access denied", e);
+
+        logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "Access denied");
+        notFoundEx = new DocumentNotFoundException("Access denied. docId: " + config.getDocId() + ", workspace: " + workspace);
+      } catch (DocumentNotFoundException e) {
+        DocumentStatus errorStatus = new DocumentStatus.Builder().config(config)
+                                                                 .error(OnlyofficeEditorListener.FILE_DELETED_ERROR)
+                                                                 .build();
+        fireError(errorStatus);
+        logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "The document is not found.");
       }
-      // TODO if notFoundEx not null - let it go
-      // throw notFoundEx;
+      if (notFoundEx != null) {
+        throw notFoundEx;
+      }
 
       Node content = nodeContent(node);
       String nodePath = nodePath(workspace, node.getPath());

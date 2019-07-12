@@ -97,16 +97,15 @@ public interface OnlyofficeEditorService {
                       String docId) throws OnlyofficeEditorException, RepositoryException;
 
   /**
-   * Update a configuration associated with given editor {@link Config}
-   * instance. A {@link Node} from that the config was created will be updated.
+   * Update a configuration associated with given DocumentStatus 
+   * instance. 
    * This operation will close the editor and it will not be usable after that.
    * 
-   * @param userId {@link String}
    * @param status {@link DocumentStatus}
    * @throws OnlyofficeEditorException if editor exception happened
    * @throws RepositoryException if storage exception happened
    */
-  void updateDocument(String userId, DocumentStatus status) throws OnlyofficeEditorException, RepositoryException;
+  void updateDocument(DocumentStatus status) throws OnlyofficeEditorException, RepositoryException;
 
   /**
    * Inits the document and returns an ID for use within editors. Node may be
@@ -271,7 +270,7 @@ public interface OnlyofficeEditorService {
    * @param coEdited the coEdited
    * @param contentUrl the contentUrl
    */
-  void downloadVersion(String userId, String key, Boolean coEdited, String contentUrl);
+  void downloadVersion(String userId, String key, boolean coEdited, String contentUrl);
 
   /**
    * Gets the last modifier userId.
@@ -297,7 +296,7 @@ public interface OnlyofficeEditorService {
    * @param download the download
    * @param coEdit the coedit
    */
-  void forceSave(String userId, String key, Boolean download, Boolean coEdit);
+  void forceSave(String userId, String key, boolean download, boolean coEdit);
 
   /**
    * Gets a user.

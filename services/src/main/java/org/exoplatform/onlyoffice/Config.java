@@ -905,66 +905,66 @@ public class Config implements Externalizable {
   }
 
   /** The Document Server URL. */
-  private String         documentserverUrl, documentserverJsUrl;
+  private String                          documentserverUrl, documentserverJsUrl;
 
   /** The Platform REST URL base (to generate file URLs for users). */
-  private String         platformRestUrl;
+  private String                          platformRestUrl;
 
   /** The editor page URL. */
-  private String         editorUrl;
+  private String                          editorUrl;
 
   /** The explorer page URL (ECMS Explorer page). */
-  private transient URI  explorerUri;
+  private transient URI                   explorerUri;
 
   /** The workspace. */
-  private String         workspace;
+  private String                          workspace;
 
   /** The path. */
-  private String         path;
+  private String                          path;
 
   /** The document ID in storage. */
-  private String         docId;
+  private String                          docId;
 
   /** The document type. */
-  private String         documentType;
+  private String                          documentType;
 
   /** The token. */
-  private String         token;
+  private String                          token;
 
   /** The document. */
-  private Document       document;
+  private Document                        document;
 
   /** The editor config. */
-  private Editor         editorConfig;
+  private Editor                          editorConfig;
 
   /** The error. */
-  private String         error;
+  private String                          error;
 
   /** The node. */
-  private transient Node node;
-  
-  private transient ThreadLocal<Boolean> sameModifier = new  ThreadLocal<>();
+  private transient Node                  node;
 
-  private transient ThreadLocal<Calendar> previousModified = new  ThreadLocal<>();
-  
+  private transient ThreadLocal<Boolean>  sameModifier     = new ThreadLocal<>();
+
+  private transient ThreadLocal<Calendar> previousModified = new ThreadLocal<>();
+
   /**
    * Marker of editor state. By default editor state is undefined and will be
    * treated as not open nor not closed. When editor will be open in Onlyoffice
    * it will send a status (1) and then need mark the editor open.
    */
-  private Boolean        open;
+  private Boolean                         open;
 
   /**
    * Marker for transient state between an UI closed in eXo and actually saved
    * data submitted from Onlyoffice DS.
    */
-  private Boolean        closing;
+  private Boolean                         closing;
 
   /**  The open timestamp. */
-  private Long           openedTime;
+  private Long                            openedTime;
 
   /**  The close timestamp. */
-  private Long           closedTime;
+  private Long                            closedTime;
 
   /**
    * Instantiates a new config for use with {@link Externalizable} methods. User
@@ -1295,19 +1295,19 @@ public class Config implements Externalizable {
   public Editor getEditorConfig() {
     return editorConfig;
   }
-  
+
   public void setPreviousModified(Calendar previousModified) {
     this.previousModified.set(previousModified);
   }
-  
+
   public Calendar getPreviousModified() {
     return this.previousModified.get();
   }
-  
+
   public void setSameModifier(Boolean samemodifier) {
     this.sameModifier.set(samemodifier);
   }
-  
+
   public Boolean getSameModifier() {
     return this.sameModifier.get();
   }

@@ -83,7 +83,16 @@ public class DocumentStatus {
    * @return the last user (editor)
    */
   public String getLastUser() {
-    return users.length > 0 ? users[0] : null;
+    return users != null && users.length > 0 ? users[0] : null;
+  }
+
+  /**
+   * Gets the key.
+   *
+   * @return the key
+   */
+  public String getKey() {
+    return key;
   }
 
   /**
@@ -95,14 +104,6 @@ public class DocumentStatus {
     this.config = config;
   }
 
-  /**
-   * Gets the key.
-   *
-   * @return the key
-   */
-  protected String getKey() {
-    return key;
-  }
 
   /**
    * Gets the status returned by Onlyoffice Document Server. <br>
@@ -253,15 +254,28 @@ public class DocumentStatus {
       return this;
     }
 
-    public Builder userdata(Userdata userdata) {
-      if (userdata != null) {
-        documentStatus.userId = userdata.userId;
-        documentStatus.coEdited = userdata.coEdited;
-        documentStatus.saved = userdata.isDownload();
-      }
+    /**
+     * Sets userId.
+     *
+     * @param userId the userId
+     * @return the builder
+     */
+    public Builder userId(String userId) {
+      documentStatus.userId = userId;
       return this;
     }
-
+    
+    /**
+     * Sets the saved.
+     *
+     * @param saved the saved
+     * @return the builder
+     */
+    public Builder saved(Boolean saved) {
+      documentStatus.saved = saved;
+      return this;
+    }
+  
     /**
      * Builds the.
      *

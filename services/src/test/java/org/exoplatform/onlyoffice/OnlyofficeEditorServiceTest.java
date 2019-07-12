@@ -196,19 +196,24 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
     Config config = editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());
     DocumentStatus status = new DocumentStatus.Builder().status(1L)
                                                         .users(new String[] { "john" })
+                                                        .userId("john")
                                                         .key(config.getDocument().getKey())
                                                         .build();
     assertFalse(config.isOpen());
-    editorService.updateDocument("john", status);
+    editorService.updateDocument(status);
     assertTrue(config.isOpen());
     assertFalse(config.isClosed());
-    status = new DocumentStatus.Builder().status(4L).users(new String[] {}).key(config.getDocument().getKey()).build();
-    editorService.updateDocument("john", status);
+    status = new DocumentStatus.Builder().status(4L)
+                                         .userId("john")
+                                         .users(new String[] {})
+                                         .key(config.getDocument().getKey())
+                                         .build();
+    editorService.updateDocument(status);
     assertFalse(config.isOpen());
     assertTrue(config.isClosed());
     node.remove();
   }
-  
+
   /*
   @Test
   public void testEditedAndClosed() throws Exception {
@@ -237,7 +242,7 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
     assertEquals("Updated Content", data);
   }
   
-
+  
   @Test
   public void testCanEditDocument() throws Exception {
     startSessionAs("john");
@@ -260,11 +265,10 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
     sessionProviderService.setSessionProvider(null, provider);
     session = provider.getSession(WORKSPACE_NAME, repositoryService.getCurrentRepository());
   }
- 
 
   protected NodeImpl createDocument(String title, String type, String data) throws Exception {
     NodeImpl rootNode = (NodeImpl) session.getRootNode();
-    rootNode.setPermission("john", new String[]{PermissionType.SET_PROPERTY});
+    rootNode.setPermission("john", new String[] { PermissionType.SET_PROPERTY });
     NodeImpl node = (NodeImpl) rootNode.addNode(title, type);
     node.addMixin("mix:lockable");
     node.addMixin("mix:referenceable");

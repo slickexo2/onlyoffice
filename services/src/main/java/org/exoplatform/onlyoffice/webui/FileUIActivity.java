@@ -88,13 +88,14 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
 
     if (getFilesCount() == 1) {
       Node node = getContentNode(0);
-      // TODO the node can be null here.
-      // TODO Is this node not already a resolved symlink so we need call
-      // our method to resolve it?
-      node = editorService.getDocument(node.getSession().getWorkspace().getName(), node.getPath());
       if (node != null) {
-        callModule("initActivity('" + editorService.initDocument(node) + "', " + contextEditorLink(node, "stream") + ",'"
-            + activityId + "');");
+        // TODO Is this node not already a resolved symlink so we need call
+        // our method to resolve it?
+        node = editorService.getDocument(node.getSession().getWorkspace().getName(), node.getPath());
+        if (node != null) {
+          callModule("initActivity('" + editorService.initDocument(node) + "', " + contextEditorLink(node, "stream") + ",'"
+              + activityId + "');");
+        }
       }
     }
 

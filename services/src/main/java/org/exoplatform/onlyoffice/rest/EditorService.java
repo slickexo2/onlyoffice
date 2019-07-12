@@ -210,7 +210,7 @@ public class EditorService implements ResourceContainer {
           token = token.replace("Bearer", "").trim();
         }
         String statusKey = (String) jsonObj.get("key");
-        String userdata = (String) jsonObj.get("userdata");
+        String userdataJson = (String) jsonObj.get("userdata");
         long statusCode = (long) jsonObj.get("status");
         String statusUrl = (String) jsonObj.get("url");
         Object errorObj = jsonObj.get("error");
@@ -233,15 +233,25 @@ public class EditorService implements ResourceContainer {
               // Need make field by field reading and throw and error/warn if
               // something not expected and attempt to do not fail when possible
               // (if some field could be omitted or assumed etc)
+
               statusBuilder.key(statusKey != null && statusKey.length() > 0 ? statusKey : key)
                            .status(statusCode)
                            .url(statusUrl)
                            .users(statusUsers)
-                           .error(error)
-                           .userdata(userdata != null ? new ObjectMapper().readValue(userdata, Userdata.class) : null);
-
+                           .error(error);
+              Userdata userdata = userdataJson != null ? new ObjectMapper().readValue(userdataJson, Userdata.class) : null;
+              if (userdata != null) {
+                statusBuilder.userId(userdata.getUserId());
+                statusBuilder.coEdited(userdata.getCoEdited());
+                statusBuilder.saved(userdata.isDownload());
+              } else if (statusUsers != null && statusUsers.length > 0) {
+                // Last user
+                statusBuilder.userId(statusUsers[0]);
+              } else {
+                statusBuilder.userId(userId);
+              }
               try {
-                editors.updateDocument(userId, statusBuilder.build());
+                editors.updateDocument(statusBuilder.build());
                 resp.entity("{\"error\": 0}");
               } catch (BadParameterException e) {
                 LOG.warn("Bad parameter to update status for " + key + ". " + e.getMessage());
