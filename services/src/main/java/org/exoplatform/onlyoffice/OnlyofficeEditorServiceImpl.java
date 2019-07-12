@@ -562,13 +562,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             builder.folder(node.getParent().getName());
           } catch (AccessDeniedException e) {
             // TODO Current user has no permissions to read the document parent
-            // - it can be an usecase of
-            // shared file.
+            // - it can be an usecase of shared file.
             // As folder is a text used for "Location" in document info in
-            // Onlyoffice, we could guess
-            // something like "John Smith's document" or "Product Team document"
-            // for sharing from personal
-            // docs and a space respectively.
+            // Onlyoffice, we could guess something like "John Smith's document"
+            // or "Product Team document" for sharing from personal docs and a
+            // space respectively.
             String owner;
             try {
               owner = node.getProperty("exo:owner").getString();
@@ -639,13 +637,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       if (config != null) {
         validateUser(userId, config);
 
-        // use user session here:
+        // Use user session here:
         // remember real context state and session provider to restore them at
         // the end
         ConversationState contextState = ConversationState.getCurrent();
         SessionProvider contextProvider = sessionProviders.getSessionProvider(null);
         try {
-          // XXX we want do all the job under actual (requester) user here
+          // We all the job under actual (requester) user here
           if (!setUserConvoState(userId)) {
             logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "Cannot set conversation state");
             throw new OnlyofficeEditorException("Cannot set conversation state " + userId);
@@ -707,8 +705,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         throw new BadParameterException("User editor not found " + userId);
       }
     } else {
-      return new ChangeState(true, null, new String[0]); // not found - thus
-                                                         // already saved
+      // not found - thus already saved
+      return new ChangeState(true, null, new String[0]);
     }
   }
 
@@ -809,10 +807,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               activeCache.put(config.getDocId(), configs);
               fireError(status);
               broadcastEvent(status, OnlyofficeEditorService.EDITOR_ERROR_EVENT);
-              // TODO no sense to throw an ex here: it will be caught by the
-              // caller (REST) and returned to
-              // the Onlyoffice server as 500 response, but it doesn't deal with
-              // it and will try send the status again.
+              // No sense to throw an ex here: it will be caught by the
+              // caller (REST) and returned to the Onlyoffice server as 500
+              // response, but it doesn't deal with it and will try send the
+              // status again.
             }
           } else {
             // otherwise we assume other user will save it later
@@ -846,8 +844,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           }
 
         } else if (statusCode == 7) {
-          // forcedsave error, we may decide next step according
-          // status.getError()
+          // For forcedsave error, we may decide next step according
+          // status.getError():
           // TODO more precise error handling:
           // 0 No errors.
           // 1 Document key is missing or no document with such key could be
@@ -1288,7 +1286,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         return fileExt;
       }
     }
-    // TODO should we find a type from MIME-type?
+    // TODO should we find a type from the file MIME-type?
     // String mimeType =
     // node.getProperty("jcr:content/jcr:mimeType").getString();
     return null;
@@ -1574,9 +1572,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     try {
       // We want do all the job under actual (last editor) user here
       // Notable that some WCM actions (FileUpdateActivityListener) will fail if
-      // user will be anonymous
-      // TODO but it seems looks as nasty thing for security, it should be
-      // carefully reviewed for production
+      // user will be anonymous.
+      // TODO Consider from a security point: will it be possible to hack to
+      // make a download under another user?
       if (!setUserConvoState(userId)) {
         logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "Cannot set conversation state");
         throw new OnlyofficeEditorException("Cannot set conversation state " + userId);
@@ -1935,8 +1933,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             lock = null;
           }
         } else {
-          Lock jcrLock = node.lock(true, false); // TODO deep vs only file node
-                                                 // lock?
+          Lock jcrLock = node.lock(true, false); 
           // keep lock token for other sessions of same user
           try {
             LockUtil.keepLock(jcrLock, user.getId(), jcrLock.getLockToken());
