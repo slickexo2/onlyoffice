@@ -95,7 +95,9 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
       if (uiExplorer != null) {
         OnlyofficeEditorService editorService = this.getApplicationComponent(OnlyofficeEditorService.class);
         Node node = uiExplorer.getCurrentNode();
+        // TODO can the node be null here?
         node = editorService.getDocument(node.getSession().getWorkspace().getName(), node.getPath());
+        // TODO the node can be null here
         String editorLink = editorService.getEditorLink(node);
         if (editorLink != null && !editorLink.isEmpty()) {
           return "javascript:window.open('" + editorLink(editorLink, "documents") + "');";

@@ -520,6 +520,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       docId = initDocument(workspace, docId);
     }
     Node node = getDocumentById(workspace, docId);
+    // TODO can be null here, check and throw DocumentNotFoundException
     String path = node.getPath();
     String nodePath = nodePath(workspace, path);
 
@@ -951,6 +952,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     try {
       return nodeByUUID(workspace, uuid);
     } catch (ItemNotFoundException e) {
+      // TODO A good idea to do LOG.debug here.
       return null;
     }
   }
@@ -966,6 +968,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     try {
       return node(workspace, path);
     } catch (ItemNotFoundException e) {
+      // TODO A good idea to do LOG.debug here.
       return null;
     }
   }
@@ -1585,12 +1588,20 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       }
       // work in user session
       Node node = null;
+      // TODO rework the code to throw DocumentNotFoundException once after all
+      // checks
+      DocumentNotFoundException notFoundEx;
       try {
         node = getDocumentById(workspace, config.getDocId());
+        // TODO node can be null here, check it, create
+        // DocumentNotFoundException if it is and go out the try-catch
         if (trashService.isInTrash(node)) {
-          throw new OnlyofficeEditorException("The document " + config.getDocId() + " has been deleted");
+          // TODO assign notFoundEx and go out
+          throw new OnlyofficeEditorException("The document " + config.getDocId() + " has been moved to trash");
         }
       } catch (AccessDeniedException | OnlyofficeEditorException e) {
+        // TODO Separate two cases: access and not found for clear messages in
+        // the log
         DocumentStatus errorStatus = new DocumentStatus.Builder().config(config)
                                                                  .error(OnlyofficeEditorListener.FILE_DELETED_ERROR)
                                                                  .build();
@@ -1600,8 +1611,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                  config.getDocId(),
                  config.getDocument().getKey(),
                  "Document has been deleted or access denied");
+        // TODO assign notFoundEx and go out
         throw new OnlyofficeEditorException("The document " + config.getDocId() + " has been deleted or access denied", e);
       }
+      // TODO if notFoundEx not null - let it go
+      // throw notFoundEx;
 
       Node content = nodeContent(node);
       String nodePath = nodePath(workspace, node.getPath());
@@ -1933,7 +1947,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             lock = null;
           }
         } else {
-          Lock jcrLock = node.lock(true, false); 
+          Lock jcrLock = node.lock(true, false);
           // keep lock token for other sessions of same user
           try {
             LockUtil.keepLock(jcrLock, user.getId(), jcrLock.getLockToken());
