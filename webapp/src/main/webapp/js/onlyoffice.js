@@ -122,110 +122,6 @@
   // ******** REST services ********
   var prefixUrl = pageBaseUrl(location);
 
-  /* TODO not used
-  var initRequest = function(request) {
-    var process = $.Deferred();
-    // stuff in textStatus is less interesting: it can be "timeout",
-    // "error", "abort", and "parsererror",
-    // "success" or smth like that
-    request.fail(function(jqXHR, textStatus, err) {
-      if (jqXHR.status != 309) {
-        // check if response isn't JSON
-        var data;
-        try {
-          data = $.parseJSON(jqXHR.responseText);
-          if (typeof data == "string") {
-            // not JSON
-            data = jqXHR.responseText;
-          }
-        } catch (e) {
-          // not JSON
-          data = jqXHR.responseText;
-        }
-        // in err - textual portion of the HTTP status, such as "Not
-        // Found" or "Internal Server Error."
-        process.reject(data, jqXHR.status, err, jqXHR);
-      }
-    });
-    // hacking jQuery for statusCode handling
-    var jQueryStatusCode = request.statusCode;
-    request.statusCode = function(map) {
-      var user502 = map[502];
-      if (!user502) {
-        map[502] = function() {
-          // treat 502 as request error also
-          process.fail("Bad gateway", 502, "error");
-        };
-      }
-      return jQueryStatusCode(map);
-    };
-    request.done(function(data, textStatus, jqXHR) {
-      process.resolve(data, jqXHR.status, textStatus, jqXHR);
-    });
-    request.always(function(data, textStatus, errorThrown) {
-      var status;
-      if (data && data.status) {
-        status = data.status;
-      } else if (errorThrown && errorThrown.status) {
-        status = errorThrown.status;
-      } else {
-        status = 200;
-        // what else we could to do
-      }
-      process.always(status, textStatus);
-    });
-    // custom Promise target to provide an access to jqXHR object
-    var processTarget = {
-      request : request
-    };
-    return process.promise(processTarget);
-  }; */
-
-  /* TODO cleanup
-  var configGet = function(workspace, path) {
-    var request = $.ajax({
-      type : "GET",
-      url : prefixUrl + "/portal/rest/onlyoffice/editor/config/" + workspace + path,
-      dataType : "json"
-    });
-    return initRequest(request);
-  };
-  var configPost = function(workspace, path) {
-    var request = $.ajax({
-      type : "POST",
-      url : prefixUrl + "/portal/rest/onlyoffice/editor/config/" + workspace + path,
-      dataType : "json"
-    });
-    return initRequest(request);
-  };
-  
-  var configGetByKey = function(key) {
-    var request = $.ajax({
-      type : "GET",
-      url : prefixUrl + "/portal/rest/onlyoffice/editor/config/" + key,
-      dataType : "json"
-    });
-    return initRequest(request);
-  };
-  
-  var documentPost = function(workspace, path) {
-    var request = $.ajax({
-      type : "POST",
-      url : prefixUrl + "/portal/rest/onlyoffice/editor/document/" + workspace + path,
-      dataType : "json"
-    });
-    return initRequest(request);
-  };
-  var stateGet = function(userId, fileKey) {
-    var request = $.ajax({
-      type : "GET",
-      url : prefixUrl + "/portal/rest/onlyoffice/editor/state/" + userId + "/" + fileKey,
-      dataType : "json"
-    });
-    return initRequest(request);
-  };
-  */
-
   /**
    * Editor core class.
    */
@@ -329,7 +225,6 @@
     };
 
     var publishDocument = function(docId, data) {
-      // TODO do we need Handshake or eXo's cCometD already did this?
       cometd.publish("/eXo/Application/Onlyoffice/editor/" + docId, data, cometdContext, function(publishReply) {
         // Publication status callback
         if (publishReply.successful) {
@@ -360,7 +255,7 @@
         log("ONLYOFFICE The document changed");
         changesSaved = false;
         // Document changed locally, soon it will be sent to Document Server.
-        // TODO We may get prepared here for a soon call of downloadAs().
+        // FYI We may get prepared here for a soon call of downloadAs().
       } else {
         // We use this check to avoid publishing updates from other users
         // and publishing when user hasn't made any changes yet (opened editor)
@@ -488,7 +383,7 @@
           "pluginsData" : []
         };
 
-        // load Onlyoffice API script
+        // load Onlyoffice API script:
         // XXX need load API script to DOM head, Onlyoffice needs a real element in <script> to detect the DS server URL
         $("<script>").attr("type", "text/javascript").attr("src", config.documentserverJsUrl).appendTo("head");
 
@@ -680,7 +575,6 @@
         explorerDocId = docId;
       }
       UI.addEditorButtonToExplorer(editorLink);
-
     };
 
     /**
@@ -871,10 +765,11 @@
      * Init editor page UI.
      */
     this.initEditor = function() {
-      // We may need this for some cases
-      $("#LeftNavigation").parent(".LeftNavigationTDContainer").remove();
-      // TODO cleanup
+      // We don't need this (thx to OnlyofficeEditorLifecycle)
       // $("#NavigationPortlet").remove();
+      // But we may need this for some cases of first page loading
+      $("#LeftNavigation").parent(".LeftNavigationTDContainer").remove();
+      // Specific styles to add
       $("#SharedLayoutRightBody").addClass("onlyofficeEditorBody");
     };
 
@@ -1062,7 +957,7 @@
 
   $(function() {
     try {
-      // load required styles
+      // load required styles (it didn't work right via gatein-resources.xml in PLF 5.0)
       loadStyle("/onlyoffice/skin/jquery-ui.css");
       loadStyle("/onlyoffice/skin/jquery.pnotify.default.css");
       loadStyle("/onlyoffice/skin/jquery.pnotify.default.icons.css");
