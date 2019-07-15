@@ -27,19 +27,26 @@ import org.exoplatform.ws.frameworks.json.impl.JsonGeneratorImpl;
  */
 public class CometdConfig {
 
-  /** The token. */
-  private String token;
-
   /** The path. */
-  private String path;
+  private final String path;
+
+  /** The token. */
+  private final String token;
 
   /** The container name. */
-  private String containerName;
+  private final String containerName;
 
   /**
-   * Instantiates a new client config.
+   * Instantiates CometdConfig.
+   * @param path the path
+   * @param token the token
+   * @param containerName the containerName
    */
-  public CometdConfig() {
+  public CometdConfig(String path, String token, String containerName) {
+    super();
+    this.token = token;
+    this.path = path;
+    this.containerName = containerName;
   }
 
   /**
@@ -52,30 +59,12 @@ public class CometdConfig {
   }
 
   /**
-   * Sets the token.
-   *
-   * @param token the new cometd token
-   */
-  public void setToken(String token) {
-    this.token = token;
-  }
-
-  /**
    * Gets the path.
    *
    * @return the cometdPath
    */
   public String getPath() {
     return path;
-  }
-
-  /**
-   * Sets the path.
-   *
-   * @param cometdPath the cometdPath
-   */
-  public void setPath(String cometdPath) {
-    this.path = cometdPath;
   }
 
   /**
@@ -88,15 +77,6 @@ public class CometdConfig {
   }
 
   /**
-   * Sets the container name.
-   *
-   * @param container the container
-   */
-  public void setContainerName(String container) {
-    this.containerName = container;
-  }
-
-  /**
    * To JSON.
    *
    * @return the string
@@ -104,7 +84,5 @@ public class CometdConfig {
    */
   public String toJSON() throws JsonException {
     return new JsonGeneratorImpl().createJsonObject(this).toString();
-    // return new
-    // ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsString(this);
   }
 }

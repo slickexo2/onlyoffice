@@ -114,10 +114,7 @@ public class OnlyofficeContext {
 
       String userId = convo.getIdentity().getUserId();
 
-      CometdConfig cometdConf = new CometdConfig();
-      cometdConf.setPath(cometdService.getCometdServerPath());
-      cometdConf.setToken(cometdService.getUserToken(userId));
-      cometdConf.setContainerName(PortalContainer.getCurrentPortalContainerName());
+      CometdConfig cometdConf = new CometdConfig(cometdService.getCometdServerPath(), cometdService.getUserToken(userId), PortalContainer.getCurrentPortalContainerName());
 
       callOnModule("init('" + userId + "', " + cometdConf.toJSON() + ", " + messagesJson + ");");
     } else {
@@ -180,9 +177,7 @@ public class OnlyofficeContext {
   }
 
   /**
-   * Inits the context (current user, CometD settings, etc). This method called
-   * from
-   * {@link OnlyofficePortalLifecycle#onStartRequest(org.exoplatform.web.application.Application, WebuiRequestContext)},
+   * Inits the context (current user, CometD settings, etc).
    * on Platform app request start.
    *
    * @throws Exception the exception

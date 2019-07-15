@@ -21,7 +21,6 @@ package org.exoplatform.onlyoffice.webui;
 
 import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.servlet.ServletRequest;
 
@@ -55,15 +54,12 @@ public class OnlyofficeEditorLifecycle extends AbstractOnlyofficeLifecycle {
    * The Interface RenderedState.
    */
   interface RenderedState {
-    
+
     /**
      * Restore.
      */
     void restore();
   }
-
-  /** The enabled. */
-  private final AtomicBoolean enabled = new AtomicBoolean();
 
   /**
    * Instantiates a new Onlyoffice editor lifecycle.

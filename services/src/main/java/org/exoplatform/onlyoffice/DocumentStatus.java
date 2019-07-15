@@ -22,7 +22,6 @@ package org.exoplatform.onlyoffice;
 import org.exoplatform.ws.frameworks.json.impl.JsonException;
 import org.exoplatform.ws.frameworks.json.impl.JsonGeneratorImpl;
 
-// TODO: Auto-generated Javadoc
 /**
  * Onlyoffice Config status as described in
  * <a href="http://api.onlyoffice.com/editors/callback">callback handler
@@ -51,54 +50,14 @@ public class DocumentStatus {
   /** The error. */
   protected long     error;
 
-  /** The userdata. */
-  protected Userdata userdata;
-  
-  /**  The coedited. */
-  protected Boolean coEdited;
-   
-  /**
-   * Sets the config.
-   *
-   * @param config the new config
-   */
-  protected void setConfig(Config config) {
-    this.config = config;
-  }
-  /**
-   * Gets the key.
-   *
-   * @return the key
-   */
-  public String getKey() {
-    return key;
-  }
-  /**
-   * Gets the status.
-   *
-   * @return the status
-   */
-  public Long getStatus() {
-    return status;
-  }
+  /** The coedited. */
+  protected Boolean  coEdited;
 
-  /**
-   * Gets the url.
-   *
-   * @return the url
-   */
-  public String getUrl() {
-    return url;
-  }
+  /** The saved */
+  protected Boolean  saved;
 
-  /**
-   * Gets the users.
-   *
-   * @return the users
-   */
-  public String[] getUsers() {
-    return users;
-  }
+  /** The userId (used for saving the document content under this user) */
+  protected String   userId;
 
   /**
    * Gets the config.
@@ -108,7 +67,6 @@ public class DocumentStatus {
   public Config getConfig() {
     return config;
   }
-
 
   /**
    * Gets the error.
@@ -125,32 +83,90 @@ public class DocumentStatus {
    * @return the last user (editor)
    */
   public String getLastUser() {
-    return users.length > 0 ? users[0] : null;
+    return users != null && users.length > 0 ? users[0] : null;
   }
 
   /**
-   * Gets the userdata.
+   * Gets the key.
    *
-   * @return the userdata
+   * @return the key
    */
-  public Userdata getUserdata() {
-    return userdata;
+  public String getKey() {
+    return key;
   }
-  
+
+  /**
+   * Sets the config.
+   *
+   * @param config the new config
+   */
+  protected void setConfig(Config config) {
+    this.config = config;
+  }
+
+
+  /**
+   * Gets the status returned by Onlyoffice Document Server. <br>
+   * See <a href=
+   * "https://api.onlyoffice.com/editors/callback#status">https://api.onlyoffice.com/editors/callback#status</a>
+   * for details.
+   *
+   * @return the status
+   */
+  protected Long getStatus() {
+    return status;
+  }
+
+  /**
+   * Gets the url.
+   *
+   * @return the url
+   */
+  protected String getUrl() {
+    return url;
+  }
+
+  /**
+   * Gets the users.
+   *
+   * @return the users
+   */
+  protected String[] getUsers() {
+    return users;
+  }
+
   /**
    * Gets the coEdited.
    *
    * @return the coEdited
    */
-  public Boolean isCoedited() {
+  protected Boolean isCoedited() {
     return coEdited;
+  }
+
+  /**
+   * Gets the isSaved.
+   *
+   * @return the isSaved
+   */
+  protected Boolean isSaved() {
+    return saved;
+  }
+
+  /**
+   * Gets the userId.
+   *
+   * @return the userId
+   */
+  protected String getUserId() {
+    return userId;
   }
 
   /**
    * The Class Builder.
    */
   public static class Builder {
-    
+
     /** The document status. */
     private DocumentStatus documentStatus;
 
@@ -228,17 +244,6 @@ public class DocumentStatus {
     }
 
     /**
-     * Userdata.
-     *
-     * @param userdata the userdata
-     * @return the builder
-     */
-    public Builder userdata(Userdata userdata) {
-      documentStatus.userdata = userdata;
-      return this;
-    }
-    
-    /**
      * Co edited.
      *
      * @param coEdited the co edited
@@ -250,6 +255,28 @@ public class DocumentStatus {
     }
 
     /**
+     * Sets userId.
+     *
+     * @param userId the userId
+     * @return the builder
+     */
+    public Builder userId(String userId) {
+      documentStatus.userId = userId;
+      return this;
+    }
+    
+    /**
+     * Sets the saved.
+     *
+     * @param saved the saved
+     * @return the builder
+     */
+    public Builder saved(Boolean saved) {
+      documentStatus.saved = saved;
+      return this;
+    }
+  
+    /**
      * Builds the.
      *
      * @return the document status
@@ -257,7 +284,7 @@ public class DocumentStatus {
     public DocumentStatus build() {
       return documentStatus;
     }
-    
+
     /**
      * Reset.
      */
@@ -265,6 +292,7 @@ public class DocumentStatus {
       documentStatus = new DocumentStatus();
     }
   }
+
   /**
    * Return this config as JSON string.
    *

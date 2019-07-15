@@ -18,13 +18,12 @@
  */
 package org.exoplatform.onlyoffice.documents;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.exoplatform.container.component.BaseComponentPlugin;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ObjectParameter;
-import org.exoplatform.onlyoffice.documents.NewDocumentService.NewDocumentTypesConfig;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
@@ -40,7 +39,7 @@ public class NewDocumentTypePlugin extends BaseComponentPlugin {
   private static final String DOCUMENT_TYPES_CONFIGURATION = "document-types-configuration";
   
   /** The document types. */
-  protected List<NewDocumentType> types;
+  protected List<NewDocumentType> types = Collections.emptyList();
   
   /**
    * Gets the types.
@@ -63,7 +62,6 @@ public class NewDocumentTypePlugin extends BaseComponentPlugin {
       if (obj != null && NewDocumentService.NewDocumentTypesConfig.class.isAssignableFrom(obj.getClass())) {
         this.types = NewDocumentService.NewDocumentTypesConfig.class.cast(obj).getTypes();
       } else {
-        this.types = new ArrayList<>();
         LOG.error("The new document types are not set");
       }
     }

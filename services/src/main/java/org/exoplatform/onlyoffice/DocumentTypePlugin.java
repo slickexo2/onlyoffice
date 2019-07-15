@@ -19,6 +19,7 @@
 package org.exoplatform.onlyoffice;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.exoplatform.container.component.BaseComponentPlugin;
@@ -35,11 +36,11 @@ public class DocumentTypePlugin extends BaseComponentPlugin {
   /** The Constant LOG. */
   protected static final Log  LOG                          = ExoLogger.getLogger(DocumentTypePlugin.class);
 
-  /**  The DOCUMENT_TYPES_CONFIGURATION param *. */
+  /** The DOCUMENT_TYPES_CONFIGURATION param *. */
   private static final String DOCUMENT_TYPES_CONFIGURATION = "document-types-configuration";
 
-  /**  The mime types *. */
-  protected List<String>      mimeTypes;
+  /** The mime types. */
+  protected List<String>      mimeTypes                    = Collections.emptyList();
 
   /**
    * Initializes a DocumentTypePlugin.

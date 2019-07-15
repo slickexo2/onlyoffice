@@ -29,7 +29,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
@@ -48,7 +47,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
+
 import java.util.regex.Pattern;
+
+import java.util.stream.Collectors;
 
 import javax.jcr.AccessDeniedException;
 import javax.jcr.Item;
@@ -308,7 +310,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   protected final ExoCache<String, ConcurrentMap<String, Config>> activeCache;
 
   /** Lock for updating Editing documents cache. */
-  protected final ReentrantLock                                   activeLock   = new ReentrantLock();
+  protected final ReentrantLock                                   activeLock = new ReentrantLock();
 
   /** The config. */
   protected final Map<String, String>                             config;
@@ -335,14 +337,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   protected final Set<String>                                     documentserverAllowedhosts;
 
   /** The file types. */
-  protected final Map<String, String>                             fileTypes    = new ConcurrentHashMap<String, String>();
-
-  /** The upload params. */
-  protected final MessageFormat                                   uploadParams =
-                                                                               new MessageFormat("?url={0}&outputtype={1}&filetype={2}&title={3}&key={4}");
+  protected final Map<String, String>                             fileTypes  = new ConcurrentHashMap<String, String>();
 
   /** The listeners. */
-  protected final ConcurrentLinkedQueue<OnlyofficeEditorListener> listeners    =
+  protected final ConcurrentLinkedQueue<OnlyofficeEditorListener> listeners  =
                                                                             new ConcurrentLinkedQueue<OnlyofficeEditorListener>();
 
   /** The document type plugin. */
@@ -545,6 +543,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       docId = initDocument(workspace, docId);
     }
     Node node = getDocumentById(workspace, docId);
+    if (node == null) {
+      throw new DocumentNotFoundException("The document is not found. docId: " + docId + ", workspace: " + workspace);
+    }
     String path = node.getPath();
     String nodePath = nodePath(workspace, path);
     // The path in form of Drive:path/to/node/nodeTitle
@@ -588,13 +589,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             builder.folder(node.getParent().getName());
           } catch (AccessDeniedException e) {
             // TODO Current user has no permissions to read the document parent
-            // - it can be an usecase of
-            // shared file.
+            // - it can be an usecase of shared file.
             // As folder is a text used for "Location" in document info in
-            // Onlyoffice, we could guess
-            // something like "John Smith's document" or "Product Team document"
-            // for sharing from personal
-            // docs and a space respectively.
+            // Onlyoffice, we could guess something like "John Smith's document"
+            // or "Product Team document" for sharing from personal docs and a
+            // space respectively.
             String owner;
             try {
               owner = node.getProperty("exo:owner").getString();
@@ -667,7 +666,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /**
    * {@inheritDoc}
    */
-  @SuppressWarnings("deprecation")
   @Override
   public DocumentContent getContent(String userId, String key) throws OnlyofficeEditorException, RepositoryException {
     ConcurrentMap<String, Config> configs = activeCache.get(key);
@@ -676,13 +674,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       if (config != null) {
         validateUser(userId, config);
 
-        // use user session here:
+        // Use user session here:
         // remember real context state and session provider to restore them at
         // the end
         ConversationState contextState = ConversationState.getCurrent();
         SessionProvider contextProvider = sessionProviders.getSessionProvider(null);
         try {
-          // XXX we want do all the job under actual (requester) user here
+          // We all the job under actual (requester) user here
           if (!setUserConvoState(userId)) {
             logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "Cannot set conversation state");
             throw new OnlyofficeEditorException("Cannot set conversation state " + userId);
@@ -744,8 +742,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         throw new BadParameterException("User editor not found " + userId);
       }
     } else {
-      return new ChangeState(true, null, new String[0]); // not found - thus
-                                                         // already saved
+      // not found - thus already saved
+      return new ChangeState(true, null, new String[0]);
     }
   }
 
@@ -753,14 +751,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * {@inheritDoc}
    */
   @Override
-  public void updateDocument(String userId, DocumentStatus status) throws OnlyofficeEditorException, RepositoryException {
+  public void updateDocument(DocumentStatus status) throws OnlyofficeEditorException, RepositoryException {
     String key = status.getKey();
     ConcurrentMap<String, Config> configs = activeCache.get(key);
     if (configs != null) {
-      Config config = configs.get(userId);
+      Config config = configs.get(status.getUserId());
       if (config != null) {
         status.setConfig(config);
-        validateUser(userId, config);
+        validateUser(status.getUserId(), config);
 
         String nodePath = nodePath(config.getWorkspace(), config.getPath());
 
@@ -846,10 +844,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               activeCache.put(config.getDocId(), configs);
               fireError(status);
               broadcastEvent(status, OnlyofficeEditorService.EDITOR_ERROR_EVENT);
-              // TODO no sense to throw an ex here: it will be caught by the
-              // caller (REST) and returned to
-              // the Onlyoffice server as 500 response, but it doesn't deal with
-              // it and will try send the status again.
+              // No sense to throw an ex here: it will be caught by the
+              // caller (REST) and returned to the Onlyoffice server as 500
+              // response, but it doesn't deal with it and will try send the
+              // status again.
             }
           } else {
             // otherwise we assume other user will save it later
@@ -873,17 +871,18 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // forcedsave done, save the version with its URL
           if (LOG.isDebugEnabled()) {
             LOG.debug("Received Onlyoffice forced saved document. Key: " + key + ". Users: " + Arrays.toString(status.getUsers())
-                + ". Document " + nodePath + ". URL: " + status.getUrl() + ". Download: " + status.getUserdata().getDownload());
+                + ". Document " + nodePath + ". URL: " + status.getUrl() + ". Download: " + status.isSaved());
           }
-          if (status.getUserdata().getDownload()) {
-            downloadVersion(status.getUserdata(), status.getUrl());
+          // Here we decide if we need to download content or just save the link
+          if (status.isSaved()) {
+            downloadVersion(status.getUserId(), key, status.isCoedited(), status.getUrl());
           } else {
-            saveLink(status.getUserdata(), status.getUrl());
+            saveLink(status.getUserId(), key, status.getUrl());
           }
 
         } else if (statusCode == 7) {
-          // forcedsave error, we may decide next step according
-          // status.getError()
+          // For forcedsave error, we may decide next step according
+          // status.getError():
           // TODO more precise error handling:
           // 0 No errors.
           // 1 Document key is missing or no document with such key could be
@@ -896,14 +895,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // 6 Invalid token.
           LOG.error("Received Onlyoffice error of forced saving of document. Key: " + key + ". Users: "
               + Arrays.toString(status.getUsers()) + ". Document: " + nodePath + ". Error: " + status.getError() + ". URL: "
-              + status.getUrl() + ". Download: " + status.getUserdata().getDownload());
+              + status.getUrl() + ". Download: " + status.isSaved());
         } else {
           // warn unexpected status, wait for next status
           LOG.warn("Received Onlyoffice unexpected status. Key: " + key + ". URL: " + status.getUrl() + ". Users: "
               + status.getUsers() + ". Document: " + nodePath);
         }
       } else {
-        throw new BadParameterException("User editor not found " + userId);
+        throw new BadParameterException("User editor not found " + status.getUserId());
       }
     } else {
       throw new BadParameterException("File key not found " + key);
@@ -989,6 +988,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     try {
       return nodeByUUID(workspace, uuid);
     } catch (ItemNotFoundException e) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("The node is not found. Workspace: {}, UUID: {}", workspace, uuid);
+      }
       return null;
     }
   }
@@ -1004,6 +1006,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     try {
       return node(workspace, path);
     } catch (ItemNotFoundException e) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("The node is not found. Workspace: {}, path: {}", workspace, path);
+      }
       return null;
     }
   }
@@ -1031,7 +1036,15 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   public void addTypePlugin(ComponentPlugin plugin) {
     Class<DocumentTypePlugin> pclass = DocumentTypePlugin.class;
     if (pclass.isAssignableFrom(plugin.getClass())) {
-      documentTypePlugin = pclass.cast(plugin);
+      DocumentTypePlugin newPlugin = pclass.cast(plugin);
+      if (this.documentTypePlugin != null) {
+        LOG.info("Replace existing DocumentTypePlugin {} with new one {}",
+                 this.documentTypePlugin.getMimeTypes().stream().collect(Collectors.joining(",")),
+                 newPlugin.getMimeTypes().stream().collect(Collectors.joining(",")));
+      } else {
+        LOG.info("Use DocumentTypePlugin {}", newPlugin.getMimeTypes().stream().collect(Collectors.joining(",")));
+      }
+      this.documentTypePlugin = newPlugin;
       if (LOG.isDebugEnabled()) {
         LOG.debug("Set documentTypePlugin instance of {}", plugin.getClass().getName());
       }
@@ -1068,35 +1081,41 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    */
   @Override
   public boolean isDocumentMimeSupported(Node node) throws RepositoryException {
-    if (node != null) {
-      String mimeType;
-      if (node.isNodeType(Utils.NT_FILE)) {
-        mimeType = node.getNode(Utils.JCR_CONTENT).getProperty(Utils.JCR_MIMETYPE).getString();
+    if (this.documentTypePlugin != null) {
+      if (node != null) {
+        String mimeType;
+        if (node.isNodeType(Utils.NT_FILE)) {
+          mimeType = node.getNode(Utils.JCR_CONTENT).getProperty(Utils.JCR_MIMETYPE).getString();
+        } else {
+          mimeType = new MimeTypeResolver().getMimeType(node.getName());
+        }
+        return this.documentTypePlugin.getMimeTypes().contains(mimeType);
       } else {
-        mimeType = new MimeTypeResolver().getMimeType(node.getName());
+        return false;
       }
-      return documentTypePlugin.getMimeTypes().contains(mimeType);
     }
-    return false;
+    return true;
   }
 
   /**
    * Downloads document's content to the JCR node creating a new version.
    * 
-   * @param userdata the userdata
+   * @param userId the userId
+   * @param key the key
+   * @param coEdited the coEdited
    * @param contentUrl the contentUrl
    */
   @Override
-  public void downloadVersion(Userdata userdata, String contentUrl) {
+  public void downloadVersion(String userId, String key, boolean coEdited, String contentUrl) {
     String docId = null;
     try {
-      Config config = getEditorByKey(userdata.getUserId(), userdata.getKey());
+      Config config = getEditorByKey(userId, key);
       docId = config.getDocId();
       DocumentStatus status = new DocumentStatus.Builder().config(config)
-                                                          .key(userdata.getKey())
+                                                          .key(key)
                                                           .url(contentUrl)
-                                                          .users(new String[] { userdata.getUserId() })
-                                                          .coEdited(userdata.getCoEdited())
+                                                          .userId(userId)
+                                                          .coEdited(coEdited)
                                                           .build();
       download(config, status);
       // we set it sooner to let clients see the save
@@ -1128,8 +1147,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   /**
-  * {@inheritDoc}
-  */
+   * {@inheritDoc}
+   */
   @Override
   public void setLastModifier(String key, String userId) {
     ConcurrentMap<String, Config> configs = activeCache.get(key);
@@ -1157,13 +1176,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * {@inheritDoc}
    */
   @Override
-  public void forceSave(Userdata userdata) {
+  public void forceSave(String userId, String key, boolean download, boolean coEdit) {
     HttpURLConnection connection = null;
     try {
-      String json = new JSONObject().put("c", "forcesave")
-                                    .put("key", userdata.getKey())
-                                    .put("userdata", userdata.toJSON())
-                                    .toString();
+      Userdata userdata = new Userdata(userId, download, coEdit);
+      String json = new JSONObject().put("c", "forcesave").put("key", key).put("userdata", userdata.toJSON()).toString();
       byte[] postDataBytes = json.toString().getBytes("UTF-8");
 
       URL url = new URL(commandServiceUrl);
@@ -1178,7 +1195,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         String jwtToken = Jwts.builder()
                               .setSubject("exo-onlyoffice")
                               .claim("c", "forcesave")
-                              .claim("key", userdata.getKey())
+                              .claim("key", key)
                               .claim("userdata", userdata.toJSON())
                               .signWith(Keys.hmacShaKeyFor(documentserverSecret.getBytes()))
                               .compact();
@@ -1191,10 +1208,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       // read the response
       InputStream in = new BufferedInputStream(connection.getInputStream());
       String response = IOUtils.toString(in, "UTF-8");
-      LOG.debug("Command service responded on forcesave command: " + response);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Command service responded on forcesave command: " + response);
+      }
     } catch (Exception e) {
-      LOG.error("Error in sending forcesave command. UserId: " + userdata.getUserId() + ". Key: " + userdata.getKey()
-          + ". Download: " + userdata.getDownload(), e);
+      LOG.error("Error in sending forcesave command. UserId: " + userId + ". Key: " + key + ". Download: " + download, e);
     } finally {
       if (connection != null) {
         connection.disconnect();
@@ -1210,7 +1228,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     if (token != null && key != null) {
       try {
         Jws<Claims> jws = Jwts.parser().setSigningKey(Keys.hmacShaKeyFor(documentserverSecret.getBytes())).parseClaimsJws(token);
-        Map<String, Object> claims = (Map) jws.getBody().get("payload");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> claims = (Map<String, Object>) jws.getBody().get("payload");
         if (claims != null) {
           if (claims.containsKey("key")) {
             return String.valueOf(claims.get("key")).equals(key);
@@ -1275,16 +1294,17 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /**
    * Save link.
    *
-   * @param userdata the userdata
+   * @param userId the userId
+   * @param key the key
    * @param url the url
    */
-  protected void saveLink(Userdata userdata, String url) {
-    ConcurrentMap<String, Config> configs = activeCache.get(userdata.getKey());
+  protected void saveLink(String userId, String key, String url) {
+    ConcurrentMap<String, Config> configs = activeCache.get(key);
     if (configs != null) {
-      Config config = configs.get(userdata.getUserId());
+      Config config = configs.get(userId);
       config.getEditorConfig().getUser().setDownloadLink(url);
       config.getEditorConfig().getUser().setLinkSaved(System.currentTimeMillis());
-      activeCache.put(userdata.getKey(), configs);
+      activeCache.put(key, configs);
       activeCache.put(config.getDocId(), configs);
     }
   }
@@ -1355,7 +1375,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         return fileExt;
       }
     }
-    // TODO should we find a type from MIME-type?
+    // TODO should we find a type from the file MIME-type?
     // String mimeType =
     // node.getProperty("jcr:content/jcr:mimeType").getString();
     return null;
@@ -1470,6 +1490,20 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     } catch (Exception e) {
       throw new OnlyofficeEditorException("Error searching user " + username, e);
     }
+  }
+
+  /**
+   * Webdav uri.
+   *
+   * @param schema the schema
+   * @param host the host
+   * @param port the port
+   * @return the uri
+   * @throws URISyntaxException the URI syntax exception
+   */
+  @Deprecated
+  protected URI webdavUri(String schema, String host, int port) throws URISyntaxException {
+    return new URI(platformRestUrl(schema, host, port).append("/jcr").toString());
   }
 
   /**
@@ -1597,8 +1631,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       LOG.debug(">> download(" + path + ", " + config.getDocument().getKey() + ")");
     }
 
-    // Assuming a single user here (last modifier)
-    String userId = status.getLastUser();
+    String userId = status.getUserId();
     validateUser(userId, config);
     String contentUrl = status.getUrl();
     Calendar editedTime = Calendar.getInstance();
@@ -1627,9 +1660,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     try {
       // We want do all the job under actual (last editor) user here
       // Notable that some WCM actions (FileUpdateActivityListener) will fail if
-      // user will be anonymous
-      // TODO but it seems looks as nasty thing for security, it should be
-      // carefully reviewed for production
+      // user will be anonymous.
+      // TODO Consider from a security point: will it be possible to hack to
+      // make a download under another user?
       if (!setUserConvoState(userId)) {
         logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "Cannot set conversation state");
         throw new OnlyofficeEditorException("Cannot set conversation state " + userId);
@@ -1640,22 +1673,40 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       }
       // work in user session
       Node node = null;
+      // TODO rework the code to throw DocumentNotFoundException once after all
+      // checks
+      DocumentNotFoundException notFoundEx = null;
       try {
         node = getDocumentById(workspace, config.getDocId());
-        if (trashService.isInTrash(node)) {
-          throw new OnlyofficeEditorException("The document " + config.getDocId() + " has been deleted");
+        // TODO node can be null here, check it, create
+        // DocumentNotFoundException if it is and go out the try-catch
+        if (node == null) {
+          notFoundEx = new DocumentNotFoundException("The document is not found. docId: " + config.getDocId() + ", workspace: "
+              + workspace);
+          throw notFoundEx;
         }
-      } catch (AccessDeniedException | OnlyofficeEditorException e) {
+        if (trashService.isInTrash(node)) {
+          notFoundEx = new DocumentNotFoundException("The document is in trash. docId: " + config.getDocId() + ", workspace: "
+              + workspace);
+          throw notFoundEx;
+        }
+      } catch (AccessDeniedException e) {
         DocumentStatus errorStatus = new DocumentStatus.Builder().config(config)
                                                                  .error(OnlyofficeEditorListener.FILE_DELETED_ERROR)
                                                                  .build();
         fireError(errorStatus);
-        logError(userId,
-                 config.getPath(),
-                 config.getDocId(),
-                 config.getDocument().getKey(),
-                 "Document has been deleted or access denied");
-        throw new OnlyofficeEditorException("The document " + config.getDocId() + " has been deleted or access denied", e);
+
+        logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "Access denied");
+        notFoundEx = new DocumentNotFoundException("Access denied. docId: " + config.getDocId() + ", workspace: " + workspace);
+      } catch (DocumentNotFoundException e) {
+        DocumentStatus errorStatus = new DocumentStatus.Builder().config(config)
+                                                                 .error(OnlyofficeEditorListener.FILE_DELETED_ERROR)
+                                                                 .build();
+        fireError(errorStatus);
+        logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "The document is not found.");
+      }
+      if (notFoundEx != null) {
+        throw notFoundEx;
       }
 
       Node content = nodeContent(node);
@@ -1810,7 +1861,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   /**
-   * Creates a version of draft. Used to create version after manually uploaded content.
+   * Creates a version of draft. Used to create version after manually uploaded
+   * content.
    *
    * @param node the node
    * @throws RepositoryException the repository exception
@@ -1987,8 +2039,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             lock = null;
           }
         } else {
-          Lock jcrLock = node.lock(true, false); // TODO deep vs only file node
-                                                 // lock?
+          Lock jcrLock = node.lock(true, false);
           // keep lock token for other sessions of same user
           try {
             LockUtil.keepLock(jcrLock, user.getId(), jcrLock.getLockToken());
@@ -2192,20 +2243,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   /**
-   * Webdav uri.
-   *
-   * @param schema the schema
-   * @param host the host
-   * @param port the port
-   * @return the uri
-   * @throws URISyntaxException the URI syntax exception
-   */
-  @Deprecated
-  protected URI webdavUri(String schema, String host, int port) throws URISyntaxException {
-    return new URI(platformRestUrl(schema, host, port).append("/jcr").toString());
-  }
-
-  /**
    * Broadcasts an event using the listenerService.
    * 
    * @param status the status
@@ -2216,7 +2253,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       if (LOG.isDebugEnabled()) {
         LOG.debug("Fire {} event. DocumentStatus: {}", eventType, status.toJSON());
       }
-      listenerService.broadcast(eventType, this, status.getConfig());
+      listenerService.broadcast(eventType, this, status);
     } catch (Exception e) {
       LOG.error("Error firing listener with Onlyoffice {} event for user: {}, document: {}",
                 eventType,
@@ -2384,6 +2421,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @param userId the userId
    * @return true if successful, false when the user is not found
    */
+  @SuppressWarnings("deprecation")
   protected boolean setUserConvoState(String userId) {
     Identity userIdentity = userIdentity(userId);
     if (userIdentity != null) {

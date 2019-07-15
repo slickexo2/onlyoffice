@@ -87,4 +87,12 @@ public class NewDocumentType {
     this.mimeType = mimeType;
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public String toString() {
+    return new StringBuilder(label).append(" (").append(mimeType).append(", ").append(path).append(")").toString();
+  }
+
 }

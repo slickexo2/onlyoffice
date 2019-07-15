@@ -21,6 +21,7 @@ package org.exoplatform.onlyoffice.documents;
 import java.io.InputStream;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.jcr.Node;
 
@@ -30,6 +31,7 @@ import org.picocontainer.Startable;
 import org.exoplatform.container.component.ComponentPlugin;
 import org.exoplatform.ecm.utils.text.Text;
 import org.exoplatform.ecm.webui.utils.Utils;
+import org.exoplatform.onlyoffice.DocumentTypePlugin;
 import org.exoplatform.resolver.ApplicationResourceResolver;
 import org.exoplatform.resolver.ResourceResolver;
 import org.exoplatform.services.log.ExoLogger;
@@ -56,20 +58,13 @@ public class NewDocumentService implements Startable {
   /**
    * {@inheritDoc}
    */
-  /* (non-Javadoc)
-   * @see org.picocontainer.Startable#start()
-   */
   @Override
   public void start() {
     // Nothing
-
   }
 
   /**
    * {@inheritDoc}
-   */
-  /* (non-Javadoc)
-   * @see org.picocontainer.Startable#stop()
    */
   @Override
   public void stop() {
@@ -86,14 +81,23 @@ public class NewDocumentService implements Startable {
   }
 
   /**
-  * Adds the type plugin.
-  *
-  * @param plugin the plugin
-  */
+   * Adds the type plugin.
+   *
+   * @param plugin the plugin
+   */
   public void addTypePlugin(ComponentPlugin plugin) {
     Class<NewDocumentTypePlugin> pclass = NewDocumentTypePlugin.class;
     if (pclass.isAssignableFrom(plugin.getClass())) {
-      documentTypePlugin = pclass.cast(plugin);
+      NewDocumentTypePlugin newPlugin = pclass.cast(plugin);
+      if (this.documentTypePlugin != null) {
+        LOG.info("Replace existing DocumentTypePlugin [{}] with new one [{}]",
+                 this.documentTypePlugin.getTypes().stream().map(p -> p.toString()).collect(Collectors.joining(",")),
+                 newPlugin.getTypes().stream().map(p -> p.toString()).collect(Collectors.joining(",")));
+      } else {
+        LOG.info("Use DocumentTypePlugin [{}]",
+                 newPlugin.getTypes().stream().map(p -> p.toString()).collect(Collectors.joining(",")));
+      }
+      this.documentTypePlugin = pclass.cast(plugin);
       if (LOG.isDebugEnabled()) {
         LOG.debug("Set newDocumentTypePlugin instance of {}", plugin.getClass().getName());
       }
@@ -131,7 +135,7 @@ public class NewDocumentService implements Startable {
     if (addedNode.canAddMixin(MIX_VERSIONABLE)) {
       addedNode.addMixin(MIX_VERSIONABLE);
     }
-    
+
     addedNode.setProperty(Utils.EXO_TITLE, title);
     Node content = addedNode.addNode("jcr:content", "nt:resource");
 
