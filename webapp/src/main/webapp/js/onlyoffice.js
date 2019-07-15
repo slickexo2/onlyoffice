@@ -900,7 +900,7 @@
       var title = folders.pop();
       var $pathElem = $("#editor-top-bar .document-path");
       $pathElem.append(drive + " : ");
-      if(folders.length >= 2){
+      if(folders.length >= 2) {
         var formattedFolders = [];
         formattedFolders.push("...");
         formattedFolders.push(folders[folders.length - 1]);

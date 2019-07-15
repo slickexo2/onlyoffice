@@ -30,7 +30,6 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
@@ -49,32 +48,25 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.jcr.AccessDeniedException;
 import javax.jcr.Item;
 import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
-import javax.jcr.NodeIterator;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
-import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.lock.Lock;
-import javax.jcr.lock.LockException;
-import javax.ws.rs.core.Response;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.AutoCloseInputStream;
 import org.apache.commons.lang.StringUtils;
-import org.apache.poi.hssf.record.FnGroupCountRecord;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
 
-import org.exoplatform.common.http.HTTPStatus;
 import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.commons.utils.MimeTypeResolver;
 import org.exoplatform.container.PortalContainer;
@@ -93,11 +85,9 @@ import org.exoplatform.services.cache.CacheListener;
 import org.exoplatform.services.cache.CacheListenerContext;
 import org.exoplatform.services.cache.CacheService;
 import org.exoplatform.services.cache.ExoCache;
-import org.exoplatform.services.cms.CmsService;
 import org.exoplatform.services.cms.documents.DocumentService;
 import org.exoplatform.services.cms.documents.TrashService;
 import org.exoplatform.services.cms.lock.LockService;
-import org.exoplatform.services.cms.relations.RelationsService;
 import org.exoplatform.services.jcr.RepositoryService;
 import org.exoplatform.services.jcr.ext.app.SessionProviderService;
 import org.exoplatform.services.jcr.ext.common.SessionProvider;
@@ -113,11 +103,9 @@ import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.security.IdentityRegistry;
 import org.exoplatform.services.wcm.core.NodetypeConstant;
-import org.exoplatform.services.wcm.publication.WCMPublicationService;
 import org.exoplatform.services.wcm.utils.WCMCoreUtils;
 import org.exoplatform.social.core.space.model.Space;
 import org.exoplatform.social.core.space.spi.SpaceService;
-import org.exoplatform.wcm.connector.collaboration.RenameConnector;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.application.portlet.PortletRequestContext;
 
@@ -624,14 +612,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           builder.userId(user.getUserName());
           builder.userFirstName(user.getFirstName());
           builder.userLastName(user.getLastName());
-          if(node.hasProperty("exo:lastModifier")) {
+          if (node.hasProperty("exo:lastModifier")) {
             String lastModifierId = node.getProperty("exo:lastModifier").getString();
             User modifier = getUser(lastModifierId);
-            if(modifier != null) {
+            if (modifier != null) {
               builder.lastModifier(modifier.getDisplayName());
             }
           }
-          if(node.hasProperty("exo:lastModifiedDate")) {
+          if (node.hasProperty("exo:lastModifiedDate")) {
             builder.lastModified(node.getProperty("exo:lastModifiedDate").getDate().getTimeInMillis());
           }
 
@@ -1239,7 +1227,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   @Override
-  public void updateTitle(String oldPath, String newTitle, String userId) {
+  public void updateTitle(String workspace, String docId, String newTitle, String userId) {
     ConversationState contextState = ConversationState.getCurrent();
     SessionProvider contextProvider = sessionProviders.getSessionProvider(null);
     if (!setUserConvoState(userId)) {
@@ -1247,134 +1235,34 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       return;
     }
     try {
+      newTitle = Text.escapeIllegalJcrChars(newTitle);
       // Check and escape newTitle
       if (StringUtils.isBlank(newTitle)) {
-        LOG.warn("Cannot rename document " + oldPath + " - new title is empty");
+        LOG.warn("Cannot rename document docId: " + docId + " - new title is empty");
         return;
       }
-      String newExoTitle = newTitle;
-      // Clarify new name & check to add extension
-      String newName = Text.escapeIllegalJcrChars(newTitle);
-
-      // Set default name if new title contain no valid character
-      newName = (StringUtils.isEmpty(newName)) ? DEFAULT_NAME : newName;
-
-      // Get renamed node
-      String[] workspaceAndPath = parseWorkSpaceNameAndNodePath(oldPath);
-      Node renamedNode = (Node) WCMCoreUtils.getService(NodeFinder.class)
-                                            .getItem(this.getSession(workspaceAndPath[0]), workspaceAndPath[1], false);
-
-      String oldName = renamedNode.getName();
-      if (oldName.indexOf('.') != -1 && renamedNode.isNodeType(NodetypeConstant.NT_FILE)) {
-        String ext = oldName.substring(oldName.lastIndexOf('.'));
-        newName = newName.concat(ext);
-        newExoTitle = newExoTitle.concat(ext);
+      Node node = getDocumentById(workspace, docId);
+      if (node == null) {
+        throw new DocumentNotFoundException("Cannot find document. docId: " + docId);
       }
 
-      // Stop process if new name and exo:title is the same with old one
-      String oldExoTitle = (renamedNode.hasProperty("exo:title")) ? renamedNode.getProperty("exo:title").getString()
-                                                                  : StringUtils.EMPTY;
-      CmsService cmsService = WCMCoreUtils.getService(CmsService.class);
-      cmsService.getPreProperties().clear();
-      String nodeUUID = "";
-      if (renamedNode.isNodeType(NodetypeConstant.MIX_REFERENCEABLE))
-        nodeUUID = renamedNode.getUUID();
-      cmsService.getPreProperties().put(nodeUUID + "_" + "exo:title", oldExoTitle);
-
-      if (renamedNode.getName().equals(newName) && oldExoTitle.equals(newExoTitle)) {
-        LOG.warn("Cannot rename document " + oldPath + " - old and new title are equals");
-        return;
+      Node parentNode = node.getParent();
+      if (parentNode.canAddMixin(NodetypeConstant.MIX_REFERENCEABLE)) {
+        parentNode.addMixin(NodetypeConstant.MIX_REFERENCEABLE);
+        parentNode.save();
       }
+      parentNode.getSession().move(node.getPath(), parentNode.getPath() + "/" + newTitle);
+      String oldName = node.getProperty("exo:name").getString();
+      String oldTitle = node.getProperty("exo:title").getString();
+      node.setProperty("exo:lastModifier", userId);
+      node.setProperty("exo:name", newTitle);
+      node.setProperty("exo:title", newTitle);
+      node.refresh(true);
+      parentNode.getSession().save();
 
-      // Check if can edit locked node
-      if (!this.canEditLockedNode(renamedNode)) {
-        LOG.warn("Cannot rename document " + oldPath + " - node is locked");
-        return;
-      }
-
-      // Get uuid
-      if (renamedNode.canAddMixin(NodetypeConstant.MIX_REFERENCEABLE)) {
-        renamedNode.addMixin(NodetypeConstant.MIX_REFERENCEABLE);
-        renamedNode.save();
-      }
-      String uuid = renamedNode.getUUID();
-
-      // Only execute renaming if name is changed
-      Session nodeSession = renamedNode.getSession();
-      if (!renamedNode.getName().equals(newName)) {
-        // Backup relations pointing to the rename node
-        List<Node> refList = new ArrayList<Node>();
-        PropertyIterator references = renamedNode.getReferences();
-        RelationsService relationsService = WCMCoreUtils.getService(RelationsService.class);
-        while (references.hasNext()) {
-          Property pro = references.nextProperty();
-          Node refNode = pro.getParent();
-          if (refNode.hasProperty(RELATION_PROP)) {
-            refList.add(refNode);
-            relationsService.removeRelation(refNode, renamedNode.getPath());
-          }
-        }
-
-        // Change name
-        Node parent = renamedNode.getParent();
-        String srcPath = renamedNode.getPath();
-        String destPath = (parent.getPath().equals("/") ? StringUtils.EMPTY : parent.getPath()) + "/" + newName;
-
-        this.addLockToken(renamedNode.getParent());
-        nodeSession.getWorkspace().move(srcPath, destPath);
-
-        // Update renamed node
-        Node destNode = nodeSession.getNodeByUUID(uuid);
-
-        // Restore relation to new name node
-        for (Node addRef : refList) {
-          relationsService.addRelation(addRef, destNode.getPath(), nodeSession.getWorkspace().getName());
-        }
-
-        // Update lock after moving
-        if (destNode.isLocked()) {
-          WCMCoreUtils.getService(LockService.class).changeLockToken(renamedNode, destNode);
-        }
-        this.changeLockForChild(srcPath, destNode);
-
-        // Mark rename node as modified
-        if (destNode.canAddMixin("exo:modify")) {
-          destNode.addMixin("exo:modify");
-        }
-        destNode.setProperty("exo:lastModifier", nodeSession.getUserID());
-
-        // Update exo:name
-        if (renamedNode.canAddMixin("exo:sortable")) {
-          renamedNode.addMixin("exo:sortable");
-        }
-        renamedNode.setProperty("exo:name", renamedNode.getName());
-
-        renamedNode = destNode;
-      }
-
-      // Change title
-      if (!renamedNode.hasProperty("exo:title")) {
-        renamedNode.addMixin(NodetypeConstant.EXO_RSS_ENABLE);
-      }
-      renamedNode.setProperty("exo:title", newExoTitle);
-
-      nodeSession.save();
-
-      // Update state of node
-      WCMPublicationService publicationService = WCMCoreUtils.getService(WCMPublicationService.class);
-      if (publicationService.isEnrolledInWCMLifecycle(renamedNode)) {
-        ListenerService listenerService = WCMCoreUtils.getService(ListenerService.class);
-        listenerService.broadcast(CmsService.POST_EDIT_CONTENT_EVENT, this, renamedNode);
-      }
-    } catch (LockException e) {
-      if (LOG.isWarnEnabled()) {
-        LOG.warn("The node or parent node is locked. Rename is not successful!");
-      }
     } catch (Exception e) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Rename is not successful!", e);
-      } else if (LOG.isWarnEnabled()) {
-        LOG.warn("Rename is not successful!");
       }
     } finally {
       restoreConvoState(contextState, contextProvider);
@@ -1867,7 +1755,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             node.setProperty("eoo:versionOwner", (String) null);
             node.setProperty("eoo:onlyofficeVersion", false);
             node.save();
-            
+
             // If the status code == 2, the EDITOR_SAVED_EVENT should be
             // thrown.
             if (statusCode != 2) {
@@ -2635,8 +2523,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @throws RepositoryException 
    */
   protected String getDisplayPath(Node node) throws RepositoryException {
-    String nodePath = node.getPath();
-    String[] foldersArr = nodePath.substring(1, nodePath.length() - 1).split("/");
+    String nodePath = node.getParent().getPath() + "/" + node.getProperty("exo:title").getString();
+    String[] foldersArr = nodePath.substring(1, nodePath.length()).split("/");
     LinkedList<String> folders = new LinkedList<>(Arrays.asList(foldersArr));
     if (folders.size() < 2) {
       return nodePath;
@@ -2666,90 +2554,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       }
     }
     return String.join("/", folders).replaceFirst("/", ":");
-  }
-
-  /**
-   * Updates lock for child nodes after renaming.
-   *
-   * @param srcPath The source path.
-   * @param parentNewNode The destination node which gets the new name.
-   * @throws Exception
-   */
-  protected void changeLockForChild(String srcPath, Node parentNewNode) throws Exception {
-    if (parentNewNode.hasNodes()) {
-      NodeIterator newNodeIter = parentNewNode.getNodes();
-      String newSRCPath = null;
-      while (newNodeIter.hasNext()) {
-        Node newChildNode = newNodeIter.nextNode();
-        newSRCPath = newChildNode.getPath().replace(parentNewNode.getPath(), srcPath);
-        if (newChildNode.isLocked())
-          WCMCoreUtils.getService(LockService.class).changeLockToken(newSRCPath, newChildNode);
-        if (newChildNode.hasNodes())
-          changeLockForChild(newSRCPath, newChildNode);
-      }
-    }
-  }
-
-  /**
-   * Checks if a locked node is editable or not.
-   *
-   * @param node A specific node.
-   * @return True if the locked node is editable, false otherwise.
-   * @throws Exception
-   */
-  protected boolean canEditLockedNode(Node node) throws Exception {
-    LockService lockService = WCMCoreUtils.getService(LockService.class);
-    if (!node.isLocked())
-      return true;
-    String lockToken = lockService.getLockTokenOfUser(node);
-    if (lockToken != null) {
-      node.getSession().addLockToken(lockService.getLockToken(node));
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * Adds the lock token of a specific node to its session.
-   *
-   * @param node A specific node.
-   * @throws Exception
-   */
-  protected void addLockToken(Node node) throws Exception {
-    if (node.isLocked()) {
-      String lockToken = WCMCoreUtils.getService(LockService.class).getLockToken(node);
-      if (lockToken != null) {
-        node.getSession().addLockToken(lockToken);
-      }
-    }
-  }
-
-  /**
-   * Parse node path with syntax [workspace:node path] to workspace name and path separately
-   *
-   * @param nodePath node path with syntax [workspace:node path]
-   * @return array of String. element with index 0 is workspace name, remaining one is node path
-   */
-  protected String[] parseWorkSpaceNameAndNodePath(String nodePath) {
-    Matcher matcher = FILE_EXPLORER_URL_SYNTAX.matcher(nodePath);
-    if (!matcher.find())
-      return null;
-    String[] workSpaceNameAndNodePath = new String[2];
-    workSpaceNameAndNodePath[0] = matcher.group(1);
-    workSpaceNameAndNodePath[1] = matcher.group(2);
-    return workSpaceNameAndNodePath;
-  }
-
-  /**
-   * Gets user session from a specific workspace.
-   *
-   * @param workspaceName
-   * @return session
-   * @throws Exception
-   */
-  protected Session getSession(String workspaceName) throws Exception {
-    SessionProvider sessionProvider = WCMCoreUtils.getUserSessionProvider();
-    return sessionProvider.getSession(workspaceName, WCMCoreUtils.getRepository());
   }
 
 }

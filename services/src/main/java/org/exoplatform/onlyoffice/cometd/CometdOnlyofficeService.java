@@ -201,9 +201,9 @@ public class CometdOnlyofficeService implements Startable {
 
   /** The document link event. */
   public static final String              DOCUMENT_LINK_EVENT    = "DOCUMENT_LINK";
-  
+
   /** The document title updated event. */
-  public static final String              DOCUMENT_TITLE_UPDATED    = "DOCUMENT_TITLE_UPDATED";
+  public static final String              DOCUMENT_TITLE_UPDATED = "DOCUMENT_TITLE_UPDATED";
 
   /** The editor closed event. */
   public static final String              EDITOR_CLOSED_EVENT    = "EDITOR_CLOSED";
@@ -443,7 +443,7 @@ public class CometdOnlyofficeService implements Startable {
       // Saving a link
       editors.forceSave(new Userdata(userId, key, false, false));
     }
-    
+
     /**
      * Handle document title updated.
      *
@@ -454,7 +454,6 @@ public class CometdOnlyofficeService implements Startable {
       String userId = (String) data.get("userId");
       String title = (String) data.get("title");
       String workspace = (String) data.get("workspace");
-      String path = (String) data.get("path");
       eventsHandlers.submit(new ContainerCommand(PortalContainer.getCurrentPortalContainerName()) {
         @Override
         void onContainerError(String error) {
@@ -463,7 +462,7 @@ public class CometdOnlyofficeService implements Startable {
 
         @Override
         void execute(ExoContainer exoContainer) {
-          editors.updateTitle(workspace + ":" + path , title, userId);
+          editors.updateTitle(workspace, docId, title, userId);
         }
       });
     }

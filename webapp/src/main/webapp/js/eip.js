@@ -104,4 +104,4 @@ $.fn.editable = function (options) {
         $(editableElement).on('click', (ev) => toInput(ev.target));
     });
 };
-}( $ ));
+}( jQuery ));

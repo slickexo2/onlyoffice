@@ -315,10 +315,11 @@ public interface OnlyofficeEditorService {
   /**
    * Updates title of a document.
    * 
-   * @param oldPath the oldPath
+   * @param workspace the workspace
+   * @param docId the docId
    * @param title the title
    * @param userId the userId
    */
-  void updateTitle(String oldPath, String title, String userId);
+  void updateTitle(String workspace, String docId, String title, String userId);
 
 }
