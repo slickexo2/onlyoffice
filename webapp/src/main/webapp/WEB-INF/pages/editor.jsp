@@ -12,8 +12,11 @@
     <div class="document-title"></div>
     <div class="last-edited"></div>
     <div class="editors-comment"></div>
-    <div class="forcesave-btn"></div>
-    <div class="comment"></div>
+    <div class="comment">
+    <input type="text" id="comment-box"></input>
+    <button id="save-btn" value="Save">Save</button>
+    </div>
+     <div class="forcesave-btn"></div>
     <div class="close-btn"></div>
   </div>
   <div class="editor" style="display: none;">

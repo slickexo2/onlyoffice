@@ -463,7 +463,7 @@
      * Initialize an editor page in current browser window.
      */
     this.initEditor = function(config) {
-      UI.initBar(config.displayPath);
+      UI.initBar(config);
       log("Initialize editor for document: " + config.docId);
       window.document.title = config.document.title + " - " + window.document.title;
       UI.initEditor();
@@ -591,6 +591,7 @@
         explorerDocId = docId;
       }
       UI.addEditorButtonToExplorer(editorLink);
+
     };
 
     /**
@@ -789,13 +790,13 @@
       $("#SharedLayoutRightBody").addClass("onlyofficeEditorBody");
     };
 
-    this.initBar = function(path) {
-      var drive = path.split(':')[0];
-      var folders = path.split(':')[1].split('/');
+    this.initBar = function(config) {
+      var drive = config.displayPath.split(':')[0];
+      var folders = config.displayPath.split(':')[1].split('/');
       var title = folders.pop();
       var $pathElem = $("#editor-top-bar .document-path");
       $pathElem.append(drive + " : ");
-      if(folders.length >= 2) {
+      if(folders.length >= 2){
         var formattedFolders = [];
         formattedFolders.push("...");
         formattedFolders.push(folders[folders.length - 1]);
@@ -806,6 +807,10 @@
       });
       var $titleElem = $("#editor-top-bar .document-title");
       $titleElem.append("<span class='editable-title'>" + title + "</span>");
+
+      var $lastEditedElem = $("#editor-top-bar .last-edited");
+      var modifiedDate = new Date(config.document.lastModified).toISOString().replace("T", " ").substring(0, 16);
+      $lastEditedElem.append("Last edited by " + config.document.lastModifier + " " + modifiedDate );
     };
 
     this.isEditorLoaded = function() {

@@ -203,6 +203,9 @@ public class CometdOnlyofficeService implements Startable {
   /** The document title updated event. */
   public static final String              DOCUMENT_TITLE_UPDATED = "DOCUMENT_TITLE_UPDATED";
 
+  /** The document forcesave event. */
+  public static final String              DOCUMENT_FORCESAVED    = "DOCUMENT_FORCESAVED";
+
   /** The editor closed event. */
   public static final String              EDITOR_CLOSED_EVENT    = "EDITOR_CLOSED";
 
@@ -416,6 +419,9 @@ public class CometdOnlyofficeService implements Startable {
         break;
       case DOCUMENT_TITLE_UPDATED:
         handleDocumentTitleUpdatedEvent(data, docId);
+        break;
+      case DOCUMENT_FORCESAVED:
+        handleDocumentForcesavedEvent(data, docId);
       case EDITOR_CLOSED_EVENT:
         handleEditorClosedEvent(data, docId);
         break;
@@ -501,7 +507,7 @@ public class CometdOnlyofficeService implements Startable {
                             key,
                             lastUser.getDownloadLink());
                 }
-                editors.downloadVersion(lastUser.getId(), key, false, lastUser.getDownloadLink());
+                editors.downloadVersion(lastUser.getId(), key, false, null, lastUser.getDownloadLink());
               } else {
                 editors.forceSave(lastUser.getId(), key, true, false);
               }
@@ -547,7 +553,7 @@ public class CometdOnlyofficeService implements Startable {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Downloading from existing link. User: {}, Key: {}, Link: {}", user.getId(), key, user.getDownloadLink());
             }
-            editors.downloadVersion(userId, key, false, user.getDownloadLink());
+            editors.downloadVersion(userId, key, false, null, user.getDownloadLink());
           } else {
             editors.forceSave(userId, key, true, false);
           }
@@ -585,7 +591,7 @@ public class CometdOnlyofficeService implements Startable {
                           key,
                           lastUser.getDownloadLink());
               }
-              editors.downloadVersion(lastUser.getId(), key, true, lastUser.getDownloadLink());
+              editors.downloadVersion(lastUser.getId(), key, true, null, lastUser.getDownloadLink());
             } else {
               if (LOG.isDebugEnabled()) {
                 LOG.debug("Download a new version of document: user " + lastUser.getId() + ", docId: " + docId);
@@ -603,6 +609,25 @@ public class CometdOnlyofficeService implements Startable {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Changes collected from: " + userId + ", docId: " + docId);
       }
+    }
+
+    protected void handleDocumentForcesavedEvent(Map<String, Object> data, String docId) {
+      String userId = (String) data.get("userId");
+      String key = (String) data.get("key");
+      String comment = (String) data.get("comment");
+      eventsHandlers.submit(new ContainerCommand(PortalContainer.getCurrentPortalContainerName()) {
+        @Override
+        void onContainerError(String error) {
+          LOG.error("An error has occured in container: {}", containerName);
+        }
+        @Override
+        void execute(ExoContainer exoContainer) {
+          Editor.User lastUser = editors.getLastModifier(key);
+          if(lastUser.getLastModified() > lastUser.getLastSaved()) {
+            editors.downloadVersion(userId, key, true, comment, lastUser.getDownloadLink());
+          }
+        }
+      });
     }
 
     /**

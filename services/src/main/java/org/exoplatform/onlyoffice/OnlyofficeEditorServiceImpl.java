@@ -875,7 +875,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           }
           // Here we decide if we need to download content or just save the link
           if (status.isSaved()) {
-            downloadVersion(status.getUserId(), key, status.isCoedited(), status.getUrl());
+            downloadVersion(status.getUserId(), key, status.isCoedited(), null, status.getUrl());
           } else {
             saveLink(status.getUserId(), key, status.getUrl());
           }
@@ -1106,7 +1106,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @param contentUrl the contentUrl
    */
   @Override
-  public void downloadVersion(String userId, String key, boolean coEdited, String contentUrl) {
+  public void downloadVersion(String userId, String key, boolean coEdited, String comment, String contentUrl) {
     String docId = null;
     try {
       Config config = getEditorByKey(userId, key);
@@ -1117,7 +1117,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                                           .userId(userId)
                                                           .coEdited(coEdited)
                                                           .build();
-      download(config, status);
+      download(config, status, comment);
       // we set it sooner to let clients see the save
       config.getEditorConfig().getUser().setLastSaved(System.currentTimeMillis());
     } catch (OnlyofficeEditorException | RepositoryException e) {
@@ -1284,7 +1284,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     } finally {
       restoreConvoState(contextState, contextProvider);
     }
-
   }
 
   // *********************** implementation level ***************
@@ -1318,7 +1317,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     config.closing();
     broadcastEvent(status, OnlyofficeEditorService.EDITOR_CLOSED_EVENT);
     try {
-      download(config, status);
+      download(config, status, null);
       config.getEditorConfig().getUser().setLastSaved(System.currentTimeMillis());
       config.closed(); // reset transient closing state
     } catch (OnlyofficeEditorException | RepositoryException e) {
@@ -1621,7 +1620,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @throws OnlyofficeEditorException the OnlyofficeEditorException
    * @throws RepositoryException the RepositoryException
    */
-  protected void download(Config config, DocumentStatus status) throws OnlyofficeEditorException, RepositoryException {
+  protected void download(Config config, DocumentStatus status, String comment) throws OnlyofficeEditorException, RepositoryException {
     String workspace = config.getWorkspace();
     String path = config.getPath();
 
@@ -1791,7 +1790,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             node.setProperty("eoo:versionOwner", (String) null);
           }
           node.setProperty("eoo:onlyofficeVersion", true);
-
+          
+          if(comment != null && !comment.trim().isEmpty()) {
+            // TODO: add comment to the file activity
+            // Save comment id to the node property
+            // to be able to retrieve it and show in the editor bar
+          }
+          
           node.save();
           // manage version only if node already mix:versionable
           if (checkout(node)) {
