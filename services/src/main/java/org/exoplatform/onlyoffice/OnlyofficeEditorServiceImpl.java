@@ -1271,8 +1271,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         parentNode.save();
       }
       parentNode.getSession().move(node.getPath(), parentNode.getPath() + "/" + newTitle);
-      String oldName = node.getProperty("exo:name").getString();
-      String oldTitle = node.getProperty("exo:title").getString();
       node.setProperty("exo:lastModifier", userId);
       node.setProperty("exo:name", newTitle);
       node.setProperty("exo:title", newTitle);
