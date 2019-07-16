@@ -91,10 +91,10 @@ public class Config implements Externalizable {
     protected String       documentserverSecret;
 
     /** The last modifier. **/
-    protected  String lastModifier;
-    
+    protected String       lastModifier;
+
     /** The lastModified. **/
-    protected  Long lastModified;
+    protected Long         lastModified;
 
     /** The ECMS explorer page URL. */
     @Deprecated
@@ -102,6 +102,9 @@ public class Config implements Externalizable {
 
     /** The display path. */
     protected String       displayPath;
+
+    /** The comment.  */
+    protected String       comment;
 
     /** The ECMS explorer page URL. */
     protected URI          explorerUri;
@@ -252,13 +255,24 @@ public class Config implements Externalizable {
     }
 
     /**
-     * Created.
+     * Display path.
      *
-     * @param createdTime the created time
+     * @param displayPath the created displayPath
      * @return the builder
      */
     public Builder displayPath(String displayPath) {
       this.displayPath = displayPath;
+      return this;
+    }
+
+    /**
+     * Display path.
+     *
+     * @param displayPath the created displayPath
+     * @return the builder
+     */
+    public Builder comment(String comment) {
+      this.comment = comment;
       return this;
     }
 
@@ -349,7 +363,7 @@ public class Config implements Externalizable {
       this.documentserverSecret = documentServerSecret;
       return this;
     }
-    
+
     /**
      * 
      * @param lastModifier
@@ -359,12 +373,11 @@ public class Config implements Externalizable {
       this.lastModifier = lastModifier;
       return this;
     }
-    
+
     public Builder lastModified(Long lastModified) {
       this.lastModified = lastModified;
       return this;
     }
-
 
     /**
      * Builds the.
@@ -387,7 +400,7 @@ public class Config implements Externalizable {
 
       Document.Info info = new Document.Info(author, created, folder);
       Document.Permissions permissions = new Document.EditPermissions();
-      Document document = new Document(key, fileType, title, url, info, permissions,lastModifier, lastModified);
+      Document document = new Document(key, fileType, title, url, info, permissions, lastModifier, lastModified);
       Editor.User user = new Editor.User(userId, firstname, lastname);
       Editor editor = new Editor(callbackUrl, lang, mode, user);
       Config config = new Config(documentserverUrl,
@@ -398,6 +411,7 @@ public class Config implements Externalizable {
                                  workspace,
                                  path,
                                  displayPath,
+                                 comment,
                                  docId,
                                  document,
                                  editor);
@@ -555,12 +569,12 @@ public class Config implements Externalizable {
 
     /** The permissions. */
     protected final Permissions permissions;
-     
+
     /** The last modifier */
-    protected String lastModifier;
+    protected String            lastModifier;
 
     /** The last modified timestamp */
-    protected Long lastModified;
+    protected Long              lastModified;
 
     /**
      * Instantiates a new document.
@@ -572,7 +586,14 @@ public class Config implements Externalizable {
      * @param info the info
      * @param permissions the permissions
      */
-    protected Document(String key, String fileType, String title, String url, Info info, Permissions permissions, String lastModifier, Long lastModified) {
+    protected Document(String key,
+                       String fileType,
+                       String title,
+                       String url,
+                       Info info,
+                       Permissions permissions,
+                       String lastModifier,
+                       Long lastModified) {
       super();
       this.fileType = fileType;
       this.key = key;
@@ -650,7 +671,7 @@ public class Config implements Externalizable {
     public Permissions getPermissions() {
       return permissions;
     }
-    
+
     /**
      * Gets the lastModifier. 
      *
@@ -659,7 +680,7 @@ public class Config implements Externalizable {
     public String getLastModifier() {
       return lastModifier;
     }
-    
+
     /**
      * Gets the lastModified.
      *
@@ -993,6 +1014,9 @@ public class Config implements Externalizable {
   /** The display path. */
   private String                          displayPath;
 
+  /** The comment. */
+  private String                          comment;
+
   /** The document ID in storage. */
   private String                          docId;
 
@@ -1067,12 +1091,14 @@ public class Config implements Externalizable {
                    String workspace,
                    String path,
                    String displayPath,
+                   String comment,
                    String docId,
                    Document document,
                    Editor editor) {
     this.workspace = workspace;
     this.path = path;
     this.displayPath = displayPath;
+    this.comment = comment;
     this.docId = docId;
     this.documentType = documentType;
     this.documentserverUrl = documentserverUrl;
@@ -1120,7 +1146,6 @@ public class Config implements Externalizable {
     out.writeUTF(document.getInfo().getAuthor());
     out.writeUTF(document.getInfo().getCreated());
     out.writeUTF(document.getInfo().getFolder());
-    
 
     // Editor: callbackUrl, lang, mode, user(userId, firstname, lastname)
     out.writeUTF(editorConfig.getCallbackUrl());
@@ -1274,7 +1299,7 @@ public class Config implements Externalizable {
   public String getPath() {
     return path;
   }
-  
+
   /**
    * Gets the display path.
    *
@@ -1282,6 +1307,15 @@ public class Config implements Externalizable {
    */
   public String getDisplayPath() {
     return displayPath;
+  }
+  
+  /**
+   * Gets the comment.
+   *
+   * @return the comment
+   */
+  public String getComment() {
+    return comment;
   }
 
   /**
@@ -1421,6 +1455,7 @@ public class Config implements Externalizable {
                                workspace,
                                path,
                                displayPath,
+                               comment,
                                docId,
                                userDocument,
                                userEditor);

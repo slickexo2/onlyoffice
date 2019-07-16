@@ -244,6 +244,7 @@ public class EditorService implements ResourceContainer {
                 statusBuilder.userId(userdata.getUserId());
                 statusBuilder.coEdited(userdata.getCoEdited());
                 statusBuilder.saved(userdata.isDownload());
+                statusBuilder.comment(userdata.getComment());
               } else if (statusUsers != null && statusUsers.length > 0) {
                 // Last user
                 statusBuilder.userId(statusUsers[0]);

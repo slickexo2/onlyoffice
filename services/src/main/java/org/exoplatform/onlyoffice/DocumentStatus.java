@@ -58,6 +58,9 @@ public class DocumentStatus {
 
   /** The userId (used for saving the document content under this user) */
   protected String   userId;
+  
+  /** The comment (used for saving a version of a document with comment on FileActivity) */
+  protected String comment;
 
   /**
    * Gets the config.
@@ -160,6 +163,15 @@ public class DocumentStatus {
    */
   protected String getUserId() {
     return userId;
+  }
+  
+  /**
+   * Gets the comment.
+   *
+   * @return the coment
+   */
+  protected String getComment() {
+    return comment;
   }
 
   /**
@@ -273,6 +285,17 @@ public class DocumentStatus {
      */
     public Builder saved(Boolean saved) {
       documentStatus.saved = saved;
+      return this;
+    }
+    
+    /**
+     * Sets the comment.
+     *
+     * @param comment the comment
+     * @return the builder
+     */
+    public Builder comment(String comment) {
+      documentStatus.comment = comment;
       return this;
     }
   

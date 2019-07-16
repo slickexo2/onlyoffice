@@ -132,6 +132,7 @@
     var DOCUMENT_CHANGED = "DOCUMENT_CHANGED";
     var DOCUMENT_DELETED = "DOCUMENT_DELETED";
     var DOCUMENT_VERSION = "DOCUMENT_VERSION";
+    var DOCUMENT_FORCESAVED = "DOCUMENT_FORCESAVED";
     var DOCUMENT_TITLE_UPDATED = "DOCUMENT_TITLE_UPDATED";
     var DOCUMENT_LINK = "DOCUMENT_LINK";
     var EDITOR_CLOSED = "EDITOR_CLOSED";
@@ -248,16 +249,6 @@
 
     var onBack = function() {
       log("ONLYOFFICE Document Editor on Back");
-    };
-
-    var updateTitle = function(event) {
-     publishDocument(currentConfig.docId, {
-        "type" : DOCUMENT_TITLE_UPDATED,
-        "userId" : currentUserId,
-        "clientId" : clientId,
-        "title" : event.newValue,
-        "workspace": currentConfig.workspace
-     });
     };
 
     var onDocumentStateChange = function(event) {
@@ -463,14 +454,35 @@
      * Initialize an editor page in current browser window.
      */
     this.initEditor = function(config) {
-      UI.initBar(config);
+      var $bar = UI.initBar(config);
       log("Initialize editor for document: " + config.docId);
       window.document.title = config.document.title + " - " + window.document.title;
       UI.initEditor();
       // Edit title
-      $(".editable-title").editable({
-        onChange: updateTitle
+      $bar.find(".editable-title").editable({
+        onChange : function(event) {
+          publishDocument(currentConfig.docId, {
+            "type" : DOCUMENT_TITLE_UPDATED,
+            "userId" : currentUserId,
+            "clientId" : clientId,
+            "title" : event.newValue,
+            "workspace" : currentConfig.workspace
+          });
+        }
       });
+      $bar.find("#save-btn").on("click", function() {
+        var comment = $bar.find("#comment-box").val();
+        publishDocument(currentConfig.docId, {
+          "type" : DOCUMENT_FORCESAVED,
+          "userId" : currentUserId,
+          "clientId" : clientId,
+          "key" : currentConfig.document.key,
+          "comment" : comment
+        });
+        // All changes are saved
+        currentUserChanges = false;
+      });
+
       create(config).done(function(localConfig) {
         if (localConfig) {
           currentConfig = localConfig;
@@ -578,7 +590,7 @@
             UI.addRefreshBannerPDF();
           }
         }
-        if(state.type === DOCUMENT_DELETED) {
+        if (state.type === DOCUMENT_DELETED) {
           UI.showError(message("ErrorTitle"), message("ErrorFileDeletedECMS"));
         }
       });
@@ -796,7 +808,7 @@
       var title = folders.pop();
       var $pathElem = $("#editor-top-bar .document-path");
       $pathElem.append(drive + " : ");
-      if(folders.length >= 2){
+      if (folders.length >= 2) {
         var formattedFolders = [];
         formattedFolders.push("...");
         formattedFolders.push(folders[folders.length - 1]);
@@ -805,12 +817,17 @@
       folders.forEach(function(folder) {
         $pathElem.append(folder + " <i class='uiIconArrowRight'></i> ");
       });
-      var $titleElem = $("#editor-top-bar .document-title");
+
+      var $bar = $("#editor-top-bar");
+      var $titleElem = $bar.find(".document-title");
       $titleElem.append("<span class='editable-title'>" + title + "</span>");
 
-      var $lastEditedElem = $("#editor-top-bar .last-edited");
+      var $lastEditedElem = $bar.find(".last-edited");
       var modifiedDate = new Date(config.document.lastModified).toISOString().replace("T", " ").substring(0, 16);
-      $lastEditedElem.append("Last edited by " + config.document.lastModifier + " " + modifiedDate );
+      $lastEditedElem.append("Last edited by " + config.document.lastModifier + " " + modifiedDate);
+      var $comment = $bar.find(".editors-comment");
+      $comment.append(config.comment);
+      return $bar;
     };
 
     this.isEditorLoaded = function() {

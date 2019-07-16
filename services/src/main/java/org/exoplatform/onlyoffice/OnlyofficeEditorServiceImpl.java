@@ -47,9 +47,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
-
 import java.util.regex.Pattern;
-
 import java.util.stream.Collectors;
 
 import javax.jcr.AccessDeniedException;
@@ -69,6 +67,7 @@ import org.apache.commons.lang.StringUtils;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
 
+import org.exoplatform.commons.utils.ActivityTypeUtils;
 import org.exoplatform.commons.utils.CommonsUtils;
 import org.exoplatform.commons.utils.MimeTypeResolver;
 import org.exoplatform.container.PortalContainer;
@@ -106,6 +105,12 @@ import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.security.IdentityRegistry;
 import org.exoplatform.services.wcm.core.NodetypeConstant;
 import org.exoplatform.services.wcm.utils.WCMCoreUtils;
+import org.exoplatform.social.core.activity.model.ExoSocialActivity;
+import org.exoplatform.social.core.activity.model.ExoSocialActivityImpl;
+import org.exoplatform.social.core.application.SpaceActivityPublisher;
+import org.exoplatform.social.core.identity.provider.OrganizationIdentityProvider;
+import org.exoplatform.social.core.manager.ActivityManager;
+import org.exoplatform.social.core.manager.IdentityManager;
 import org.exoplatform.social.core.space.model.Space;
 import org.exoplatform.social.core.space.spi.SpaceService;
 import org.exoplatform.webui.application.WebuiRequestContext;
@@ -306,6 +311,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /** The space service */
   protected final SpaceService                                    spaceService;
 
+  /** The activity manager */
+  protected final ActivityManager                                 activityManager;
+
   /** Cache of Editing documents. */
   protected final ExoCache<String, ConcurrentMap<String, Config>> activeCache;
 
@@ -375,6 +383,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                      ListenerService listenerService,
                                      TrashService trashService,
                                      SpaceService spaceService,
+                                     ActivityManager activityManager,
                                      InitParams params)
       throws ConfigurationException {
     this.jcrService = jcrService;
@@ -388,7 +397,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     this.listenerService = listenerService;
     this.trashService = trashService;
     this.spaceService = spaceService;
-
+    this.activityManager = activityManager;
     this.activeCache = cacheService.getCacheInstance(CACHE_NAME);
     if (LOG.isDebugEnabled()) {
       addDebugCacheListener();
@@ -585,6 +594,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           builder.fileType(fileType);
           builder.created(nodeCreated(node));
           builder.displayPath(getDisplayPath(node));
+          builder.comment(nodeComment(node));
           try {
             builder.folder(node.getParent().getName());
           } catch (AccessDeniedException e) {
@@ -875,7 +885,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           }
           // Here we decide if we need to download content or just save the link
           if (status.isSaved()) {
-            downloadVersion(status.getUserId(), key, status.isCoedited(), null, status.getUrl());
+            downloadVersion(status.getUserId(), key, status.isCoedited(), status.getComment(), status.getUrl());
           } else {
             saveLink(status.getUserId(), key, status.getUrl());
           }
@@ -1103,6 +1113,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @param userId the userId
    * @param key the key
    * @param coEdited the coEdited
+   * @param comment the comment
    * @param contentUrl the contentUrl
    */
   @Override
@@ -1114,10 +1125,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       DocumentStatus status = new DocumentStatus.Builder().config(config)
                                                           .key(key)
                                                           .url(contentUrl)
+                                                          .comment(comment)
                                                           .userId(userId)
                                                           .coEdited(coEdited)
                                                           .build();
-      download(config, status, comment);
+      download(config, status);
       // we set it sooner to let clients see the save
       config.getEditorConfig().getUser().setLastSaved(System.currentTimeMillis());
     } catch (OnlyofficeEditorException | RepositoryException e) {
@@ -1176,10 +1188,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * {@inheritDoc}
    */
   @Override
-  public void forceSave(String userId, String key, boolean download, boolean coEdit) {
+  public void forceSave(String userId, String key, boolean download, boolean coEdit, String comment) {
     HttpURLConnection connection = null;
     try {
-      Userdata userdata = new Userdata(userId, download, coEdit);
+      Userdata userdata = new Userdata(userId, download, coEdit, comment);
       String json = new JSONObject().put("c", "forcesave").put("key", key).put("userdata", userdata.toJSON()).toString();
       byte[] postDataBytes = json.toString().getBytes("UTF-8");
 
@@ -1317,7 +1329,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     config.closing();
     broadcastEvent(status, OnlyofficeEditorService.EDITOR_CLOSED_EVENT);
     try {
-      download(config, status, null);
+      download(config, status);
       config.getEditorConfig().getUser().setLastSaved(System.currentTimeMillis());
       config.closed(); // reset transient closing state
     } catch (OnlyofficeEditorException | RepositoryException e) {
@@ -1620,7 +1632,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @throws OnlyofficeEditorException the OnlyofficeEditorException
    * @throws RepositoryException the RepositoryException
    */
-  protected void download(Config config, DocumentStatus status, String comment) throws OnlyofficeEditorException, RepositoryException {
+  protected void download(Config config, DocumentStatus status) throws OnlyofficeEditorException, RepositoryException {
     String workspace = config.getWorkspace();
     String path = config.getPath();
 
@@ -1790,13 +1802,21 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             node.setProperty("eoo:versionOwner", (String) null);
           }
           node.setProperty("eoo:onlyofficeVersion", true);
-          
-          if(comment != null && !comment.trim().isEmpty()) {
-            // TODO: add comment to the file activity
-            // Save comment id to the node property
-            // to be able to retrieve it and show in the editor bar
+
+          // Add comment to the FileActivity with current file
+          String commentId = null;
+          if (status.getComment() != null && !status.getComment().trim().isEmpty()) {
+            String activityId = ActivityTypeUtils.getActivityId(node);
+            if (activityId != null) {
+              commentId = addComment(activityId, status.getComment(), userId);
+            }
           }
-          
+          if (commentId != null) {
+            node.setProperty("eoo:commentId", commentId);
+          } else {
+            node.setProperty("eoo:commentId", (String) null);
+          }
+
           node.save();
           // manage version only if node already mix:versionable
           if (checkout(node)) {
@@ -1861,6 +1881,29 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     } finally {
       restoreConvoState(contextState, contextProvider);
     }
+  }
+
+  protected String addComment(String activityId, String commentText, String userId) {
+    if (activityId != null && !activityId.isEmpty() && commentText != null && !commentText.trim().isEmpty()) {
+      IdentityManager identityManager = WCMCoreUtils.getService(IdentityManager.class);
+      org.exoplatform.social.core.identity.model.Identity identity =
+                                                                   identityManager.getOrCreateIdentity(OrganizationIdentityProvider.NAME,
+                                                                                                       userId,
+                                                                                                       false);
+      ExoSocialActivity activity = activityManager.getActivity(activityId);
+      ExoSocialActivity comment = new ExoSocialActivityImpl(identity.getId(),
+                                                            SpaceActivityPublisher.SPACE_APP_ID,
+                                                            commentText,
+                                                            null);
+      activityManager.saveComment(activity, comment);
+      return comment.getId();
+    } else {
+      LOG.warn("Cannot add comment. ActivityId and comment shouldn't be null or empty. activityId: {}, comment: {}",
+               activityId,
+               commentText);
+      return null;
+    }
+
   }
 
   /**
@@ -2571,6 +2614,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       return nodePath;
     }
     // Personal documents
+    // TODO: remove hardcoded strings
     if (folders.get(0).equals("Users")) {
       folders.set(0, "Personal Documents");
       Iterator<String> iterator = folders.iterator();
@@ -2597,4 +2641,25 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     return String.join("/", folders).replaceFirst("/", ":");
   }
 
+  /**
+   * Gets comment of last version of node
+   *
+   * @param node the node
+   * @return the comment or null
+   */
+  private String nodeComment(Node node) {
+    try {
+      if (node.hasProperty("eoo:commentId")) {
+        String commentId = null;
+        commentId = node.getProperty("eoo:commentId").getString();
+        if (commentId != null && !commentId.isEmpty()) {
+          ExoSocialActivity comment = activityManager.getActivity(commentId);
+          return comment != null ? comment.getTitle() : null;
+        }
+      }
+    } catch (Exception e) {
+      LOG.warn("Cannot get eoo:commentId of node.");
+    }
+    return null;
+  }
 }

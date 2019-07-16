@@ -34,6 +34,9 @@ public class Userdata {
 
   /** The co edited. */
   protected Boolean coEdited;
+  
+  /**  The comment. */
+  protected String comment;
 
   /**
    * Instantiates a new userdata.
@@ -41,12 +44,14 @@ public class Userdata {
    * @param userId the user id
    * @param download the download
    * @param coEdited the co edited
+   * @param comment the comment
    */
-  public Userdata(String userId, Boolean download, Boolean coEdited) {
+  public Userdata(String userId, Boolean download, Boolean coEdited, String comment) {
     super();
     this.userId = userId;
     this.download = download;
     this.coEdited = coEdited;
+    this.comment = comment;
   }
 
   /**
@@ -109,6 +114,25 @@ public class Userdata {
    */
   public void setCoEdited(Boolean coEdited) {
     this.coEdited = coEdited;
+  }
+  
+  
+  /**
+   * Gets the comment.
+   *
+   * @return the comment
+   */
+  public String getComment() {
+    return comment;
+  }
+
+  /**
+   * Sets the comment.
+   *
+   * @param comment the new comment
+   */
+  public void setComment(String comment) {
+    this.comment = comment;
   }
 
   /**

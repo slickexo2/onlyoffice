@@ -296,8 +296,9 @@ public interface OnlyofficeEditorService {
    * @param key the key
    * @param download the download
    * @param coEdit the coedit
+   * @param comment the comment
    */
-  void forceSave(String userId, String key, boolean download, boolean coEdit);
+  void forceSave(String userId, String key, boolean download, boolean coEdit, String comment);
 
   /**
    * Gets a user.
