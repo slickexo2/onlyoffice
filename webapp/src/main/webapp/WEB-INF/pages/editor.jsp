@@ -18,7 +18,9 @@
       </div>
     </div>
     <div class="forcesave-btn"></div>
-    <div class="close-btn"></div>
+    <div class="close-btn">
+      <i class="uiIconEcmsLightGray uiIconRemove"></i>
+    </div>
   </div>
   <div class="editor" style="display: none;">
     <div id="onlyoffice"></div>

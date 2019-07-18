@@ -42,8 +42,16 @@
   padding-left: 20px;
 }
 
-.onlyofficeEditorBody #editor-top-bar #save-btn {
+.onlyofficeEditorBody  #editor-top-bar #save-btn {
   display: inline-block;
+  cursor: pointer;
+}
+
+.onlyofficeEditorBody  #editor-top-bar .close-btn {
+    position: absolute;
+    right: 7px;
+    cursor: pointer;
+    top: 7px;
 }
 
 .onlyofficeEditorBody #editor-top-bar .document-path {
