@@ -6,7 +6,9 @@
 }
 
 .onlyofficeEditorBody #RightBody, .onlyofficeEditorBody .onlyofficeContainer>.editor {
-  height: calc(100vh - 30px);
+  height: calc(100vh - 35px);
+  display: table;
+  width: 100%;
 }
 
 .onlyofficeEditorBody #editor-top-bar {
@@ -16,17 +18,28 @@
 }
 
 .onlyofficeEditorBody #editor-top-bar div {
-  display: inline-block;
+  display: table-cell;
+  vertical-align: middle;
 }
 
-.onlyofficeEditorBody #editor-top-bar .eip-editable, 
-.onlyofficeEditorBody #editor-top-bar div.form-group {
+.onlyofficeEditorBody #editor-top-bar .eip-editable, .onlyofficeEditorBody #editor-top-bar div.form-group {
   height: 25px;
+  margin: 0;
 }
 
-.onlyofficeEditorBody #editor-top-bar .comment #comment-box {
+.onlyofficeEditorBody #editor-top-bar input, .onlyofficeEditorBody  #editor-top-bar .document-title {
+  margin: 0;
   height: 25px;
   width: 160px;
+}
+
+.onlyofficeEditorBody #editor-top-bar .last-edited, .onlyofficeEditorBody #editor-top-bar .editors-comment, .onlyofficeEditorBody #editor-top-bar .comment
+  {
+  padding-left: 20px;
+}
+
+.onlyofficeEditorBody #editor-top-bar .document-path {
+  padding-right: 10px;
 }
 
 .onlyofficeEditorBody .RightBodyTDContainer {
@@ -159,8 +172,7 @@
   border-top: 1px solid #ccc;
 }
 
-.fileShare .documentRefreshBanner:before,
-.fileShare .documentRefreshBanner:after {
+.fileShare .documentRefreshBanner:before, .fileShare .documentRefreshBanner:after {
   content: '';
   width: 0;
   height: 100%;
