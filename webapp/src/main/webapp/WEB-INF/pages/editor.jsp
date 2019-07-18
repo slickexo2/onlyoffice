@@ -6,17 +6,18 @@
   <%-- div class="exitWindow onlyofficeEditorClose" style="display: none;">
     <a class="uiIconClose uiIconWhite" title="Close"></a>
   </div --%>
-  <div id="editor-top-bar" style="display:none">
-    <div class="document-path">
-    </div>
+  <div id="editor-top-bar" style="display: none">
+    <div class="document-path"></div>
     <div class="document-title"></div>
     <div class="last-edited"></div>
     <div class="editors-comment"></div>
     <div class="comment">
-    <input type="text" id="comment-box"></input>
-    <button id="save-btn" value="Save">Save</button>
+      <input type="text" id="comment-box"></input>
+      <div id="save-btn">
+        <i class="uiIconEcmsLightGray uiIconSave"></i>
+      </div>
     </div>
-     <div class="forcesave-btn"></div>
+    <div class="forcesave-btn"></div>
     <div class="close-btn"></div>
   </div>
   <div class="editor" style="display: none;">

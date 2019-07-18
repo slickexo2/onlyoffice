@@ -1276,7 +1276,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       if (node == null) {
         throw new DocumentNotFoundException("Cannot find document. docId: " + docId);
       }
-
+    
       Node parentNode = node.getParent();
       if (parentNode.canAddMixin(NodetypeConstant.MIX_REFERENCEABLE)) {
         parentNode.addMixin(NodetypeConstant.MIX_REFERENCEABLE);
@@ -2647,18 +2647,17 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @param node the node
    * @return the comment or null
    */
-  private String nodeComment(Node node) {
+  protected String nodeComment(Node node) {
     try {
       if (node.hasProperty("eoo:commentId")) {
-        String commentId = null;
-        commentId = node.getProperty("eoo:commentId").getString();
+        String commentId = node.getProperty("eoo:commentId").getString();
         if (commentId != null && !commentId.isEmpty()) {
           ExoSocialActivity comment = activityManager.getActivity(commentId);
           return comment != null ? comment.getTitle() : null;
         }
       }
     } catch (Exception e) {
-      LOG.warn("Cannot get eoo:commentId of node.");
+      LOG.warn("Cannot get eoo:commentId of node.", e);
     }
     return null;
   }
