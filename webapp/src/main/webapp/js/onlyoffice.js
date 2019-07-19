@@ -360,6 +360,10 @@
 
       $bar.find("#save-btn").on("click", function() {
         var comment = $bar.find("#comment-box").val();
+        if(comment.length > 40){
+          UI.showWarn("Comment is too long", "Please, shorten your comment. Max length is 40 characters");
+          return;
+        }
         publishDocument(currentConfig.docId, {
           "type" : DOCUMENT_FORCESAVED,
           "userId" : currentUserId,
@@ -845,9 +849,18 @@
 
       var $lastEditedElem = $bar.find(".last-edited");
       var modifiedDate = new Date(config.document.lastModified).toISOString().replace("T", " ").substring(0, 16);
-      $lastEditedElem.append("Last edited by " + config.document.lastModifier + " " + modifiedDate);
+
+      var lastUser = config.document.lastModifier === config.editorConfig.user.firstname ? "you" : config.document.lastModifier;
+      $lastEditedElem.append("Last edited by " + lastUser + " " + modifiedDate);
       var $comment = $bar.find(".editors-comment");
       $comment.append(config.comment);
+      var $saveBtn = $bar.find("#save-btn .uiIconSave");
+      $saveBtn.on("click", function(){
+        $saveBtn.css("color", "gray");
+        setTimeout(function(){
+          $saveBtn.css("color", "")
+        }, 300)
+      });
       return $bar;
     };
 

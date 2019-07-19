@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
+import javax.jcr.RepositoryException;
 
 import org.apache.commons.chain.Context;
 
@@ -27,7 +28,7 @@ public class DocumentUpdateActivityListener extends FileUpdateActivityListener {
 
   /** The Constant EVENT_DELAY in min. */
   protected static final long     EVENT_DELAY = 10;
-  
+
   /** The editor service. */
   private OnlyofficeEditorService editorService;
 
@@ -50,20 +51,39 @@ public class DocumentUpdateActivityListener extends FileUpdateActivityListener {
     Context context = event.getSource();
     Property currentProperty = (Property) context.get(InvocationContext.CURRENT_ITEM);
     Node currentNode = currentProperty.getParent().getParent();
-    String lastModifier = currentNode.getProperty("exo:lastModifier").getString();
-    String workspace = currentNode.getSession().getWorkspace().getName();
-    String path = currentNode.getPath();
-    Config config = editorService.getEditor(lastModifier, workspace, path);
-    if (config != null && config.getSameModifier() != null && config.getPreviousModified() != null) {
-      boolean sameModifier = config.getSameModifier();
-      Calendar previousModified = config.getPreviousModified();
-      long difference = Calendar.getInstance().getTimeInMillis() - previousModified.getTimeInMillis();
-      if (!sameModifier || TimeUnit.MILLISECONDS.toMinutes(difference) > EVENT_DELAY) {
+    // If there is no manually added comment from the editor
+    if (!isCommentedNode(currentNode)) {
+      String lastModifier = currentNode.getProperty("exo:lastModifier").getString();
+      String workspace = currentNode.getSession().getWorkspace().getName();
+      String path = currentNode.getPath();
+      Config config = editorService.getEditor(lastModifier, workspace, path);
+      if (config != null && config.getSameModifier() != null && config.getPreviousModified() != null) {
+        boolean sameModifier = config.getSameModifier();
+        Calendar previousModified = config.getPreviousModified();
+        long difference = Calendar.getInstance().getTimeInMillis() - previousModified.getTimeInMillis();
+        if (!sameModifier || TimeUnit.MILLISECONDS.toMinutes(difference) > EVENT_DELAY) {
+          super.onEvent(event);
+        }
+        // Manually updated node
+      } else {
         super.onEvent(event);
       }
-      // Manually updated node
-    } else {
-      super.onEvent(event);
     }
+
+  }
+
+  /**
+   * Checks if a node has comment.
+   *
+   * @param node the node
+   * @return true if the node is commented
+   * @throws RepositoryException the repository exception
+   */
+  protected boolean isCommentedNode(Node node) throws RepositoryException {
+    if (node.hasProperty("eoo:commentId")) {
+      String commentId = node.getProperty("eoo:commentId").getString();
+      return commentId != null && !commentId.isEmpty();
+    }
+    return false;
   }
 }

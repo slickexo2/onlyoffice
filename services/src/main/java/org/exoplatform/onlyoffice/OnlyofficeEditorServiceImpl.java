@@ -86,15 +86,23 @@ import org.exoplatform.services.cache.CacheListener;
 import org.exoplatform.services.cache.CacheListenerContext;
 import org.exoplatform.services.cache.CacheService;
 import org.exoplatform.services.cache.ExoCache;
+import org.exoplatform.services.cms.BasePath;
 import org.exoplatform.services.cms.documents.DocumentService;
 import org.exoplatform.services.cms.documents.TrashService;
+import org.exoplatform.services.cms.drives.DriveData;
+import org.exoplatform.services.cms.drives.ManageDriveService;
 import org.exoplatform.services.cms.lock.LockService;
 import org.exoplatform.services.jcr.RepositoryService;
+import org.exoplatform.services.jcr.access.PermissionType;
 import org.exoplatform.services.jcr.ext.app.SessionProviderService;
 import org.exoplatform.services.jcr.ext.common.SessionProvider;
+import org.exoplatform.services.jcr.ext.hierarchy.NodeHierarchyCreator;
+import org.exoplatform.services.jcr.impl.core.NodeImpl;
 import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.services.organization.Group;
+import org.exoplatform.services.organization.GroupHandler;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.User;
 import org.exoplatform.services.organization.UserProfile;
@@ -308,11 +316,17 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /** The trash service. */
   protected final TrashService                                    trashService;
 
-  /** The space service */
+  /** The space service. */
   protected final SpaceService                                    spaceService;
 
-  /** The activity manager */
+  /** The activity manager. */
   protected final ActivityManager                                 activityManager;
+
+  /** The node hierarchy creator. */
+  protected final NodeHierarchyCreator                            hierarchyCreator;
+
+  /** The manage drive service */
+  protected final ManageDriveService                              manageDriveService;
 
   /** Cache of Editing documents. */
   protected final ExoCache<String, ConcurrentMap<String, Config>> activeCache;
@@ -340,6 +354,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
   /** The documentserver access only. */
   protected final boolean                                         documentserverAccessOnly;
+
+  /** The group drives path in JCR. */
+  protected final String                                          groupsPath;
+
+  /** The user drives paths in JCR. */
+  protected final String                                          usersPath;
 
   /** The documentserver allowed hosts (can be empty if not configured). */
   protected final Set<String>                                     documentserverAllowedhosts;
@@ -384,6 +404,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                      TrashService trashService,
                                      SpaceService spaceService,
                                      ActivityManager activityManager,
+                                     ManageDriveService manageDriveService,
+                                     NodeHierarchyCreator hierarchyCreator,
                                      InitParams params)
       throws ConfigurationException {
     this.jcrService = jcrService;
@@ -399,6 +421,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     this.spaceService = spaceService;
     this.activityManager = activityManager;
     this.activeCache = cacheService.getCacheInstance(CACHE_NAME);
+    this.hierarchyCreator = hierarchyCreator;
+    this.manageDriveService = manageDriveService;
     if (LOG.isDebugEnabled()) {
       addDebugCacheListener();
     }
@@ -428,6 +452,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     this.documentserverSecret = config.get(CONFIG_DS_SECRET);
     this.documentserverAllowedhosts = getDocumentserverAllowedHosts(config.get(CONFIG_DS_ALLOWEDHOSTS));
 
+    this.usersPath = hierarchyCreator.getJcrPath(BasePath.CMS_USERS_PATH);
+    this.groupsPath = hierarchyCreator.getJcrPath(BasePath.CMS_GROUPS_PATH);
   }
 
   /**
@@ -1272,16 +1298,27 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         LOG.warn("Cannot rename document docId: " + docId + " - new title is empty");
         return;
       }
-      Node node = getDocumentById(workspace, docId);
+      NodeImpl node = (NodeImpl) getDocumentById(workspace, docId);
       if (node == null) {
         throw new DocumentNotFoundException("Cannot find document. docId: " + docId);
       }
-    
+
       Node parentNode = node.getParent();
       if (parentNode.canAddMixin(NodetypeConstant.MIX_REFERENCEABLE)) {
         parentNode.addMixin(NodetypeConstant.MIX_REFERENCEABLE);
         parentNode.save();
       }
+
+      if (!node.hasPermission(PermissionType.REMOVE)) {
+        Session systemSession = jcrService.getCurrentRepository().getSystemSession(workspace);
+        NodeImpl systemNode = (NodeImpl) systemSession.getNodeByUUID(docId);
+        systemNode.addMixin("exo:privilegeable");
+        systemNode.setPermission(userId,
+                                 new String[] { PermissionType.REMOVE, PermissionType.READ, PermissionType.ADD_NODE,
+                                     PermissionType.SET_PROPERTY });
+        systemNode.save();
+      }
+
       parentNode.getSession().move(node.getPath(), parentNode.getPath() + "/" + newTitle);
       node.setProperty("exo:lastModifier", userId);
       node.setProperty("exo:name", newTitle);
@@ -1777,6 +1814,20 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             node.setProperty("exo:dateModified", editedTime);
           }
 
+          // Add comment to the FileActivity with current file
+          String commentId = null;
+          if (status.getComment() != null && !status.getComment().trim().isEmpty()) {
+            String activityId = ActivityTypeUtils.getActivityId(node);
+            if (activityId != null) {
+              commentId = addComment(activityId, status.getComment(), userId);
+            }
+          }
+          if (commentId != null) {
+            node.setProperty("eoo:commentId", commentId);
+          } else {
+            node.setProperty("eoo:commentId", (String) null);
+          }
+
           // update document
           content.setProperty("jcr:data", data);
 
@@ -1802,20 +1853,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             node.setProperty("eoo:versionOwner", (String) null);
           }
           node.setProperty("eoo:onlyofficeVersion", true);
-
-          // Add comment to the FileActivity with current file
-          String commentId = null;
-          if (status.getComment() != null && !status.getComment().trim().isEmpty()) {
-            String activityId = ActivityTypeUtils.getActivityId(node);
-            if (activityId != null) {
-              commentId = addComment(activityId, status.getComment(), userId);
-            }
-          }
-          if (commentId != null) {
-            node.setProperty("eoo:commentId", commentId);
-          } else {
-            node.setProperty("eoo:commentId", (String) null);
-          }
 
           node.save();
           // manage version only if node already mix:versionable
@@ -2639,6 +2676,28 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       }
     }
     return String.join("/", folders).replaceFirst("/", ":");
+    
+    /* 
+    DriveData drive = documentService.getDriveOfNode(node.getPath());
+    String displayPath = "";
+    if(drive != null) {
+      String driveName = drive.getName();
+      if(node.getPath().startsWith(usersPath)) {
+        displayPath += driveName + ":";
+      }
+      else {
+        if(driveName.startsWith(".spaces.")) {
+          String spacePrettyName = driveName.substring(driveName.lastIndexOf("."));
+          Space space = spaceService.getSpaceByPrettyName(spacePrettyName);
+          displayPath += space.getDisplayName();
+        } else if (driveName.startsWith(".platform.")) {
+          String groupId = driveName.replaceAll(".", "/");
+          Group group = organization.getGroupHandler().findGroupById(groupId);
+          displayPath += group.getLabel();
+        }
+      }
+    }
+    */
   }
 
   /**
