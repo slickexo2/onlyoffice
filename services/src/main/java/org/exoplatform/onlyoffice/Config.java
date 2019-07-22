@@ -268,7 +268,7 @@ public class Config implements Externalizable {
     /**
      * Display path.
      *
-     * @param displayPath the created displayPath
+     * @param comment the created comment
      * @return the builder
      */
     public Builder comment(String comment) {
@@ -365,15 +365,22 @@ public class Config implements Externalizable {
     }
 
     /**
-     * 
-     * @param lastModifier
-     * @return
+     * Sets last modifier.
+     *
+     * @param lastModifier the last Modifier
+     * @return the builder
      */
     public Builder lastModifier(String lastModifier) {
       this.lastModifier = lastModifier;
       return this;
     }
 
+    /**
+     * Sets last modified.
+     *
+     * @param lastModified the last modified
+     * @return the builder
+     */
     public Builder lastModified(Long lastModified) {
       this.lastModified = lastModified;
       return this;
@@ -585,6 +592,8 @@ public class Config implements Externalizable {
      * @param url the url
      * @param info the info
      * @param permissions the permissions
+     * @param lastModifier the lastModifier
+     * @param lastModified the lastModified
      */
     protected Document(String key,
                        String fileType,
@@ -1079,6 +1088,8 @@ public class Config implements Externalizable {
    * @param documentType the document type
    * @param workspace the workspace
    * @param path the path
+   * @param displayPath the displayPath
+   * @param comment the comment
    * @param docId the document ID
    * @param document the document
    * @param editor the editor

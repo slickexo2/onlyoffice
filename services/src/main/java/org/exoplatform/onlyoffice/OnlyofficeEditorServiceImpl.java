@@ -388,6 +388,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @param lockService the lock service
    * @param listenerService the listener service
    * @param trashService the trashService
+   * @param spaceService the spaceService
+   * @param activityManager the activityManager
+   * @param manageDriveService the manageDriveService
+   * @param hierarchyCreator the hierarchyCreator
    * @param params the params
    * @throws ConfigurationException the configuration exception
    */
@@ -2641,7 +2645,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    *
    * @param node the node
    * @return the display path
-   * @throws RepositoryException 
    */
   protected String getDisplayPath(Node node) {
     try {
