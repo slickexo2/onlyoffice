@@ -2643,61 +2643,45 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @return the display path
    * @throws RepositoryException 
    */
-  protected String getDisplayPath(Node node) throws RepositoryException {
-    String nodePath = node.getParent().getPath() + "/" + node.getProperty("exo:title").getString();
-    String[] foldersArr = nodePath.substring(1, nodePath.length()).split("/");
-    LinkedList<String> folders = new LinkedList<>(Arrays.asList(foldersArr));
-    if (folders.size() < 2) {
-      return nodePath;
-    }
-    // Personal documents
-    // TODO: remove hardcoded strings
-    if (folders.get(0).equals("Users")) {
-      folders.set(0, "Personal Documents");
-      Iterator<String> iterator = folders.iterator();
-      // Skip first element
-      iterator.next();
-      while (iterator.hasNext()) {
-        String folder = iterator.next();
-        iterator.remove();
-        if (!folder.endsWith("_")) {
-          break;
+  protected String getDisplayPath(Node node) {
+    try {
+      DriveData driveData = documentService.getDriveOfNode(node.getPath());
+      List<String> elems = Arrays.asList(node.getPath().split("/"));
+      String lastFolder = elems.get(elems.size() - 2);
+      String title = node.hasProperty("exo:title") ? node.getProperty("exo:title").getString() : elems.get(elems.size() - 1);
+      String drive = "";
+      if (driveData != null) {
+        String driveName = driveData.getName();
+        if (node.getPath().startsWith(usersPath)) {
+          drive = driveName;
+        } else {
+          if (driveName.startsWith(".spaces.")) {
+            String spacePrettyName = driveName.substring(driveName.lastIndexOf(".") + 1);
+            Space space = spaceService.getSpaceByPrettyName(spacePrettyName);
+            if (space != null) {
+              drive = space.getDisplayName();
+            } else {
+              LOG.warn("Cannot find space by pretty name {}", spacePrettyName);
+              drive = spacePrettyName;
+            }
+
+          } else if (driveName.startsWith(".platform.")) {
+            String groupId = driveName.replaceAll(".", "/");
+            Group group = organization.getGroupHandler().findGroupById(groupId);
+            if (group != null) {
+              drive = group.getLabel();
+              drive = groupId;
+            } else {
+              LOG.warn("Cannot find group by id {}", groupId);
+            }
+          }
         }
       }
-    } else if (folders.get(0).equals("Groups")) {
-      // Remove "Groups/spaces/"
-      folders.remove(0);
-      folders.remove(0);
-      Space space = spaceService.getSpaceByPrettyName(folders.get(0));
-      if (space != null) {
-        folders.set(0, space.getDisplayName());
-      } else {
-        LOG.warn("Cannot find space: {}" + folders.get(0));
-      }
+      return drive + ":" + lastFolder + "/" + title;
+    } catch (Exception e) {
+      LOG.error("Error occured while creating display path", e);
+      return null;
     }
-    return String.join("/", folders).replaceFirst("/", ":");
-    
-    /* 
-    DriveData drive = documentService.getDriveOfNode(node.getPath());
-    String displayPath = "";
-    if(drive != null) {
-      String driveName = drive.getName();
-      if(node.getPath().startsWith(usersPath)) {
-        displayPath += driveName + ":";
-      }
-      else {
-        if(driveName.startsWith(".spaces.")) {
-          String spacePrettyName = driveName.substring(driveName.lastIndexOf("."));
-          Space space = spaceService.getSpaceByPrettyName(spacePrettyName);
-          displayPath += space.getDisplayName();
-        } else if (driveName.startsWith(".platform.")) {
-          String groupId = driveName.replaceAll(".", "/");
-          Group group = organization.getGroupHandler().findGroupById(groupId);
-          displayPath += group.getLabel();
-        }
-      }
-    }
-    */
   }
 
   /**

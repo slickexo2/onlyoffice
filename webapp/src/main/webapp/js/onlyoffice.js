@@ -833,16 +833,7 @@
       var title = folders.pop();
       var $pathElem = $("#editor-top-bar .document-path");
       $pathElem.append(drive + " : ");
-      if (folders.length >= 2) {
-        var formattedFolders = [];
-        formattedFolders.push("...");
-        formattedFolders.push(folders[folders.length - 1]);
-        folders = formattedFolders;
-      }
-      folders.forEach(function(folder) {
-        $pathElem.append(folder + " <i class='uiIconArrowRight'></i> ");
-      });
-
+      $pathElem.append("..." + " <i class='uiIconArrowRight'></i> ");
       var $bar = $("#editor-top-bar");
       var $titleElem = $bar.find(".document-title");
       $titleElem.append("<span class='editable-title'>" + title + "</span>");
