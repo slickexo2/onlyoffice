@@ -123,9 +123,9 @@ public class EditorPortlet extends GenericPortlet {
         showError(i18n.getString("OnlyofficeEditorClient.ErrorTitle"),
                   i18n.getString("OnlyofficeEditor.error.CannotSendEditorConfiguration"));
       } catch (Exception e) {
-        LOG.error("Error initializing editor for node by ID: {}", docId, e);
+        LOG.error("Error initializing editor configuration for node by ID: {}", docId, e);
         showError(i18n.getString("OnlyofficeEditorClient.ErrorTitle"),
-                  i18n.getString("OnlyofficeEditor.error.CannotSendEditorConfiguration"));
+                  i18n.getString("OnlyofficeEditor.error.CannotInitEditorConfiguration"));
       }
     } else {
       showError(i18n.getString("OnlyofficeEditorClient.ErrorTitle"), i18n.getString("OnlyofficeEditor.error.DocumentIdRequired"));
