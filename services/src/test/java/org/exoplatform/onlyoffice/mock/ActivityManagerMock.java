@@ -2,28 +2,13 @@ package org.exoplatform.onlyoffice.mock;
 
 import java.util.List;
 
-import javax.jcr.RepositoryException;
-
-import org.exoplatform.commons.utils.ListAccess;
-import org.exoplatform.services.cms.documents.DocumentService;
-import org.exoplatform.services.cms.documents.model.Document;
-import org.exoplatform.services.cms.drives.DriveData;
 import org.exoplatform.social.common.RealtimeListAccess;
 import org.exoplatform.social.core.ActivityProcessor;
 import org.exoplatform.social.core.BaseActivityProcessorPlugin;
 import org.exoplatform.social.core.activity.ActivityListenerPlugin;
 import org.exoplatform.social.core.activity.model.ExoSocialActivity;
-import org.exoplatform.social.core.application.PortletPreferenceRequiredPlugin;
 import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.manager.ActivityManager;
-import org.exoplatform.social.core.space.SpaceApplicationConfigPlugin;
-import org.exoplatform.social.core.space.SpaceException;
-import org.exoplatform.social.core.space.SpaceFilter;
-import org.exoplatform.social.core.space.SpaceListAccess;
-import org.exoplatform.social.core.space.SpaceListenerPlugin;
-import org.exoplatform.social.core.space.model.Space;
-import org.exoplatform.social.core.space.spi.SpaceLifeCycleListener;
-import org.exoplatform.social.core.space.spi.SpaceService;
 import org.exoplatform.social.core.storage.ActivityStorageException;
 
 /**

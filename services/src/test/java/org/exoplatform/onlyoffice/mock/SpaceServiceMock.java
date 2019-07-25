@@ -2,12 +2,7 @@ package org.exoplatform.onlyoffice.mock;
 
 import java.util.List;
 
-import javax.jcr.RepositoryException;
-
 import org.exoplatform.commons.utils.ListAccess;
-import org.exoplatform.services.cms.documents.DocumentService;
-import org.exoplatform.services.cms.documents.model.Document;
-import org.exoplatform.services.cms.drives.DriveData;
 import org.exoplatform.social.core.application.PortletPreferenceRequiredPlugin;
 import org.exoplatform.social.core.space.SpaceApplicationConfigPlugin;
 import org.exoplatform.social.core.space.SpaceException;

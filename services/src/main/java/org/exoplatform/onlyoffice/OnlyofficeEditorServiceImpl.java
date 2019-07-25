@@ -1061,8 +1061,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     try {
       String workspace = jcrService.getCurrentRepository().getConfiguration().getDefaultWorkspaceName();
       Session session = jcrService.getCurrentRepository().getSystemSession(workspace);
-      ExtendedNodeTypeManager nodeTypeManager = (ExtendedNodeTypeManager) session.getWorkspace()
-          .getNodeTypeManager();
+      ExtendedNodeTypeManager nodeTypeManager = (ExtendedNodeTypeManager) session.getWorkspace().getNodeTypeManager();
       InputStream is = OnlyofficeEditorService.class.getResourceAsStream("/conf/portal/jcr/onlyoffice-nodetypes.xml");
       nodeTypeManager.registerNodeTypes(is, ExtendedNodeTypeManager.REPLACE_IF_EXISTS, NodeTypeDataManager.TEXT_XML);
     } catch (Exception e) {
