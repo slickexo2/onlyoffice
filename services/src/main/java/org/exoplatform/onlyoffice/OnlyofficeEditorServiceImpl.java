@@ -1429,7 +1429,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     String title = nodeTitle(node);
     int dotIndex = title.lastIndexOf('.');
     if (dotIndex >= 0 && dotIndex < title.length()) {
-      String fileExt = title.substring(dotIndex + 1).trim();
+      String fileExt = title.substring(dotIndex + 1).trim().toLowerCase();
       if (fileTypes.containsKey(fileExt)) {
         return fileExt;
       }
