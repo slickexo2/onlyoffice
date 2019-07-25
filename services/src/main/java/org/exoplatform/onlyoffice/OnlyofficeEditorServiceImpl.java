@@ -35,7 +35,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -94,6 +93,8 @@ import org.exoplatform.services.cms.drives.ManageDriveService;
 import org.exoplatform.services.cms.lock.LockService;
 import org.exoplatform.services.jcr.RepositoryService;
 import org.exoplatform.services.jcr.access.PermissionType;
+import org.exoplatform.services.jcr.core.nodetype.ExtendedNodeTypeManager;
+import org.exoplatform.services.jcr.core.nodetype.NodeTypeDataManager;
 import org.exoplatform.services.jcr.ext.app.SessionProviderService;
 import org.exoplatform.services.jcr.ext.common.SessionProvider;
 import org.exoplatform.services.jcr.ext.hierarchy.NodeHierarchyCreator;
@@ -102,7 +103,6 @@ import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.Group;
-import org.exoplatform.services.organization.GroupHandler;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.User;
 import org.exoplatform.services.organization.UserProfile;
@@ -1058,6 +1058,16 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    */
   @Override
   public void start() {
+    try {
+      String workspace = jcrService.getCurrentRepository().getConfiguration().getDefaultWorkspaceName();
+      Session session = jcrService.getCurrentRepository().getSystemSession(workspace);
+      ExtendedNodeTypeManager nodeTypeManager = (ExtendedNodeTypeManager) session.getWorkspace()
+          .getNodeTypeManager();
+      InputStream is = OnlyofficeEditorService.class.getResourceAsStream("/conf/portal/jcr/onlyoffice-nodetypes.xml");
+      nodeTypeManager.registerNodeTypes(is, ExtendedNodeTypeManager.REPLACE_IF_EXISTS, NodeTypeDataManager.TEXT_XML);
+    } catch (Exception e) {
+      LOG.error("Cannot update nodetypes.", e);
+    }
     LOG.info("Onlyoffice Editor service successfuly started");
   }
 
