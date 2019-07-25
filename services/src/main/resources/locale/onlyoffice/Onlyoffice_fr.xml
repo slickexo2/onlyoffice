@@ -40,6 +40,7 @@
       <CannotReadDocument>Cannot read the document. Please retry.</CannotReadDocument>
       <CannotCreateEditor>Cannot create editor. Please retry.</CannotCreateEditor>
       <CannotSendEditorConfiguration>Cannot send editor configuration. Please retry.</CannotSendEditorConfiguration>
+      <CannotInitEditorConfiguration>Cannot initialize editor configuration. Please retry.</CannotInitEditorConfiguration>
       <InitializationError>Error initialize editor. Please retry.</InitializationError>
       <DocumentIdRequired>Wrong request: document ID required.</DocumentIdRequired>
     </error>
