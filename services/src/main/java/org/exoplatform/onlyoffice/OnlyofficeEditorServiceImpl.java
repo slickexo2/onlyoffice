@@ -1843,7 +1843,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             node.setProperty("eoo:commentId", commentId);
             config.setComment(status.getComment());
           } else {
-            node.setProperty("eoo:commentId", (String) null);
+            node.setProperty("eoo:commentId", "");
             config.setComment(null);
           }
 
@@ -1869,7 +1869,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           if (statusCode != 2) {
             node.setProperty("eoo:versionOwner", userId);
           } else {
-            node.setProperty("eoo:versionOwner", (String) null);
+            node.setProperty("eoo:versionOwner", "");
           }
           node.setProperty("eoo:onlyofficeVersion", true);
 
@@ -1882,7 +1882,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             // actions in ECMS appear on it
             node.checkout();
             // Remove properties from node
-            node.setProperty("eoo:versionOwner", (String) null);
+            node.setProperty("eoo:versionOwner", "");
             node.setProperty("eoo:onlyofficeVersion", false);
             node.save();
 
