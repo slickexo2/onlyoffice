@@ -623,7 +623,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           builder.author(userId);
           builder.fileType(fileType);
           builder.created(nodeCreated(node));
-          builder.displayPath(getDisplayPath(node));
+          builder.displayPath(getDisplayPath(node, userId));
           builder.comment(nodeComment(node));
           try {
             builder.folder(node.getParent().getName());
@@ -699,6 +699,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                                           .build();
 
       fireCreated(status);
+    } else {
+      // Update display path 
+      config.setDisplayPath(getDisplayPath(node, userId));
     }
     return config;
   }
@@ -1429,7 +1432,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     String title = nodeTitle(node);
     int dotIndex = title.lastIndexOf('.');
     if (dotIndex >= 0 && dotIndex < title.length()) {
-      String fileExt = title.substring(dotIndex + 1).trim();
+      String fileExt = title.substring(dotIndex + 1).trim().toLowerCase();
       if (fileTypes.containsKey(fileExt)) {
         return fileExt;
       }
@@ -1835,10 +1838,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               commentId = addComment(activityId, status.getComment(), userId);
             }
           }
+          
           if (commentId != null) {
             node.setProperty("eoo:commentId", commentId);
+            config.setComment(status.getComment());
           } else {
             node.setProperty("eoo:commentId", (String) null);
+            config.setComment(null);
           }
 
           // update document
@@ -2653,9 +2659,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * Gets display path. 
    *
    * @param node the node
+   * @param userId the userId
    * @return the display path
    */
-  protected String getDisplayPath(Node node) {
+  protected String getDisplayPath(Node node, String userId) {
     try {
       DriveData driveData = documentService.getDriveOfNode(node.getPath());
       List<String> elems = Arrays.asList(node.getPath().split("/"));
@@ -2666,6 +2673,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         String driveName = driveData.getName();
         if (node.getPath().startsWith(usersPath)) {
           drive = driveName;
+          // Hide last folder for shared docs
+          if(!userId.equals(getUserId(node.getPath()))) {
+            lastFolder = "...";
+          }
         } else {
           if (driveName.startsWith(".spaces.")) {
             String spacePrettyName = driveName.substring(driveName.lastIndexOf(".") + 1);
@@ -2676,24 +2687,33 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               LOG.warn("Cannot find space by pretty name {}", spacePrettyName);
               drive = spacePrettyName;
             }
-
           } else if (driveName.startsWith(".platform.")) {
             String groupId = driveName.replaceAll(".", "/");
             Group group = organization.getGroupHandler().findGroupById(groupId);
             if (group != null) {
               drive = group.getLabel();
-              drive = groupId;
             } else {
               LOG.warn("Cannot find group by id {}", groupId);
+              drive = groupId;
             }
           }
         }
       }
+     
       return drive + ":" + lastFolder + "/" + title;
     } catch (Exception e) {
       LOG.error("Error occured while creating display path", e);
       return null;
     }
+  }
+
+  protected String getUserId(String path) {
+    List<String> elems = Arrays.asList(path.split("/"));
+    int position = 2;
+    while (elems.get(position).endsWith("_")) {
+      position++;
+    }
+    return elems.get(position);
   }
 
   /**

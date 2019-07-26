@@ -833,7 +833,8 @@
       var title = folders.pop();
       var $pathElem = $("#editor-top-bar .document-path");
       $pathElem.append(drive + " : ");
-      $pathElem.append("..." + " <i class='uiIconArrowRight'></i> ");
+      $pathElem.append(folders[0] + " <i class='uiIconArrowRight'></i> ");
+      
       var $bar = $("#editor-top-bar");
       var $titleElem = $bar.find(".document-title");
       $titleElem.append("<span class='editable-title'>" + title + "</span>");
