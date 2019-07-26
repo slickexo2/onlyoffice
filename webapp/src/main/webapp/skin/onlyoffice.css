@@ -28,11 +28,15 @@
   margin: 0;
 }
 
-.onlyofficeEditorBody #editor-top-bar input,
- .onlyofficeEditorBody  #editor-top-bar .document-title {
+.onlyofficeEditorBody #editor-top-bar .comment input {
   margin: 0;
   height: 25px;
-  width: 160px;
+  width: 170px;
+}
+.onlyofficeEditorBody  #editor-top-bar .document-title {
+  margin: 0;
+  height: 25px;
+  width: auto !important;
 }
 
 .onlyofficeEditorBody #editor-top-bar .last-edited,

@@ -1418,6 +1418,24 @@ public class Config implements Externalizable {
   protected void setClosedTime(Long closedTime) {
     this.closedTime = closedTime;
   }
+  
+  /**
+   * Sets the comment.
+   *
+   * @param commet the comment
+   */
+  protected void setComment(String comment) {
+    this.comment = comment;
+  }
+  
+  /**
+   * Sets the displayPath.
+   *
+   * @param displayPath the displayPath
+   */
+  protected void setDisplayPath(String displayPath) {
+    this.displayPath = displayPath;
+  }
 
   /**
    * Gets the editor config.
