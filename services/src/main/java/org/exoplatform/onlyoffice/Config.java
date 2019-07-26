@@ -1422,7 +1422,7 @@ public class Config implements Externalizable {
   /**
    * Sets the comment.
    *
-   * @param commet the comment
+   * @param comment the comment
    */
   protected void setComment(String comment) {
     this.comment = comment;
