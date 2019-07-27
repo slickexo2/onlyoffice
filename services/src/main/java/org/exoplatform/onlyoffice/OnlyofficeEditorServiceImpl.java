@@ -625,6 +625,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           builder.created(nodeCreated(node));
           builder.displayPath(getDisplayPath(node, userId));
           builder.comment(nodeComment(node));
+          builder.isActivity(ActivityTypeUtils.getActivityId(node) != null);
           try {
             builder.folder(node.getParent().getName());
           } catch (AccessDeniedException e) {
