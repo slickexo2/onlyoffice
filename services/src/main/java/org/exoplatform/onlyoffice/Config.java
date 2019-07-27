@@ -106,6 +106,9 @@ public class Config implements Externalizable {
     /** The comment.  */
     protected String       comment;
 
+    /** The indicator to show if the document has a file activity */
+    protected Boolean      isActivity;
+
     /** The ECMS explorer page URL. */
     protected URI          explorerUri;
 
@@ -277,6 +280,17 @@ public class Config implements Externalizable {
     }
 
     /**
+     * IsActivity.
+     * 
+     * @param isActivity the has isActivity
+     * @return the builder
+     */
+    public Builder isActivity(Boolean isActivity) {
+      this.isActivity = isActivity;
+      return this;
+    }
+
+    /**
      * Folder.
      *
      * @param folder the folder
@@ -419,6 +433,7 @@ public class Config implements Externalizable {
                                  path,
                                  displayPath,
                                  comment,
+                                 isActivity,
                                  docId,
                                  document,
                                  editor);
@@ -1026,6 +1041,9 @@ public class Config implements Externalizable {
   /** The comment. */
   private String                          comment;
 
+  /** The isActivity */
+  private Boolean                         isActivity;
+
   /** The document ID in storage. */
   private String                          docId;
 
@@ -1090,6 +1108,7 @@ public class Config implements Externalizable {
    * @param path the path
    * @param displayPath the displayPath
    * @param comment the comment
+   * @param isActivity the isActivity
    * @param docId the document ID
    * @param document the document
    * @param editor the editor
@@ -1103,12 +1122,14 @@ public class Config implements Externalizable {
                    String path,
                    String displayPath,
                    String comment,
+                   Boolean isActivity,
                    String docId,
                    Document document,
                    Editor editor) {
     this.workspace = workspace;
     this.path = path;
     this.displayPath = displayPath;
+    this.isActivity = isActivity;
     this.comment = comment;
     this.docId = docId;
     this.documentType = documentType;
@@ -1136,6 +1157,9 @@ public class Config implements Externalizable {
     out.writeUTF(documentserverJsUrl);
     out.writeUTF(platformRestUrl.toString());
     out.writeUTF(editorUrl);
+    out.writeUTF(displayPath);
+    out.writeUTF(comment);
+    out.writeBoolean(isActivity);
     try {
       out.writeObject(explorerUri);
     } catch (Exception e) {
@@ -1183,6 +1207,9 @@ public class Config implements Externalizable {
     this.documentserverJsUrl = in.readUTF();
     this.platformRestUrl = in.readUTF();
     this.editorUrl = in.readUTF();
+    this.displayPath = in.readUTF();
+    this.comment = in.readUTF();
+    this.isActivity = in.readBoolean();
     try {
       this.explorerUri = (URI) in.readObject();
     } catch (Exception e) {
@@ -1321,6 +1348,15 @@ public class Config implements Externalizable {
   }
   
   /**
+   * Is activity
+   *
+   * @return the isActivity
+   */
+  public Boolean isActivity() {
+    return isActivity;
+  }
+
+  /**
    * Gets the comment.
    *
    * @return the comment
@@ -1418,7 +1454,7 @@ public class Config implements Externalizable {
   protected void setClosedTime(Long closedTime) {
     this.closedTime = closedTime;
   }
-  
+
   /**
    * Sets the comment.
    *
@@ -1427,7 +1463,7 @@ public class Config implements Externalizable {
   protected void setComment(String comment) {
     this.comment = comment;
   }
-  
+
   /**
    * Sets the displayPath.
    *
@@ -1485,6 +1521,7 @@ public class Config implements Externalizable {
                                path,
                                displayPath,
                                comment,
+                               isActivity,
                                docId,
                                userDocument,
                                userEditor);

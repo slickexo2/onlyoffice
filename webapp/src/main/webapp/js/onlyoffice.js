@@ -831,11 +831,14 @@
       var drive = config.displayPath.split(':')[0];
       var folders = config.displayPath.split(':')[1].split('/');
       var title = folders.pop();
-      var $pathElem = $("#editor-top-bar .document-path");
+      var $bar = $("#editor-top-bar");
+      if(!config.activity) {
+        $bar.find("#comment-box").prop("disabled", true);
+      }
+      var $pathElem = $bar.find(".document-path");
       $pathElem.append(drive + " : ");
       $pathElem.append(folders[0] + " <i class='uiIconArrowRight'></i> ");
-      
-      var $bar = $("#editor-top-bar");
+     
       var $titleElem = $bar.find(".document-title");
       $titleElem.append("<span class='editable-title'>" + title + "</span>");
 
