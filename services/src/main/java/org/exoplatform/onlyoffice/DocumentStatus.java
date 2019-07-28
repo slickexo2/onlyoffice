@@ -161,7 +161,7 @@ public class DocumentStatus {
    *
    * @return the userId
    */
-  protected String getUserId() {
+  public String getUserId() {
     return userId;
   }
   
