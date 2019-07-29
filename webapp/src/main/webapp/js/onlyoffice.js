@@ -371,7 +371,7 @@
           "key" : currentConfig.document.key,
           "comment" : comment
         });
-        
+
         deferred.done(function(event){
           // All changes are saved
           currentUserChanges = false;
@@ -855,8 +855,10 @@
 
       var lastUser = config.document.lastModifier === config.editorConfig.user.firstname ? "you" : config.document.lastModifier;
       $lastEditedElem.append("Last edited by " + lastUser + " " + modifiedDate);
-      var $comment = $bar.find(".editors-comment");
-      $comment.append("\"" + config.comment + "\"");
+      if(config.comment){
+        var $comment = $bar.find(".editors-comment");
+        $comment.append("\"" + config.comment + "\"");
+      }
       var $saveBtn = $bar.find("#save-btn .uiIconSave");
       $saveBtn.on("click", function(){
         $saveBtn.css("color", "gray");
