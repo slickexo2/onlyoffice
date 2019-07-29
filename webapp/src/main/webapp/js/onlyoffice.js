@@ -227,16 +227,20 @@
     };
 
     var publishDocument = function(docId, data) {
+      var deferred = $.Deferred();
       cometd.publish("/eXo/Application/Onlyoffice/editor/" + docId, data, cometdContext, function(publishReply) {
         // Publication status callback
         if (publishReply.successful) {
+          deferred.resolve();
           // The server successfully subscribed this client to the channel.
           log("Document update published successfully: " + JSON.stringify(publishReply));
         } else {
+          deferred.reject();
           var err = publishReply.error ? publishReply.error : (publishReply.failure ? publishReply.failure.reason : "Undefined");
           log("Document updates publication failed for " + docId, err);
         }
       });
+      return deferred;
     };
 
     var onError = function(event) {
@@ -360,20 +364,24 @@
 
       $bar.find("#save-btn").on("click", function() {
         var comment = $bar.find("#comment-box").val();
-        if(comment.length > 40){
-          UI.showWarn("Comment is too long", "Please, shorten your comment. Max length is 40 characters");
-          return;
-        }
-        publishDocument(currentConfig.docId, {
+        var deferred = publishDocument(currentConfig.docId, {
           "type" : DOCUMENT_FORCESAVED,
           "userId" : currentUserId,
           "clientId" : clientId,
           "key" : currentConfig.document.key,
           "comment" : comment
         });
-        // All changes are saved
-        currentUserChanges = false;
-        $bar.find("#comment-box").val('');
+        
+        deferred.done(function(event){
+          // All changes are saved
+          currentUserChanges = false;
+          $bar.find("#comment-box").val('');
+          var $editorsComment = $bar.find(".editors-comment");
+          $editorsComment.empty();
+          $editorsComment.append("\"" + comment + "\"");
+          config.comment = comment;
+        });
+        
       });
 
       $bar.find(".close-btn").on("click", function() {
@@ -848,7 +856,7 @@
       var lastUser = config.document.lastModifier === config.editorConfig.user.firstname ? "you" : config.document.lastModifier;
       $lastEditedElem.append("Last edited by " + lastUser + " " + modifiedDate);
       var $comment = $bar.find(".editors-comment");
-      $comment.append(config.comment);
+      $comment.append("\"" + config.comment + "\"");
       var $saveBtn = $bar.find("#save-btn .uiIconSave");
       $saveBtn.on("click", function(){
         $saveBtn.css("color", "gray");
