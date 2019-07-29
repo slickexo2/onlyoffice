@@ -353,7 +353,7 @@ public class CometdOnlyofficeService implements Startable {
 
         @Override
         public void onSaved(DocumentStatus status) {
-          publishSavedEvent(status.getConfig().getDocId(), status.getLastUser());
+          publishSavedEvent(status.getConfig().getDocId(), status.getUserId());
         }
 
         @Override
