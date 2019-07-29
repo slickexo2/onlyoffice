@@ -28,22 +28,24 @@
   margin: 0;
 }
 
-.onlyofficeEditorBody #editor-top-bar .comment input {
-  margin: 0;
-  height: 25px;
-  width: 170px;
-}
+.onlyofficeEditorBody #editor-top-bar .comment input,
 .onlyofficeEditorBody  #editor-top-bar .document-title {
   margin: 0;
   height: 25px;
+}
+
+.onlyofficeEditorBody  #editor-top-bar .document-title {
   width: auto !important;
 }
 
 .onlyofficeEditorBody #editor-top-bar .last-edited,
 .onlyofficeEditorBody #editor-top-bar .editors-comment,
-.onlyofficeEditorBody #editor-top-bar .comment
-  {
+.onlyofficeEditorBody #editor-top-bar .comment {
   padding-left: 20px;
+}
+
+.onlyofficeEditorBody #editor-top-bar .editors-comment {
+  font-style: italic;
 }
 
 .onlyofficeEditorBody  #editor-top-bar #save-btn {
