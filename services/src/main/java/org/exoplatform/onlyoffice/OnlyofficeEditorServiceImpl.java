@@ -1843,6 +1843,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           if (commentId != null) {
             node.setProperty("eoo:commentId", commentId);
             config.setComment(status.getComment());
+            fireCommented(status);
           } else {
             node.setProperty("eoo:commentId", (String) null);
             config.setComment(null);
@@ -2440,6 +2441,21 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       }
     }
   }
+  
+  /**
+   * Fire commented.
+   *
+   * @param status the status
+   */
+  protected void fireCommented(DocumentStatus status) {
+    for (OnlyofficeEditorListener l : listeners) {
+      try {
+        l.onCommented(status);
+      } catch (Throwable t) {
+        LOG.warn("Comment listener error", t);
+      }
+    }
+  }
 
   /**
    * Fire error.
@@ -2664,6 +2680,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @return the display path
    */
   protected String getDisplayPath(Node node, String userId) {
+    
     try {
       DriveData driveData = documentService.getDriveOfNode(node.getPath());
       List<String> elems = Arrays.asList(node.getPath().split("/"));
@@ -2677,6 +2694,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // Hide last folder for shared docs
           if(!userId.equals(getUserId(node.getPath()))) {
             lastFolder = "...";
+             // TODO: We can get all symlinks, but have to find right one
+             // LinkManager linkManager = WCMCoreUtils.getService(LinkManager.class);
+             // List<Node> symlinksSystem = linkManager.getAllLinks(node, ManageDocumentService.EXO_SYMLINK, sessionProviders.getSystemSessionProvider(null));
           }
         } else {
           if (driveName.startsWith(".spaces.")) {
@@ -2708,6 +2728,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * Gets userId from node path.
+   * 
+   * @param path the node path
+   * @return the userId
+   */
   protected String getUserId(String path) {
     List<String> elems = Arrays.asList(path.split("/"));
     int position = 2;
