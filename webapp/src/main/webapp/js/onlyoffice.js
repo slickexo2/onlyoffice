@@ -340,29 +340,30 @@
     var initBar = function(config) {
       var $bar = UI.initBar(config);
       // Edit title
-      $bar.find(".editable-title").editable({
-        onChange : function(event) {
-          var newTitle = event.newValue;
-          var oldTitle = currentConfig.document.title;
-          if (oldTitle.includes(".")) {
-            var extension = oldTitle.substr(oldTitle.lastIndexOf("."));
-            if (!newTitle.endsWith(extension)) {
-              newTitle += extension;
+      if(config.renameAllowed){
+        $bar.find(".editable-title").editable({
+          onChange : function(event) {
+            var newTitle = event.newValue;
+            var oldTitle = currentConfig.document.title;
+            if (oldTitle.includes(".")) {
+              var extension = oldTitle.substr(oldTitle.lastIndexOf("."));
+              if (!newTitle.endsWith(extension)) {
+                newTitle += extension;
+              }
             }
+            currentConfig.document.title = newTitle;
+            window.document.title = window.document.title.replace(oldTitle, newTitle);
+            $bar.find(".editable-title").text(newTitle);
+            publishDocument(currentConfig.docId, {
+              "type" : DOCUMENT_TITLE_UPDATED,
+              "userId" : currentUserId,
+              "clientId" : clientId,
+              "title" : newTitle,
+              "workspace" : currentConfig.workspace
+            });
           }
-          currentConfig.document.title = newTitle;
-          window.document.title = window.document.title.replace(oldTitle, newTitle);
-          $bar.find(".editable-title").text(newTitle);
-          publishDocument(currentConfig.docId, {
-            "type" : DOCUMENT_TITLE_UPDATED,
-            "userId" : currentUserId,
-            "clientId" : clientId,
-            "title" : newTitle,
-            "workspace" : currentConfig.workspace
-          });
-        }
-      });
-
+        });
+      }
       $bar.find("#save-btn").on("click", function() {
         var comment = $bar.find("#comment-box").val();
         publishDocument(currentConfig.docId, {

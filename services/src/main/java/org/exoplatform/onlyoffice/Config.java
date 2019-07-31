@@ -106,6 +106,9 @@ public class Config implements Externalizable {
     /** The comment.  */
     protected String       comment;
 
+    /** The rename allowed indicator. */
+    protected Boolean      renameAllowed;
+
     /** The indicator to show if the document has a file activity */
     protected Boolean      isActivity;
 
@@ -280,6 +283,17 @@ public class Config implements Externalizable {
     }
 
     /**
+     * Rename allowed.
+     *
+     * @param comment the created comment
+     * @return the builder
+     */
+    public Builder renameAllowed(Boolean renameAllowed) {
+      this.renameAllowed = renameAllowed;
+      return this;
+    }
+
+    /**
      * IsActivity.
      * 
      * @param isActivity the has isActivity
@@ -433,6 +447,7 @@ public class Config implements Externalizable {
                                  path,
                                  displayPath,
                                  comment,
+                                 renameAllowed,
                                  isActivity,
                                  docId,
                                  document,
@@ -1041,6 +1056,9 @@ public class Config implements Externalizable {
   /** The comment. */
   private String                          comment;
 
+  /** The renameAllowed indicator. */
+  private Boolean                         renameAllowed;
+
   /** The isActivity */
   private Boolean                         isActivity;
 
@@ -1122,6 +1140,7 @@ public class Config implements Externalizable {
                    String path,
                    String displayPath,
                    String comment,
+                   Boolean renameAllowed,
                    Boolean isActivity,
                    String docId,
                    Document document,
@@ -1131,6 +1150,7 @@ public class Config implements Externalizable {
     this.displayPath = displayPath;
     this.isActivity = isActivity;
     this.comment = comment;
+    this.renameAllowed = renameAllowed;
     this.docId = docId;
     this.documentType = documentType;
     this.documentserverUrl = documentserverUrl;
@@ -1159,6 +1179,7 @@ public class Config implements Externalizable {
     out.writeUTF(editorUrl);
     out.writeUTF(displayPath);
     out.writeUTF(comment);
+    out.writeBoolean(renameAllowed);
     out.writeBoolean(isActivity);
     try {
       out.writeObject(explorerUri);
@@ -1209,6 +1230,7 @@ public class Config implements Externalizable {
     this.editorUrl = in.readUTF();
     this.displayPath = in.readUTF();
     this.comment = in.readUTF();
+    this.renameAllowed = in.readBoolean();
     this.isActivity = in.readBoolean();
     try {
       this.explorerUri = (URI) in.readObject();
@@ -1346,7 +1368,7 @@ public class Config implements Externalizable {
   public String getDisplayPath() {
     return displayPath;
   }
-  
+
   /**
    * Is activity
    *
@@ -1363,6 +1385,15 @@ public class Config implements Externalizable {
    */
   public String getComment() {
     return comment;
+  }
+  
+  /**
+   * Is rename allowed.
+   *
+   * @return the renameAllowed indicator
+   */
+  public Boolean isRenameAllowed() {
+    return renameAllowed;
   }
 
   /**
@@ -1472,6 +1503,15 @@ public class Config implements Externalizable {
   protected void setDisplayPath(String displayPath) {
     this.displayPath = displayPath;
   }
+  
+  /**
+   * Sets the renameAllowed.
+   *
+   * @param renameAllowed the renameAllowed
+   */
+  protected void setRenameAllowed(Boolean renameAllowed) {
+    this.renameAllowed = renameAllowed;
+  }
 
   /**
    * Gets the editor config.
@@ -1521,6 +1561,7 @@ public class Config implements Externalizable {
                                path,
                                displayPath,
                                comment,
+                               renameAllowed,
                                isActivity,
                                docId,
                                userDocument,
