@@ -587,7 +587,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
     String path = node.getPath();
     String nodePath = nodePath(workspace, path);
-    System.out.println("NAME: " + node.getProperty("exo:title").getString());
     
     // The path in form of Drive:path/to/node/nodeTitle
     // TODO other node types?
