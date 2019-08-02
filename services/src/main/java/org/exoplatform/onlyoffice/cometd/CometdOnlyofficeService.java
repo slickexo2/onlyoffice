@@ -200,12 +200,6 @@ public class CometdOnlyofficeService implements Startable {
   /** The document link event. */
   public static final String              DOCUMENT_LINK_EVENT    = "DOCUMENT_LINK";
 
-  /** The document title updated event. */
-  public static final String              DOCUMENT_TITLE_UPDATED = "DOCUMENT_TITLE_UPDATED";
-
-  /** The document forcesave event. */
-  public static final String              DOCUMENT_FORCESAVED    = "DOCUMENT_FORCESAVED";
-
   /** The editor closed event. */
   public static final String              EDITOR_CLOSED_EVENT    = "EDITOR_CLOSED";
 
@@ -417,12 +411,6 @@ public class CometdOnlyofficeService implements Startable {
       case DOCUMENT_LINK_EVENT:
         handleDocumentLinkEvent(data, docId);
         break;
-      case DOCUMENT_TITLE_UPDATED:
-        handleDocumentTitleUpdatedEvent(data, docId);
-        break;
-      case DOCUMENT_FORCESAVED:
-        handleDocumentForcesavedEvent(data, docId);
-        break;
       case EDITOR_CLOSED_EVENT:
         handleEditorClosedEvent(data, docId);
         break;
@@ -443,29 +431,6 @@ public class CometdOnlyofficeService implements Startable {
       String key = (String) data.get("key");
       // Saving a link
       editors.forceSave(userId, key, false, false, null);
-    }
-
-    /**
-     * Handle document title updated.
-     *
-     * @param data the data
-     * @param docId the doc id
-     */
-    protected void handleDocumentTitleUpdatedEvent(Map<String, Object> data, String docId) {
-      String userId = (String) data.get("userId");
-      String title = (String) data.get("title");
-      String workspace = (String) data.get("workspace");
-      eventsHandlers.submit(new ContainerCommand(PortalContainer.getCurrentPortalContainerName()) {
-        @Override
-        void onContainerError(String error) {
-          LOG.error("An error has occured in container: {}", containerName);
-        }
-
-        @Override
-        void execute(ExoContainer exoContainer) {
-          editors.updateTitle(workspace, docId, title, userId);
-        }
-      });
     }
 
     /**
@@ -610,37 +575,6 @@ public class CometdOnlyofficeService implements Startable {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Changes collected from: " + userId + ", docId: " + docId);
       }
-    }
-
-    /**
-     * Handles document forcesave event.
-     * 
-     * @param data the data
-     * @param docId the docId
-     */
-    protected void handleDocumentForcesavedEvent(Map<String, Object> data, String docId) {
-      String userId = (String) data.get("userId");
-      String key = (String) data.get("key");
-      String comment = (String) data.get("comment");
-      eventsHandlers.submit(new ContainerCommand(PortalContainer.getCurrentPortalContainerName()) {
-        @Override
-        void onContainerError(String error) {
-          LOG.error("An error has occured in container: {}", containerName);
-        }
-
-        @Override
-        void execute(ExoContainer exoContainer) {
-          Editor.User lastUser = editors.getLastModifier(key);
-          // If there were changes after last saving
-          if (lastUser.getLastModified() > lastUser.getLastSaved()) {
-            if (lastUser.getLinkSaved() >= lastUser.getLastModified()) {
-              editors.downloadVersion(userId, key, true, comment, lastUser.getDownloadLink());
-            } else {
-              editors.forceSave(userId, key, true, false, comment);
-            }
-          }
-        }
-      });
     }
 
     /**

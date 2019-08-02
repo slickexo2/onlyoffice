@@ -35,7 +35,7 @@ public class Userdata {
   /** The co edited. */
   protected Boolean coEdited;
   
-  /**  The comment. */
+  /**  The comment. Will be used in Onlyoffice 1.5 for Editor Bar feature. */
   protected String comment;
 
   /**

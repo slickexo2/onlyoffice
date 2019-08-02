@@ -132,8 +132,6 @@
     var DOCUMENT_CHANGED = "DOCUMENT_CHANGED";
     var DOCUMENT_DELETED = "DOCUMENT_DELETED";
     var DOCUMENT_VERSION = "DOCUMENT_VERSION";
-    var DOCUMENT_FORCESAVED = "DOCUMENT_FORCESAVED";
-    var DOCUMENT_TITLE_UPDATED = "DOCUMENT_TITLE_UPDATED";
     var DOCUMENT_LINK = "DOCUMENT_LINK";
     var EDITOR_CLOSED = "EDITOR_CLOSED";
 
@@ -336,59 +334,6 @@
       }
     };
 
-    var initBar = function(config) {
-      var $bar = UI.initBar(config);
-      // Edit title
-      $bar.find(".editable-title").editable({
-        onChange : function(event) {
-          var newTitle = event.newValue;
-          var oldTitle = currentConfig.document.title;
-          if (oldTitle.includes(".")) {
-            var extension = oldTitle.substr(oldTitle.lastIndexOf("."));
-            if (!newTitle.endsWith(extension)) {
-              newTitle += extension;
-            }
-          }
-          currentConfig.document.title = newTitle;
-          window.document.title = window.document.title.replace(oldTitle, newTitle);
-          $bar.find(".editable-title").text(newTitle);
-          publishDocument(currentConfig.docId, {
-            "type" : DOCUMENT_TITLE_UPDATED,
-            "userId" : currentUserId,
-            "clientId" : clientId,
-            "title" : newTitle,
-            "workspace" : currentConfig.workspace
-          });
-        }
-      });
-
-      $bar.find("#save-btn").on("click", function() {
-        var comment = $bar.find("#comment-box").val();
-        var deferred = publishDocument(currentConfig.docId, {
-          "type" : DOCUMENT_FORCESAVED,
-          "userId" : currentUserId,
-          "clientId" : clientId,
-          "key" : currentConfig.document.key,
-          "comment" : comment
-        });
-
-        deferred.done(function(event){
-          // All changes are saved
-          currentUserChanges = false;
-          $bar.find("#comment-box").val('');
-          var $editorsComment = $bar.find(".editors-comment");
-          $editorsComment.empty();
-          $editorsComment.append("\"" + comment + "\"");
-          config.comment = comment;
-        });
-        
-      });
-
-      $bar.find(".close-btn").on("click", function() {
-        window.close();
-      });
-    };
-
     /**
      * Create an editor configuration (for use to create the editor client UI).
      */
@@ -511,7 +456,6 @@
      * Initialize an editor page in current browser window.
      */
     this.initEditor = function(config) {
-      initBar(config);
       log("Initialize editor for document: " + config.docId);
       window.document.title = config.document.title + " - " + window.document.title;
       UI.initEditor();
@@ -835,40 +779,6 @@
       $("#SharedLayoutRightBody").addClass("onlyofficeEditorBody");
     };
 
-    this.initBar = function(config) {
-      var drive = config.displayPath.split(':')[0];
-      var folders = config.displayPath.split(':')[1].split('/');
-      var title = folders.pop();
-      var $bar = $("#editor-top-bar");
-      if(!config.activity) {
-        $bar.find("#comment-box").prop("disabled", true);
-      }
-      var $pathElem = $bar.find(".document-path");
-      $pathElem.append(drive + " : ");
-      $pathElem.append(folders[0] + " <i class='uiIconArrowRight'></i> ");
-     
-      var $titleElem = $bar.find(".document-title");
-      $titleElem.append("<span class='editable-title'>" + title + "</span>");
-
-      var $lastEditedElem = $bar.find(".last-edited");
-      var modifiedDate = new Date(config.document.lastModified).toISOString().replace("T", " ").substring(0, 16);
-
-      var lastUser = config.document.lastModifier === config.editorConfig.user.firstname ? "you" : config.document.lastModifier;
-      $lastEditedElem.append("Last edited by " + lastUser + " " + modifiedDate);
-      if(config.comment){
-        var $comment = $bar.find(".editors-comment");
-        $comment.append("\"" + config.comment + "\"");
-      }
-      var $saveBtn = $bar.find("#save-btn .uiIconSave");
-      $saveBtn.on("click", function(){
-        $saveBtn.css("color", "gray");
-        setTimeout(function(){
-          $saveBtn.css("color", "")
-        }, 300)
-      });
-      return $bar;
-    };
-
     this.isEditorLoaded = function() {
       return $("#UIPage .onlyofficeContainer").length > 0;
     };
@@ -893,7 +803,6 @@
           // create and start editor (this also will re-use an existing editor config from the server)
           docEditor = new DocsAPI.DocEditor("onlyoffice", localConfig);
           // show editor
-          $container.find("#editor-top-bar").show("blind");
           $container.find(".editor").show("blind");
           $container.find(".loading").hide("blind");
         } else {

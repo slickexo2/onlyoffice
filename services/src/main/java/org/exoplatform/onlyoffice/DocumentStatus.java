@@ -59,7 +59,7 @@ public class DocumentStatus {
   /** The userId (used for saving the document content under this user) */
   protected String   userId;
   
-  /** The comment (used for saving a version of a document with comment on FileActivity) */
+  /** The comment. Will be used in Onlyoffice 1.5 for Editor Bar feature. (for saving a version of a document with comment on FileActivity) */
   protected String comment;
 
   /**

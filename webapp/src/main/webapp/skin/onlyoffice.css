@@ -6,62 +6,9 @@
 }
 
 .onlyofficeEditorBody #RightBody, .onlyofficeEditorBody .onlyofficeContainer>.editor {
-  height: calc(100vh - 35px);
+  height: 100vh;
   display: table;
   width: 100%;
-}
-
-.onlyofficeEditorBody #editor-top-bar {
-  height: 25px;
-  background-color: #FFF;
-  padding: 5px 10px;
-}
-
-.onlyofficeEditorBody #editor-top-bar div {
-  display: table-cell;
-  vertical-align: middle;
-}
-
-.onlyofficeEditorBody #editor-top-bar .eip-editable,
-.onlyofficeEditorBody #editor-top-bar div.form-group {
-  height: 25px;
-  margin: 0;
-}
-
-.onlyofficeEditorBody #editor-top-bar .comment input,
-.onlyofficeEditorBody  #editor-top-bar .document-title {
-  margin: 0;
-  height: 25px;
-}
-
-.onlyofficeEditorBody  #editor-top-bar .document-title {
-  width: auto !important;
-}
-
-.onlyofficeEditorBody #editor-top-bar .last-edited,
-.onlyofficeEditorBody #editor-top-bar .editors-comment,
-.onlyofficeEditorBody #editor-top-bar .comment {
-  padding-left: 20px;
-}
-
-.onlyofficeEditorBody #editor-top-bar .editors-comment {
-  font-style: italic;
-}
-
-.onlyofficeEditorBody  #editor-top-bar #save-btn {
-  display: inline-block;
-  cursor: pointer;
-}
-
-.onlyofficeEditorBody  #editor-top-bar .close-btn {
-    position: absolute;
-    right: 7px;
-    cursor: pointer;
-    top: 7px;
-}
-
-.onlyofficeEditorBody #editor-top-bar .document-path {
-  padding-right: 10px;
 }
 
 .onlyofficeEditorBody .RightBodyTDContainer {

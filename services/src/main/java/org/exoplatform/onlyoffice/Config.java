@@ -592,10 +592,10 @@ public class Config implements Externalizable {
     /** The permissions. */
     protected final Permissions permissions;
 
-    /** The last modifier */
+    /** The last modifier. Will be used in Onlyoffice 1.5 for Editor Bar feature. */
     protected String            lastModifier;
 
-    /** The last modified timestamp */
+    /** The last modified timestamp. Will be used in Onlyoffice 1.5 for Editor Bar feature. */
     protected Long              lastModified;
 
     /**
@@ -1035,13 +1035,13 @@ public class Config implements Externalizable {
   /** The path. */
   private String                          path;
 
-  /** The display path. */
+  /** The display path. Will be used in Onlyoffice 1.5 for Editor Bar feature. */
   private String                          displayPath;
 
-  /** The comment. */
+  /** The comment. Will be used in Onlyoffice 1.5 for Editor Bar feature. */
   private String                          comment;
 
-  /** The isActivity */
+  /** The isActivity Will be used in Onlyoffice 1.5 for Editor Bar feature. */
   private Boolean                         isActivity;
 
   /** The document ID in storage. */
