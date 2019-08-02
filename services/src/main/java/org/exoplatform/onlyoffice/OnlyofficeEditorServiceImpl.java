@@ -587,6 +587,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
     String path = node.getPath();
     String nodePath = nodePath(workspace, path);
+    
     // The path in form of Drive:path/to/node/nodeTitle
     // TODO other node types?
     if (!node.isNodeType("nt:file")) {
@@ -625,6 +626,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           builder.created(nodeCreated(node));
           builder.displayPath(getDisplayPath(node, userId));
           builder.comment(nodeComment(node));
+          builder.renameAllowed(canRenameDocument(node));
           builder.isActivity(ActivityTypeUtils.getActivityId(node) != null);
           try {
             builder.folder(node.getParent().getName());
@@ -701,8 +703,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
       fireCreated(status);
     } else {
-      // Update display path 
+      // Update display path and rename
       config.setDisplayPath(getDisplayPath(node, userId));
+      config.setRenameAllowed(canRenameDocument(node)); 
     }
     return config;
   }
@@ -1839,10 +1842,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               commentId = addComment(activityId, status.getComment(), userId);
             }
           }
-          
+
           if (commentId != null) {
             node.setProperty("eoo:commentId", commentId);
             config.setComment(status.getComment());
+            fireCommented(status);
           } else {
             node.setProperty("eoo:commentId", "");
             config.setComment(null);
@@ -2442,6 +2446,21 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   /**
+   * Fire commented.
+   *
+   * @param status the status
+   */
+  protected void fireCommented(DocumentStatus status) {
+    for (OnlyofficeEditorListener l : listeners) {
+      try {
+        l.onCommented(status);
+      } catch (Throwable t) {
+        LOG.warn("Comment listener error", t);
+      }
+    }
+  }
+
+  /**
    * Fire error.
    *
    * @param status the status
@@ -2664,6 +2683,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @return the display path
    */
   protected String getDisplayPath(Node node, String userId) {
+
     try {
       DriveData driveData = documentService.getDriveOfNode(node.getPath());
       List<String> elems = Arrays.asList(node.getPath().split("/"));
@@ -2675,8 +2695,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         if (node.getPath().startsWith(usersPath)) {
           drive = driveName;
           // Hide last folder for shared docs
-          if(!userId.equals(getUserId(node.getPath()))) {
+          if (!userId.equals(getUserId(node.getPath()))) {
             lastFolder = "...";
+            // TODO: We can get all symlinks, but have to find right one
+            // LinkManager linkManager = WCMCoreUtils.getService(LinkManager.class);
+            // List<Node> symlinksSystem = linkManager.getAllLinks(node, ManageDocumentService.EXO_SYMLINK,
+            // sessionProviders.getSystemSessionProvider(null));
           }
         } else {
           if (driveName.startsWith(".spaces.")) {
@@ -2700,7 +2724,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           }
         }
       }
-     
+
       return drive + ":" + lastFolder + "/" + title;
     } catch (Exception e) {
       LOG.error("Error occured while creating display path", e);
@@ -2708,6 +2732,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * Gets userId from node path.
+   * 
+   * @param path the node path
+   * @return the userId
+   */
   protected String getUserId(String path) {
     List<String> elems = Arrays.asList(path.split("/"));
     int position = 2;
@@ -2736,5 +2766,21 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       LOG.warn("Cannot get eoo:commentId of node.", e);
     }
     return null;
+  }
+
+  /**
+   * Checks if current user can rename the document.
+   *
+   * @param node the node
+   * @return true if user can rename 
+   */
+  protected boolean canRenameDocument(Node node) {
+    try {
+      NodeImpl parent = (NodeImpl) node.getParent();
+      return parent.hasPermission(PermissionType.READ) && parent.hasPermission(PermissionType.ADD_NODE)
+          && parent.hasPermission(PermissionType.SET_PROPERTY);
+    } catch (Exception e) {
+      return false;
+    }
   }
 }

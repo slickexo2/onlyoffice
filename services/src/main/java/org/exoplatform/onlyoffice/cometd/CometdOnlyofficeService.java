@@ -196,6 +196,9 @@ public class CometdOnlyofficeService implements Startable {
 
   /** The document version event. */
   public static final String              DOCUMENT_VERSION_EVENT = "DOCUMENT_VERSION";
+  
+  /** The document commented event. */
+  public static final String              DOCUMENT_COMMENTED_EVENT = "DOCUMENT_COMMENTED";
 
   /** The document link event. */
   public static final String              DOCUMENT_LINK_EVENT    = "DOCUMENT_LINK";
@@ -381,6 +384,11 @@ public class CometdOnlyofficeService implements Startable {
         @Override
         public void onCreate(DocumentStatus status) {
           // Nothing
+        }
+
+        @Override
+        public void onCommented(DocumentStatus status) {
+          publishCommentedEvent(status.getConfig().getDocId(), status.getConfig().getComment(), status.getConfig().getEditorConfig().getUser().getFirstname());
         }
       });
     }
@@ -683,6 +691,34 @@ public class CometdOnlyofficeService implements Startable {
         data.append("\", ");
         data.append("\"docId\": \"");
         data.append(docId);
+        data.append("\"");
+        data.append('}');
+        channel.publish(localSession, data.toString());
+      }
+    }
+    
+    /**
+     * Publish commented event.
+     *
+     * @param docId the docId
+     * @param comment the comment
+     */
+    protected void publishCommentedEvent(String docId, String comment, String user) {
+      ServerChannel channel = bayeux.getChannel(CHANNEL_NAME + docId);
+      if (channel != null) {
+        StringBuilder data = new StringBuilder();
+        data.append('{');
+        data.append("\"type\": \"");
+        data.append(DOCUMENT_COMMENTED_EVENT);
+        data.append("\", ");
+        data.append("\"docId\": \"");
+        data.append(docId);
+        data.append("\", ");
+        data.append("\"comment\": \"");
+        data.append(comment);
+        data.append("\", ");
+        data.append("\"changer\": \"");
+        data.append(user);
         data.append("\"");
         data.append('}');
         channel.publish(localSession, data.toString());

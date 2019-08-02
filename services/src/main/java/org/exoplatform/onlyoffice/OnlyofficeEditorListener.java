@@ -71,5 +71,12 @@ public interface OnlyofficeEditorListener {
    * @param status the status
    */
   void onError(DocumentStatus status);
+  
+  /**
+   * Document was forcesaved and commented using Editor Bar.
+   *
+   * @param status the status
+   */
+  void onCommented(DocumentStatus status);
 
 }

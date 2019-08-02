@@ -131,6 +131,7 @@
     var DOCUMENT_SAVED = "DOCUMENT_SAVED";
     var DOCUMENT_CHANGED = "DOCUMENT_CHANGED";
     var DOCUMENT_DELETED = "DOCUMENT_DELETED";
+    var DOCUMENT_COMMENTED = "DOCUMENT_COMMENTED";
     var DOCUMENT_VERSION = "DOCUMENT_VERSION";
     var DOCUMENT_FORCESAVED = "DOCUMENT_FORCESAVED";
     var DOCUMENT_TITLE_UPDATED = "DOCUMENT_TITLE_UPDATED";
@@ -138,7 +139,7 @@
     var EDITOR_CLOSED = "EDITOR_CLOSED";
 
     // Events that are dispatched to redux as actions
-    var dispatchableEvents = [ DOCUMENT_SAVED, DOCUMENT_CHANGED, DOCUMENT_DELETED, DOCUMENT_VERSION ];
+    var dispatchableEvents = [ DOCUMENT_SAVED, DOCUMENT_CHANGED, DOCUMENT_DELETED, DOCUMENT_VERSION, DOCUMENT_COMMENTED ];
 
     // CometD transport bus
     var cometd, cometdContext;
@@ -339,49 +340,40 @@
     var initBar = function(config) {
       var $bar = UI.initBar(config);
       // Edit title
-      $bar.find(".editable-title").editable({
-        onChange : function(event) {
-          var newTitle = event.newValue;
-          var oldTitle = currentConfig.document.title;
-          if (oldTitle.includes(".")) {
-            var extension = oldTitle.substr(oldTitle.lastIndexOf("."));
-            if (!newTitle.endsWith(extension)) {
-              newTitle += extension;
+      if(config.renameAllowed){
+        $bar.find(".editable-title").editable({
+          onChange : function(event) {
+            var newTitle = event.newValue;
+            var oldTitle = currentConfig.document.title;
+            if (oldTitle.includes(".")) {
+              var extension = oldTitle.substr(oldTitle.lastIndexOf("."));
+              if (!newTitle.endsWith(extension)) {
+                newTitle += extension;
+              }
             }
+            currentConfig.document.title = newTitle;
+            window.document.title = window.document.title.replace(oldTitle, newTitle);
+            $bar.find(".editable-title").text(newTitle);
+            publishDocument(currentConfig.docId, {
+              "type" : DOCUMENT_TITLE_UPDATED,
+              "userId" : currentUserId,
+              "clientId" : clientId,
+              "title" : newTitle,
+              "workspace" : currentConfig.workspace
+            });
           }
-          currentConfig.document.title = newTitle;
-          window.document.title = window.document.title.replace(oldTitle, newTitle);
-          $bar.find(".editable-title").text(newTitle);
-          publishDocument(currentConfig.docId, {
-            "type" : DOCUMENT_TITLE_UPDATED,
-            "userId" : currentUserId,
-            "clientId" : clientId,
-            "title" : newTitle,
-            "workspace" : currentConfig.workspace
-          });
-        }
-      });
-
+        });
+      }
       $bar.find("#save-btn").on("click", function() {
         var comment = $bar.find("#comment-box").val();
-        var deferred = publishDocument(currentConfig.docId, {
+        publishDocument(currentConfig.docId, {
           "type" : DOCUMENT_FORCESAVED,
           "userId" : currentUserId,
           "clientId" : clientId,
           "key" : currentConfig.document.key,
           "comment" : comment
         });
-
-        deferred.done(function(event){
-          // All changes are saved
-          currentUserChanges = false;
-          $bar.find("#comment-box").val('');
-          var $editorsComment = $bar.find(".editors-comment");
-          $editorsComment.empty();
-          $editorsComment.append("\"" + comment + "\"");
-          config.comment = comment;
-        });
-        
+        $bar.find("#comment-box").val('');
       });
 
       $bar.find(".close-btn").on("click", function() {
@@ -524,6 +516,11 @@
             var state = store.getState();
             if (state.type === DOCUMENT_DELETED) {
               UI.showError(message("ErrorTitle"), message("ErrorFileDeletedEditor"));
+            }
+            if (state.type === DOCUMENT_COMMENTED) {
+              UI.updateComment(state.comment, state.changer, currentConfig.editorConfig.user.firstname);
+        currentConfig.comment = state.comment;
+            currentUserChanges = false;
             }
           });
 
@@ -833,6 +830,20 @@
       $("#LeftNavigation").parent(".LeftNavigationTDContainer").remove();
       // Specific styles to add
       $("#SharedLayoutRightBody").addClass("onlyofficeEditorBody");
+    };
+    
+    this.updateComment = function(comment, changer, currentUserId) {
+      var $bar = $("#editor-top-bar");
+      if(comment){
+        var $commentBox = $bar.find(".editors-comment");
+        $commentBox.empty();
+        $commentBox.append("\"" + comment + "\"");
+      }
+    var $lastEditedElem = $bar.find(".last-edited");
+    var modifiedDate = new Date().toISOString().replace("T", " ").substring(0, 16);
+    var lastUser = changer === currentUserId ? "you" : changer;
+      $lastEditedElem.empty();
+      $lastEditedElem.append("Last edited by " + lastUser + " " + modifiedDate);
     };
 
     this.initBar = function(config) {
