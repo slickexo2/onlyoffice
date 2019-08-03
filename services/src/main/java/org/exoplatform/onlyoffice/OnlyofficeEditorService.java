@@ -268,10 +268,11 @@ public interface OnlyofficeEditorService {
    * @param userId the userId
    * @param key the key
    * @param coEdited the coEdited
+   * @param forcesaved the forcesaved
    * @param comment the comment
    * @param contentUrl the contentUrl
    */
-  void downloadVersion(String userId, String key, boolean coEdited, String comment, String contentUrl);
+  void downloadVersion(String userId, String key, boolean coEdited, boolean forceSaved, String comment, String contentUrl);
 
   /**
    * Gets the last modifier userId.
@@ -296,9 +297,10 @@ public interface OnlyofficeEditorService {
    * @param key the key
    * @param download the download
    * @param coEdit the coedit
+   * @param forcesaved the forcesaved
    * @param comment the comment
    */
-  void forceSave(String userId, String key, boolean download, boolean coEdit, String comment);
+  void forceSave(String userId, String key, boolean download, boolean coEdit, boolean forcesaved, String comment);
 
   /**
    * Gets a user.

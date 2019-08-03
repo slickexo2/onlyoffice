@@ -177,69 +177,69 @@ public class CometdOnlyofficeService implements Startable {
   }
 
   /** The Constant LOG. */
-  private static final Log                LOG                    = ExoLogger.getLogger(CometdOnlyofficeService.class);
+  private static final Log                LOG                      = ExoLogger.getLogger(CometdOnlyofficeService.class);
 
   /** The channel name. */
-  public static final String              CHANNEL_NAME           = "/eXo/Application/Onlyoffice/editor/";
+  public static final String              CHANNEL_NAME             = "/eXo/Application/Onlyoffice/editor/";
 
   /** The channel name. */
-  public static final String              CHANNEL_NAME_PARAMS    = CHANNEL_NAME + "{docId}";
+  public static final String              CHANNEL_NAME_PARAMS      = CHANNEL_NAME + "{docId}";
 
   /** The document saved event. */
-  public static final String              DOCUMENT_SAVED_EVENT   = "DOCUMENT_SAVED";
+  public static final String              DOCUMENT_SAVED_EVENT     = "DOCUMENT_SAVED";
 
   /** The document deleted event. */
-  public static final String              DOCUMENT_DELETED_EVENT = "DOCUMENT_DELETED";
+  public static final String              DOCUMENT_DELETED_EVENT   = "DOCUMENT_DELETED";
 
   /** The document changed event. */
-  public static final String              DOCUMENT_CHANGED_EVENT = "DOCUMENT_CHANGED";
+  public static final String              DOCUMENT_CHANGED_EVENT   = "DOCUMENT_CHANGED";
 
   /** The document version event. */
-  public static final String              DOCUMENT_VERSION_EVENT = "DOCUMENT_VERSION";
-  
+  public static final String              DOCUMENT_VERSION_EVENT   = "DOCUMENT_VERSION";
+
   /** The document commented event. */
   public static final String              DOCUMENT_COMMENTED_EVENT = "DOCUMENT_COMMENTED";
 
   /** The document link event. */
-  public static final String              DOCUMENT_LINK_EVENT    = "DOCUMENT_LINK";
+  public static final String              DOCUMENT_LINK_EVENT      = "DOCUMENT_LINK";
 
   /** The document title updated event. */
-  public static final String              DOCUMENT_TITLE_UPDATED = "DOCUMENT_TITLE_UPDATED";
+  public static final String              DOCUMENT_TITLE_UPDATED   = "DOCUMENT_TITLE_UPDATED";
 
   /** The document forcesave event. */
-  public static final String              DOCUMENT_FORCESAVED    = "DOCUMENT_FORCESAVED";
+  public static final String              DOCUMENT_FORCESAVED      = "DOCUMENT_FORCESAVED";
 
   /** The editor closed event. */
-  public static final String              EDITOR_CLOSED_EVENT    = "EDITOR_CLOSED";
+  public static final String              EDITOR_CLOSED_EVENT      = "EDITOR_CLOSED";
 
   /**
    * Base minimum number of threads for document updates thread executors.
    */
-  public static final int                 MIN_THREADS            = 2;
+  public static final int                 MIN_THREADS              = 2;
 
   /**
    * Minimal number of threads maximum possible for document updates thread
    * executors.
    */
-  public static final int                 MIN_MAX_THREADS        = 4;
+  public static final int                 MIN_MAX_THREADS          = 4;
 
   /** Thread idle time for thread executors (in seconds). */
-  public static final int                 THREAD_IDLE_TIME       = 120;
+  public static final int                 THREAD_IDLE_TIME         = 120;
 
   /**
    * Maximum threads per CPU for thread executors of document changes channel.
    */
-  public static final int                 MAX_FACTOR             = 20;
+  public static final int                 MAX_FACTOR               = 20;
 
   /**
    * Queue size per CPU for thread executors of document updates channel.
    */
-  public static final int                 QUEUE_FACTOR           = MAX_FACTOR * 2;
+  public static final int                 QUEUE_FACTOR             = MAX_FACTOR * 2;
 
   /**
    * Thread name used for the executor.
    */
-  public static final String              THREAD_PREFIX          = "onlyoffice-comet-thread-";
+  public static final String              THREAD_PREFIX            = "onlyoffice-comet-thread-";
 
   /** The Onlyoffice editor service. */
   protected final OnlyofficeEditorService editors;
@@ -388,7 +388,9 @@ public class CometdOnlyofficeService implements Startable {
 
         @Override
         public void onCommented(DocumentStatus status) {
-          publishCommentedEvent(status.getConfig().getDocId(), status.getConfig().getComment(), status.getConfig().getEditorConfig().getUser().getFirstname());
+          publishCommentedEvent(status.getConfig().getDocId(),
+                                status.getConfig().getComment(),
+                                status.getConfig().getEditorConfig().getUser().getFirstname());
         }
       });
     }
@@ -450,7 +452,7 @@ public class CometdOnlyofficeService implements Startable {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
       // Saving a link
-      editors.forceSave(userId, key, false, false, null);
+      editors.forceSave(userId, key, false, false, false, null);
     }
 
     /**
@@ -516,9 +518,9 @@ public class CometdOnlyofficeService implements Startable {
                             key,
                             lastUser.getDownloadLink());
                 }
-                editors.downloadVersion(lastUser.getId(), key, false, null, lastUser.getDownloadLink());
+                editors.downloadVersion(lastUser.getId(), key, false, false, null, lastUser.getDownloadLink());
               } else {
-                editors.forceSave(lastUser.getId(), key, true, false, null);
+                editors.forceSave(lastUser.getId(), key, true, false, false, null);
               }
             }
           });
@@ -562,9 +564,9 @@ public class CometdOnlyofficeService implements Startable {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Downloading from existing link. User: {}, Key: {}, Link: {}", user.getId(), key, user.getDownloadLink());
             }
-            editors.downloadVersion(userId, key, false, null, user.getDownloadLink());
+            editors.downloadVersion(userId, key, false, false, null, user.getDownloadLink());
           } else {
-            editors.forceSave(userId, key, true, false, null);
+            editors.forceSave(userId, key, true, false, false, null);
           }
         }
       });
@@ -600,12 +602,12 @@ public class CometdOnlyofficeService implements Startable {
                           key,
                           lastUser.getDownloadLink());
               }
-              editors.downloadVersion(lastUser.getId(), key, true, null, lastUser.getDownloadLink());
+              editors.downloadVersion(lastUser.getId(), key, true, false, null, lastUser.getDownloadLink());
             } else {
               if (LOG.isDebugEnabled()) {
                 LOG.debug("Download a new version of document: user " + lastUser.getId() + ", docId: " + docId);
               }
-              editors.forceSave(lastUser.getId(), key, true, true, null);
+              editors.forceSave(lastUser.getId(), key, true, true, false, null);
             }
 
           }
@@ -640,12 +642,10 @@ public class CometdOnlyofficeService implements Startable {
         void execute(ExoContainer exoContainer) {
           Editor.User lastUser = editors.getLastModifier(key);
           // If there were changes after last saving
-          if (lastUser.getLastModified() > lastUser.getLastSaved()) {
-            if (lastUser.getLinkSaved() >= lastUser.getLastModified()) {
-              editors.downloadVersion(userId, key, true, comment, lastUser.getDownloadLink());
-            } else {
-              editors.forceSave(userId, key, true, false, comment);
-            }
+          if (lastUser.getLinkSaved() >= lastUser.getLastModified()) {
+            editors.downloadVersion(userId, key, true, true, comment, lastUser.getDownloadLink());
+          } else {
+            editors.forceSave(userId, key, true, false, true, comment);
           }
         }
       });
@@ -696,7 +696,7 @@ public class CometdOnlyofficeService implements Startable {
         channel.publish(localSession, data.toString());
       }
     }
-    
+
     /**
      * Publish commented event.
      *

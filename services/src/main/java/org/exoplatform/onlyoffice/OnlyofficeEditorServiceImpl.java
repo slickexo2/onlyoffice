@@ -922,7 +922,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           }
           // Here we decide if we need to download content or just save the link
           if (status.isSaved()) {
-            downloadVersion(status.getUserId(), key, status.isCoedited(), status.getComment(), status.getUrl());
+            downloadVersion(status.getUserId(), key, status.isCoedited(), status.isForcesaved(), status.getComment(), status.getUrl());
           } else {
             saveLink(status.getUserId(), key, status.getUrl());
           }
@@ -1159,11 +1159,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @param userId the userId
    * @param key the key
    * @param coEdited the coEdited
+   * @param forcesaved the forcesaved
    * @param comment the comment
    * @param contentUrl the contentUrl
    */
   @Override
-  public void downloadVersion(String userId, String key, boolean coEdited, String comment, String contentUrl) {
+  public void downloadVersion(String userId, String key, boolean coEdited, boolean forcesaved, String comment, String contentUrl) {
     String docId = null;
     try {
       Config config = getEditorByKey(userId, key);
@@ -1174,6 +1175,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                                           .comment(comment)
                                                           .userId(userId)
                                                           .coEdited(coEdited)
+                                                          .forcesaved(forcesaved)
                                                           .build();
       download(config, status);
       // we set it sooner to let clients see the save
@@ -1234,10 +1236,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * {@inheritDoc}
    */
   @Override
-  public void forceSave(String userId, String key, boolean download, boolean coEdit, String comment) {
+  public void forceSave(String userId, String key, boolean download, boolean coEdit, boolean forcesaved, String comment) {
     HttpURLConnection connection = null;
     try {
-      Userdata userdata = new Userdata(userId, download, coEdit, comment);
+      Userdata userdata = new Userdata(userId, download, coEdit, forcesaved, comment);
       String json = new JSONObject().put("c", "forcesave").put("key", key).put("userdata", userdata.toJSON()).toString();
       byte[] postDataBytes = json.toString().getBytes("UTF-8");
 
@@ -1862,13 +1864,15 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           if (frozen.hasProperty("eoo:versionOwner")) {
             versioningUser = frozen.getProperty("eoo:versionOwner").getString();
           }
+          
           // Version accumulation for same user
-          if (versionable && userId.equals(versioningUser)) {
+          if (!status.isForcesaved() && versionable && userId.equals(versioningUser)) {
             String versionName = node.getBaseVersion().getName();
             if (LOG.isDebugEnabled()) {
-              LOG.debug("Removig version " + versionName + " from node " + nodePath);
+              LOG.debug("Version accumulation: removig version " + versionName + " from node " + nodePath);
             }
             node.getVersionHistory().removeVersion(versionName);
+            
           }
 
           if (statusCode != 2) {
@@ -1886,6 +1890,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             // Since 1.2.0-RC01 we check-out the document to let (more) other
             // actions in ECMS appear on it
             node.checkout();
+            
             // Remove properties from node
             node.setProperty("eoo:versionOwner", "");
             node.setProperty("eoo:onlyofficeVersion", false);

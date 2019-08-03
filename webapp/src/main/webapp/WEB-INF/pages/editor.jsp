@@ -12,7 +12,7 @@
     <div class="last-edited"></div>
     <div class="editors-comment"></div>
     <div class="comment">
-      <input type="text" id="comment-box"></input>
+      <input type="text" id="comment-box" placeholder="Add your summary"></input>
       <div id="save-btn">
         <i class="uiIconEcmsLightGray uiIconSave"></i>
       </div>

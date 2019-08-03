@@ -53,14 +53,17 @@ public class DocumentStatus {
   /** The coedited. */
   protected Boolean  coEdited;
 
+  /** The forcesaved (true if a document is forcesaved via Editor bar) */
+  protected Boolean  forceSaved;
+
   /** The saved */
   protected Boolean  saved;
 
   /** The userId (used for saving the document content under this user) */
   protected String   userId;
-  
+
   /** The comment (used for saving a version of a document with comment on FileActivity) */
-  protected String comment;
+  protected String   comment;
 
   /**
    * Gets the config.
@@ -107,7 +110,6 @@ public class DocumentStatus {
     this.config = config;
   }
 
-
   /**
    * Gets the status returned by Onlyoffice Document Server. <br>
    * See <a href=
@@ -148,6 +150,15 @@ public class DocumentStatus {
   }
 
   /**
+   * Gets the forcesaved.
+   *
+   * @return the forcesaved
+   */
+  protected Boolean isForcesaved() {
+    return forceSaved != null ? forceSaved : false;
+  }
+
+  /**
    * Gets the isSaved.
    *
    * @return the isSaved
@@ -164,7 +175,7 @@ public class DocumentStatus {
   public String getUserId() {
     return userId;
   }
-  
+
   /**
    * Gets the comment.
    *
@@ -267,6 +278,17 @@ public class DocumentStatus {
     }
 
     /**
+     * Forcesaved.
+     *
+     * @param forcesaved the forcesaved
+     * @return the builder
+     */
+    public Builder forcesaved(Boolean forcesaved) {
+      documentStatus.forceSaved = forcesaved;
+      return this;
+    }
+
+    /**
      * Sets userId.
      *
      * @param userId the userId
@@ -276,7 +298,7 @@ public class DocumentStatus {
       documentStatus.userId = userId;
       return this;
     }
-    
+
     /**
      * Sets the saved.
      *
@@ -287,7 +309,7 @@ public class DocumentStatus {
       documentStatus.saved = saved;
       return this;
     }
-    
+
     /**
      * Sets the comment.
      *
@@ -298,7 +320,7 @@ public class DocumentStatus {
       documentStatus.comment = comment;
       return this;
     }
-  
+
     /**
      * Builds the.
      *
