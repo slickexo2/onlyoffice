@@ -59,6 +59,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.lock.Lock;
+import javax.jcr.version.VersionException;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.AutoCloseInputStream;
@@ -1356,6 +1357,22 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       restoreConvoState(contextState, contextProvider);
     }
   }
+  
+  /**
+   * Gets the user.
+   *
+   * @param username the username
+   * @return the user
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   */
+  @Override
+  public User getUser(String username) throws OnlyofficeEditorException {
+    try {
+      return organization.getUserHandler().findUserByName(username);
+    } catch (Exception e) {
+      throw new OnlyofficeEditorException("Error searching user " + username, e);
+    }
+  }
 
   // *********************** implementation level ***************
 
@@ -1543,21 +1560,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    */
   protected String nodePath(Config config) {
     return nodePath(config.getWorkspace(), config.getPath());
-  }
-
-  /**
-   * Gets the user.
-   *
-   * @param username the username
-   * @return the user
-   * @throws OnlyofficeEditorException the onlyoffice editor exception
-   */
-  protected User getUser(String username) throws OnlyofficeEditorException {
-    try {
-      return organization.getUserHandler().findUserByName(username);
-    } catch (Exception e) {
-      throw new OnlyofficeEditorException("Error searching user " + username, e);
-    }
   }
 
   /**
@@ -1838,10 +1840,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
           // Add comment to the FileActivity with current file
           String commentId = null;
+          String versionSummary = null;
           if (status.getComment() != null && !status.getComment().trim().isEmpty()) {
             String activityId = ActivityTypeUtils.getActivityId(node);
             if (activityId != null) {
               commentId = addComment(activityId, status.getComment(), userId);
+              versionSummary = status.getComment().trim();
             }
           }
 
@@ -1872,7 +1876,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               LOG.debug("Version accumulation: removig version " + versionName + " from node " + nodePath);
             }
             node.getVersionHistory().removeVersion(versionName);
-            
           }
 
           if (statusCode != 2) {
@@ -1894,6 +1897,16 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             // Remove properties from node
             node.setProperty("eoo:versionOwner", "");
             node.setProperty("eoo:onlyofficeVersion", false);
+            
+            // Add version summary
+            if(versionable && versionSummary != null) {
+              String baseVersion = node.getBaseVersion().getName();
+              try {
+                node.getVersionHistory().addVersionLabel(baseVersion, versionSummary, false);
+              } catch (VersionException e) {
+                LOG.debug("Cannot add version label {}", e.getMessage());
+              }
+            }
             node.save();
 
             // If the status code == 2, the EDITOR_SAVED_EVENT should be
@@ -2692,7 +2705,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     try {
       DriveData driveData = documentService.getDriveOfNode(node.getPath());
       List<String> elems = Arrays.asList(node.getPath().split("/"));
-      String lastFolder = elems.get(elems.size() - 2);
+      String lastFolder;
+      try {
+        lastFolder = node.getParent().getProperty("exo:title").getString();
+      } catch (Exception e) {
+        LOG.debug("Couldn't get exo:title from node parent. Node {}, message {}", node.getPath(), e.getMessage());
+        lastFolder = elems.get(elems.size() - 2);
+      }
       String title = node.hasProperty("exo:title") ? node.getProperty("exo:title").getString() : elems.get(elems.size() - 1);
       String drive = "";
       if (driveData != null) {
@@ -2729,7 +2748,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           }
         }
       }
-
+      
       return drive + ":" + lastFolder + "/" + title;
     } catch (Exception e) {
       LOG.error("Error occured while creating display path", e);

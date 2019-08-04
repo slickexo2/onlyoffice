@@ -61,6 +61,7 @@ import org.exoplatform.onlyoffice.OnlyofficeEditorListener;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.services.organization.User;
 
 /**
  * The CometdOnlyofficeService.
@@ -356,6 +357,7 @@ public class CometdOnlyofficeService implements Startable {
 
         @Override
         public void onSaved(DocumentStatus status) {
+
           publishSavedEvent(status.getConfig().getDocId(), status.getUserId());
         }
 
@@ -388,9 +390,7 @@ public class CometdOnlyofficeService implements Startable {
 
         @Override
         public void onCommented(DocumentStatus status) {
-          publishCommentedEvent(status.getConfig().getDocId(),
-                                status.getConfig().getComment(),
-                                status.getConfig().getEditorConfig().getUser().getFirstname());
+          publishCommentedEvent(status.getConfig().getDocId(), status.getUserId(), status.getConfig().getComment());
         }
       });
     }
@@ -670,6 +670,9 @@ public class CometdOnlyofficeService implements Startable {
         data.append("\", ");
         data.append("\"userId\": \"");
         data.append(userId);
+        data.append("\", ");
+        data.append("\"displayName\": \"");
+        data.append(getDisplayName(userId));
         data.append("\"");
         data.append('}');
         channel.publish(localSession, data.toString());
@@ -703,7 +706,7 @@ public class CometdOnlyofficeService implements Startable {
      * @param docId the docId
      * @param comment the comment
      */
-    protected void publishCommentedEvent(String docId, String comment, String user) {
+    protected void publishCommentedEvent(String docId, String userId, String comment) {
       ServerChannel channel = bayeux.getChannel(CHANNEL_NAME + docId);
       if (channel != null) {
         StringBuilder data = new StringBuilder();
@@ -717,8 +720,8 @@ public class CometdOnlyofficeService implements Startable {
         data.append("\"comment\": \"");
         data.append(comment);
         data.append("\", ");
-        data.append("\"changer\": \"");
-        data.append(user);
+        data.append("\"displayName\": \"");
+        data.append(getDisplayName(userId));
         data.append("\"");
         data.append('}');
         channel.publish(localSession, data.toString());
@@ -795,5 +798,23 @@ public class CometdOnlyofficeService implements Startable {
                                   new LinkedBlockingQueue<Runnable>(queueSize),
                                   new CommandThreadFactory(threadNamePrefix),
                                   new ThreadPoolExecutor.CallerRunsPolicy());
+  }
+
+  /**
+   * Gets user's display name.
+   *
+   * @param userId the userId
+   * @return the displayName
+   */
+  protected String getDisplayName(String userId) {
+    String displayName;
+    try {
+      User user = editors.getUser(userId);
+      displayName = user != null ? user.getDisplayName() : userId;
+    } catch (OnlyofficeEditorException e) {
+      displayName = userId;
+      LOG.debug("Cannot find user by userId {}", userId);
+    }
+    return displayName;
   }
 }

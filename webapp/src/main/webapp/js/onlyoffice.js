@@ -118,6 +118,30 @@
     var m = messages[key];
     return m ? m : key;
   };
+  
+  var formatDate = function(date) {
+    var yyyy = date.getFullYear();
+    var dd = date.getDate();
+    var mm = (date.getMonth() + 1);
+    
+    if (dd < 10)
+        dd = "0" + dd;
+    if (mm < 10)
+        mm = "0" + mm;
+
+    var cur_day = yyyy + "-" + mm + "-" + dd;
+
+    var hours = date.getHours()
+    var minutes = date.getMinutes()
+
+    if (hours < 10)
+        hours = "0" + hours;
+
+    if (minutes < 10)
+        minutes = "0" + minutes;
+
+    return cur_day + " " + hours + ":" + minutes;
+  }
 
   // ******** REST services ********
   var prefixUrl = pageBaseUrl(location);
@@ -518,9 +542,12 @@
               UI.showError(message("ErrorTitle"), message("ErrorFileDeletedEditor"));
             }
             if (state.type === DOCUMENT_COMMENTED) {
-              UI.updateComment(state.comment, state.changer, currentConfig.editorConfig.user.firstname);
+              UI.updateBar(state.displayName, state.comment);
         currentConfig.comment = state.comment;
             currentUserChanges = false;
+            }
+            if(state.type === DOCUMENT_SAVED) {
+              UI.updateBar(state.displayName);
             }
           });
 
@@ -832,18 +859,16 @@
       $("#SharedLayoutRightBody").addClass("onlyofficeEditorBody");
     };
     
-    this.updateComment = function(comment, changer, currentUserId) {
+    this.updateBar = function(changer, comment) {
       var $bar = $("#editor-top-bar");
       if(comment){
         var $commentBox = $bar.find(".editors-comment");
         $commentBox.empty();
         $commentBox.append("\"" + comment + "\"");
       }
-    var $lastEditedElem = $bar.find(".last-edited");
-    var modifiedDate = new Date().toISOString().replace("T", " ").substring(0, 16);
-    var lastUser = changer === currentUserId ? "you" : changer;
+      var $lastEditedElem = $bar.find(".last-edited");
       $lastEditedElem.empty();
-      $lastEditedElem.append("Last edited by " + lastUser + " " + modifiedDate);
+      $lastEditedElem.append("Last edited by " + changer + " " + formatDate(new Date()));
     };
 
     this.initBar = function(config) {
@@ -862,10 +887,7 @@
       $titleElem.append("<span class='editable-title'>" + title + "</span>");
 
       var $lastEditedElem = $bar.find(".last-edited");
-      var modifiedDate = new Date(config.document.lastModified).toISOString().replace("T", " ").substring(0, 16);
-
-      var lastUser = config.document.lastModifier === config.editorConfig.user.firstname ? "you" : config.document.lastModifier;
-      $lastEditedElem.append("Last edited by " + lastUser + " " + modifiedDate);
+      $lastEditedElem.append("Last edited by " + config.document.lastModifier + " " + formatDate(new Date(config.document.lastModified)));
       if(config.comment){
         var $comment = $bar.find(".editors-comment");
         $comment.append("\"" + config.comment + "\"");
