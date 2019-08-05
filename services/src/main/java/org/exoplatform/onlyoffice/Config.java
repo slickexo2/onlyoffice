@@ -285,7 +285,7 @@ public class Config implements Externalizable {
     /**
      * Rename allowed.
      *
-     * @param comment the created comment
+     * @param renameAllowed the renameAllowed
      * @return the builder
      */
     public Builder renameAllowed(Boolean renameAllowed) {
@@ -1126,6 +1126,7 @@ public class Config implements Externalizable {
    * @param path the path
    * @param displayPath the displayPath
    * @param comment the comment
+   * @param renameAllowed the renameAllowed
    * @param isActivity the isActivity
    * @param docId the document ID
    * @param document the document

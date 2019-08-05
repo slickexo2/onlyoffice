@@ -704,6 +704,7 @@ public class CometdOnlyofficeService implements Startable {
      * Publish commented event.
      *
      * @param docId the docId
+     * @param userId the userId
      * @param comment the comment
      */
     protected void publishCommentedEvent(String docId, String userId, String comment) {
