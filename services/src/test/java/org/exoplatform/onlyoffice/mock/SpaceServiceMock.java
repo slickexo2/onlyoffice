@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.exoplatform.commons.utils.ListAccess;
 import org.exoplatform.social.core.application.PortletPreferenceRequiredPlugin;
+import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.space.SpaceApplicationConfigPlugin;
 import org.exoplatform.social.core.space.SpaceException;
 import org.exoplatform.social.core.space.SpaceFilter;
@@ -706,6 +707,12 @@ public class SpaceServiceMock implements SpaceService {
   public boolean isSuperManager(String userId) {
     // TODO Auto-generated method stub
     return false;
+  }
+
+  @Override
+  public Space createSpace(Space space, String creator, List<Identity> identitiesToInvite) throws SpaceException {
+    // TODO Auto-generated method stub
+    return null;
   }
 
   
