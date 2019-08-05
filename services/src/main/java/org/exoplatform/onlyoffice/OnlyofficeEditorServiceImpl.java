@@ -1809,9 +1809,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             sameModifier = userId.equals(node.getProperty("exo:lastModifier").getString());
             node.setProperty("exo:lastModifier", userId);
           }
+          
+          // TODO: Need to set SameModifier to false if last time the document was saved by forcesave
           modifierConfig.setSameModifier(sameModifier);
           modifierConfig.setPreviousModified(content.getProperty("jcr:lastModified").getDate());
-
+          
           Boolean onlyofficeVersion = false;
           if (frozen.hasProperty("eoo:onlyofficeVersion")) {
             onlyofficeVersion = frozen.getProperty("eoo:onlyofficeVersion").getBoolean();
@@ -1878,7 +1880,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             node.getVersionHistory().removeVersion(versionName);
           }
 
-          if (statusCode != 2) {
+          if (statusCode != 2 && !status.isForcesaved()) {
             node.setProperty("eoo:versionOwner", userId);
           } else {
             node.setProperty("eoo:versionOwner", "");

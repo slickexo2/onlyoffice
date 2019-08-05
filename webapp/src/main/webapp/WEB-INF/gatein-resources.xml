@@ -49,18 +49,6 @@
     </depends>
   </module>
   <module>
-    <name>onlyofficeTooltips</name>
-    <load-group>onlyofficeGRP</load-group>
-    <script>
-      <minify>false</minify>
-      <path>/js/bootstrap-tooltip.js</path>
-    </script>
-    <depends>
-      <module>jquery</module>
-      <as>jQuery</as>
-    </depends>
-  </module>
-  <module>
     <name>onlyofficeJqueryUI</name>
     <as>jqueryUI</as>
     <load-group>onlyofficeGRP</load-group>

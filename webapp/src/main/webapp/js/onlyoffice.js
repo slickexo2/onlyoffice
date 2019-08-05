@@ -876,6 +876,7 @@
       var folders = config.displayPath.split(':')[1].split('/');
       var title = folders.pop();
       var $bar = $("#editor-top-bar");
+      $bar.find("a[rel=tooltip]").tooltip();
       if(!config.activity) {
         $bar.find("#comment-box").prop("disabled", true);
       }
@@ -883,7 +884,7 @@
       $pathElem.append(drive + " : ");
       $pathElem.append(folders[0] + " <i class='uiIconArrowRight'></i> ");
      
-      var $titleElem = $bar.find(".document-title");
+      var $titleElem = $bar.find(".document-title a");
       $titleElem.append("<span class='editable-title'>" + title + "</span>");
 
       var $lastEditedElem = $bar.find(".last-edited");
