@@ -20,6 +20,7 @@ package org.exoplatform.onlyoffice.portlet;
 
 import static org.exoplatform.onlyoffice.webui.OnlyofficeContext.callModule;
 import static org.exoplatform.onlyoffice.webui.OnlyofficeContext.showError;
+import static org.exoplatform.onlyoffice.webui.OnlyofficeContext.requireJS;
 
 import java.io.IOException;
 import java.util.Locale;
@@ -105,6 +106,7 @@ public class EditorPortlet extends GenericPortlet {
               config.getEditorConfig().setLang(Locale.getDefault().getLanguage());
             }
           }
+          requireJS().require("SHARED/bts_tooltip");
           callModule("initEditor(" + config.toJSON() + ");");
         } else {
           showError(i18n.getString("OnlyofficeEditorClient.ErrorTitle"),

@@ -35,7 +35,10 @@ public class Userdata {
   /** The co edited. */
   protected Boolean coEdited;
   
-  /**  The comment. Will be used in Onlyoffice 1.5 for Editor Bar feature. */
+  /** The forcesaved */
+  protected Boolean forcesaved;
+  
+  /**  The comment. */
   protected String comment;
 
   /**
@@ -44,13 +47,15 @@ public class Userdata {
    * @param userId the user id
    * @param download the download
    * @param coEdited the co edited
+   * @param forcesaved the forcesaved
    * @param comment the comment
    */
-  public Userdata(String userId, Boolean download, Boolean coEdited, String comment) {
+  public Userdata(String userId, Boolean download, Boolean coEdited, Boolean forcesaved, String comment) {
     super();
     this.userId = userId;
     this.download = download;
     this.coEdited = coEdited;
+    this.forcesaved = forcesaved;
     this.comment = comment;
   }
 
@@ -116,7 +121,24 @@ public class Userdata {
     this.coEdited = coEdited;
   }
   
-  
+  /**
+   * Gets the forcesaved.
+   *
+   * @return the forcesaved
+   */
+  public Boolean isForcesaved() {
+    return forcesaved;
+  }
+
+  /**
+   * Sets the forcesaved.
+   *
+   * @param forcesaved the forcesaved
+   */
+  public void setForcesaved(Boolean forcesaved) {
+    this.forcesaved = forcesaved;
+  }
+
   /**
    * Gets the comment.
    *

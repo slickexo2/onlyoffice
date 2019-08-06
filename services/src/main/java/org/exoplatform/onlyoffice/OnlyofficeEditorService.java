@@ -23,6 +23,7 @@ import javax.jcr.RepositoryException;
 
 import org.exoplatform.container.component.ComponentPlugin;
 import org.exoplatform.onlyoffice.Config.Editor;
+import org.exoplatform.services.organization.User;
 
 /**
  * Created by The eXo Platform SAS.
@@ -33,20 +34,20 @@ import org.exoplatform.onlyoffice.Config.Editor;
 public interface OnlyofficeEditorService {
 
   /** The editor opened event. */
-  static String EDITOR_OPENED_EVENT = "exo.onlyoffice.editor.opened";
-  
+  static String EDITOR_OPENED_EVENT  = "exo.onlyoffice.editor.opened";
+
   /** The editor closed event. */
-  static String EDITOR_CLOSED_EVENT = "exo.onlyoffice.editor.closed";
-  
+  static String EDITOR_CLOSED_EVENT  = "exo.onlyoffice.editor.closed";
+
   /** The editor saved event. */
-  static String EDITOR_SAVED_EVENT = "exo.onlyoffice.editor.saved";
-  
+  static String EDITOR_SAVED_EVENT   = "exo.onlyoffice.editor.saved";
+
   /** The editor version event. */
   static String EDITOR_VERSION_EVENT = "exo.onlyoffice.editor.version";
-  
+
   /** The editor error event. */
-  static String EDITOR_ERROR_EVENT = "exo.onlyoffice.editor.error";
-  
+  static String EDITOR_ERROR_EVENT   = "exo.onlyoffice.editor.error";
+
   /**
    * Return existing editor configuration for given user and node. If editor not
    * open for given node or user then <code>null</code> will be returned. If
@@ -268,10 +269,11 @@ public interface OnlyofficeEditorService {
    * @param userId the userId
    * @param key the key
    * @param coEdited the coEdited
+   * @param forceSaved the forceSaved
    * @param comment the comment
    * @param contentUrl the contentUrl
    */
-  void downloadVersion(String userId, String key, boolean coEdited, String comment, String contentUrl);
+  void downloadVersion(String userId, String key, boolean coEdited, boolean forceSaved, String comment, String contentUrl);
 
   /**
    * Gets the last modifier userId.
@@ -296,9 +298,10 @@ public interface OnlyofficeEditorService {
    * @param key the key
    * @param download the download
    * @param coEdit the coedit
+   * @param forcesaved the forcesaved
    * @param comment the comment
    */
-  void forceSave(String userId, String key, boolean download, boolean coEdit, String comment);
+  void forceSave(String userId, String key, boolean download, boolean coEdit, boolean forcesaved, String comment);
 
   /**
    * Gets a user.
@@ -317,5 +320,24 @@ public interface OnlyofficeEditorService {
    * @return true, if the token is correct, false otherwise
    */
   boolean validateToken(String token, String key);
+
+  /**
+   * Updates title of a document.
+   * 
+   * @param workspace the workspace
+   * @param docId the docId
+   * @param title the title
+   * @param userId the userId
+   */
+  void updateTitle(String workspace, String docId, String title, String userId);
+
+  /**
+   * Gets the user.
+   *
+   * @param username the username
+   * @return the user
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   */
+  User getUser(String username) throws OnlyofficeEditorException;
 
 }

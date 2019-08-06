@@ -61,6 +61,7 @@ import org.exoplatform.onlyoffice.OnlyofficeEditorListener;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.services.organization.User;
 
 /**
  * The CometdOnlyofficeService.
@@ -177,60 +178,69 @@ public class CometdOnlyofficeService implements Startable {
   }
 
   /** The Constant LOG. */
-  private static final Log                LOG                    = ExoLogger.getLogger(CometdOnlyofficeService.class);
+  private static final Log                LOG                      = ExoLogger.getLogger(CometdOnlyofficeService.class);
 
   /** The channel name. */
-  public static final String              CHANNEL_NAME           = "/eXo/Application/Onlyoffice/editor/";
+  public static final String              CHANNEL_NAME             = "/eXo/Application/Onlyoffice/editor/";
 
   /** The channel name. */
-  public static final String              CHANNEL_NAME_PARAMS    = CHANNEL_NAME + "{docId}";
+  public static final String              CHANNEL_NAME_PARAMS      = CHANNEL_NAME + "{docId}";
 
   /** The document saved event. */
-  public static final String              DOCUMENT_SAVED_EVENT   = "DOCUMENT_SAVED";
+  public static final String              DOCUMENT_SAVED_EVENT     = "DOCUMENT_SAVED";
 
   /** The document deleted event. */
-  public static final String              DOCUMENT_DELETED_EVENT = "DOCUMENT_DELETED";
+  public static final String              DOCUMENT_DELETED_EVENT   = "DOCUMENT_DELETED";
 
   /** The document changed event. */
-  public static final String              DOCUMENT_CHANGED_EVENT = "DOCUMENT_CHANGED";
+  public static final String              DOCUMENT_CHANGED_EVENT   = "DOCUMENT_CHANGED";
 
   /** The document version event. */
-  public static final String              DOCUMENT_VERSION_EVENT = "DOCUMENT_VERSION";
+  public static final String              DOCUMENT_VERSION_EVENT   = "DOCUMENT_VERSION";
+
+  /** The document commented event. */
+  public static final String              DOCUMENT_COMMENTED_EVENT = "DOCUMENT_COMMENTED";
 
   /** The document link event. */
-  public static final String              DOCUMENT_LINK_EVENT    = "DOCUMENT_LINK";
+  public static final String              DOCUMENT_LINK_EVENT      = "DOCUMENT_LINK";
+
+  /** The document title updated event. */
+  public static final String              DOCUMENT_TITLE_UPDATED   = "DOCUMENT_TITLE_UPDATED";
+
+  /** The document forcesave event. */
+  public static final String              DOCUMENT_FORCESAVED      = "DOCUMENT_FORCESAVED";
 
   /** The editor closed event. */
-  public static final String              EDITOR_CLOSED_EVENT    = "EDITOR_CLOSED";
+  public static final String              EDITOR_CLOSED_EVENT      = "EDITOR_CLOSED";
 
   /**
    * Base minimum number of threads for document updates thread executors.
    */
-  public static final int                 MIN_THREADS            = 2;
+  public static final int                 MIN_THREADS              = 2;
 
   /**
    * Minimal number of threads maximum possible for document updates thread
    * executors.
    */
-  public static final int                 MIN_MAX_THREADS        = 4;
+  public static final int                 MIN_MAX_THREADS          = 4;
 
   /** Thread idle time for thread executors (in seconds). */
-  public static final int                 THREAD_IDLE_TIME       = 120;
+  public static final int                 THREAD_IDLE_TIME         = 120;
 
   /**
    * Maximum threads per CPU for thread executors of document changes channel.
    */
-  public static final int                 MAX_FACTOR             = 20;
+  public static final int                 MAX_FACTOR               = 20;
 
   /**
    * Queue size per CPU for thread executors of document updates channel.
    */
-  public static final int                 QUEUE_FACTOR           = MAX_FACTOR * 2;
+  public static final int                 QUEUE_FACTOR             = MAX_FACTOR * 2;
 
   /**
    * Thread name used for the executor.
    */
-  public static final String              THREAD_PREFIX          = "onlyoffice-comet-thread-";
+  public static final String              THREAD_PREFIX            = "onlyoffice-comet-thread-";
 
   /** The Onlyoffice editor service. */
   protected final OnlyofficeEditorService editors;
@@ -347,6 +357,7 @@ public class CometdOnlyofficeService implements Startable {
 
         @Override
         public void onSaved(DocumentStatus status) {
+
           publishSavedEvent(status.getConfig().getDocId(), status.getUserId());
         }
 
@@ -375,6 +386,11 @@ public class CometdOnlyofficeService implements Startable {
         @Override
         public void onCreate(DocumentStatus status) {
           // Nothing
+        }
+
+        @Override
+        public void onCommented(DocumentStatus status) {
+          publishCommentedEvent(status.getConfig().getDocId(), status.getUserId(), status.getConfig().getComment());
         }
       });
     }
@@ -411,6 +427,12 @@ public class CometdOnlyofficeService implements Startable {
       case DOCUMENT_LINK_EVENT:
         handleDocumentLinkEvent(data, docId);
         break;
+      case DOCUMENT_TITLE_UPDATED:
+        handleDocumentTitleUpdatedEvent(data, docId);
+        break;
+      case DOCUMENT_FORCESAVED:
+        handleDocumentForcesavedEvent(data, docId);
+        break;
       case EDITOR_CLOSED_EVENT:
         handleEditorClosedEvent(data, docId);
         break;
@@ -430,7 +452,30 @@ public class CometdOnlyofficeService implements Startable {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
       // Saving a link
-      editors.forceSave(userId, key, false, false, null);
+      editors.forceSave(userId, key, false, false, false, null);
+    }
+
+    /**
+     * Handle document title updated.
+     *
+     * @param data the data
+     * @param docId the doc id
+     */
+    protected void handleDocumentTitleUpdatedEvent(Map<String, Object> data, String docId) {
+      String userId = (String) data.get("userId");
+      String title = (String) data.get("title");
+      String workspace = (String) data.get("workspace");
+      eventsHandlers.submit(new ContainerCommand(PortalContainer.getCurrentPortalContainerName()) {
+        @Override
+        void onContainerError(String error) {
+          LOG.error("An error has occured in container: {}", containerName);
+        }
+
+        @Override
+        void execute(ExoContainer exoContainer) {
+          editors.updateTitle(workspace, docId, title, userId);
+        }
+      });
     }
 
     /**
@@ -473,9 +518,9 @@ public class CometdOnlyofficeService implements Startable {
                             key,
                             lastUser.getDownloadLink());
                 }
-                editors.downloadVersion(lastUser.getId(), key, false, null, lastUser.getDownloadLink());
+                editors.downloadVersion(lastUser.getId(), key, false, false, null, lastUser.getDownloadLink());
               } else {
-                editors.forceSave(lastUser.getId(), key, true, false, null);
+                editors.forceSave(lastUser.getId(), key, true, false, false, null);
               }
             }
           });
@@ -519,9 +564,9 @@ public class CometdOnlyofficeService implements Startable {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Downloading from existing link. User: {}, Key: {}, Link: {}", user.getId(), key, user.getDownloadLink());
             }
-            editors.downloadVersion(userId, key, false, null, user.getDownloadLink());
+            editors.downloadVersion(userId, key, false, false, null, user.getDownloadLink());
           } else {
-            editors.forceSave(userId, key, true, false, null);
+            editors.forceSave(userId, key, true, false, false, null);
           }
         }
       });
@@ -557,12 +602,12 @@ public class CometdOnlyofficeService implements Startable {
                           key,
                           lastUser.getDownloadLink());
               }
-              editors.downloadVersion(lastUser.getId(), key, true, null, lastUser.getDownloadLink());
+              editors.downloadVersion(lastUser.getId(), key, true, false, null, lastUser.getDownloadLink());
             } else {
               if (LOG.isDebugEnabled()) {
                 LOG.debug("Download a new version of document: user " + lastUser.getId() + ", docId: " + docId);
               }
-              editors.forceSave(lastUser.getId(), key, true, true, null);
+              editors.forceSave(lastUser.getId(), key, true, true, false, null);
             }
 
           }
@@ -575,6 +620,35 @@ public class CometdOnlyofficeService implements Startable {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Changes collected from: " + userId + ", docId: " + docId);
       }
+    }
+
+    /**
+     * Handles document forcesave event.
+     * 
+     * @param data the data
+     * @param docId the docId
+     */
+    protected void handleDocumentForcesavedEvent(Map<String, Object> data, String docId) {
+      String userId = (String) data.get("userId");
+      String key = (String) data.get("key");
+      String comment = (String) data.get("comment");
+      eventsHandlers.submit(new ContainerCommand(PortalContainer.getCurrentPortalContainerName()) {
+        @Override
+        void onContainerError(String error) {
+          LOG.error("An error has occured in container: {}", containerName);
+        }
+
+        @Override
+        void execute(ExoContainer exoContainer) {
+          Editor.User lastUser = editors.getLastModifier(key);
+          // If there were changes after last saving
+          if (lastUser.getLinkSaved() >= lastUser.getLastModified()) {
+            editors.downloadVersion(userId, key, true, true, comment, lastUser.getDownloadLink());
+          } else {
+            editors.forceSave(userId, key, true, false, true, comment);
+          }
+        }
+      });
     }
 
     /**
@@ -596,6 +670,9 @@ public class CometdOnlyofficeService implements Startable {
         data.append("\", ");
         data.append("\"userId\": \"");
         data.append(userId);
+        data.append("\", ");
+        data.append("\"displayName\": \"");
+        data.append(getDisplayName(userId));
         data.append("\"");
         data.append('}');
         channel.publish(localSession, data.toString());
@@ -617,6 +694,35 @@ public class CometdOnlyofficeService implements Startable {
         data.append("\", ");
         data.append("\"docId\": \"");
         data.append(docId);
+        data.append("\"");
+        data.append('}');
+        channel.publish(localSession, data.toString());
+      }
+    }
+
+    /**
+     * Publish commented event.
+     *
+     * @param docId the docId
+     * @param userId the userId
+     * @param comment the comment
+     */
+    protected void publishCommentedEvent(String docId, String userId, String comment) {
+      ServerChannel channel = bayeux.getChannel(CHANNEL_NAME + docId);
+      if (channel != null) {
+        StringBuilder data = new StringBuilder();
+        data.append('{');
+        data.append("\"type\": \"");
+        data.append(DOCUMENT_COMMENTED_EVENT);
+        data.append("\", ");
+        data.append("\"docId\": \"");
+        data.append(docId);
+        data.append("\", ");
+        data.append("\"comment\": \"");
+        data.append(comment);
+        data.append("\", ");
+        data.append("\"displayName\": \"");
+        data.append(getDisplayName(userId));
         data.append("\"");
         data.append('}');
         channel.publish(localSession, data.toString());
@@ -693,5 +799,23 @@ public class CometdOnlyofficeService implements Startable {
                                   new LinkedBlockingQueue<Runnable>(queueSize),
                                   new CommandThreadFactory(threadNamePrefix),
                                   new ThreadPoolExecutor.CallerRunsPolicy());
+  }
+
+  /**
+   * Gets user's display name.
+   *
+   * @param userId the userId
+   * @return the displayName
+   */
+  protected String getDisplayName(String userId) {
+    String displayName;
+    try {
+      User user = editors.getUser(userId);
+      displayName = user != null ? user.getDisplayName() : userId;
+    } catch (OnlyofficeEditorException e) {
+      displayName = userId;
+      LOG.debug("Cannot find user by userId {}", userId);
+    }
+    return displayName;
   }
 }

@@ -59,9 +59,11 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.lock.Lock;
+import javax.jcr.version.VersionException;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.AutoCloseInputStream;
+import org.apache.commons.lang.StringUtils;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
 
@@ -74,6 +76,7 @@ import org.exoplatform.container.configuration.ConfigurationException;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.PropertiesParam;
 import org.exoplatform.ecm.utils.lock.LockUtil;
+import org.exoplatform.ecm.utils.text.Text;
 import org.exoplatform.ecm.webui.utils.PermissionUtil;
 import org.exoplatform.ecm.webui.utils.Utils;
 import org.exoplatform.onlyoffice.Config.Editor;
@@ -86,17 +89,21 @@ import org.exoplatform.services.cache.ExoCache;
 import org.exoplatform.services.cms.BasePath;
 import org.exoplatform.services.cms.documents.DocumentService;
 import org.exoplatform.services.cms.documents.TrashService;
+import org.exoplatform.services.cms.drives.DriveData;
 import org.exoplatform.services.cms.drives.ManageDriveService;
 import org.exoplatform.services.cms.lock.LockService;
 import org.exoplatform.services.jcr.RepositoryService;
+import org.exoplatform.services.jcr.access.PermissionType;
 import org.exoplatform.services.jcr.core.nodetype.ExtendedNodeTypeManager;
 import org.exoplatform.services.jcr.core.nodetype.NodeTypeDataManager;
 import org.exoplatform.services.jcr.ext.app.SessionProviderService;
 import org.exoplatform.services.jcr.ext.common.SessionProvider;
 import org.exoplatform.services.jcr.ext.hierarchy.NodeHierarchyCreator;
+import org.exoplatform.services.jcr.impl.core.NodeImpl;
 import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.services.organization.Group;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.User;
 import org.exoplatform.services.organization.UserProfile;
@@ -105,6 +112,7 @@ import org.exoplatform.services.security.Authenticator;
 import org.exoplatform.services.security.ConversationState;
 import org.exoplatform.services.security.Identity;
 import org.exoplatform.services.security.IdentityRegistry;
+import org.exoplatform.services.wcm.core.NodetypeConstant;
 import org.exoplatform.services.wcm.utils.WCMCoreUtils;
 import org.exoplatform.social.core.activity.model.ExoSocialActivity;
 import org.exoplatform.social.core.activity.model.ExoSocialActivityImpl;
@@ -112,6 +120,7 @@ import org.exoplatform.social.core.application.SpaceActivityPublisher;
 import org.exoplatform.social.core.identity.provider.OrganizationIdentityProvider;
 import org.exoplatform.social.core.manager.ActivityManager;
 import org.exoplatform.social.core.manager.IdentityManager;
+import org.exoplatform.social.core.space.model.Space;
 import org.exoplatform.social.core.space.spi.SpaceService;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.application.portlet.PortletRequestContext;
@@ -579,6 +588,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
     String path = node.getPath();
     String nodePath = nodePath(workspace, path);
+    
     // The path in form of Drive:path/to/node/nodeTitle
     // TODO other node types?
     if (!node.isNodeType("nt:file")) {
@@ -615,6 +625,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           builder.author(userId);
           builder.fileType(fileType);
           builder.created(nodeCreated(node));
+          builder.displayPath(getDisplayPath(node, userId));
+          builder.comment(nodeComment(node));
+          builder.renameAllowed(canRenameDocument(node));
+          builder.isActivity(ActivityTypeUtils.getActivityId(node) != null);
           try {
             builder.folder(node.getParent().getName());
           } catch (AccessDeniedException e) {
@@ -689,6 +703,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                                           .build();
 
       fireCreated(status);
+    } else {
+      // Update display path and rename
+      config.setDisplayPath(getDisplayPath(node, userId));
+      config.setRenameAllowed(canRenameDocument(node)); 
     }
     return config;
   }
@@ -905,7 +923,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           }
           // Here we decide if we need to download content or just save the link
           if (status.isSaved()) {
-            downloadVersion(status.getUserId(), key, status.isCoedited(), status.getComment(), status.getUrl());
+            downloadVersion(status.getUserId(), key, status.isCoedited(), status.isForcesaved(), status.getComment(), status.getUrl());
           } else {
             saveLink(status.getUserId(), key, status.getUrl());
           }
@@ -1142,11 +1160,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @param userId the userId
    * @param key the key
    * @param coEdited the coEdited
+   * @param forcesaved the forcesaved
    * @param comment the comment
    * @param contentUrl the contentUrl
    */
   @Override
-  public void downloadVersion(String userId, String key, boolean coEdited, String comment, String contentUrl) {
+  public void downloadVersion(String userId, String key, boolean coEdited, boolean forcesaved, String comment, String contentUrl) {
     String docId = null;
     try {
       Config config = getEditorByKey(userId, key);
@@ -1157,6 +1176,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                                           .comment(comment)
                                                           .userId(userId)
                                                           .coEdited(coEdited)
+                                                          .forcesaved(forcesaved)
                                                           .build();
       download(config, status);
       // we set it sooner to let clients see the save
@@ -1217,10 +1237,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * {@inheritDoc}
    */
   @Override
-  public void forceSave(String userId, String key, boolean download, boolean coEdit, String comment) {
+  public void forceSave(String userId, String key, boolean download, boolean coEdit, boolean forcesaved, String comment) {
     HttpURLConnection connection = null;
     try {
-      Userdata userdata = new Userdata(userId, download, coEdit, comment);
+      Userdata userdata = new Userdata(userId, download, coEdit, forcesaved, comment);
       String json = new JSONObject().put("c", "forcesave").put("key", key).put("userdata", userdata.toJSON()).toString();
       byte[] postDataBytes = json.toString().getBytes("UTF-8");
 
@@ -1284,6 +1304,74 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       }
     }
     return false;
+  }
+
+  @Override
+  public void updateTitle(String workspace, String docId, String newTitle, String userId) {
+    ConversationState contextState = ConversationState.getCurrent();
+    SessionProvider contextProvider = sessionProviders.getSessionProvider(null);
+    if (!setUserConvoState(userId)) {
+      LOG.error("Cannot set user conversation state: {}", userId);
+      return;
+    }
+    try {
+      newTitle = Text.escapeIllegalJcrChars(newTitle);
+      // Check and escape newTitle
+      if (StringUtils.isBlank(newTitle)) {
+        LOG.warn("Cannot rename document docId: " + docId + " - new title is empty");
+        return;
+      }
+      NodeImpl node = (NodeImpl) getDocumentById(workspace, docId);
+      if (node == null) {
+        throw new DocumentNotFoundException("Cannot find document. docId: " + docId);
+      }
+
+      Node parentNode = node.getParent();
+      if (parentNode.canAddMixin(NodetypeConstant.MIX_REFERENCEABLE)) {
+        parentNode.addMixin(NodetypeConstant.MIX_REFERENCEABLE);
+        parentNode.save();
+      }
+
+      if (!node.hasPermission(PermissionType.REMOVE)) {
+        Session systemSession = jcrService.getCurrentRepository().getSystemSession(workspace);
+        NodeImpl systemNode = (NodeImpl) systemSession.getNodeByUUID(docId);
+        systemNode.addMixin("exo:privilegeable");
+        systemNode.setPermission(userId,
+                                 new String[] { PermissionType.REMOVE, PermissionType.READ, PermissionType.ADD_NODE,
+                                     PermissionType.SET_PROPERTY });
+        systemNode.save();
+      }
+
+      parentNode.getSession().move(node.getPath(), parentNode.getPath() + "/" + newTitle);
+      node.setProperty("exo:lastModifier", userId);
+      node.setProperty("exo:name", newTitle);
+      node.setProperty("exo:title", newTitle);
+      node.refresh(true);
+      parentNode.getSession().save();
+
+    } catch (Exception e) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Rename is not successful!", e);
+      }
+    } finally {
+      restoreConvoState(contextState, contextProvider);
+    }
+  }
+  
+  /**
+   * Gets the user.
+   *
+   * @param username the username
+   * @return the user
+   * @throws OnlyofficeEditorException the onlyoffice editor exception
+   */
+  @Override
+  public User getUser(String username) throws OnlyofficeEditorException {
+    try {
+      return organization.getUserHandler().findUserByName(username);
+    } catch (Exception e) {
+      throw new OnlyofficeEditorException("Error searching user " + username, e);
+    }
   }
 
   // *********************** implementation level ***************
@@ -1472,21 +1560,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    */
   protected String nodePath(Config config) {
     return nodePath(config.getWorkspace(), config.getPath());
-  }
-
-  /**
-   * Gets the user.
-   *
-   * @param username the username
-   * @return the user
-   * @throws OnlyofficeEditorException the onlyoffice editor exception
-   */
-  protected User getUser(String username) throws OnlyofficeEditorException {
-    try {
-      return organization.getUserHandler().findUserByName(username);
-    } catch (Exception e) {
-      throw new OnlyofficeEditorException("Error searching user " + username, e);
-    }
   }
 
   /**
@@ -1736,9 +1809,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             sameModifier = userId.equals(node.getProperty("exo:lastModifier").getString());
             node.setProperty("exo:lastModifier", userId);
           }
+          
+          // TODO: Need to set SameModifier to false if last time the document was saved by forcesave
           modifierConfig.setSameModifier(sameModifier);
           modifierConfig.setPreviousModified(content.getProperty("jcr:lastModified").getDate());
-
+          
           Boolean onlyofficeVersion = false;
           if (frozen.hasProperty("eoo:onlyofficeVersion")) {
             onlyofficeVersion = frozen.getProperty("eoo:onlyofficeVersion").getBoolean();
@@ -1765,6 +1840,26 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             node.setProperty("exo:dateModified", editedTime);
           }
 
+          // Add comment to the FileActivity with current file
+          String commentId = null;
+          String versionSummary = null;
+          if (status.getComment() != null && !status.getComment().trim().isEmpty()) {
+            String activityId = ActivityTypeUtils.getActivityId(node);
+            if (activityId != null) {
+              commentId = addComment(activityId, status.getComment(), userId);
+              versionSummary = status.getComment().trim();
+            }
+          }
+
+          if (commentId != null) {
+            node.setProperty("eoo:commentId", commentId);
+            config.setComment(status.getComment());
+            fireCommented(status);
+          } else {
+            node.setProperty("eoo:commentId", "");
+            config.setComment(null);
+          }
+
           // update document
           content.setProperty("jcr:data", data);
 
@@ -1775,16 +1870,17 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           if (frozen.hasProperty("eoo:versionOwner")) {
             versioningUser = frozen.getProperty("eoo:versionOwner").getString();
           }
+          
           // Version accumulation for same user
-          if (versionable && userId.equals(versioningUser)) {
+          if (!status.isForcesaved() && versionable && userId.equals(versioningUser)) {
             String versionName = node.getBaseVersion().getName();
             if (LOG.isDebugEnabled()) {
-              LOG.debug("Removig version " + versionName + " from node " + nodePath);
+              LOG.debug("Version accumulation: removig version " + versionName + " from node " + nodePath);
             }
             node.getVersionHistory().removeVersion(versionName);
           }
 
-          if (statusCode != 2) {
+          if (statusCode != 2 && !status.isForcesaved()) {
             node.setProperty("eoo:versionOwner", userId);
           } else {
             node.setProperty("eoo:versionOwner", "");
@@ -1799,9 +1895,20 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             // Since 1.2.0-RC01 we check-out the document to let (more) other
             // actions in ECMS appear on it
             node.checkout();
+            
             // Remove properties from node
             node.setProperty("eoo:versionOwner", "");
             node.setProperty("eoo:onlyofficeVersion", false);
+            
+            // Add version summary
+            if(versionable && versionSummary != null) {
+              String baseVersion = node.getBaseVersion().getName();
+              try {
+                node.getVersionHistory().addVersionLabel(baseVersion, versionSummary, false);
+              } catch (VersionException e) {
+                LOG.debug("Cannot add version label {}", e.getMessage());
+              }
+            }
             node.save();
 
             // If the status code == 2, the EDITOR_SAVED_EVENT should be
@@ -2359,6 +2466,21 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   /**
+   * Fire commented.
+   *
+   * @param status the status
+   */
+  protected void fireCommented(DocumentStatus status) {
+    for (OnlyofficeEditorListener l : listeners) {
+      try {
+        l.onCommented(status);
+      } catch (Throwable t) {
+        LOG.warn("Comment listener error", t);
+      }
+    }
+  }
+
+  /**
    * Fire error.
    *
    * @param status the status
@@ -2573,4 +2695,118 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
+  /**
+   * Gets display path. 
+   *
+   * @param node the node
+   * @param userId the userId
+   * @return the display path
+   */
+  protected String getDisplayPath(Node node, String userId) {
+
+    try {
+      DriveData driveData = documentService.getDriveOfNode(node.getPath());
+      List<String> elems = Arrays.asList(node.getPath().split("/"));
+      String lastFolder;
+      try {
+        lastFolder = node.getParent().getProperty("exo:title").getString();
+      } catch (Exception e) {
+        LOG.debug("Couldn't get exo:title from node parent. Node {}, message {}", node.getPath(), e.getMessage());
+        lastFolder = elems.get(elems.size() - 2);
+      }
+      String title = node.hasProperty("exo:title") ? node.getProperty("exo:title").getString() : elems.get(elems.size() - 1);
+      String drive = "";
+      if (driveData != null) {
+        String driveName = driveData.getName();
+        if (node.getPath().startsWith(usersPath)) {
+          drive = driveName;
+          // Hide last folder for shared docs
+          if (!userId.equals(getUserId(node.getPath()))) {
+            lastFolder = "...";
+            // TODO: We can get all symlinks, but have to find right one
+            // LinkManager linkManager = WCMCoreUtils.getService(LinkManager.class);
+            // List<Node> symlinksSystem = linkManager.getAllLinks(node, ManageDocumentService.EXO_SYMLINK,
+            // sessionProviders.getSystemSessionProvider(null));
+          }
+        } else {
+          if (driveName.startsWith(".spaces.")) {
+            String spacePrettyName = driveName.substring(driveName.lastIndexOf(".") + 1);
+            Space space = spaceService.getSpaceByPrettyName(spacePrettyName);
+            if (space != null) {
+              drive = space.getDisplayName();
+            } else {
+              LOG.warn("Cannot find space by pretty name {}", spacePrettyName);
+              drive = spacePrettyName;
+            }
+          } else if (driveName.startsWith(".platform.")) {
+            String groupId = driveName.replaceAll(".", "/");
+            Group group = organization.getGroupHandler().findGroupById(groupId);
+            if (group != null) {
+              drive = group.getLabel();
+            } else {
+              LOG.warn("Cannot find group by id {}", groupId);
+              drive = groupId;
+            }
+          }
+        }
+      }
+      
+      return drive + ":" + lastFolder + "/" + title;
+    } catch (Exception e) {
+      LOG.error("Error occured while creating display path", e);
+      return null;
+    }
+  }
+
+  /**
+   * Gets userId from node path.
+   * 
+   * @param path the node path
+   * @return the userId
+   */
+  protected String getUserId(String path) {
+    List<String> elems = Arrays.asList(path.split("/"));
+    int position = 2;
+    while (elems.get(position).endsWith("_")) {
+      position++;
+    }
+    return elems.get(position);
+  }
+
+  /**
+   * Gets comment of last version of node
+   *
+   * @param node the node
+   * @return the comment or null
+   */
+  protected String nodeComment(Node node) {
+    try {
+      if (node.hasProperty("eoo:commentId")) {
+        String commentId = node.getProperty("eoo:commentId").getString();
+        if (commentId != null && !commentId.isEmpty()) {
+          ExoSocialActivity comment = activityManager.getActivity(commentId);
+          return comment != null ? comment.getTitle() : null;
+        }
+      }
+    } catch (Exception e) {
+      LOG.warn("Cannot get eoo:commentId of node.", e);
+    }
+    return null;
+  }
+
+  /**
+   * Checks if current user can rename the document.
+   *
+   * @param node the node
+   * @return true if user can rename 
+   */
+  protected boolean canRenameDocument(Node node) {
+    try {
+      NodeImpl parent = (NodeImpl) node.getParent();
+      return parent.hasPermission(PermissionType.READ) && parent.hasPermission(PermissionType.ADD_NODE)
+          && parent.hasPermission(PermissionType.SET_PROPERTY);
+    } catch (Exception e) {
+      return false;
+    }
+  }
 }

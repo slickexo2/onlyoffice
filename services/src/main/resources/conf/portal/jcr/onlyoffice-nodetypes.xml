@@ -33,7 +33,6 @@
         mandatory="false" onParentVersion="VERSION" protected="false" multiple="false">
         <valueConstraints />
       </propertyDefinition>
-      <!-- Will be used in Onlyoffice 1.5 for Editor Bar feature. -->
       <propertyDefinition name="eoo:commentId" requiredType="String" autoCreated="false" mandatory="false"
         onParentVersion="VERSION" protected="false" multiple="false">
         <valueConstraints />
