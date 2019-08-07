@@ -32,6 +32,7 @@ import org.exoplatform.onlyoffice.OnlyofficeEditorService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.social.webui.activity.BaseUIActivity;
+import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.ComponentConfigs;
 import org.exoplatform.webui.config.annotation.EventConfig;
@@ -88,15 +89,15 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
 
     if (getFilesCount() == 1) {
       Node node = getContentNode(0);
-        if (node != null) {
-          callModule("initActivity('" + editorService.initDocument(node) + "', " + contextEditorLink(node, "stream") + ",'"
-              + activityId + "');");
-        }
+      if (node != null) {
+        callModule("initActivity('" + editorService.initDocument(node) + "', " + contextEditorLink(node, "stream") + ",'"
+            + activityId + "');");
+      }
     }
-
     // Init preview links for each of file
     for (int index = 0; index < getFilesCount(); index++) {
       Node node = getContentNode(index);
+      addFilePreferences(node, index);
       if (node != null) {
         callModule("initPreview('" + editorService.initDocument(node) + "', " + contextEditorLink(node, "preview") + ",'"
             + new StringBuilder("#Preview").append(activityId).append('-').append(index).toString() + "');");
@@ -134,5 +135,29 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
     } else {
       return new StringBuilder().append('\'').append(editorLink(link, context)).append('\'').toString();
     }
+  }
+
+  /**
+   * Addds file preferences to the node (path for opening shared doc for particular user).
+   * @param node the node
+   * @param index the index
+   * @throws RepositoryException  the repositoryException
+   */
+  private void addFilePreferences(Node node, int index) throws RepositoryException {
+    WebuiRequestContext context = WebuiRequestContext.getCurrentInstance();
+    String userId = context.getRemoteUser();
+    if (!node.hasNode("preferences")) {
+      node.addNode("preferences", "eoo:filePreferences");
+    }
+    node.save();
+    Node preferences = node.getNode("preferences");
+
+    if (!preferences.hasNode(userId)) {
+      Node userPreferences = preferences.addNode(userId, "eoo:userPreferences");
+      String location = getNodeLocation(index).getPath();
+      location = location.substring(location.lastIndexOf(":") + 1);
+      userPreferences.setProperty("path", location);
+    }
+    node.save();
   }
 }
