@@ -876,7 +876,11 @@
       var folders = config.displayPath.split(':')[1].split('/');
       var title = folders.pop();
       var $bar = $("#editor-top-bar");
-      $bar.find("a[rel=tooltip]").tooltip();
+      if(config.renameAllowed){
+        $bar.find("a[rel=tooltip]").tooltip();
+      } else {
+        $bar.find("a[rel=tooltip]").not(".document-title a[rel=tooltip]").tooltip();
+      }
       if(!config.activity) {
         $bar.find("#comment-box").prop("disabled", true);
       }

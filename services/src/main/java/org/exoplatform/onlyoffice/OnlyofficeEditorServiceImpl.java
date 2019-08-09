@@ -169,6 +169,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /** The Constant HTTP_PORT_DELIMITER. */
   protected static final char    HTTP_PORT_DELIMITER      = ':';
 
+  /** The hidden folder */
+  protected static final String  HIDDEN_FOLDER            = "...";
+
   /** The Constant TYPE_TEXT. */
   protected static final String  TYPE_TEXT                = "text";
 
@@ -483,7 +486,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   @Override
   public Config getEditor(String userId, String workspace, String path) throws OnlyofficeEditorException, RepositoryException {
     Node node = getDocument(workspace, path);
-    return node != null ? getEditor(userId, node.getUUID(), false) : null;
+    if (node != null && node.isNodeType("mix:referenceable")) {
+      return getEditor(userId, node.getUUID(), false);
+    }
+    return null;
   }
 
   /**
@@ -588,7 +594,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
     String path = node.getPath();
     String nodePath = nodePath(workspace, path);
-    
+
     // The path in form of Drive:path/to/node/nodeTitle
     // TODO other node types?
     if (!node.isNodeType("nt:file")) {
@@ -704,9 +710,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
       fireCreated(status);
     } else {
-      // Update display path and rename
+      // Update display path, rename allowed and comment
       config.setDisplayPath(getDisplayPath(node, userId));
-      config.setRenameAllowed(canRenameDocument(node)); 
+      config.setRenameAllowed(canRenameDocument(node));
+      config.setComment(nodeComment(node));
     }
     return config;
   }
@@ -923,7 +930,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           }
           // Here we decide if we need to download content or just save the link
           if (status.isSaved()) {
-            downloadVersion(status.getUserId(), key, status.isCoedited(), status.isForcesaved(), status.getComment(), status.getUrl());
+            downloadVersion(status.getUserId(),
+                            key,
+                            status.isCoedited(),
+                            status.isForcesaved(),
+                            status.getComment(),
+                            status.getUrl());
           } else {
             saveLink(status.getUserId(), key, status.getUrl());
           }
@@ -1066,14 +1078,23 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    */
   @Override
   public void start() {
+    InputStream is = null;
     try {
       String workspace = jcrService.getCurrentRepository().getConfiguration().getDefaultWorkspaceName();
       Session session = jcrService.getCurrentRepository().getSystemSession(workspace);
       ExtendedNodeTypeManager nodeTypeManager = (ExtendedNodeTypeManager) session.getWorkspace().getNodeTypeManager();
-      InputStream is = OnlyofficeEditorService.class.getResourceAsStream("/conf/portal/jcr/onlyoffice-nodetypes.xml");
+      is = OnlyofficeEditorService.class.getResourceAsStream("/conf/portal/jcr/onlyoffice-nodetypes.xml");
       nodeTypeManager.registerNodeTypes(is, ExtendedNodeTypeManager.REPLACE_IF_EXISTS, NodeTypeDataManager.TEXT_XML);
     } catch (Exception e) {
       LOG.error("Cannot update nodetypes.", e);
+    } finally {
+      if (is != null) {
+        try {
+          is.close();
+        } catch (IOException e) {
+          LOG.error("Cannot close InputStream", e);
+        }
+      }
     }
     LOG.info("Onlyoffice Editor service successfuly started");
   }
@@ -1165,7 +1186,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @param contentUrl the contentUrl
    */
   @Override
-  public void downloadVersion(String userId, String key, boolean coEdited, boolean forcesaved, String comment, String contentUrl) {
+  public void downloadVersion(String userId,
+                              String key,
+                              boolean coEdited,
+                              boolean forcesaved,
+                              String comment,
+                              String contentUrl) {
     String docId = null;
     try {
       Config config = getEditorByKey(userId, key);
@@ -1357,7 +1383,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       restoreConvoState(contextState, contextProvider);
     }
   }
-  
+
   /**
    * Gets the user.
    *
@@ -1372,6 +1398,35 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     } catch (Exception e) {
       throw new OnlyofficeEditorException("Error searching user " + username, e);
     }
+  }
+
+  /**
+   * Addds file preferences to the node (path for opening shared doc for particular user).
+   * @param node the node
+   * @param userId the userId
+   * @param path the path
+   * @throws RepositoryException  the repositoryException
+   */
+  @Override
+  public void addFilePreferences(Node node, String userId, String path) throws RepositoryException {
+    Node preferences;
+    if (!node.hasNode("eoo:preferences")) {
+      if (node.canAddMixin("eoo:onlyofficeFile")) {
+        node.addMixin("eoo:onlyofficeFile");
+      }
+      preferences = node.addNode("eoo:preferences");
+    } else {
+      preferences = node.getNode("eoo:preferences");
+    }
+
+    Node userPreferences;
+    if (!preferences.hasNode(userId)) {
+      userPreferences = preferences.addNode(userId, "eoo:userPreferences");
+    } else {
+      userPreferences = preferences.getNode(userId);
+    }
+    userPreferences.setProperty("path", path);
+    node.save();
   }
 
   // *********************** implementation level ***************
@@ -1809,11 +1864,11 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             sameModifier = userId.equals(node.getProperty("exo:lastModifier").getString());
             node.setProperty("exo:lastModifier", userId);
           }
-          
+
           // TODO: Need to set SameModifier to false if last time the document was saved by forcesave
           modifierConfig.setSameModifier(sameModifier);
           modifierConfig.setPreviousModified(content.getProperty("jcr:lastModified").getDate());
-          
+
           Boolean onlyofficeVersion = false;
           if (frozen.hasProperty("eoo:onlyofficeVersion")) {
             onlyofficeVersion = frozen.getProperty("eoo:onlyofficeVersion").getBoolean();
@@ -1859,6 +1914,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             node.setProperty("eoo:commentId", "");
             config.setComment(null);
           }
+          updateCache(config);
 
           // update document
           content.setProperty("jcr:data", data);
@@ -1870,7 +1926,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           if (frozen.hasProperty("eoo:versionOwner")) {
             versioningUser = frozen.getProperty("eoo:versionOwner").getString();
           }
-          
+
           // Version accumulation for same user
           if (!status.isForcesaved() && versionable && userId.equals(versioningUser)) {
             String versionName = node.getBaseVersion().getName();
@@ -1895,13 +1951,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             // Since 1.2.0-RC01 we check-out the document to let (more) other
             // actions in ECMS appear on it
             node.checkout();
-            
+
             // Remove properties from node
             node.setProperty("eoo:versionOwner", "");
             node.setProperty("eoo:onlyofficeVersion", false);
-            
+
             // Add version summary
-            if(versionable && versionSummary != null) {
+            if (versionable && versionSummary != null) {
               String baseVersion = node.getBaseVersion().getName();
               try {
                 node.getVersionHistory().addVersionLabel(baseVersion, versionSummary, false);
@@ -1961,6 +2017,19 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       }
     } finally {
       restoreConvoState(contextState, contextProvider);
+    }
+  }
+
+  /**
+   * Updates config in the activeCache.
+   *
+   * @param config the config
+   */
+  protected void updateCache(Config config) {
+    ConcurrentMap<String, Config> configs = activeCache.get(config.getDocument().getKey());
+    if (configs != null) {
+      activeCache.put(config.getDocument().getKey(), configs);
+      activeCache.put(config.getDocId(), configs);
     }
   }
 
@@ -2703,59 +2772,78 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @return the display path
    */
   protected String getDisplayPath(Node node, String userId) {
-
     try {
       DriveData driveData = documentService.getDriveOfNode(node.getPath());
       List<String> elems = Arrays.asList(node.getPath().split("/"));
-      String lastFolder;
+      String parentFolder;
       try {
-        lastFolder = node.getParent().getProperty("exo:title").getString();
+        parentFolder = node.getParent().getProperty("exo:title").getString();
       } catch (Exception e) {
         LOG.debug("Couldn't get exo:title from node parent. Node {}, message {}", node.getPath(), e.getMessage());
-        lastFolder = elems.get(elems.size() - 2);
+        parentFolder = elems.get(elems.size() - 2);
       }
       String title = node.hasProperty("exo:title") ? node.getProperty("exo:title").getString() : elems.get(elems.size() - 1);
       String drive = "";
       if (driveData != null) {
         String driveName = driveData.getName();
+        // User's documents
         if (node.getPath().startsWith(usersPath)) {
           drive = driveName;
-          // Hide last folder for shared docs
+          // Shared document
           if (!userId.equals(getUserId(node.getPath()))) {
-            lastFolder = "...";
-            // TODO: We can get all symlinks, but have to find right one
-            // LinkManager linkManager = WCMCoreUtils.getService(LinkManager.class);
-            // List<Node> symlinksSystem = linkManager.getAllLinks(node, ManageDocumentService.EXO_SYMLINK,
-            // sessionProviders.getSystemSessionProvider(null));
+            Node symlink = getSymlink(node, userId);
+            if (symlink != null) {
+              return getDisplayPath(symlink, userId);
+            } else {
+              parentFolder = HIDDEN_FOLDER;
+            }
           }
-        } else {
-          if (driveName.startsWith(".spaces.")) {
-            String spacePrettyName = driveName.substring(driveName.lastIndexOf(".") + 1);
-            Space space = spaceService.getSpaceByPrettyName(spacePrettyName);
-            if (space != null) {
-              drive = space.getDisplayName();
-            } else {
-              LOG.warn("Cannot find space by pretty name {}", spacePrettyName);
-              drive = spacePrettyName;
-            }
-          } else if (driveName.startsWith(".platform.")) {
-            String groupId = driveName.replaceAll(".", "/");
-            Group group = organization.getGroupHandler().findGroupById(groupId);
-            if (group != null) {
-              drive = group.getLabel();
-            } else {
-              LOG.warn("Cannot find group by id {}", groupId);
-              drive = groupId;
-            }
+          // Spaces's documents
+        } else if (driveName.startsWith(".spaces.")) {
+          String spacePrettyName = driveName.substring(driveName.lastIndexOf(".") + 1);
+          Space space = spaceService.getSpaceByPrettyName(spacePrettyName);
+          if (space != null) {
+            drive = space.getDisplayName();
+          } else {
+            LOG.warn("Cannot find space by pretty name {}", spacePrettyName);
+            drive = spacePrettyName;
+          }
+          // Group's documents
+        } else if (driveName.startsWith(".platform.")) {
+          String groupId = driveName.replaceAll(".", "/");
+          Group group = organization.getGroupHandler().findGroupById(groupId);
+          if (group != null) {
+            drive = group.getLabel();
+          } else {
+            LOG.warn("Cannot find group by id {}", groupId);
+            drive = groupId;
           }
         }
       }
-      
-      return drive + ":" + lastFolder + "/" + title;
+      return drive + ":" + parentFolder + "/" + title;
     } catch (Exception e) {
       LOG.error("Error occured while creating display path", e);
       return null;
     }
+  }
+
+  /**
+   * Gets parent folder of the file based on file preferences
+   * @param node the node
+   * @param userId the userId
+   * @return the Node
+   * @throws Exception the exception
+   */
+  protected Node getSymlink(Node node, String userId) throws Exception {
+    if (node.hasNode("eoo:preferences")) {
+      Node filePreferences = node.getNode("eoo:preferences");
+      if (filePreferences.hasNode(userId)) {
+        Node userPreferences = filePreferences.getNode(userId);
+        String path = userPreferences.getProperty("path").getString();
+        return (Node) node.getSession().getItem(path);
+      }
+    }
+    return null;
   }
 
   /**

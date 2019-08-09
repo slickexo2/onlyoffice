@@ -340,4 +340,13 @@ public interface OnlyofficeEditorService {
    */
   User getUser(String username) throws OnlyofficeEditorException;
 
+  /**
+   * Adds file preferences (path to symlink)
+   * @param node the node
+   * @param userId the userId
+   * @param path the path
+   * @throws RepositoryException the repository exception
+   */
+  void addFilePreferences(Node node, String userId, String path) throws RepositoryException;
+
 }

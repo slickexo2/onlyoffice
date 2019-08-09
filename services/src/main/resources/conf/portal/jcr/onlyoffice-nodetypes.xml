@@ -20,35 +20,8 @@
 <nodeTypes xmlns:nt="http://www.jcp.org/jcr/nt/1.0" xmlns:mix="http://www.jcp.org/jcr/mix/1.0"
   xmlns:jcr="http://www.jcp.org/jcr/1.0">
 
-  <nodeType name="eoo:onlyofficeFile" isMixin="true" hasOrderableChildNodes="false">
-    <supertypes>
-      <supertype>mix:referenceable</supertype>
-    </supertypes>
-    <propertyDefinitions>
-      <propertyDefinition name="eoo:versionOwner" requiredType="String" autoCreated="false" mandatory="false"
-        onParentVersion="VERSION" protected="false" multiple="false">
-        <valueConstraints />
-      </propertyDefinition>
-      <propertyDefinition name="eoo:onlyofficeVersion" requiredType="Boolean" autoCreated="false"
-        mandatory="false" onParentVersion="VERSION" protected="false" multiple="false">
-        <valueConstraints />
-      </propertyDefinition>
-      <propertyDefinition name="eoo:commentId" requiredType="String" autoCreated="false" mandatory="false"
-        onParentVersion="VERSION" protected="false" multiple="false">
-        <valueConstraints />
-      </propertyDefinition>
-    </propertyDefinitions>
-    <childNodeDefinitions>
-      <childNodeDefinition name="preferences" defaultPrimaryType="eoo:filePreferences" autoCreated="false"
-        mandatory="false" onParentVersion="VERSION" protected="false" sameNameSiblings="false">
-        <requiredPrimaryTypes>
-          <requiredPrimaryType>eoo:filePreferences</requiredPrimaryType>
-        </requiredPrimaryTypes>
-      </childNodeDefinition>
-    </childNodeDefinitions>
-  </nodeType>
 
-  <nodeType name="eoo:filePreferences" isMixin="false" hasOrderableChildNodes="true" primaryItemName="">
+  <nodeType name="eoo:filePreferences0" isMixin="false" hasOrderableChildNodes="true" primaryItemName="">
     <supertypes>
       <supertype>nt:base</supertype>
     </supertypes>
@@ -95,5 +68,32 @@
       </childNodeDefinition>
     </childNodeDefinitions>
   </nodeType>
-
+  
+  <nodeType name="eoo:onlyofficeFile" isMixin="true" hasOrderableChildNodes="false">
+    <supertypes>
+      <supertype>mix:referenceable</supertype>
+    </supertypes>
+    <propertyDefinitions>
+      <propertyDefinition name="eoo:versionOwner" requiredType="String" autoCreated="false" mandatory="false"
+        onParentVersion="VERSION" protected="false" multiple="false">
+        <valueConstraints />
+      </propertyDefinition>
+      <propertyDefinition name="eoo:onlyofficeVersion" requiredType="Boolean" autoCreated="false"
+        mandatory="false" onParentVersion="VERSION" protected="false" multiple="false">
+        <valueConstraints />
+      </propertyDefinition>
+      <propertyDefinition name="eoo:commentId" requiredType="String" autoCreated="false" mandatory="false"
+        onParentVersion="VERSION" protected="false" multiple="false">
+        <valueConstraints />
+      </propertyDefinition>
+    </propertyDefinitions>
+    <childNodeDefinitions>
+      <childNodeDefinition name="eoo:preferences" defaultPrimaryType="eoo:filePreferences" autoCreated="false"
+        mandatory="false" onParentVersion="VERSION" protected="false" sameNameSiblings="false">
+        <requiredPrimaryTypes>
+          <requiredPrimaryType>eoo:filePreferences</requiredPrimaryType>
+        </requiredPrimaryTypes>
+      </childNodeDefinition>
+    </childNodeDefinitions>
+  </nodeType>
 </nodeTypes>

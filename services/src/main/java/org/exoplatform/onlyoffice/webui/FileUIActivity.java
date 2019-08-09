@@ -89,15 +89,20 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
 
     if (getFilesCount() == 1) {
       Node node = getContentNode(0);
+      node = editorService.getDocument(node.getSession().getWorkspace().getName(), node.getPath());
       if (node != null) {
         callModule("initActivity('" + editorService.initDocument(node) + "', " + contextEditorLink(node, "stream") + ",'"
             + activityId + "');");
       }
     }
+    String userId = WebuiRequestContext.getCurrentInstance().getRemoteUser();
     // Init preview links for each of file
     for (int index = 0; index < getFilesCount(); index++) {
-      Node node = getContentNode(index);
-      addFilePreferences(node, index);
+      Node symlink = getContentNode(index);
+      Node node = editorService.getDocument(symlink.getSession().getWorkspace().getName(), symlink.getPath());
+      if (symlink.isNodeType("exo:symlink")) {
+        editorService.addFilePreferences(node, userId, symlink.getPath());
+      }
       if (node != null) {
         callModule("initPreview('" + editorService.initDocument(node) + "', " + contextEditorLink(node, "preview") + ",'"
             + new StringBuilder("#Preview").append(activityId).append('-').append(index).toString() + "');");
@@ -137,27 +142,4 @@ public class FileUIActivity extends org.exoplatform.wcm.ext.component.activity.F
     }
   }
 
-  /**
-   * Addds file preferences to the node (path for opening shared doc for particular user).
-   * @param node the node
-   * @param index the index
-   * @throws RepositoryException  the repositoryException
-   */
-  private void addFilePreferences(Node node, int index) throws RepositoryException {
-    WebuiRequestContext context = WebuiRequestContext.getCurrentInstance();
-    String userId = context.getRemoteUser();
-    if (!node.hasNode("preferences")) {
-      node.addNode("preferences", "eoo:filePreferences");
-    }
-    node.save();
-    Node preferences = node.getNode("preferences");
-
-    if (!preferences.hasNode(userId)) {
-      Node userPreferences = preferences.addNode(userId, "eoo:userPreferences");
-      String location = getNodeLocation(index).getPath();
-      location = location.substring(location.lastIndexOf(":") + 1);
-      userPreferences.setProperty("path", location);
-    }
-    node.save();
-  }
 }
