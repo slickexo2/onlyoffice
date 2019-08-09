@@ -728,6 +728,24 @@ public class Config implements Externalizable {
     public Long getLastModified() {
       return lastModified;
     }
+    
+    /**
+     * Sets lastModifier.
+     *
+     * @param lastModifier the lastModifier
+     */
+    protected void setLastModifier(String lastModifier) {
+      this.lastModifier = lastModifier;
+    }
+    
+    /**
+     * Sets lastModified.
+     *
+     * @param lastModified the lastModified
+     */
+    protected void setLastModified(Long lastModified) {
+      this.lastModified = lastModified;
+    }
   }
 
   /**

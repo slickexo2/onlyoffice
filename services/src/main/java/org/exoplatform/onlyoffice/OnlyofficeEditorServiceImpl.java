@@ -710,10 +710,21 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
       fireCreated(status);
     } else {
-      // Update display path, rename allowed and comment
+      // Update fields
       config.setDisplayPath(getDisplayPath(node, userId));
       config.setRenameAllowed(canRenameDocument(node));
       config.setComment(nodeComment(node));
+      
+      if (node.hasProperty("exo:lastModifier")) {
+        String lastModifierId = node.getProperty("exo:lastModifier").getString();
+        User modifier = getUser(lastModifierId);
+        if (modifier != null) {
+          config.getDocument().setLastModifier(modifier.getDisplayName());
+        }
+      }
+      if (node.hasProperty("exo:lastModifiedDate")) {
+        config.getDocument().setLastModified(node.getProperty("exo:lastModifiedDate").getDate().getTimeInMillis());
+      }
     }
     return config;
   }
