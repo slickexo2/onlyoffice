@@ -21,7 +21,7 @@
   xmlns:jcr="http://www.jcp.org/jcr/1.0">
 
 
-  <nodeType name="eoo:filePreferences0" isMixin="false" hasOrderableChildNodes="true" primaryItemName="">
+  <nodeType name="eoo:filePreferences" isMixin="false" hasOrderableChildNodes="true" primaryItemName="">
     <supertypes>
       <supertype>nt:base</supertype>
     </supertypes>
