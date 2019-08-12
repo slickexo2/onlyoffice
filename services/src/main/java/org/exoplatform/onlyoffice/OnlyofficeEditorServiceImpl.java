@@ -1920,7 +1920,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           if (commentId != null) {
             node.setProperty("eoo:commentId", commentId);
             config.setComment(status.getComment());
-            fireCommented(status);
           } else {
             node.setProperty("eoo:commentId", "");
             config.setComment(null);
@@ -2541,21 +2540,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         l.onSaved(status);
       } catch (Throwable t) {
         LOG.warn("Saving listener error", t);
-      }
-    }
-  }
-
-  /**
-   * Fire commented.
-   *
-   * @param status the status
-   */
-  protected void fireCommented(DocumentStatus status) {
-    for (OnlyofficeEditorListener l : listeners) {
-      try {
-        l.onCommented(status);
-      } catch (Throwable t) {
-        LOG.warn("Comment listener error", t);
       }
     }
   }

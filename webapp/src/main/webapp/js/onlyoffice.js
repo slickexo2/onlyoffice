@@ -155,7 +155,6 @@
     var DOCUMENT_SAVED = "DOCUMENT_SAVED";
     var DOCUMENT_CHANGED = "DOCUMENT_CHANGED";
     var DOCUMENT_DELETED = "DOCUMENT_DELETED";
-    var DOCUMENT_COMMENTED = "DOCUMENT_COMMENTED";
     var DOCUMENT_VERSION = "DOCUMENT_VERSION";
     var DOCUMENT_FORCESAVED = "DOCUMENT_FORCESAVED";
     var DOCUMENT_TITLE_UPDATED = "DOCUMENT_TITLE_UPDATED";
@@ -163,7 +162,7 @@
     var EDITOR_CLOSED = "EDITOR_CLOSED";
 
     // Events that are dispatched to redux as actions
-    var dispatchableEvents = [ DOCUMENT_SAVED, DOCUMENT_CHANGED, DOCUMENT_DELETED, DOCUMENT_VERSION, DOCUMENT_COMMENTED ];
+    var dispatchableEvents = [ DOCUMENT_SAVED, DOCUMENT_CHANGED, DOCUMENT_DELETED, DOCUMENT_VERSION ];
 
     // CometD transport bus
     var cometd, cometdContext;
@@ -541,13 +540,14 @@
             if (state.type === DOCUMENT_DELETED) {
               UI.showError(message("ErrorTitle"), message("ErrorFileDeletedEditor"));
             }
-            if (state.type === DOCUMENT_COMMENTED) {
-              UI.updateBar(state.displayName, state.comment);
-        currentConfig.comment = state.comment;
-            currentUserChanges = false;
-            }
             if(state.type === DOCUMENT_SAVED) {
-              UI.updateBar(state.displayName);
+              UI.updateBar(state.displayName, state.comment);
+              if(state.comment){
+                currentConfig.comment = state.comment;
+              }
+              if(state.userId === currentUserId){
+                currentUserChanges = false;
+              }
             }
           });
 
@@ -861,9 +861,9 @@
     
     this.updateBar = function(changer, comment) {
       var $bar = $("#editor-top-bar");
+      var $commentBox = $bar.find(".editors-comment");
+      $commentBox.empty();
       if(comment){
-        var $commentBox = $bar.find(".editors-comment");
-        $commentBox.empty();
         $commentBox.append("\"" + comment + "\"");
       }
       var $lastEditedElem = $bar.find(".last-edited");
