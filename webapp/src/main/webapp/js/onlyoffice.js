@@ -541,7 +541,7 @@
               UI.showError(message("ErrorTitle"), message("ErrorFileDeletedEditor"));
             }
             if(state.type === DOCUMENT_SAVED) {
-              UI.updateBar(state.displayName, state.comment);
+              UI.updateBar(state.displayName, state.date, state.comment);
               if(state.comment){
                 currentConfig.comment = state.comment;
               }
@@ -859,7 +859,7 @@
       $("#SharedLayoutRightBody").addClass("onlyofficeEditorBody");
     };
     
-    this.updateBar = function(changer, comment) {
+    this.updateBar = function(changer, date, comment) {
       var $bar = $("#editor-top-bar");
       var $commentBox = $bar.find(".editors-comment");
       $commentBox.empty();
@@ -868,7 +868,7 @@
       }
       var $lastEditedElem = $bar.find(".last-edited");
       $lastEditedElem.empty();
-      $lastEditedElem.append("Last edited by " + changer + " " + formatDate(new Date()));
+      $lastEditedElem.append("Last edited by " + changer + " " + date);
     };
 
     this.initBar = function(config) {
@@ -892,7 +892,7 @@
       $titleElem.append("<span class='editable-title'>" + title + "</span>");
 
       var $lastEditedElem = $bar.find(".last-edited");
-      $lastEditedElem.append("Last edited by " + config.document.lastModifier + " " + formatDate(new Date(config.document.lastModified)));
+      $lastEditedElem.append("Last edited by " + config.document.lastModifier + " " + config.document.lastModified);
       if(config.comment){
         var $comment = $bar.find(".editors-comment");
         $comment.append("\"" + config.comment + "\"");

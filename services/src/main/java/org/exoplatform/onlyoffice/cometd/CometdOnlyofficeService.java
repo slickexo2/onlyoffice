@@ -18,6 +18,9 @@
  */
 package org.exoplatform.onlyoffice.cometd;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -59,6 +62,7 @@ import org.exoplatform.onlyoffice.DocumentStatus;
 import org.exoplatform.onlyoffice.OnlyofficeEditorException;
 import org.exoplatform.onlyoffice.OnlyofficeEditorListener;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
+import org.exoplatform.portal.webui.util.Util;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.User;
@@ -665,6 +669,9 @@ public class CometdOnlyofficeService implements Startable {
         data.append("\"userId\": \"");
         data.append(userId);
         data.append("\", ");
+        data.append("\"date\": \"");
+        data.append(formatDate(Calendar.getInstance(), OnlyofficeEditorService.LAST_EDITED_DATE_FORMAT));
+        data.append("\", ");
         data.append("\"displayName\": \"");
         data.append(getDisplayName(userId));
         if (comment != null) {
@@ -788,5 +795,11 @@ public class CometdOnlyofficeService implements Startable {
       LOG.debug("Cannot find user by userId {}", userId);
     }
     return displayName;
+  }
+
+  protected String formatDate(Calendar calendar, String format) {
+    Locale locale = Util.getPortalRequestContext().getLocale();
+    SimpleDateFormat dateFormat = new SimpleDateFormat(format, locale);
+    return dateFormat.format(calendar.getTimeInMillis());
   }
 }

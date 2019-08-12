@@ -34,19 +34,22 @@ import org.exoplatform.services.organization.User;
 public interface OnlyofficeEditorService {
 
   /** The editor opened event. */
-  static String EDITOR_OPENED_EVENT  = "exo.onlyoffice.editor.opened";
+  static String       EDITOR_OPENED_EVENT     = "exo.onlyoffice.editor.opened";
 
   /** The editor closed event. */
-  static String EDITOR_CLOSED_EVENT  = "exo.onlyoffice.editor.closed";
+  static String       EDITOR_CLOSED_EVENT     = "exo.onlyoffice.editor.closed";
 
   /** The editor saved event. */
-  static String EDITOR_SAVED_EVENT   = "exo.onlyoffice.editor.saved";
+  static String       EDITOR_SAVED_EVENT      = "exo.onlyoffice.editor.saved";
 
   /** The editor version event. */
-  static String EDITOR_VERSION_EVENT = "exo.onlyoffice.editor.version";
+  static String       EDITOR_VERSION_EVENT    = "exo.onlyoffice.editor.version";
 
   /** The editor error event. */
-  static String EDITOR_ERROR_EVENT   = "exo.onlyoffice.editor.error";
+  static String       EDITOR_ERROR_EVENT      = "exo.onlyoffice.editor.error";
+
+  /** The date format for Last Edited in editor bar */
+  static final String LAST_EDITED_DATE_FORMAT = "dd.MM.yyyy HH:mm";
 
   /**
    * Return existing editor configuration for given user and node. If editor not

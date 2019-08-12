@@ -94,7 +94,7 @@ public class Config implements Externalizable {
     protected String       lastModifier;
 
     /** The lastModified. **/
-    protected Long         lastModified;
+    protected String         lastModified;
 
     /** The ECMS explorer page URL. */
     @Deprecated
@@ -409,7 +409,7 @@ public class Config implements Externalizable {
      * @param lastModified the last modified
      * @return the builder
      */
-    public Builder lastModified(Long lastModified) {
+    public Builder lastModified(String lastModified) {
       this.lastModified = lastModified;
       return this;
     }
@@ -607,11 +607,11 @@ public class Config implements Externalizable {
     /** The permissions. */
     protected final Permissions permissions;
 
-    /** The last modifier */
+    /** The last modifier. */
     protected String            lastModifier;
 
-    /** The last modified timestamp */
-    protected Long              lastModified;
+    /** The last modified. */
+    protected String              lastModified;
 
     /**
      * Instantiates a new document.
@@ -632,7 +632,7 @@ public class Config implements Externalizable {
                        Info info,
                        Permissions permissions,
                        String lastModifier,
-                       Long lastModified) {
+                       String lastModified) {
       super();
       this.fileType = fileType;
       this.key = key;
@@ -725,7 +725,7 @@ public class Config implements Externalizable {
      *
      * @return the last modified
      */
-    public Long getLastModified() {
+    public String getLastModified() {
       return lastModified;
     }
     
@@ -743,7 +743,7 @@ public class Config implements Externalizable {
      *
      * @param lastModified the lastModified
      */
-    protected void setLastModified(Long lastModified) {
+    protected void setLastModified(String lastModified) {
       this.lastModified = lastModified;
     }
   }
@@ -1217,7 +1217,7 @@ public class Config implements Externalizable {
     out.writeUTF(document.getTitle());
     out.writeUTF(document.getUrl());
     out.writeUTF(document.getLastModifier());
-    out.writeLong(document.getLastModified());
+    out.writeUTF(document.getLastModified());
     out.writeUTF(document.getInfo().getAuthor());
     out.writeUTF(document.getInfo().getCreated());
     out.writeUTF(document.getInfo().getFolder());
@@ -1282,7 +1282,7 @@ public class Config implements Externalizable {
     String dtitle = in.readUTF();
     String durl = in.readUTF();
     String dmodifier = in.readUTF();
-    Long dmodified = in.readLong();
+    String dmodified = in.readUTF();
     String diauthor = in.readUTF();
     String dicreated = in.readUTF();
     String difolder = in.readUTF();

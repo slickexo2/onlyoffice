@@ -29,6 +29,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
@@ -36,6 +37,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
@@ -58,6 +60,7 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
+import javax.jcr.ValueFormatException;
 import javax.jcr.lock.Lock;
 import javax.jcr.version.VersionException;
 
@@ -82,6 +85,7 @@ import org.exoplatform.ecm.webui.utils.Utils;
 import org.exoplatform.onlyoffice.Config.Editor;
 import org.exoplatform.onlyoffice.jcr.NodeFinder;
 import org.exoplatform.portal.Constants;
+import org.exoplatform.portal.webui.util.Util;
 import org.exoplatform.services.cache.CacheListener;
 import org.exoplatform.services.cache.CacheListenerContext;
 import org.exoplatform.services.cache.CacheService;
@@ -661,17 +665,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           builder.userId(user.getUserName());
           builder.userFirstName(user.getFirstName());
           builder.userLastName(user.getLastName());
-          if (node.hasProperty("exo:lastModifier")) {
-            String lastModifierId = node.getProperty("exo:lastModifier").getString();
-            User modifier = getUser(lastModifierId);
-            if (modifier != null) {
-              builder.lastModifier(modifier.getDisplayName());
-            }
-          }
-          if (node.hasProperty("exo:lastModifiedDate")) {
-            builder.lastModified(node.getProperty("exo:lastModifiedDate").getDate().getTimeInMillis());
-          }
-
+          builder.lastModifier(getLastModifier(node));
+          builder.lastModified(getLastModified(node));
           String key = generateId(workspace, path).toString();
 
           builder.key(key);
@@ -714,21 +709,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       config.setDisplayPath(getDisplayPath(node, userId));
       config.setRenameAllowed(canRenameDocument(node));
       config.setComment(nodeComment(node));
-      
-      if (node.hasProperty("exo:lastModifier")) {
-        String lastModifierId = node.getProperty("exo:lastModifier").getString();
-        User modifier = getUser(lastModifierId);
-        if (modifier != null) {
-          config.getDocument().setLastModifier(modifier.getDisplayName());
-        }
-      }
-      if (node.hasProperty("exo:lastModifiedDate")) {
-        config.getDocument().setLastModified(node.getProperty("exo:lastModifiedDate").getDate().getTimeInMillis());
-      }
+      config.getDocument().setLastModifier(getLastModifier(node));
+      config.getDocument().setLastModified(getLastModified(node));
     }
     return config;
   }
-
+  
   /**
    * {@inheritDoc}
    */
@@ -2892,4 +2878,49 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       return false;
     }
   }
+  
+
+  /**
+   * Gets lastmodified from node.
+   *
+   * @param node the node
+   * @return the lastmodified
+   * @throws ValueFormatException the valueFormatException
+   * @throws PathNotFoundException the pathNotFoundException
+   * @throws RepositoryException the repositoryException
+   */
+  protected String getLastModified(Node node) throws ValueFormatException, PathNotFoundException, RepositoryException {
+    if (node.hasProperty("exo:lastModifiedDate")) {
+      Calendar date = node.getProperty("exo:lastModifiedDate").getDate();
+      Locale locale = Util.getPortalRequestContext().getLocale();
+      SimpleDateFormat dateFormat = new SimpleDateFormat(LAST_EDITED_DATE_FORMAT, locale);
+      return dateFormat.format(date.getTimeInMillis());
+    }
+    return null;
+  }
+
+  /**
+   * Gets last modifier display name from node.
+   * 
+   * @param node the node.
+   * @return the display name of last modifier
+   * @throws ValueFormatException the valueFormatException
+   * @throws PathNotFoundException the pathNotFoundException
+   * @throws RepositoryException the repositoryException
+   * @throws OnlyofficeEditorException the onlyofficeEditorException
+   */
+  protected String getLastModifier(Node node) throws ValueFormatException,
+                                            PathNotFoundException,
+                                            RepositoryException,
+                                            OnlyofficeEditorException {
+    if (node.hasProperty("exo:lastModifier")) {
+      String lastModifierId = node.getProperty("exo:lastModifier").getString();
+      User modifier = getUser(lastModifierId);
+      if (modifier != null) {
+        return modifier.getDisplayName();
+      }
+    }
+    return null;
+  }
+
 }
