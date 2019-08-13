@@ -48,9 +48,6 @@ public interface OnlyofficeEditorService {
   /** The editor error event. */
   static String       EDITOR_ERROR_EVENT      = "exo.onlyoffice.editor.error";
 
-  /** The date format for Last Edited in editor bar */
-  static final String LAST_EDITED_DATE_FORMAT = "dd.MM.yyyy HH:mm";
-
   /**
    * Return existing editor configuration for given user and node. If editor not
    * open for given node or user then <code>null</code> will be returned. If

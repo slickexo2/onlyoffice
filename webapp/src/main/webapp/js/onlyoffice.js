@@ -129,7 +129,7 @@
     if (mm < 10)
         mm = "0" + mm;
 
-    var cur_day = yyyy + "-" + mm + "-" + dd;
+    var cur_day = dd + "." + mm + "." + yyyy;
 
     var hours = date.getHours()
     var minutes = date.getMinutes()
@@ -541,7 +541,7 @@
               UI.showError(message("ErrorTitle"), message("ErrorFileDeletedEditor"));
             }
             if(state.type === DOCUMENT_SAVED) {
-              UI.updateBar(state.displayName, state.date, state.comment);
+              UI.updateBar(state.displayName, state.comment);
               if(state.comment){
                 currentConfig.comment = state.comment;
               }
@@ -859,7 +859,7 @@
       $("#SharedLayoutRightBody").addClass("onlyofficeEditorBody");
     };
     
-    this.updateBar = function(changer, date, comment) {
+    this.updateBar = function(changer, comment) {
       var $bar = $("#editor-top-bar");
       var $commentBox = $bar.find(".editors-comment");
       $commentBox.empty();
@@ -868,7 +868,7 @@
       }
       var $lastEditedElem = $bar.find(".last-edited");
       $lastEditedElem.empty();
-      $lastEditedElem.append("Last edited by " + changer + " " + date);
+      $lastEditedElem.append("Last edited by " + changer + " " + formatDate(new Date()));
     };
 
     this.initBar = function(config) {

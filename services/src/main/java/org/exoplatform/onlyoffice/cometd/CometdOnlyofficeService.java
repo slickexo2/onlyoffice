@@ -52,6 +52,8 @@ import org.eclipse.jetty.util.component.LifeCycle;
 import org.mortbay.cometd.continuation.EXoContinuationBayeux;
 import org.picocontainer.Startable;
 
+import com.sun.media.jai.codecimpl.WBMPCodec;
+
 import org.exoplatform.commons.utils.PropertyManager;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
@@ -66,6 +68,8 @@ import org.exoplatform.portal.webui.util.Util;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.User;
+import org.exoplatform.services.resources.LocaleConfig;
+import org.exoplatform.services.wcm.utils.WCMCoreUtils;
 
 /**
  * The CometdOnlyofficeService.
@@ -669,9 +673,6 @@ public class CometdOnlyofficeService implements Startable {
         data.append("\"userId\": \"");
         data.append(userId);
         data.append("\", ");
-        data.append("\"date\": \"");
-        data.append(formatDate(Calendar.getInstance(), OnlyofficeEditorService.LAST_EDITED_DATE_FORMAT));
-        data.append("\", ");
         data.append("\"displayName\": \"");
         data.append(getDisplayName(userId));
         if (comment != null) {
@@ -797,9 +798,4 @@ public class CometdOnlyofficeService implements Startable {
     return displayName;
   }
 
-  protected String formatDate(Calendar calendar, String format) {
-    Locale locale = Util.getPortalRequestContext().getLocale();
-    SimpleDateFormat dateFormat = new SimpleDateFormat(format, locale);
-    return dateFormat.format(calendar.getTimeInMillis());
-  }
 }

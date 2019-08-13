@@ -176,6 +176,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /** The hidden folder */
   protected static final String  HIDDEN_FOLDER            = "...";
 
+  /** The date format for Last Edited in editor bar */
+  protected static final String  LAST_EDITED_DATE_FORMAT  = "dd.MM.yyyy HH:mm";
+
   /** The Constant TYPE_TEXT. */
   protected static final String  TYPE_TEXT                = "text";
 
@@ -714,7 +717,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
     return config;
   }
-  
+
   /**
    * {@inheritDoc}
    */
@@ -2878,7 +2881,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       return false;
     }
   }
-  
 
   /**
    * Gets lastmodified from node.
@@ -2910,9 +2912,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * @throws OnlyofficeEditorException the onlyofficeEditorException
    */
   protected String getLastModifier(Node node) throws ValueFormatException,
-                                            PathNotFoundException,
-                                            RepositoryException,
-                                            OnlyofficeEditorException {
+                                              PathNotFoundException,
+                                              RepositoryException,
+                                              OnlyofficeEditorException {
     if (node.hasProperty("exo:lastModifier")) {
       String lastModifierId = node.getProperty("exo:lastModifier").getString();
       User modifier = getUser(lastModifierId);
