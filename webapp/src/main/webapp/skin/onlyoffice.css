@@ -11,6 +11,13 @@
   width: 100%;
 }
 
+.onlyofficeEditorBody #editor-top-bar-loader {
+  position: absolute;
+  width: 100%;
+  height: 35px;
+  background-color: white;
+  z-index: 100;
+}
 .onlyofficeEditorBody #editor-top-bar {
   height: 25px;
   background-color: #FFF;
@@ -66,13 +73,14 @@
 .onlyofficeEditorBody  #editor-top-bar #save-btn {
   display: inline-block;
   cursor: pointer;
+  margin-right: 30px;
 }
 
 .onlyofficeEditorBody  #editor-top-bar .close-btn {
-    position: absolute;
-    right: 10px;
-    cursor: pointer;
-    top: 7px;
+  position: absolute;
+  right: 10px;
+  cursor: pointer;
+  top: 7px;
 }
 
 .onlyofficeEditorBody #editor-top-bar .document-path {

@@ -750,6 +750,33 @@
       }
     };
 
+    var addElipsises = function(callback) {
+      var editorBar = window.document.getElementById("editor-top-bar");
+      
+      if (editorBar.scrollHeight > editorBar.offsetHeight) {
+        var $commentBox = $("#editor-top-bar .editors-comment a");
+        
+        while (editorBar.scrollHeight > editorBar.offsetHeight) {
+          var comment = $commentBox.html();
+          if(comment.length >= 15) {
+            comment = comment.slice(0, -10) + "...";
+            $commentBox.html(comment);
+          } else {
+            break;
+          }
+        }
+        // Hide last folder
+        if (editorBar.scrollHeight > editorBar.offsetHeight) {
+          console.log($("#editor-top-bar .folder"));
+          $("#editor-top-bar .folder").text("...");
+        }
+
+      }
+      if(callback){
+        callback();
+      }
+    };
+
     /**
      * Adds the 'Edit Online' button to a preview (from the activity stream) when it's loaded.
      */
@@ -781,6 +808,10 @@
         }
       }
     };
+
+    var hideBarLoader = function() {
+      $("#editor-top-bar-loader").hide();
+    }
 
     /**
      * Refreshes an activity preview by updating preview picture.
@@ -861,7 +892,8 @@
     
     this.updateBar = function(changer, comment) {
       var $bar = $("#editor-top-bar");
-      var $commentBox = $bar.find(".editors-comment");
+      var $commentBox = $bar.find(".editors-comment a");
+      $commentBox.attr("data-original-title", comment);
       $commentBox.empty();
       if(comment){
         $commentBox.append("\"" + comment + "\"");
@@ -869,6 +901,7 @@
       var $lastEditedElem = $bar.find(".last-edited");
       $lastEditedElem.empty();
       $lastEditedElem.append("Last edited by " + changer + " " + formatDate(new Date()));
+      addElipsises();
     };
 
     this.initBar = function(config) {
@@ -886,7 +919,7 @@
       }
       var $pathElem = $bar.find(".document-path");
       $pathElem.append(drive + " : ");
-      $pathElem.append(folders[0] + " <i class='uiIconArrowRight'></i> ");
+      $pathElem.append("<span class='folder'>" + folders[0] + "</span>" + " <i class='uiIconArrowRight'></i> ");
      
       var $titleElem = $bar.find(".document-title a");
       $titleElem.append("<span class='editable-title'>" + title + "</span>");
@@ -894,9 +927,11 @@
       var $lastEditedElem = $bar.find(".last-edited");
       $lastEditedElem.append("Last edited by " + config.document.lastModifier + " " + config.document.lastModified);
       if(config.comment){
-        var $comment = $bar.find(".editors-comment");
+        var $comment = $bar.find(".editors-comment a");
         $comment.append("\"" + config.comment + "\"");
+        $comment.attr("data-original-title", config.comment);
       }
+
       var $saveBtn = $bar.find("#save-btn .uiIconSave");
       $saveBtn.on("click", function(){
         $saveBtn.css("color", "gray");
@@ -904,6 +939,9 @@
           $saveBtn.css("color", "")
         }, 300)
       });
+      setTimeout(function() { 
+        addElipsises(hideBarLoader)
+      }, 1500);
       return $bar;
     };
 
@@ -932,6 +970,7 @@
           docEditor = new DocsAPI.DocEditor("onlyoffice", localConfig);
           // show editor
           $container.find("#editor-top-bar").show("blind");
+          $container.find("#editor-top-bar-loader").show("blind");
           $container.find(".editor").show("blind");
           $container.find(".loading").hide("blind");
         } else {
