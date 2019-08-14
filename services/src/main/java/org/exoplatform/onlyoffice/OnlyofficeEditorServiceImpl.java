@@ -2894,7 +2894,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   protected String getLastModified(Node node) throws ValueFormatException, PathNotFoundException, RepositoryException {
     if (node.hasProperty("exo:lastModifiedDate")) {
       Calendar date = node.getProperty("exo:lastModifiedDate").getDate();
-      Locale locale = Util.getPortalRequestContext().getLocale();
+      Locale locale;
+      try{
+        locale = Util.getPortalRequestContext().getLocale();
+      } catch (Exception e) {
+        LOG.warn("Cannot get locale from portal request context. {}", e.getMessage());
+        locale = Locale.getDefault();
+      }
       SimpleDateFormat dateFormat = new SimpleDateFormat(LAST_EDITED_DATE_FORMAT, locale);
       return dateFormat.format(date.getTimeInMillis());
     }
