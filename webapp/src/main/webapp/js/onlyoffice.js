@@ -761,16 +761,17 @@
           if(comment.length >= 15) {
             comment = comment.slice(0, -10) + "...";
             $commentBox.html(comment);
+            // We take editorBar again to be sure that scrollHeigth and offsetHeigh are updated
+            editorBar = window.document.getElementById("editor-top-bar");
           } else {
             break;
           }
         }
+        editorBar = window.document.getElementById("editor-top-bar");
         // Hide last folder
         if (editorBar.scrollHeight > editorBar.offsetHeight) {
-          console.log($("#editor-top-bar .folder"));
           $("#editor-top-bar .folder").text("...");
         }
-
       }
       if(callback){
         callback();
