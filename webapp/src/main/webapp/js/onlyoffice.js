@@ -750,30 +750,22 @@
       }
     };
 
-    var addElipsises = function(callback) {
-      var editorBar = window.document.getElementById("editor-top-bar");
-      
-      if (editorBar.scrollHeight > editorBar.offsetHeight) {
-        var $commentBox = $("#editor-top-bar .editors-comment a");
-        
-        while (editorBar.scrollHeight > editorBar.offsetHeight) {
-          var comment = $commentBox.html();
-          if(comment.length >= 15) {
-            comment = comment.slice(0, -10) + "...";
-            $commentBox.html(comment);
-          } else {
-            break;
-          }
-        }
-        // Hide last folder
-        if (editorBar.scrollHeight > editorBar.offsetHeight) {
-          console.log($("#editor-top-bar .folder"));
-          $("#editor-top-bar .folder").text("...");
-        }
-
-      }
-      if(callback){
-        callback();
+    var addElipsises = function() {
+      var $editorBar = $("#editor-top-bar");
+      if ($editorBar[0].scrollHeight > $editorBar[0].offsetHeight) {
+        $editorBar.ready(function(){
+            var $commentBox = $("#editor-top-bar .editors-comment a");
+            var comment = $commentBox.html();
+            if(comment.length >= 15) {
+              comment = comment.slice(0, -10) + "...";
+              $commentBox.html(comment);
+               addElipsises();
+            } else {
+              $("#editor-top-bar .folder").text("...");
+            }
+        }); 
+      } else {
+        hideBarLoader();
       }
     };
 
@@ -811,7 +803,7 @@
 
     var hideBarLoader = function() {
       $("#editor-top-bar-loader").hide();
-    }
+    };
 
     /**
      * Refreshes an activity preview by updating preview picture.
@@ -940,7 +932,7 @@
         }, 300)
       });
       setTimeout(function() { 
-        addElipsises(hideBarLoader)
+        addElipsises();
       }, 1500);
       return $bar;
     };
