@@ -118,6 +118,25 @@
     var m = messages[key];
     return m ? m : key;
   };
+
+  var adjustWidth = function() {
+      var $editorBar = $("#editor-top-bar");
+      if ($editorBar[0].scrollHeight > $editorBar[0].offsetHeight) {
+        $editorBar.ready(function(){
+            var $commentBox = $editorBar.find(".editors-comment a");
+            var comment = $commentBox.html();
+            if(comment.length >= 15) {
+              comment = comment.slice(0, -10) + "...";
+              $commentBox.html(comment);
+               adjustWidth();
+            } else {
+              $editorBar.find(".folder").text("...");
+            }
+        }); 
+      } else {
+        $("#editor-top-bar-loader").hide();
+      }
+    };
   
   var formatDate = function(date) {
     var yyyy = date.getFullYear();
@@ -364,6 +383,7 @@
       var $bar = UI.initBar(config);
       // Edit title
       if(config.renameAllowed){
+        
         $bar.find(".editable-title").editable({
           onChange : function(event) {
             var newTitle = event.newValue;
@@ -384,6 +404,7 @@
               "title" : newTitle,
               "workspace" : currentConfig.workspace
             });
+            adjustWidth();
           }
         });
       }
@@ -749,35 +770,6 @@
         }
       }
     };
-
-    var addElipsises = function(callback) {
-      var editorBar = window.document.getElementById("editor-top-bar");
-      
-      if (editorBar.scrollHeight > editorBar.offsetHeight) {
-        var $commentBox = $("#editor-top-bar .editors-comment a");
-        
-        while (editorBar.scrollHeight > editorBar.offsetHeight) {
-          var comment = $commentBox.html();
-          if(comment.length >= 15) {
-            comment = comment.slice(0, -10) + "...";
-            $commentBox.html(comment);
-            // We take editorBar again to be sure that scrollHeigth and offsetHeigh are updated
-            editorBar = window.document.getElementById("editor-top-bar");
-          } else {
-            break;
-          }
-        }
-        editorBar = window.document.getElementById("editor-top-bar");
-        // Hide last folder
-        if (editorBar.scrollHeight > editorBar.offsetHeight) {
-          $("#editor-top-bar .folder").text("...");
-        }
-      }
-      if(callback){
-        callback();
-      }
-    };
-
     /**
      * Adds the 'Edit Online' button to a preview (from the activity stream) when it's loaded.
      */
@@ -809,10 +801,6 @@
         }
       }
     };
-
-    var hideBarLoader = function() {
-      $("#editor-top-bar-loader").hide();
-    }
 
     /**
      * Refreshes an activity preview by updating preview picture.
@@ -902,7 +890,7 @@
       var $lastEditedElem = $bar.find(".last-edited");
       $lastEditedElem.empty();
       $lastEditedElem.append("Last edited by " + changer + " " + formatDate(new Date()));
-      addElipsises();
+      adjustWidth();
     };
 
     this.initBar = function(config) {
@@ -941,7 +929,7 @@
         }, 300)
       });
       setTimeout(function() { 
-        addElipsises(hideBarLoader)
+        adjustWidth();
       }, 1500);
       return $bar;
     };

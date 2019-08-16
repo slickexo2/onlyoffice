@@ -57,7 +57,7 @@ $.fn.editable = function (options) {
         const parent          = editableElement.parentElement;
         const type            = (editableElement.hasAttribute('type')) ? editableElement.getAttribute('type') : 'text';
         const parentClassList = [...parent.classList];
-
+        var width = $(".editable-title").width() + "px";
         // Since we can't submit a form on "enter" whenever there is only one input in the form, a ghost one has been added.
         const wrapper = `
             <input type="text" style="display:none"/>
@@ -68,6 +68,9 @@ $.fn.editable = function (options) {
 
         setParent(parent, wrapper, `${parent.clientWidth}px`);
         const input = parent.querySelector('.eip-editable');
+        input.style.width = width;
+        input.style.margin = "0px";
+        input.style.paddint = "1px";
         setInput(input);
 
         // setTimeout so we don't block the UI. Check the following link for further infos:
