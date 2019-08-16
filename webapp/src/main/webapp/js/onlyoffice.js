@@ -118,6 +118,25 @@
     var m = messages[key];
     return m ? m : key;
   };
+
+  var adjustWidth = function() {
+      var $editorBar = $("#editor-top-bar");
+      if ($editorBar[0].scrollHeight > $editorBar[0].offsetHeight) {
+        $editorBar.ready(function(){
+            var $commentBox = $editorBar.find(".editors-comment a");
+            var comment = $commentBox.html();
+            if(comment.length >= 15) {
+              comment = comment.slice(0, -10) + "...";
+              $commentBox.html(comment);
+               adjustWidth();
+            } else {
+              $editorBar.find(".folder").text("...");
+            }
+        }); 
+      } else {
+        $("#editor-top-bar-loader").hide();
+      }
+    };
   
   var formatDate = function(date) {
     var yyyy = date.getFullYear();
@@ -364,6 +383,7 @@
       var $bar = UI.initBar(config);
       // Edit title
       if(config.renameAllowed){
+        
         $bar.find(".editable-title").editable({
           onChange : function(event) {
             var newTitle = event.newValue;
@@ -384,6 +404,7 @@
               "title" : newTitle,
               "workspace" : currentConfig.workspace
             });
+            adjustWidth();
           }
         });
       }
@@ -749,26 +770,6 @@
         }
       }
     };
-
-    var addElipsises = function() {
-      var $editorBar = $("#editor-top-bar");
-      if ($editorBar[0].scrollHeight > $editorBar[0].offsetHeight) {
-        $editorBar.ready(function(){
-            var $commentBox = $("#editor-top-bar .editors-comment a");
-            var comment = $commentBox.html();
-            if(comment.length >= 15) {
-              comment = comment.slice(0, -10) + "...";
-              $commentBox.html(comment);
-               addElipsises();
-            } else {
-              $("#editor-top-bar .folder").text("...");
-            }
-        }); 
-      } else {
-        hideBarLoader();
-      }
-    };
-
     /**
      * Adds the 'Edit Online' button to a preview (from the activity stream) when it's loaded.
      */
@@ -799,10 +800,6 @@
           log("Error saving and destroying ONLYOFFICE editor", e);
         }
       }
-    };
-
-    var hideBarLoader = function() {
-      $("#editor-top-bar-loader").hide();
     };
 
     /**
@@ -893,7 +890,7 @@
       var $lastEditedElem = $bar.find(".last-edited");
       $lastEditedElem.empty();
       $lastEditedElem.append("Last edited by " + changer + " " + formatDate(new Date()));
-      addElipsises();
+      adjustWidth();
     };
 
     this.initBar = function(config) {
@@ -932,7 +929,7 @@
         }, 300)
       });
       setTimeout(function() { 
-        addElipsises();
+        adjustWidth();
       }, 1500);
       return $bar;
     };
