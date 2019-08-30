@@ -851,14 +851,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // here to make a cleanup
           // Sync users from the status to active config: this should close
           // configs of gone users
-          String[] users = status.getUsers();
-          if (syncUsers(configs, users)) {
+          if (syncUsers(configs, status.getUsers())) {
             // Update cached (for replicated cache)
             activeCache.put(key, configs);
             activeCache.put(config.getDocId(), configs);
           }
         } else if (statusCode == 2) {
-
           Editor.User lastUser = getUser(key, status.getLastUser());
           Editor.User lastModifier = getLastModifier(key);
           // We download if there were modifications after the last saving.
@@ -930,6 +928,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           }
           // Here we decide if we need to download content or just save the link
           if (status.isSaved()) {
+            // TODO call the downloadVersion() with existing status object,
+            // make another downloadVersion() with fields on input and creating status from them, then call it
             downloadVersion(status.getUserId(),
                             key,
                             status.isCoedited(),
@@ -1778,8 +1778,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       throw new OnlyofficeEditorException("Error reading content stream " + contentUrl + " for " + path, e);
     }
 
-    // remember real context state and session provider to restore them at the
-    // end
+    // remember real context state and session provider to restore them at the end
     ConversationState contextState = ConversationState.getCurrent();
     SessionProvider contextProvider = sessionProviders.getSessionProvider(null);
     try {
@@ -1798,8 +1797,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       }
       // work in user session
       Node node = null;
-      // TODO rework the code to throw DocumentNotFoundException once after all
-      // checks
+      // TODO rework the code to throw DocumentNotFoundException once after all checks
       DocumentNotFoundException notFoundEx = null;
       try {
         node = getDocumentById(workspace, config.getDocId());
@@ -1966,8 +1964,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             }
             node.save();
 
-            // If the status code == 2, the EDITOR_SAVED_EVENT should be
-            // thrown.
+            // If the status code == 2, the EDITOR_SAVED_EVENT should be thrown.
             if (statusCode != 2) {
               broadcastEvent(status, OnlyofficeEditorService.EDITOR_VERSION_EVENT);
             }

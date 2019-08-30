@@ -47,7 +47,7 @@ public interface OnlyofficeEditorService {
 
   /** The editor error event. */
   static String       EDITOR_ERROR_EVENT      = "exo.onlyoffice.editor.error";
-
+  
   /**
    * Return existing editor configuration for given user and node. If editor not
    * open for given node or user then <code>null</code> will be returned. If

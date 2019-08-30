@@ -32,159 +32,6 @@ import org.exoplatform.ws.frameworks.json.impl.JsonGeneratorImpl;
  */
 public class DocumentStatus {
 
-  /** The key. */
-  protected String   key;
-
-  /** The status. */
-  protected Long     status;
-
-  /** The url. */
-  protected String   url;
-
-  /** The users. */
-  protected String[] users;
-
-  /** The config. */
-  protected Config   config;
-
-  /** The error. */
-  protected long     error;
-
-  /** The coedited. */
-  protected Boolean  coEdited;
-
-  /** The forcesaved (true if a document is forcesaved via Editor bar) */
-  protected Boolean  forceSaved;
-
-  /** The saved */
-  protected Boolean  saved;
-
-  /** The userId (used for saving the document content under this user) */
-  protected String   userId;
-
-  /** The comment (used for saving a version of a document with comment on FileActivity) */
-  protected String   comment;
-
-  /**
-   * Gets the config.
-   * 
-   * @return the config
-   */
-  public Config getConfig() {
-    return config;
-  }
-
-  /**
-   * Gets the error.
-   *
-   * @return the error
-   */
-  public long getError() {
-    return error;
-  }
-
-  /**
-   * Gets the last user (editor).
-   *
-   * @return the last user (editor)
-   */
-  public String getLastUser() {
-    return users != null && users.length > 0 ? users[0] : null;
-  }
-
-  /**
-   * Gets the key.
-   *
-   * @return the key
-   */
-  public String getKey() {
-    return key;
-  }
-
-  /**
-   * Sets the config.
-   *
-   * @param config the new config
-   */
-  protected void setConfig(Config config) {
-    this.config = config;
-  }
-
-  /**
-   * Gets the status returned by Onlyoffice Document Server. <br>
-   * See <a href=
-   * "https://api.onlyoffice.com/editors/callback#status">https://api.onlyoffice.com/editors/callback#status</a>
-   * for details.
-   *
-   * @return the status
-   */
-  protected Long getStatus() {
-    return status;
-  }
-
-  /**
-   * Gets the url.
-   *
-   * @return the url
-   */
-  protected String getUrl() {
-    return url;
-  }
-
-  /**
-   * Gets the users.
-   *
-   * @return the users
-   */
-  protected String[] getUsers() {
-    return users;
-  }
-
-  /**
-   * Gets the coEdited.
-   *
-   * @return the coEdited
-   */
-  protected Boolean isCoedited() {
-    return coEdited;
-  }
-
-  /**
-   * Gets the forcesaved.
-   *
-   * @return the forcesaved
-   */
-  protected Boolean isForcesaved() {
-    return forceSaved != null ? forceSaved : false;
-  }
-
-  /**
-   * Gets the isSaved.
-   *
-   * @return the isSaved
-   */
-  protected Boolean isSaved() {
-    return saved;
-  }
-
-  /**
-   * Gets the userId.
-   *
-   * @return the userId
-   */
-  public String getUserId() {
-    return userId;
-  }
-
-  /**
-   * Gets the comment.
-   *
-   * @return the coment
-   */
-  protected String getComment() {
-    return comment;
-  }
-
   /**
    * The Class Builder.
    */
@@ -338,13 +185,166 @@ public class DocumentStatus {
     }
   }
 
+  /** The key. */
+  protected String   key;
+
+  /** The status. */
+  protected Long     status;
+
+  /** The url. */
+  protected String   url;
+
+  /** The users. */
+  protected String[] users;
+
+  /** The config. */
+  protected Config   config;
+
+  /** The error. */
+  protected long     error;
+
+  /** The coedited. */
+  protected Boolean  coEdited;
+
+  /** The forcesaved (true if a document is forcesaved via Editor bar) */
+  protected Boolean  forceSaved;
+
+  /** The saved */
+  protected Boolean  saved;
+
+  /** The userId (used for saving the document content under this user) */
+  protected String   userId;
+
+  /** The comment (used for saving a version of a document with comment on FileActivity) */
+  protected String   comment;
+
+  /**
+   * Gets the config.
+   * 
+   * @return the config
+   */
+  public Config getConfig() {
+    return config;
+  }
+
+  /**
+   * Gets the error.
+   *
+   * @return the error
+   */
+  public long getError() {
+    return error;
+  }
+
+  /**
+   * Gets the key.
+   *
+   * @return the key
+   */
+  public String getKey() {
+    return key;
+  }
+
+  /**
+   * Sets the config.
+   *
+   * @param config the new config
+   */
+  protected void setConfig(Config config) {
+    this.config = config;
+  }
+
+  /**
+   * Gets the status returned by Onlyoffice Document Server. <br>
+   * See <a href=
+   * "https://api.onlyoffice.com/editors/callback#status">https://api.onlyoffice.com/editors/callback#status</a>
+   * for details.
+   *
+   * @return the status
+   */
+  protected Long getStatus() {
+    return status;
+  }
+
+  /**
+   * Gets the url.
+   *
+   * @return the url
+   */
+  protected String getUrl() {
+    return url;
+  }
+
+  /**
+   * Gets the users.
+   *
+   * @return the users
+   */
+  protected String[] getUsers() {
+    return users;
+  }
+  
+  /**
+   * Gets the last user (editor).
+   *
+   * @return the last user (editor)
+   */
+  protected String getLastUser() {
+    return users != null && users.length > 0 ? users[0] : null;
+  }
+
+  /**
+   * Gets the coEdited.
+   *
+   * @return the coEdited
+   */
+  public Boolean isCoedited() {
+    return coEdited;
+  }
+
+  /**
+   * Gets the forcesaved.
+   *
+   * @return the forcesaved
+   */
+  public Boolean isForcesaved() {
+    return forceSaved != null ? forceSaved : false;
+  }
+
+  /**
+   * Gets the isSaved.
+   *
+   * @return the isSaved
+   */
+  public Boolean isSaved() {
+    return saved;
+  }
+
+  /**
+   * Gets the userId.
+   *
+   * @return the userId
+   */
+  public String getUserId() {
+    return userId;
+  }
+
+  /**
+   * Gets the comment.
+   *
+   * @return the coment
+   */
+  protected String getComment() {
+    return comment;
+  }
+
   /**
    * Return this config as JSON string.
    *
    * @return the string
    * @throws JsonException the json exception
    */
-  public String toJSON() throws JsonException {
+  protected String toJSON() throws JsonException {
     JsonGeneratorImpl gen = new JsonGeneratorImpl();
     return gen.createJsonObject(this).toString();
   }

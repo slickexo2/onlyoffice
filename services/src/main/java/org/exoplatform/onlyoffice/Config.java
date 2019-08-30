@@ -1348,6 +1348,9 @@ public class Config implements Externalizable {
    *
    * @return the node in context, can be <code>null</code>
    */
+  @Deprecated // TODO we don't need it here in public API, 
+  // Node session will be expired soon or the config will be shared to another thread, 
+  // but the instance will stay here and may lead to InvalidItemStateException or unsafe use.
   public Node getContextNode() {
     return node;
   }
@@ -1402,6 +1405,7 @@ public class Config implements Externalizable {
    *
    * @return the comment
    */
+  @Deprecated
   public String getComment() {
     return comment;
   }
