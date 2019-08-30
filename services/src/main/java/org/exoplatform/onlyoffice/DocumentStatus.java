@@ -334,7 +334,7 @@ public class DocumentStatus {
    *
    * @return the coment
    */
-  protected String getComment() {
+  public String getComment() {
     return comment;
   }
 
