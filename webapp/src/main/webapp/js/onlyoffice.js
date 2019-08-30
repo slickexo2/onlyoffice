@@ -775,8 +775,17 @@
       // $("#NavigationPortlet").remove();
       // But we may need this for some cases of first page loading
       $("#LeftNavigation").parent(".LeftNavigationTDContainer").remove();
-      // Specific styles to add
-      $("#SharedLayoutRightBody").addClass("onlyofficeEditorBody");
+      // Specific styles to add to hide/fix portal layout  
+      // We prefer to add to an element with already applied Platform skin style 
+      var $body = $("#UIWorkingWorkspace");
+      if ($body.length == 0) {
+        $body = $("#UIPortalApplication");
+        if ($body.length == 0) {
+          // Otherwise, use the whole page 
+          $body = $("body");
+        }
+      }
+      $body.addClass("onlyofficeEditorBody");
     };
 
     this.isEditorLoaded = function() {
