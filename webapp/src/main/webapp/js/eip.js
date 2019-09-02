@@ -1,3 +1,8 @@
+/**
+ * Edit In Place JQuery plugin eip.js from https://www.jqueryscript.net/download/Edit-In-Place-Plugin-jQuery.zip
+ * Modified for Onlyoffice Editor bar
+ * Aug 16, 2019.
+ */
 (function ( $ ) { 
 $.fn.editable = function (options) {
     const STYLE_EDITABLE = {
@@ -57,6 +62,7 @@ $.fn.editable = function (options) {
         const parent          = editableElement.parentElement;
         const type            = (editableElement.hasAttribute('type')) ? editableElement.getAttribute('type') : 'text';
         const parentClassList = [...parent.classList];
+        // Get required width from editable title
         var width = $(".editable-title").width() + "px";
         // Since we can't submit a form on "enter" whenever there is only one input in the form, a ghost one has been added.
         const wrapper = `
