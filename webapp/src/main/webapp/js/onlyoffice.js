@@ -181,7 +181,7 @@
     var EDITOR_CLOSED = "EDITOR_CLOSED";
 
     // Events that are dispatched to redux as actions
-    var dispatchableEvents = [ DOCUMENT_SAVED, DOCUMENT_CHANGED, DOCUMENT_DELETED, DOCUMENT_VERSION ];
+    var dispatchableEvents = [ DOCUMENT_SAVED, DOCUMENT_CHANGED, DOCUMENT_DELETED, DOCUMENT_VERSION, DOCUMENT_TITLE_UPDATED ];
 
     // CometD transport bus
     var cometd, cometdContext;
@@ -394,9 +394,6 @@
                 newTitle += extension;
               }
             }
-            currentConfig.document.title = newTitle;
-            window.document.title = window.document.title.replace(oldTitle, newTitle);
-            $bar.find(".editable-title").text(newTitle);
             publishDocument(currentConfig.docId, {
               "type" : DOCUMENT_TITLE_UPDATED,
               "userId" : currentUserId,
@@ -404,7 +401,6 @@
               "title" : newTitle,
               "workspace" : currentConfig.workspace
             });
-            adjustWidth();
           }
         });
       }
@@ -569,6 +565,14 @@
               if(state.userId === currentUserId){
                 currentUserChanges = false;
               }
+            }
+            if(state.type === DOCUMENT_TITLE_UPDATED) {
+              console.log("Title updated");
+              var oldTitle = currentConfig.document.title;
+              currentConfig.document.title = state.title;
+              window.document.title = window.document.title.replace(oldTitle, state.title);
+              $("#editor-top-bar").find(".editable-title").text(state.title);
+              adjustWidth();
             }
           });
 
