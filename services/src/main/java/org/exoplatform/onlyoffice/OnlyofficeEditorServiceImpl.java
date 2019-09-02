@@ -709,9 +709,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       fireCreated(status);
     } else {
       // Update fields
-      config.setDisplayPath(getDisplayPath(node, userId));
-      config.setRenameAllowed(canRenameDocument(node));
-      config.setComment(nodeComment(node));
+      config.getEditorPage().setDisplayPath(getDisplayPath(node, userId));
+      config.getEditorPage().setRenameAllowed(canRenameDocument(node));
+      config.getEditorPage().setComment(nodeComment(node));
       config.getDocument().setLastModifier(getLastModifier(node));
       config.getDocument().setLastModified(getLastModified(node));
     }
@@ -1906,10 +1906,10 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
           if (commentId != null) {
             node.setProperty("eoo:commentId", commentId);
-            config.setComment(status.getComment());
+            config.getEditorPage().setComment(status.getComment());
           } else {
             node.setProperty("eoo:commentId", "");
-            config.setComment(null);
+            config.getEditorPage().setComment(null);
           }
           updateCache(config);
 

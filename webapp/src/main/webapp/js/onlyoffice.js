@@ -560,7 +560,7 @@
             if(state.type === DOCUMENT_SAVED) {
               UI.updateBar(state.displayName, state.comment);
               if(state.comment){
-                currentConfig.comment = state.comment;
+                currentConfig.editorPage.comment = state.comment;
               }
               if(state.userId === currentUserId){
                 currentUserChanges = false;
@@ -907,11 +907,11 @@
     };
 
     this.initBar = function(config) {
-      var drive = config.displayPath.split(':')[0];
-      var folders = config.displayPath.split(':')[1].split('/');
+      var drive = config.editorPage.displayPath.split(':')[0];
+      var folders = config.editorPage.displayPath.split(':')[1].split('/');
       var title = folders.pop();
       var $bar = $("#editor-top-bar");
-      if(config.renameAllowed){
+      if(config.editorPage.renameAllowed){
         $bar.find("a[rel=tooltip]").tooltip();
       } else {
         $bar.find("a[rel=tooltip]").not(".document-title a[rel=tooltip]").tooltip();
@@ -928,10 +928,10 @@
 
       var $lastEditedElem = $bar.find(".last-edited");
       $lastEditedElem.append("Last edited by " + config.document.lastModifier + " " + config.document.lastModified);
-      if(config.comment){
+      if(config.editorPage.comment){
         var $comment = $bar.find(".editors-comment a");
-        $comment.append("\"" + config.comment + "\"");
-        $comment.attr("data-original-title", config.comment);
+        $comment.append("\"" + config.editorPage.comment + "\"");
+        $comment.attr("data-original-title", config.editorPage.comment);
       }
 
       var $saveBtn = $bar.find("#save-btn .uiIconSave");

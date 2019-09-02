@@ -438,6 +438,7 @@ public class Config implements Externalizable {
       Document document = new Document(key, fileType, title, url, info, permissions, lastModifier, lastModified);
       Editor.User user = new Editor.User(userId, firstname, lastname);
       Editor editor = new Editor(callbackUrl, lang, mode, user);
+      EditorPage editorPage = new EditorPage(comment, renameAllowed, displayPath);
       Config config = new Config(documentserverUrl,
                                  platformRestUrl,
                                  editorUrl,
@@ -445,9 +446,7 @@ public class Config implements Externalizable {
                                  documentType,
                                  workspace,
                                  path,
-                                 displayPath,
-                                 comment,
-                                 renameAllowed,
+                                 editorPage,
                                  isActivity,
                                  docId,
                                  document,
@@ -1068,14 +1067,8 @@ public class Config implements Externalizable {
   /** The path. */
   private String                          path;
 
-  /** The display path. */
-  private String                          displayPath;
-
-  /** The comment. */
-  private String                          comment;
-
-  /** The renameAllowed indicator. */
-  private Boolean                         renameAllowed;
+  /** The editor page. */
+  private EditorPage                      editorPage = new EditorPage();
 
   /** The isActivity */
   private Boolean                         isActivity;
@@ -1157,28 +1150,22 @@ public class Config implements Externalizable {
                    String documentType,
                    String workspace,
                    String path,
-                   String displayPath,
-                   String comment,
-                   Boolean renameAllowed,
+                   EditorPage editorPage,
                    Boolean isActivity,
                    String docId,
                    Document document,
                    Editor editor) {
     this.workspace = workspace;
     this.path = path;
-    this.displayPath = displayPath;
     this.isActivity = isActivity;
-    this.comment = comment;
-    this.renameAllowed = renameAllowed;
+    this.editorPage = editorPage;
     this.docId = docId;
     this.documentType = documentType;
     this.documentserverUrl = documentserverUrl;
     this.documentserverJsUrl = new StringBuilder(documentserverUrl).append("apps/api/documents/api.js").toString();
-
     this.platformRestUrl = platformRestUrl;
     this.editorUrl = editorUrl;
     this.explorerUri = explorerUri;
-
     this.document = document;
     this.editorConfig = editor;
   }
@@ -1196,9 +1183,9 @@ public class Config implements Externalizable {
     out.writeUTF(documentserverJsUrl);
     out.writeUTF(platformRestUrl.toString());
     out.writeUTF(editorUrl);
-    out.writeUTF(displayPath);
-    out.writeUTF(comment);
-    out.writeBoolean(renameAllowed);
+    out.writeUTF(editorPage.displayPath);
+    out.writeUTF(editorPage.comment);
+    out.writeBoolean(editorPage.renameAllowed);
     out.writeBoolean(isActivity);
     try {
       out.writeObject(explorerUri);
@@ -1247,9 +1234,10 @@ public class Config implements Externalizable {
     this.documentserverJsUrl = in.readUTF();
     this.platformRestUrl = in.readUTF();
     this.editorUrl = in.readUTF();
-    this.displayPath = in.readUTF();
-    this.comment = in.readUTF();
-    this.renameAllowed = in.readBoolean();
+    String edisplayPath = in.readUTF();
+    String ecomment = in.readUTF();
+    Boolean erenameAllowed = in.readBoolean();
+    this.editorPage = new EditorPage(ecomment, erenameAllowed, edisplayPath);
     this.isActivity = in.readBoolean();
     try {
       this.explorerUri = (URI) in.readObject();
@@ -1370,14 +1358,6 @@ public class Config implements Externalizable {
     return path;
   }
 
-  /**
-   * Gets the display path.
-   *
-   * @return the display path
-   */
-  public String getDisplayPath() {
-    return displayPath;
-  }
 
   /**
    * Is activity
@@ -1389,24 +1369,14 @@ public class Config implements Externalizable {
   }
 
   /**
-   * Gets the comment.
+   * Gets the editor page.
    *
-   * @return the comment
+   * @return the editorPage
    */
-  @Deprecated
-  public String getComment() {
-    return comment;
+  public EditorPage getEditorPage() {
+    return editorPage;
   }
   
-  /**
-   * Is rename allowed.
-   *
-   * @return the renameAllowed indicator
-   */
-  public Boolean isRenameAllowed() {
-    return renameAllowed;
-  }
-
   /**
    * Gets the document ID in storage.
    *
@@ -1502,26 +1472,8 @@ public class Config implements Externalizable {
    *
    * @param comment the comment
    */
-  protected void setComment(String comment) {
-    this.comment = comment;
-  }
-
-  /**
-   * Sets the displayPath.
-   *
-   * @param displayPath the displayPath
-   */
-  protected void setDisplayPath(String displayPath) {
-    this.displayPath = displayPath;
-  }
-  
-  /**
-   * Sets the renameAllowed.
-   *
-   * @param renameAllowed the renameAllowed
-   */
-  protected void setRenameAllowed(Boolean renameAllowed) {
-    this.renameAllowed = renameAllowed;
+  protected void setEditorPage(EditorPage editorPage) {
+    this.editorPage = editorPage;
   }
 
   /**
@@ -1570,9 +1522,7 @@ public class Config implements Externalizable {
                                documentType,
                                workspace,
                                path,
-                               displayPath,
-                               comment,
-                               renameAllowed,
+                               editorPage,
                                isActivity,
                                docId,
                                userDocument,
