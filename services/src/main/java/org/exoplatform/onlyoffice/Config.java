@@ -1344,18 +1344,6 @@ public class Config implements Externalizable {
   }
 
   /**
-   * Gets the context node.
-   *
-   * @return the node in context, can be <code>null</code>
-   */
-  @Deprecated // TODO we don't need it here in public API, 
-  // Node session will be expired soon or the config will be shared to another thread, 
-  // but the instance will stay here and may lead to InvalidItemStateException or unsafe use.
-  public Node getContextNode() {
-    return node;
-  }
-
-  /**
    * Sets the context node.
    *
    * @param node the node to set
