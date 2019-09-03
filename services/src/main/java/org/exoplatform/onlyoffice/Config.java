@@ -435,10 +435,10 @@ public class Config implements Externalizable {
 
       Document.Info info = new Document.Info(author, created, folder);
       Document.Permissions permissions = new Document.EditPermissions();
-      Document document = new Document(key, fileType, title, url, info, permissions, lastModifier, lastModified);
+      Document document = new Document(key, fileType, title, url, info, permissions);
       Editor.User user = new Editor.User(userId, firstname, lastname);
       Editor editor = new Editor(callbackUrl, lang, mode, user);
-      EditorPage editorPage = new EditorPage(comment, renameAllowed, displayPath);
+      EditorPage editorPage = new EditorPage(comment, renameAllowed, displayPath, lastModifier, lastModified);
       Config config = new Config(documentserverUrl,
                                  platformRestUrl,
                                  editorUrl,
@@ -606,12 +606,6 @@ public class Config implements Externalizable {
     /** The permissions. */
     protected final Permissions permissions;
 
-    /** The last modifier. */
-    protected String            lastModifier;
-
-    /** The last modified. */
-    protected String              lastModified;
-
     /**
      * Instantiates a new document.
      *
@@ -621,17 +615,13 @@ public class Config implements Externalizable {
      * @param url the url
      * @param info the info
      * @param permissions the permissions
-     * @param lastModifier the lastModifier
-     * @param lastModified the lastModified
      */
     protected Document(String key,
                        String fileType,
                        String title,
                        String url,
                        Info info,
-                       Permissions permissions,
-                       String lastModifier,
-                       String lastModified) {
+                       Permissions permissions) {
       super();
       this.fileType = fileType;
       this.key = key;
@@ -639,8 +629,6 @@ public class Config implements Externalizable {
       this.url = url;
       this.info = info;
       this.permissions = permissions;
-      this.lastModifier = lastModifier;
-      this.lastModified = lastModified;
     }
 
     /**
@@ -653,7 +641,7 @@ public class Config implements Externalizable {
      * @return the document
      */
     protected Document forUser(String id, String firstName, String lastName, String url) {
-      return new Document(key, fileType, title, url, info, permissions, lastModifier, lastModified);
+      return new Document(key, fileType, title, url, info, permissions);
     }
 
     /**
@@ -708,42 +696,6 @@ public class Config implements Externalizable {
      */
     public Permissions getPermissions() {
       return permissions;
-    }
-
-    /**
-     * Gets the lastModifier. 
-     *
-     * @return the last modifier
-     */
-    public String getLastModifier() {
-      return lastModifier;
-    }
-
-    /**
-     * Gets the lastModified.
-     *
-     * @return the last modified
-     */
-    public String getLastModified() {
-      return lastModified;
-    }
-    
-    /**
-     * Sets lastModifier.
-     *
-     * @param lastModifier the lastModifier
-     */
-    protected void setLastModifier(String lastModifier) {
-      this.lastModifier = lastModifier;
-    }
-    
-    /**
-     * Sets lastModified.
-     *
-     * @param lastModified the lastModified
-     */
-    protected void setLastModified(String lastModified) {
-      this.lastModified = lastModified;
     }
   }
 
@@ -1091,8 +1043,6 @@ public class Config implements Externalizable {
   /** The error. */
   private String                          error;
 
-  /** The node. */
-  private transient Node                  node;
 
   private transient ThreadLocal<Boolean>  sameModifier     = new ThreadLocal<>();
 
@@ -1135,9 +1085,7 @@ public class Config implements Externalizable {
    * @param documentType the document type
    * @param workspace the workspace
    * @param path the path
-   * @param displayPath the displayPath
-   * @param comment the comment
-   * @param renameAllowed the renameAllowed
+   * @param editorPage the editor page
    * @param isActivity the isActivity
    * @param docId the document ID
    * @param document the document
@@ -1183,9 +1131,6 @@ public class Config implements Externalizable {
     out.writeUTF(documentserverJsUrl);
     out.writeUTF(platformRestUrl.toString());
     out.writeUTF(editorUrl);
-    out.writeUTF(editorPage.displayPath);
-    out.writeUTF(editorPage.comment);
-    out.writeBoolean(editorPage.renameAllowed);
     out.writeBoolean(isActivity);
     try {
       out.writeObject(explorerUri);
@@ -1198,13 +1143,18 @@ public class Config implements Externalizable {
     out.writeUTF(error != null ? error : EMPTY);
 
     // Objects
+    // EditorPage: displayPath, comment, renameAllowed, lastModifier, lastModified.
+    out.writeUTF(editorPage.displayPath);
+    out.writeUTF(editorPage.comment);
+    out.writeBoolean(editorPage.renameAllowed);
+    out.writeUTF(editorPage.lastModifier);
+    out.writeUTF(editorPage.lastModified);
+    
     // Document: key, fileType, title, url, info(author, created, folder)
     out.writeUTF(document.getKey());
     out.writeUTF(document.getFileType());
     out.writeUTF(document.getTitle());
     out.writeUTF(document.getUrl());
-    out.writeUTF(document.getLastModifier());
-    out.writeUTF(document.getLastModified());
     out.writeUTF(document.getInfo().getAuthor());
     out.writeUTF(document.getInfo().getCreated());
     out.writeUTF(document.getInfo().getFolder());
@@ -1234,10 +1184,6 @@ public class Config implements Externalizable {
     this.documentserverJsUrl = in.readUTF();
     this.platformRestUrl = in.readUTF();
     this.editorUrl = in.readUTF();
-    String edisplayPath = in.readUTF();
-    String ecomment = in.readUTF();
-    Boolean erenameAllowed = in.readBoolean();
-    this.editorPage = new EditorPage(ecomment, erenameAllowed, edisplayPath);
     this.isActivity = in.readBoolean();
     try {
       this.explorerUri = (URI) in.readObject();
@@ -1264,18 +1210,24 @@ public class Config implements Externalizable {
     }
 
     // Objects
+    // EditorPage: displayPath, comment, renameAllowed, lastModifier, lastModified.
+    String edisplayPath = in.readUTF();
+    String ecomment = in.readUTF();
+    Boolean erenameAllowed = in.readBoolean();
+    String emodifier = in.readUTF();
+    String emodified = in.readUTF();
+    this.editorPage = new EditorPage(ecomment, erenameAllowed, edisplayPath,emodifier, emodified);
+    
     // Document: key, fileType, title, url, info(author, created, folder)
     String dkey = in.readUTF();
     String dfileType = in.readUTF();
     String dtitle = in.readUTF();
     String durl = in.readUTF();
-    String dmodifier = in.readUTF();
-    String dmodified = in.readUTF();
     String diauthor = in.readUTF();
     String dicreated = in.readUTF();
     String difolder = in.readUTF();
     Document.Info dinfo = new Document.Info(diauthor, dicreated, difolder);
-    this.document = new Document(dkey, dfileType, dtitle, durl, dinfo, new Document.EditPermissions(), dmodifier, dmodified);
+    this.document = new Document(dkey, dfileType, dtitle, durl, dinfo, new Document.EditPermissions());
 
     // Editor: callbackUrl, lang, mode, user(userId, firstname, lastname)
     String ecallbackUrl = in.readUTF();
@@ -1329,15 +1281,6 @@ public class Config implements Externalizable {
    */
   public void setToken(String token) {
     this.token = token;
-  }
-
-  /**
-   * Sets the context node.
-   *
-   * @param node the node to set
-   */
-  protected void setContextNode(Node node) {
-    this.node = node;
   }
 
   /**

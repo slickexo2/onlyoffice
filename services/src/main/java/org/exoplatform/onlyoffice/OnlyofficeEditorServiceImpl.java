@@ -712,8 +712,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       config.getEditorPage().setDisplayPath(getDisplayPath(node, userId));
       config.getEditorPage().setRenameAllowed(canRenameDocument(node));
       config.getEditorPage().setComment(nodeComment(node));
-      config.getDocument().setLastModifier(getLastModifier(node));
-      config.getDocument().setLastModified(getLastModified(node));
+      config.getEditorPage().setLastModifier(getLastModifier(node));
+      config.getEditorPage().setLastModified(getLastModified(node));
     }
     return config;
   }

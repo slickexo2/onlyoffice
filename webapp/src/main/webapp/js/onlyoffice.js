@@ -382,8 +382,7 @@
     var initBar = function(config) {
       var $bar = UI.initBar(config);
       // Edit title
-      if(config.renameAllowed){
-        
+      if(config.editorPage.renameAllowed) {
         $bar.find(".editable-title").editable({
           onChange : function(event) {
             var newTitle = event.newValue;
@@ -927,7 +926,7 @@
       $titleElem.append("<span class='editable-title'>" + title + "</span>");
 
       var $lastEditedElem = $bar.find(".last-edited");
-      $lastEditedElem.append("Last edited by " + config.document.lastModifier + " " + config.document.lastModified);
+      $lastEditedElem.append("Last edited by " + config.editorPage.lastModifier + " " + config.editorPage.lastModified);
       if(config.editorPage.comment){
         var $comment = $bar.find(".editors-comment a");
         $comment.append("\"" + config.editorPage.comment + "\"");

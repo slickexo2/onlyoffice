@@ -14,7 +14,12 @@ public class EditorPage {
   
   /** The display path. */
   protected String displayPath;
-
+  
+  /** The last modifier. */
+  protected String lastModifier;
+  
+  /** The last modified. */
+  protected String lastModified;
 
   /**
    * Instantiates a new editor page.
@@ -22,12 +27,16 @@ public class EditorPage {
    * @param comment the comment
    * @param renameAllowed the rename allowed
    * @param displayPath the display path
+   * @param lastModifier the last modifier
+   * @param lastModified the last modified
    */
-  public EditorPage(String comment, Boolean renameAllowed, String displayPath) {
+  public EditorPage(String comment, Boolean renameAllowed, String displayPath, String lastModifier, String lastModified) {
     super();
     this.comment = comment;
     this.renameAllowed = renameAllowed;
     this.displayPath = displayPath;
+    this.lastModifier = lastModifier;
+    this.lastModified = lastModified;
   }
 
   /**
@@ -88,6 +97,42 @@ public class EditorPage {
    */
   public void setDisplayPath(String displayPath) {
     this.displayPath = displayPath;
+  }
+
+  /**
+   * Gets the last modifier.
+   *
+   * @return the last modifier
+   */
+  public String getLastModifier() {
+    return lastModifier;
+  }
+
+  /**
+   * Sets the last modifier.
+   *
+   * @param lastModifier the new last modifier
+   */
+  public void setLastModifier(String lastModifier) {
+    this.lastModifier = lastModifier;
+  }
+
+  /**
+   * Gets the last modified.
+   *
+   * @return the last modified
+   */
+  public String getLastModified() {
+    return lastModified;
+  }
+
+  /**
+   * Sets the last modified.
+   *
+   * @param lastModified the new last modified
+   */
+  public void setLastModified(String lastModified) {
+    this.lastModified = lastModified;
   }
  
 }
