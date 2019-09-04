@@ -18,9 +18,6 @@
  */
 package org.exoplatform.onlyoffice.cometd;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -52,8 +49,6 @@ import org.eclipse.jetty.util.component.LifeCycle;
 import org.mortbay.cometd.continuation.EXoContinuationBayeux;
 import org.picocontainer.Startable;
 
-import com.sun.media.jai.codecimpl.WBMPCodec;
-
 import org.exoplatform.commons.utils.PropertyManager;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
@@ -64,12 +59,9 @@ import org.exoplatform.onlyoffice.DocumentStatus;
 import org.exoplatform.onlyoffice.OnlyofficeEditorException;
 import org.exoplatform.onlyoffice.OnlyofficeEditorListener;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
-import org.exoplatform.portal.webui.util.Util;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.organization.User;
-import org.exoplatform.services.resources.LocaleConfig;
-import org.exoplatform.services.wcm.utils.WCMCoreUtils;
 
 /**
  * The CometdOnlyofficeService.
