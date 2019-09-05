@@ -34,20 +34,20 @@ import org.exoplatform.services.organization.User;
 public interface OnlyofficeEditorService {
 
   /** The editor opened event. */
-  static String       EDITOR_OPENED_EVENT     = "exo.onlyoffice.editor.opened";
+  static String EDITOR_OPENED_EVENT  = "exo.onlyoffice.editor.opened";
 
   /** The editor closed event. */
-  static String       EDITOR_CLOSED_EVENT     = "exo.onlyoffice.editor.closed";
+  static String EDITOR_CLOSED_EVENT  = "exo.onlyoffice.editor.closed";
 
   /** The editor saved event. */
-  static String       EDITOR_SAVED_EVENT      = "exo.onlyoffice.editor.saved";
+  static String EDITOR_SAVED_EVENT   = "exo.onlyoffice.editor.saved";
 
   /** The editor version event. */
-  static String       EDITOR_VERSION_EVENT    = "exo.onlyoffice.editor.version";
+  static String EDITOR_VERSION_EVENT = "exo.onlyoffice.editor.version";
 
   /** The editor error event. */
-  static String       EDITOR_ERROR_EVENT      = "exo.onlyoffice.editor.error";
-  
+  static String EDITOR_ERROR_EVENT   = "exo.onlyoffice.editor.error";
+
   /**
    * Return existing editor configuration for given user and node. If editor not
    * open for given node or user then <code>null</code> will be returned. If
@@ -266,14 +266,27 @@ public interface OnlyofficeEditorService {
   /**
    * Creates a new version of a document.
    * 
+   * @param status the status
+   */
+  void downloadVersion(DocumentStatus status);
+
+  /**
+   * Builds status object based on params. Obtains the config
    * @param userId the userId
    * @param key the key
    * @param coEdited the coEdited
-   * @param forceSaved the forceSaved
+   * @param forcesaved the forceSaved
    * @param comment the comment
    * @param contentUrl the contentUrl
+   * 
+   * @return created status
    */
-  void downloadVersion(String userId, String key, boolean coEdited, boolean forceSaved, String comment, String contentUrl);
+  DocumentStatus buildStatus(String userId,
+                             String key,
+                             boolean coEdited,
+                             boolean forcesaved,
+                             String comment,
+                             String contentUrl);
 
   /**
    * Gets the last modifier userId.

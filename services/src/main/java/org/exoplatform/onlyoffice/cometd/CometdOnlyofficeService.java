@@ -510,7 +510,8 @@ public class CometdOnlyofficeService implements Startable {
                             key,
                             lastUser.getDownloadLink());
                 }
-                editors.downloadVersion(lastUser.getId(), key, false, false, null, lastUser.getDownloadLink());
+                DocumentStatus status = editors.buildStatus(lastUser.getId(), key, false, false, null, lastUser.getDownloadLink());
+                editors.downloadVersion(status);
               } else {
                 editors.forceSave(lastUser.getId(), key, true, false, false, null);
               }
@@ -556,7 +557,8 @@ public class CometdOnlyofficeService implements Startable {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Downloading from existing link. User: {}, Key: {}, Link: {}", user.getId(), key, user.getDownloadLink());
             }
-            editors.downloadVersion(userId, key, false, false, null, user.getDownloadLink());
+            DocumentStatus status = editors.buildStatus(userId, key, false, false, null, user.getDownloadLink());
+            editors.downloadVersion(status);
           } else {
             editors.forceSave(userId, key, true, false, false, null);
           }
@@ -594,7 +596,8 @@ public class CometdOnlyofficeService implements Startable {
                           key,
                           lastUser.getDownloadLink());
               }
-              editors.downloadVersion(lastUser.getId(), key, true, false, null, lastUser.getDownloadLink());
+              DocumentStatus status = editors.buildStatus(lastUser.getId(), key, true, false, null, lastUser.getDownloadLink());
+              editors.downloadVersion(status);
             } else {
               if (LOG.isDebugEnabled()) {
                 LOG.debug("Download a new version of document: user " + lastUser.getId() + ", docId: " + docId);
@@ -637,12 +640,14 @@ public class CometdOnlyofficeService implements Startable {
           if (lastModifier != null && lastModifier.getLastModified() > lastModifier.getLastSaved()) {
             // If there is relevant link
             if (lastModifier.getLinkSaved() >= lastModifier.getLastModified()) {
-              editors.downloadVersion(userId, key, true, true, comment, lastModifier.getDownloadLink());
+              DocumentStatus status = editors.buildStatus(userId, key, true, true, comment, lastModifier.getDownloadLink());
+              editors.downloadVersion(status);
             } else {
               editors.forceSave(userId, key, true, false, true, comment);
             }
           } else {
-            editors.downloadVersion(userId, key, true, true, comment, null);
+            DocumentStatus status = editors.buildStatus(userId, key, true, true, comment, null);
+            editors.downloadVersion(status);
           }
         }
       });

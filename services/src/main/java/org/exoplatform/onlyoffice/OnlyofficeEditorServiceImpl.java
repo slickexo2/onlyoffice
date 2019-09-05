@@ -861,7 +861,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           Editor.User lastModifier = getLastModifier(key);
           // We download if there were modifications after the last saving.
           if (lastModifier.getId().equals(lastUser.getId()) && lastUser.getLastModified() > lastUser.getLastSaved()) {
-            downloadClosed(config, status);
+            downloadClosed(status);
           } else {
             config.closed();
             broadcastEvent(status, OnlyofficeEditorService.EDITOR_CLOSED_EVENT);
@@ -878,7 +878,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             if (url != null && url.length() > 0) {
               // if URL available then we can download it assuming it's last
               // successful modification the same behaviour as for status (2)
-              downloadClosed(config, status);
+              downloadClosed(status);
               activeCache.remove(key);
               activeCache.remove(config.getDocId());
               config.setError("Error in editor (" + status.getError() + "). Last change was successfully saved");
@@ -930,12 +930,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           if (status.isSaved()) {
             // TODO call the downloadVersion() with existing status object,
             // make another downloadVersion() with fields on input and creating status from them, then call it
-            downloadVersion(status.getUserId(),
-                            key,
-                            status.isCoedited(),
-                            status.isForcesaved(),
-                            status.getComment(),
-                            status.getUrl());
+            status.setConfig(getEditorByKey(status.getUserId(), key));
+            downloadVersion(status);
           } else {
             saveLink(status.getUserId(), key, status.getUrl());
           }
@@ -1178,20 +1174,32 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /**
    * Downloads document's content to the JCR node creating a new version.
    * 
-   * @param userId the userId
-   * @param key the key
-   * @param coEdited the coEdited
-   * @param forcesaved the forcesaved
-   * @param comment the comment
-   * @param contentUrl the contentUrl
+   * @param status the status
    */
   @Override
-  public void downloadVersion(String userId,
-                              String key,
-                              boolean coEdited,
-                              boolean forcesaved,
-                              String comment,
-                              String contentUrl) {
+  public void downloadVersion(DocumentStatus status) {
+    if (status != null) {
+      try {
+        download(status);
+        status.getConfig().getEditorConfig().getUser().setLastSaved(System.currentTimeMillis());
+      } catch (RepositoryException | OnlyofficeEditorException e) {
+        LOG.error("Error occured while downloading document [Version]. docId: " + status.getConfig().getDocId(), e);
+      }
+    } else {
+      LOG.error("Cannot download version. The document status is null");
+    }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public DocumentStatus buildStatus(String userId,
+                                    String key,
+                                    boolean coEdited,
+                                    boolean forcesaved,
+                                    String comment,
+                                    String contentUrl) {
     String docId = null;
     try {
       Config config = getEditorByKey(userId, key);
@@ -1204,12 +1212,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                                           .coEdited(coEdited)
                                                           .forcesaved(forcesaved)
                                                           .build();
-      download(config, status);
-      // we set it sooner to let clients see the save
-      config.getEditorConfig().getUser().setLastSaved(System.currentTimeMillis());
-    } catch (OnlyofficeEditorException | RepositoryException e) {
-      LOG.error("Error occured while downloading document content [Version]. docId: " + docId, e);
+      return status;
+    } catch (RepositoryException | OnlyofficeEditorException e) {
+      LOG.error("Error occured while creating document status. docId: " + docId, e);
+      return null;
     }
+
   }
 
   /**
@@ -1452,15 +1460,15 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /**
    * Downloads document's content to the JCR node when the editor is closed.
    * 
-   * @param config the config
    * @param status the status
    */
-  protected void downloadClosed(Config config, DocumentStatus status) {
+  protected void downloadClosed(DocumentStatus status) {
+    Config config = status.getConfig();
     // First mark closing, then do actual download and save in storage
     config.closing();
     broadcastEvent(status, OnlyofficeEditorService.EDITOR_CLOSED_EVENT);
     try {
-      download(config, status);
+      download(status);
       config.getEditorConfig().getUser().setLastSaved(System.currentTimeMillis());
       config.closed(); // reset transient closing state
     } catch (OnlyofficeEditorException | RepositoryException e) {
@@ -1743,12 +1751,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /**
    * Downloads document's content to the JCR node.
    * 
-   * @param config the config
    * @param status the status
    * @throws OnlyofficeEditorException the OnlyofficeEditorException
    * @throws RepositoryException the RepositoryException
    */
-  protected void download(Config config, DocumentStatus status) throws OnlyofficeEditorException, RepositoryException {
+  protected void download(DocumentStatus status) throws OnlyofficeEditorException, RepositoryException {
+    Config config = status.getConfig();
     String workspace = config.getWorkspace();
     String path = config.getPath();
 
@@ -1763,7 +1771,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     HttpURLConnection connection = null;
     InputStream data = null;
     // If we have content to download
-    if(contentUrl != null) {
+    if (contentUrl != null) {
       try {
         URL url = new URL(contentUrl);
         connection = (HttpURLConnection) url.openConnection();
@@ -1780,7 +1788,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         throw new OnlyofficeEditorException("Error reading content stream " + contentUrl + " for " + path, e);
       }
     }
-    
+
     // remember real context state and session provider to restore them at the end
     ConversationState contextState = ConversationState.getCurrent();
     SessionProvider contextProvider = sessionProviders.getSessionProvider(null);
@@ -1917,7 +1925,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           updateCache(config);
 
           // update document
-          if(data != null) {
+          if (data != null) {
             content.setProperty("jcr:data", data);
           } else {
             // Set the same data to call listeners
@@ -1993,14 +2001,18 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // Remove values after usage in DocumentUdateActivityListener
           modifierConfig.setPreviousModified(null);
           modifierConfig.setSameModifier(null);
-          if(data != null) {
+          if (data != null) {
             try {
               data.close();
             } catch (Throwable e) {
-              logError(userId, nodePath, config.getDocId(), config.getDocument().getKey(), "Error closing exported content stream");
+              logError(userId,
+                       nodePath,
+                       config.getDocId(),
+                       config.getDocument().getKey(),
+                       "Error closing exported content stream");
             }
           }
-          if(connection != null) {
+          if (connection != null) {
             try {
               connection.disconnect();
             } catch (Throwable e) {
@@ -2904,7 +2916,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     if (node.hasProperty("exo:lastModifiedDate")) {
       Calendar date = node.getProperty("exo:lastModifiedDate").getDate();
       Locale locale;
-      try{
+      try {
         locale = Util.getPortalRequestContext().getLocale();
       } catch (Exception e) {
         LOG.warn("Cannot get locale from portal request context. {}", e.getMessage());
