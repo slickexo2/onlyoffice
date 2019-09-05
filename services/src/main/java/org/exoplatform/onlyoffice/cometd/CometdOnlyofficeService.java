@@ -632,12 +632,17 @@ public class CometdOnlyofficeService implements Startable {
 
         @Override
         void execute(ExoContainer exoContainer) {
-          Editor.User lastUser = editors.getLastModifier(key);
+          Editor.User lastModifier = editors.getLastModifier(key);
           // If there were changes after last saving
-          if (lastUser.getLinkSaved() >= lastUser.getLastModified()) {
-            editors.downloadVersion(userId, key, true, true, comment, lastUser.getDownloadLink());
+          if (lastModifier != null && lastModifier.getLastModified() > lastModifier.getLastSaved()) {
+            // If there is relevant link
+            if (lastModifier.getLinkSaved() >= lastModifier.getLastModified()) {
+              editors.downloadVersion(userId, key, true, true, comment, lastModifier.getDownloadLink());
+            } else {
+              editors.forceSave(userId, key, true, false, true, comment);
+            }
           } else {
-            editors.forceSave(userId, key, true, false, true, comment);
+            editors.downloadVersion(userId, key, true, true, comment, null);
           }
         }
       });

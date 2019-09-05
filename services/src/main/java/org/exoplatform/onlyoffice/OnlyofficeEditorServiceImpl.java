@@ -1760,24 +1760,27 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     validateUser(userId, config);
     String contentUrl = status.getUrl();
     Calendar editedTime = Calendar.getInstance();
-    HttpURLConnection connection;
-    InputStream data;
-    try {
-      URL url = new URL(contentUrl);
-      connection = (HttpURLConnection) url.openConnection();
-      data = connection.getInputStream();
-      if (data == null) {
-        logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "Content stream is null");
-        throw new OnlyofficeEditorException("Content stream is null");
+    HttpURLConnection connection = null;
+    InputStream data = null;
+    // If we have content to download
+    if(contentUrl != null) {
+      try {
+        URL url = new URL(contentUrl);
+        connection = (HttpURLConnection) url.openConnection();
+        data = connection.getInputStream();
+        if (data == null) {
+          logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "Content stream is null");
+          throw new OnlyofficeEditorException("Content stream is null");
+        }
+      } catch (MalformedURLException e) {
+        logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "Error parsing content URL");
+        throw new OnlyofficeEditorException("Error parsing content URL " + contentUrl + " for " + path, e);
+      } catch (IOException e) {
+        logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "Error reading content stream");
+        throw new OnlyofficeEditorException("Error reading content stream " + contentUrl + " for " + path, e);
       }
-    } catch (MalformedURLException e) {
-      logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "Error parsing content URL");
-      throw new OnlyofficeEditorException("Error parsing content URL " + contentUrl + " for " + path, e);
-    } catch (IOException e) {
-      logError(userId, config.getPath(), config.getDocId(), config.getDocument().getKey(), "Error reading content stream");
-      throw new OnlyofficeEditorException("Error reading content stream " + contentUrl + " for " + path, e);
     }
-
+    
     // remember real context state and session provider to restore them at the end
     ConversationState contextState = ConversationState.getCurrent();
     SessionProvider contextProvider = sessionProviders.getSessionProvider(null);
@@ -1914,7 +1917,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           updateCache(config);
 
           // update document
-          content.setProperty("jcr:data", data);
+          if(data != null) {
+            content.setProperty("jcr:data", data);
+          } else {
+            // Set the same data to call listeners
+            content.setProperty("jcr:data", content.getProperty("jcr:data").getStream());
+          }
 
           node.save();
           long statusCode = status.getStatus() != null ? status.getStatus() : -1;
@@ -1958,7 +1966,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
               String baseVersion = node.getBaseVersion().getName();
               try {
                 node.getVersionHistory().addVersionLabel(baseVersion, versionSummary, false);
-              } catch (VersionException e) {
+              } catch (Exception e) {
                 LOG.debug("Cannot add version label {}", e.getMessage());
               }
             }
@@ -1985,15 +1993,19 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // Remove values after usage in DocumentUdateActivityListener
           modifierConfig.setPreviousModified(null);
           modifierConfig.setSameModifier(null);
-          try {
-            data.close();
-          } catch (Throwable e) {
-            logError(userId, nodePath, config.getDocId(), config.getDocument().getKey(), "Error closing exported content stream");
+          if(data != null) {
+            try {
+              data.close();
+            } catch (Throwable e) {
+              logError(userId, nodePath, config.getDocId(), config.getDocument().getKey(), "Error closing exported content stream");
+            }
           }
-          try {
-            connection.disconnect();
-          } catch (Throwable e) {
-            logError(userId, nodePath, config.getDocId(), config.getDocument().getKey(), "Error closing export connection");
+          if(connection != null) {
+            try {
+              connection.disconnect();
+            } catch (Throwable e) {
+              logError(userId, nodePath, config.getDocId(), config.getDocument().getKey(), "Error closing export connection");
+            }
           }
           try {
             if (node.isLocked() && lock.wasLocked()) {
