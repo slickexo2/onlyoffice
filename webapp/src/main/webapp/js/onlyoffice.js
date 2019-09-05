@@ -121,21 +121,23 @@
 
   var adjustWidth = function() {
       var $editorBar = $("#editor-top-bar");
-      if ($editorBar[0].scrollHeight > $editorBar[0].offsetHeight) {
         $editorBar.ready(function(){
-            var $commentBox = $editorBar.find(".editors-comment a");
-            var comment = $commentBox.html();
-            if(comment.length >= 15) {
-              comment = comment.slice(0, -10) + "...";
-              $commentBox.html(comment);
-               adjustWidth();
+          setTimeout(function(){
+            if ($editorBar[0].scrollHeight > $editorBar[0].offsetHeight) {
+              var $commentBox = $editorBar.find(".editors-comment a");
+              var comment = $commentBox.html();
+              if(comment.length >= 15) {
+                comment = comment.slice(0, -10) + "...";
+                $commentBox.html(comment);
+                adjustWidth();
+              }
             } else {
-              $editorBar.find(".folder").text("...");
+                setTimeout(() => {
+                  $("#editor-top-bar-loader").hide();
+              }, 10);
             }
+          }, 10);
         }); 
-      } else {
-        $("#editor-top-bar-loader").hide();
-      }
     };
   
   var formatDate = function(date) {
@@ -878,13 +880,13 @@
       // $("#NavigationPortlet").remove();
       // But we may need this for some cases of first page loading
       $("#LeftNavigation").parent(".LeftNavigationTDContainer").remove();
-      // Specific styles to add to hide/fix portal layout  
-      // We prefer to add to an element with already applied Platform skin style 
+      // Specific styles to add to hide/fix portal layout
+      // We prefer to add to an element with already applied Platform skin style
       var $body = $("#UIWorkingWorkspace");
       if ($body.length == 0) {
         $body = $("#UIPortalApplication");
         if ($body.length == 0) {
-          // Otherwise, use the whole page 
+          // Otherwise, use the whole page
           $body = $("body");
         }
       }
