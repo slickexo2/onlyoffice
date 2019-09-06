@@ -34,8 +34,11 @@ import org.exoplatform.ecm.webui.utils.Utils;
 import org.exoplatform.onlyoffice.DocumentTypePlugin;
 import org.exoplatform.resolver.ApplicationResourceResolver;
 import org.exoplatform.resolver.ResourceResolver;
+import org.exoplatform.services.cms.jcrext.activity.ActivityCommonService;
+import org.exoplatform.services.listener.ListenerService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.services.wcm.utils.WCMCoreUtils;
 import org.exoplatform.webui.application.WebuiRequestContext;
 
 /**
@@ -142,6 +145,8 @@ public class NewDocumentService implements Startable {
     content.setProperty("jcr:data", inputStream);
     content.setProperty("jcr:mimeType", selectedType.getMimeType());
     content.setProperty("jcr:lastModified", new GregorianCalendar());
+    ListenerService listenerService = WCMCoreUtils.getService(ListenerService.class);
+    listenerService.broadcast(ActivityCommonService.FILE_CREATED_ACTIVITY, null, addedNode);
     currentNode.save();
     inputStream.close();
     return addedNode;

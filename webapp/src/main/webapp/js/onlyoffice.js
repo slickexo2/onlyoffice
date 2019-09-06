@@ -121,21 +121,23 @@
 
   var adjustWidth = function() {
       var $editorBar = $("#editor-top-bar");
-      if ($editorBar[0].scrollHeight > $editorBar[0].offsetHeight) {
         $editorBar.ready(function(){
-            var $commentBox = $editorBar.find(".editors-comment a");
-            var comment = $commentBox.html();
-            if(comment.length >= 15) {
-              comment = comment.slice(0, -10) + "...";
-              $commentBox.html(comment);
-               adjustWidth();
+          setTimeout(function(){
+            if ($editorBar[0].scrollHeight > $editorBar[0].offsetHeight) {
+              var $commentBox = $editorBar.find(".editors-comment a");
+              var comment = $commentBox.html();
+              if(comment.length >= 15) {
+                comment = comment.slice(0, -10) + "...";
+                $commentBox.html(comment);
+                adjustWidth();
+              }
             } else {
-              $editorBar.find(".folder").text("...");
+                setTimeout(() => {
+                  $("#editor-top-bar-loader").hide();
+              }, 10);
             }
+          }, 10);
         }); 
-      } else {
-        $("#editor-top-bar-loader").hide();
-      }
     };
   
   var formatDate = function(date) {
@@ -181,7 +183,7 @@
     var EDITOR_CLOSED = "EDITOR_CLOSED";
 
     // Events that are dispatched to redux as actions
-    var dispatchableEvents = [ DOCUMENT_SAVED, DOCUMENT_CHANGED, DOCUMENT_DELETED, DOCUMENT_VERSION ];
+    var dispatchableEvents = [ DOCUMENT_SAVED, DOCUMENT_CHANGED, DOCUMENT_DELETED, DOCUMENT_VERSION, DOCUMENT_TITLE_UPDATED ];
 
     // CometD transport bus
     var cometd, cometdContext;
@@ -382,8 +384,7 @@
     var initBar = function(config) {
       var $bar = UI.initBar(config);
       // Edit title
-      if(config.renameAllowed){
-        
+      if(config.editorPage.renameAllowed) {
         $bar.find(".editable-title").editable({
           onChange : function(event) {
             var newTitle = event.newValue;
@@ -394,9 +395,6 @@
                 newTitle += extension;
               }
             }
-            currentConfig.document.title = newTitle;
-            window.document.title = window.document.title.replace(oldTitle, newTitle);
-            $bar.find(".editable-title").text(newTitle);
             publishDocument(currentConfig.docId, {
               "type" : DOCUMENT_TITLE_UPDATED,
               "userId" : currentUserId,
@@ -404,7 +402,6 @@
               "title" : newTitle,
               "workspace" : currentConfig.workspace
             });
-            adjustWidth();
           }
         });
       }
@@ -564,11 +561,19 @@
             if(state.type === DOCUMENT_SAVED) {
               UI.updateBar(state.displayName, state.comment);
               if(state.comment){
-                currentConfig.comment = state.comment;
+                currentConfig.editorPage.comment = state.comment;
               }
               if(state.userId === currentUserId){
                 currentUserChanges = false;
               }
+            }
+            if(state.type === DOCUMENT_TITLE_UPDATED) {
+              console.log("Title updated");
+              var oldTitle = currentConfig.document.title;
+              currentConfig.document.title = state.title;
+              window.document.title = window.document.title.replace(oldTitle, state.title);
+              $("#editor-top-bar").find(".editable-title").text(state.title);
+              adjustWidth();
             }
           });
 
@@ -875,13 +880,13 @@
       // $("#NavigationPortlet").remove();
       // But we may need this for some cases of first page loading
       $("#LeftNavigation").parent(".LeftNavigationTDContainer").remove();
-      // Specific styles to add to hide/fix portal layout  
-      // We prefer to add to an element with already applied Platform skin style 
+      // Specific styles to add to hide/fix portal layout
+      // We prefer to add to an element with already applied Platform skin style
       var $body = $("#UIWorkingWorkspace");
       if ($body.length == 0) {
         $body = $("#UIPortalApplication");
         if ($body.length == 0) {
-          // Otherwise, use the whole page 
+          // Otherwise, use the whole page
           $body = $("body");
         }
       }
@@ -903,11 +908,11 @@
     };
 
     this.initBar = function(config) {
-      var drive = config.displayPath.split(':')[0];
-      var folders = config.displayPath.split(':')[1].split('/');
+      var drive = config.editorPage.displayPath.split(':')[0];
+      var folders = config.editorPage.displayPath.split(':')[1].split('/');
       var title = folders.pop();
       var $bar = $("#editor-top-bar");
-      if(config.renameAllowed){
+      if(config.editorPage.renameAllowed){
         $bar.find("a[rel=tooltip]").tooltip();
       } else {
         $bar.find("a[rel=tooltip]").not(".document-title a[rel=tooltip]").tooltip();
@@ -923,11 +928,11 @@
       $titleElem.append("<span class='editable-title'>" + title + "</span>");
 
       var $lastEditedElem = $bar.find(".last-edited");
-      $lastEditedElem.append("Last edited by " + config.document.lastModifier + " " + config.document.lastModified);
-      if(config.comment){
+      $lastEditedElem.append("Last edited by " + config.editorPage.lastModifier + " " + config.editorPage.lastModified);
+      if(config.editorPage.comment){
         var $comment = $bar.find(".editors-comment a");
-        $comment.append("\"" + config.comment + "\"");
-        $comment.attr("data-original-title", config.comment);
+        $comment.append("\"" + config.editorPage.comment + "\"");
+        $comment.attr("data-original-title", config.editorPage.comment);
       }
 
       var $saveBtn = $bar.find("#save-btn .uiIconSave");
