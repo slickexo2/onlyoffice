@@ -263,25 +263,18 @@ public interface OnlyofficeEditorService {
    */
   Node getDocumentById(String workspace, String uuid) throws RepositoryException;
 
-  /**
-   * Creates a new version of a document.
-   * 
-   * @param status the status
-   */
-  void downloadVersion(DocumentStatus status);
 
   /**
    * Builds status object based on params. Obtains the config
+   *
    * @param userId the userId
    * @param key the key
    * @param coEdited the coEdited
    * @param forcesaved the forceSaved
    * @param comment the comment
    * @param contentUrl the contentUrl
-   * 
-   * @return created status
    */
-  DocumentStatus buildStatus(String userId,
+  void downloadVersion(String userId,
                              String key,
                              boolean coEdited,
                              boolean forcesaved,

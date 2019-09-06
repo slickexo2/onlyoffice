@@ -62,7 +62,6 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFormatException;
 import javax.jcr.lock.Lock;
-import javax.jcr.version.VersionException;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.AutoCloseInputStream;
@@ -928,8 +927,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           }
           // Here we decide if we need to download content or just save the link
           if (status.isSaved()) {
-            // TODO call the downloadVersion() with existing status object,
-            // make another downloadVersion() with fields on input and creating status from them, then call it
             status.setConfig(getEditorByKey(status.getUserId(), key));
             downloadVersion(status);
           } else {
@@ -1172,52 +1169,32 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   /**
-   * Downloads document's content to the JCR node creating a new version.
-   * 
-   * @param status the status
-   */
-  @Override
-  public void downloadVersion(DocumentStatus status) {
-    if (status != null) {
-      try {
-        download(status);
-        status.getConfig().getEditorConfig().getUser().setLastSaved(System.currentTimeMillis());
-      } catch (RepositoryException | OnlyofficeEditorException e) {
-        LOG.error("Error occured while downloading document [Version]. docId: " + status.getConfig().getDocId(), e);
-      }
-    } else {
-      LOG.error("Cannot download version. The document status is null");
-    }
-  }
-
-  /**
    * {@inheritDoc}
    */
   @Override
-  public DocumentStatus buildStatus(String userId,
-                                    String key,
-                                    boolean coEdited,
-                                    boolean forcesaved,
-                                    String comment,
-                                    String contentUrl) {
+  public void downloadVersion(String userId,
+                              String key,
+                              boolean coEdited,
+                              boolean forcesaved,
+                              String comment,
+                              String contentUrl) {
     String docId = null;
+    Config config = null;
     try {
-      Config config = getEditorByKey(userId, key);
+      config = getEditorByKey(userId, key);
       docId = config.getDocId();
-      DocumentStatus status = new DocumentStatus.Builder().config(config)
-                                                          .key(key)
-                                                          .url(contentUrl)
-                                                          .comment(comment)
-                                                          .userId(userId)
-                                                          .coEdited(coEdited)
-                                                          .forcesaved(forcesaved)
-                                                          .build();
-      return status;
     } catch (RepositoryException | OnlyofficeEditorException e) {
-      LOG.error("Error occured while creating document status. docId: " + docId, e);
-      return null;
+      LOG.error("Cannot obtain config. docId: " + docId, e);
     }
-
+    DocumentStatus status = new DocumentStatus.Builder().config(config)
+                                                        .key(key)
+                                                        .url(contentUrl)
+                                                        .comment(comment)
+                                                        .userId(userId)
+                                                        .coEdited(coEdited)
+                                                        .forcesaved(forcesaved)
+                                                        .build();
+    downloadVersion(status);
   }
 
   /**
@@ -1746,6 +1723,20 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       }
     }
     return userIds.toArray(new String[userIds.size()]);
+  }
+
+  /**
+   * Downloads document's content to the JCR node creating a new version.
+   * 
+   * @param status the status
+   */
+  protected void downloadVersion(DocumentStatus status) {
+    try {
+      download(status);
+      status.getConfig().getEditorConfig().getUser().setLastSaved(System.currentTimeMillis());
+    } catch (RepositoryException | OnlyofficeEditorException e) {
+      LOG.error("Error occured while downloading document [Version]. docId: " + status.getConfig().getDocId(), e);
+    }
   }
 
   /**
