@@ -132,6 +132,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import javassist.bytecode.stackmap.BasicBlock.Catch;
 
 /**
  * Service implementing {@link OnlyofficeEditorService} and {@link Startable}.
@@ -1276,6 +1277,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
       try (OutputStream outputStream = connection.getOutputStream()) {
         outputStream.write(postDataBytes);
+      }
+      catch(Exception e) {
+        LOG.error("Error occured while sending request to Document Server: ", e);
       }
       // read the response
       InputStream in = new BufferedInputStream(connection.getInputStream());

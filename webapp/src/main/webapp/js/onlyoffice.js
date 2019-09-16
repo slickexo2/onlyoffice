@@ -415,6 +415,17 @@
           "comment" : comment
         });
         $bar.find("#comment-box").val('');
+        // Reset all timers after forcesaving
+        if (autosaveTimer) {
+          log("Reset autosave timer...");
+          clearTimeout(autosaveTimer);
+          autosaveTimer = null;
+        }
+        if (changesTimer) {
+          log("Reset changes timer...");
+          clearTimeout(changesTimer);
+          changesTimer = null;
+        }
       });
 
       $bar.find(".close-btn").on("click", function() {
