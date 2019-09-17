@@ -177,7 +177,7 @@
     var DOCUMENT_CHANGED = "DOCUMENT_CHANGED";
     var DOCUMENT_DELETED = "DOCUMENT_DELETED";
     var DOCUMENT_VERSION = "DOCUMENT_VERSION";
-    var DOCUMENT_FORCESAVED = "DOCUMENT_FORCESAVED";
+    var DOCUMENT_USERSAVED = "DOCUMENT_USERSAVED";
     var DOCUMENT_TITLE_UPDATED = "DOCUMENT_TITLE_UPDATED";
     var DOCUMENT_LINK = "DOCUMENT_LINK";
     var EDITOR_CLOSED = "EDITOR_CLOSED";
@@ -408,7 +408,7 @@
       $bar.find("#save-btn").on("click", function() {
         var comment = $bar.find("#comment-box").val();
         publishDocument(currentConfig.docId, {
-          "type" : DOCUMENT_FORCESAVED,
+          "type" : DOCUMENT_USERSAVED,
           "userId" : currentUserId,
           "clientId" : clientId,
           "key" : currentConfig.document.key,

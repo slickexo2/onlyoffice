@@ -204,8 +204,8 @@ public class CometdOnlyofficeService implements Startable {
   /** The document title updated event. */
   public static final String              DOCUMENT_TITLE_UPDATED = "DOCUMENT_TITLE_UPDATED";
 
-  /** The document forcesave event. */
-  public static final String              DOCUMENT_FORCESAVED    = "DOCUMENT_FORCESAVED";
+  /** The document usersave event. */
+  public static final String              DOCUMENT_USERSAVED    = "DOCUMENT_USERSAVED";
 
   /** The editor closed event. */
   public static final String              EDITOR_CLOSED_EVENT    = "EDITOR_CLOSED";
@@ -422,8 +422,8 @@ public class CometdOnlyofficeService implements Startable {
       case DOCUMENT_TITLE_UPDATED:
         handleDocumentTitleUpdatedEvent(data, docId);
         break;
-      case DOCUMENT_FORCESAVED:
-        handleDocumentForcesavedEvent(data, docId);
+      case DOCUMENT_USERSAVED:
+        handleDocumentUsersavedEvent(data, docId);
         break;
       case EDITOR_CLOSED_EVENT:
         handleEditorClosedEvent(data, docId);
@@ -615,12 +615,12 @@ public class CometdOnlyofficeService implements Startable {
     }
 
     /**
-     * Handles document forcesave event.
+     * Handles document usersaved event.
      * 
      * @param data the data
      * @param docId the docId
      */
-    protected void handleDocumentForcesavedEvent(Map<String, Object> data, String docId) {
+    protected void handleDocumentUsersavedEvent(Map<String, Object> data, String docId) {
       String userId = (String) data.get("userId");
       String key = (String) data.get("key");
       String comment = (String) data.get("comment");
