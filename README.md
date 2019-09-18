@@ -86,7 +86,17 @@ Indeed, in some cases, it may be required to allow requests from any client host
 
 Allowing access from any host, if no other security protection implemented, **strongly not recommended** as mentioned RESTful end-points can be accessed by anyone (doesn't check eXo credentials to allow the Document Server work with them). 
 
-The Document Server uses tokens generated using the JSON Web Tokens standard to secure access. For the validation setup it is necessary to edit the configuration file which can be found (or created) at the following path:
+### Allowed hosts to secure access from Document Server
+
+When running in a complex infrastructure, when Document server's hostname/IP may differ for user requests (URLs used in editor Config) and for requests the server will made to eXo Platform REST endpoints, it may be required to point several Document Server host names that allowed to accept by the add-on backend.
+For this case there is an extra configuration parameter, if need point several hosts in it separated them by a comma:
+
+    onlyoffice.documentserver.allowedhosts=YOUR_DOCUMENT_SERVER_HOST_1,YOUR_DOCUMENT_SERVER_HOST_2
+
+### JSON Web Tokens to secure access
+
+Onlyoffice Document Server can use tokens generated using the JSON Web Tokens standard to secure access. It's *recommended security setup* for a production deployment.
+To setup use of JSON Web Token edit a configuration file which can be found (or created) at the following path:
 
 For Linux - /etc/onlyoffice/documentserver/local.json.
 For Windows - %ProgramFiles%\ONLYOFFICE\DocumentServer\config\local.json.
@@ -109,7 +119,7 @@ Save the local.json and restart the services:
 
 For more detailed information check the [Onlyoffice API Documentation](https://api.onlyoffice.com/editors/signature/)
 
-### Events
+## Editor Events
 
 Onlyoffice add-on publishes some eXo listener events to let end-user apps listen on them and build required data/output for collecting stats or other purposes.
 
