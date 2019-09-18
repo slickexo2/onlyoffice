@@ -1411,9 +1411,9 @@ public class Config implements Externalizable {
   }
 
   /**
-   * Sets the comment.
+   * Sets the editorPage.
    *
-   * @param comment the comment
+   * @param editorPage the editorPage
    */
   protected void setEditorPage(EditorPage editorPage) {
     this.editorPage = editorPage;

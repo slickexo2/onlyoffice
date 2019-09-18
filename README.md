@@ -17,20 +17,29 @@ A demo video where we edit Word document in eXo Platform using ONLYOFFICE editor
 
 ## Usage
 
-Since add-on installed, it adds two menu items in Document explorer action bar: "Edit In Onlyoffice" and "Close Onlyoffice". These menu items available in file preview mode (need open a file in the explorer) and also work for large files when preview not possible. 
+Since add-on installed, it adds a few UI elements to the eXo Platform. 
+'Edit Online' button is added to Document Explorer action bar and to file activities in the Activity Stream. Also the editor button is displayed on document preview opened from the Activity Stream.
 
-![Editor in Action bar](/docs/images/action_bar.png)
+![Editor in Action bar](/docs/images/edit-online-btn.png)
 
-After user will choose to open an editor for current file, it will be loaded instead of file preview. As Onlyoffice requires some time to download the document content to its Document Server and then prepare an UI, users will need wait for seconds before starting to work. Large files may require more time for loading (e.g. spreadsheets with lot of cells). 
+When user opens an editor for current file, it will be loaded in a separate page. As Onlyoffice requires some time to download the document content to its Document Server and then prepare an UI, users will need wait for seconds before starting to work. Large files may require more time for loading (e.g. spreadsheets with lot of cells). 
 
-![Editor open](/docs/images/editor.png)
+![Editor](/docs/images/editing.png)
 
-When users start to edit a document it's important to understand how Onlyoffice editor works. All modifications will go to a temporal storage in the Documents Server and only after all editors will be closed, in about 10 seconds, the file will be updated in eXo Platform. Thus, while document is open in the editor, all users opened it see actual state, but if look at the preview in eXo it will show a state before the editing session start.
-To finish editing the document, user closes the editor by menu "Close Onlyoffice".
+When users start to edit a document it's important to understand how Onlyoffice editor works. All modifications will go to a temporal storage in the Documents Server and sync with eXo side in such points:
+- Single user edited a document and closed the editor (sync is performed in ~10 seconds)
+- User modified a document and closed the editor in CoEdit mode 
+- The user clicked ‘Save’ button on the Editor Bar (the comment is optional)
+- User interrupted another user in CoEdit mode (changed the document when the another user’s changes weren’t saved yet)
+- Autosave timer went off (in 10 minutes after last modification if the editor page is still open)
 
-When several users edit the same document, it is required to make extra operations to get synced with others. In single user mode all editings will be applied immediately to the document temporal storage. But when multiple users open the document and someone edits it, the edited part of the document will be locked for others until this user save the document explicitly using _Save_ menu. After document saved current user will see also changes of others (in other paragraph, table cell etc). But others, in order to see remote modifications, will need also to click _Save_ button in their editors, even if they haven't changed anything. Onlyoffice shows a popover on the _Save_ button by default when document changed by others, it lets user to see need of such synchronization.
+When several users edit the same document, all modifications are synced, and each user sees actual state of the document. If a document is versionable, the Onlyoffice add-on creates separate versions for every user with their changes. When the document is saved, the 'yellow bar' is added to the document preview in ECMS and Activity Stream with 'Reload' button.
 
-![Co-editing](/docs/images/coediting.png)
+![Yellow Banner on File Activity](/docs/images/file-activity.png)
+
+Also, Onlyoffice add-on enables users to create documents from ECMS. The 'New Document' button is available in Document Explorer and opens a popup for creating a new office document.
+
+![New Document](/docs/images/new-document-btn.png)
 
 ## Installation
 
@@ -86,10 +95,24 @@ Indeed, in some cases, it may be required to allow requests from any client host
 
 Allowing access from any host, if no other security protection implemented, **strongly not recommended** as mentioned RESTful end-points can be accessed by anyone (doesn't check eXo credentials to allow the Document Server work with them). 
 
-The Document Server uses tokens generated using the JSON Web Tokens standard to secure access. For the validation setup it is necessary to edit the configuration file which can be found (or created) at the following path:
+### Allowed hosts to secure access from Document Server
 
-For Linux - /etc/onlyoffice/documentserver/local.json.
-For Windows - %ProgramFiles%\ONLYOFFICE\DocumentServer\config\local.json.
+When running in a complex infrastructure, the Document server's hostname/IP may differ for user requests (URLs used in editor Config) and for requests the server will made to eXo Platform REST endpoints, it may be required to point several Document Server host names that allowed to accept by the add-on backend.
+
+For this case there is an extra configuration parameter `onlyoffice.documentserver.allowedhosts`, it extends value of `onlyoffice.documentserver.host`, if need point several hosts in it separated by a comma:
+
+    onlyoffice.documentserver.allowedhosts=YOUR_DOCUMENT_SERVER_HOST_1,YOUR_DOCUMENT_SERVER_HOST_2
+    
+This parameter will work only in conjunction with `onlyoffice.documentserver.accessOnly=true`.  
+
+### JSON Web Tokens to secure access
+
+Onlyoffice Document Server can use JSON Web Tokens to secure access to eXo Platform REST endpoints. It's **recommended security setup** for a production deployment.
+
+To setup use of JSON Web Token edit a configuration file which can be found (or created) at the following path:
+
+    For Linux - /etc/onlyoffice/documentserver/local.json.
+    For Windows - %ProgramFiles%\ONLYOFFICE\DocumentServer\config\local.json.
 
 You need to enable tokens validation and set up the secret key.
 To enable tokens validation set true values to the params:
@@ -109,7 +132,7 @@ Save the local.json and restart the services:
 
 For more detailed information check the [Onlyoffice API Documentation](https://api.onlyoffice.com/editors/signature/)
 
-### Events
+## Editor Events
 
 Onlyoffice add-on publishes some eXo listener events to let end-user apps listen on them and build required data/output for collecting stats or other purposes.
 
@@ -126,3 +149,4 @@ The version event is published when a new version of a document has been created
 The error event appears when an error has occured while working with the Document Server.
 
 The data object passed to the event has DocumentStatus class which contains some useful information for end-user apps. For example, it contains the config, that has a full information about the editor, including the opened and closed times (for the opened and closed events). The coEdited field helps to figure out the original reason of the version event (true means that the version has been created becouse of coediting, false - due to autosave timer)
+
