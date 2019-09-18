@@ -88,11 +88,13 @@ Allowing access from any host, if no other security protection implemented, **st
 
 ### Allowed hosts to secure access from Document Server
 
-When running in a complex infrastructure, when Document server's hostname/IP may differ for user requests (URLs used in editor Config) and for requests the server will made to eXo Platform REST endpoints, it may be required to point several Document Server host names that allowed to accept by the add-on backend.
+When running in a complex infrastructure, the Document server's hostname/IP may differ for user requests (URLs used in editor Config) and for requests the server will made to eXo Platform REST endpoints, it may be required to point several Document Server host names that allowed to accept by the add-on backend.
 
-For this case there is an extra configuration parameter, if need point several hosts in it separated by a comma:
+For this case there is an extra configuration parameter `onlyoffice.documentserver.allowedhosts`, it extends value of `onlyoffice.documentserver.host`, if need point several hosts in it separated by a comma:
 
     onlyoffice.documentserver.allowedhosts=YOUR_DOCUMENT_SERVER_HOST_1,YOUR_DOCUMENT_SERVER_HOST_2
+    
+This parameter will work only in conjunction with `onlyoffice.documentserver.accessOnly=true`.  
 
 ### JSON Web Tokens to secure access
 
