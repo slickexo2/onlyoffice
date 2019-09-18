@@ -89,17 +89,19 @@ Allowing access from any host, if no other security protection implemented, **st
 ### Allowed hosts to secure access from Document Server
 
 When running in a complex infrastructure, when Document server's hostname/IP may differ for user requests (URLs used in editor Config) and for requests the server will made to eXo Platform REST endpoints, it may be required to point several Document Server host names that allowed to accept by the add-on backend.
-For this case there is an extra configuration parameter, if need point several hosts in it separated them by a comma:
+
+For this case there is an extra configuration parameter, if need point several hosts in it separated by a comma:
 
     onlyoffice.documentserver.allowedhosts=YOUR_DOCUMENT_SERVER_HOST_1,YOUR_DOCUMENT_SERVER_HOST_2
 
 ### JSON Web Tokens to secure access
 
-Onlyoffice Document Server can use tokens generated using the JSON Web Tokens standard to secure access. It's *recommended security setup* for a production deployment.
+Onlyoffice Document Server can use JSON Web Tokens to secure access to eXo Platform REST endpoints. It's **recommended security setup** for a production deployment.
+
 To setup use of JSON Web Token edit a configuration file which can be found (or created) at the following path:
 
-For Linux - /etc/onlyoffice/documentserver/local.json.
-For Windows - %ProgramFiles%\ONLYOFFICE\DocumentServer\config\local.json.
+    For Linux - /etc/onlyoffice/documentserver/local.json.
+    For Windows - %ProgramFiles%\ONLYOFFICE\DocumentServer\config\local.json.
 
 You need to enable tokens validation and set up the secret key.
 To enable tokens validation set true values to the params:
