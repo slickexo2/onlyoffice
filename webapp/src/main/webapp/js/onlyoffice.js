@@ -1,7 +1,7 @@
 /**
  * Onlyoffice Editor client.
  */
-(function($, cCometD, redux) {
+(function($, cCometD) {
   "use strict";
   // ******** polyfills ********
   if (!String.prototype.endsWith) {
@@ -213,7 +213,7 @@
     var editorWindow;
 
     // Redux store for dispatching document updates inside the app
-    var store = redux.createStore(function(state, action) {
+    var store = Redux.createStore(function(state, action) {
       if (dispatchableEvents.includes(action.type)) {
         // TODO do we need merge with previous state as Redux assumes?
         return action;
@@ -1161,4 +1161,4 @@
     }
   });
   return editor;
-})($, cCometD, Redux);
+})($, cCometD);
