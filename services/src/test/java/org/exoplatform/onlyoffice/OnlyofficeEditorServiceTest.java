@@ -288,8 +288,7 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
 
   /**
    * Test get document by id with workspace and ID
-   * WebuiRequestContext problem
-
+   */
   @Test
   public void testGetDocumentById() throws Exception {
     // Given
@@ -305,7 +304,6 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
     assertEquals(nodeDocument.getPrimaryNodeType().getName(), "nt:file");
     node.remove();
   }
-   */
 
   /**
    * Test get last modifier
