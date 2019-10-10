@@ -482,4 +482,373 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
     assertTrue(editorService.validateToken(token, key));
     node.remove();
   }
+
+  /**
+   * Test add listener
+   */
+  @Test
+  public void testAddListener() throws Exception {
+    // Given
+    startSessionAs("john");
+    Node node = createDocument("Test Document.docx", "nt:file", "testContent", true);
+    Config config = editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());
+    new DocumentStatus.Builder().status(1L)
+                                .users(new String[] { "john" })
+                                .userId("john")
+                                .key(config.getDocument().getKey())
+                                .build();
+    OnlyofficeEditorListener listener = new OnlyofficeEditorListener() {
+      @Override
+      public void onCreate(DocumentStatus status) {
+
+      }
+
+      @Override
+      public void onGet(DocumentStatus status) {
+
+      }
+
+      @Override
+      public void onJoined(DocumentStatus status) {
+
+      }
+
+      @Override
+      public void onLeaved(DocumentStatus status) {
+
+      }
+
+      @Override
+      public void onSaved(DocumentStatus status) {
+
+      }
+
+      @Override
+      public void onError(DocumentStatus status) {
+
+      }
+    };
+
+    // When
+    editorService.addListener(listener);
+
+    // Then
+    node.remove();
+  }
+
+  /**
+   * Test create editor
+   */
+  @Test
+  public void testCreateEditor() throws Exception {
+    startSessionAs("john");
+    Node node = session.getRootNode().addNode("Test Document.docx", "nt:file");
+    node.addMixin("mix:referenceable");
+    Node contentNode = node.addNode("jcr:content", "nt:unstructured");
+    contentNode.setProperty("jcr:mimeType", "application/vnd.oasis.opendocument.text");
+    contentNode.setProperty("jcr:lastModified", Calendar.getInstance());
+    contentNode.setProperty("jcr:data", "testContent");
+    session.save();
+
+    String docId = node.getUUID();
+    Config config = editorService.createEditor("http", "127.0.0.1", 8080, "john", null, docId);
+    String editorURL = "http://127.0.0.1:8080/portal/intranet/oeditor?docId=" + docId;
+
+    assertNotNull(config);
+
+    assertTrue(config.isCreated());
+    assertFalse(config.isClosing());
+    assertFalse(config.isOpen());
+    assertFalse(config.isClosed());
+    assertNull(config.getError());
+    assertEquals(docId, config.getDocId());
+    assertEquals(editorURL, config.getEditorUrl());
+    assertEquals("/Test Document.docx", config.getPath());
+
+    assertNotNull(config.getDocument());
+    assertEquals("Test Document.docx", config.getDocument().getTitle());
+    assertEquals("docx", config.getDocument().getFileType());
+
+    assertNotNull(config.getEditorConfig());
+    assertNotNull(config.getEditorConfig().getUser());
+    node.remove();
+    session.save();
+  }
+
+  /**
+   * Test get editor
+   */
+  @Test
+  public void testGetEditor() throws Exception {
+    // Given
+    startSessionAs("john");
+    Node node = createDocument("Test Document.docx", "nt:file", "testContent", true);
+
+    // When
+    Config config = editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());
+    Config configTest = editorService.getEditor("john", config.getWorkspace(), node.getPath());
+
+    // Then
+    assertNotNull(configTest);
+    assertSame(configTest, config);
+    node.remove();
+  }
+
+  /**
+   * Test get editor with true createCoEditing
+   */
+  @Test
+  public void testGetEditorWithCreateCoEditing() throws Exception {
+    // Given
+    startSessionAs("john");
+    Node node = createDocument("Test Document.docx", "nt:file", "testContent", true);
+
+    // When
+    editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());
+
+    Config config = editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());
+    Config configTest = editorService.getEditor("john", config.getWorkspace(), node.getPath());
+
+    // Then
+    assertNotNull(configTest);
+    assertSame(configTest, config);
+    node.remove();
+  }
+
+  /**
+   * Test remove listener
+   */
+  @Test
+  public void testRemoveListener() throws Exception {
+    // Given
+    startSessionAs("john");
+    Node node = createDocument("Test Document.docx", "nt:file", "testContent", true);
+    Config config = editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());
+    new DocumentStatus.Builder().status(1L)
+                                .users(new String[] { "john" })
+                                .userId("john")
+                                .key(config.getDocument().getKey())
+                                .build();
+    OnlyofficeEditorListener listener = new OnlyofficeEditorListener() {
+      @Override
+      public void onCreate(DocumentStatus status) {
+
+      }
+
+      @Override
+      public void onGet(DocumentStatus status) {
+
+      }
+
+      @Override
+      public void onJoined(DocumentStatus status) {
+
+      }
+
+      @Override
+      public void onLeaved(DocumentStatus status) {
+
+      }
+
+      @Override
+      public void onSaved(DocumentStatus status) {
+
+      }
+
+      @Override
+      public void onError(DocumentStatus status) {
+
+      }
+    };
+
+    // When
+    editorService.addListener(listener);
+    editorService.removeListener(listener);
+
+    // Then
+    node.remove();
+  }
+
+  /**
+   * Test update Document fot status code 3 it's an error of saving in
+   * Onlyoffice, we sync to remote editors list first
+   */
+  @Test
+  public void testUpdateDocumentErrorSavingInOnlyOffice() throws Exception {
+    // Given
+    startSessionAs("john");
+    Node node = createDocument("Test Document.docx", "nt:file", "testContent", true);
+    Config config = editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());
+    DocumentStatus status = new DocumentStatus.Builder().status(3L)
+                                                        .users(new String[] { "john" })
+                                                        .userId("john")
+                                                        .url("http://127.0.0.1:8080/editor/")
+                                                        .key(config.getDocument().getKey())
+                                                        .build();
+
+    // When
+    editorService.updateDocument(status);
+
+    // Then
+    assertNotNull(status.getConfig());
+    assertNotNull(status.getConfig().getError());
+    node.remove();
+  }
+
+  /**
+   * Test update Document for unknown status code Received Onlyoffice error of
+   * forced saving of document
+   */
+  @Test
+  public void testUpdateDocumentForUnknownCode() throws Exception {
+    // Given
+    startSessionAs("john");
+    Node node = createDocument("Test Document.docx", "nt:file", "testContent", true);
+    Config config = editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());
+    DocumentStatus status = new DocumentStatus.Builder().status(5L)
+                                                        .users(new String[] { "john" })
+                                                        .userId("john")
+                                                        .saved(true)
+                                                        .key(config.getDocument().getKey())
+                                                        .build();
+
+    // When
+    editorService.updateDocument(status);
+
+    // Then
+    node.remove();
+  }
+
+  /**
+   * Test update Document for status code 0 Onlyoffice doesn't know about such
+   * document
+   */
+  @Test
+  public void testUpdateDocumentForUnknownDocument() throws Exception {
+    // Given
+    startSessionAs("john");
+    Node node = createDocument("Test Document.docx", "nt:file", "testContent", true);
+    Config config = editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());
+    DocumentStatus status = new DocumentStatus.Builder().status(0L)
+                                                        .userId("john")
+                                                        .users(new String[] {})
+                                                        .key(config.getDocument().getKey())
+                                                        .build();
+
+    // When
+    try {
+      editorService.updateDocument(status);
+    } catch (OnlyofficeEditorException e) {
+      // Ok
+      node.remove();
+      return;
+    }
+    // Fail if the exception wasn't thrown
+    fail();
+  }
+
+  /**
+   * Test update Document for status code 6 Forcedsave done, save the version
+   * with its URL
+   */
+  @Test
+  public void testUpdateDocumentForceSaveDone() throws Exception {
+    // Given
+    startSessionAs("john");
+    Node node = createDocument("Test Document.docx", "nt:file", "testContent", true);
+    Config config = editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());
+    DocumentStatus status = new DocumentStatus.Builder().status(6L)
+                                                        .users(new String[] { "john" })
+                                                        .userId("john")
+                                                        .saved(true)
+                                                        .key(config.getDocument().getKey())
+                                                        .build();
+
+    // When
+    editorService.updateDocument(status);
+
+    // Then
+    assertNotNull(status.getConfig());
+    assertNotSame(config.getEditorConfig().getUser().getLastSaved(), 0);
+    node.remove();
+  }
+
+  /**
+   * Test update Document fot status code 2 download if there were modifications
+   * after the last saving
+   */
+  @Test
+  public void testUpdateDocumentIfThereWereModificationAfterSaving() throws Exception {
+    // Given
+    startSessionAs("john");
+    Node node = createDocument("Test Document.docx", "nt:file", "testContent", true);
+    Config config = editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());
+    DocumentStatus status = new DocumentStatus.Builder().status(2L)
+                                                        .users(new String[] { "john" })
+                                                        .userId("john")
+                                                        .key(config.getDocument().getKey())
+                                                        .build();
+
+    // When
+    editorService.setLastModifier(node.getUUID(), "john");
+    editorService.updateDocument(status);
+
+    // Then
+    assertTrue(config.isClosed());
+    assertFalse(config.isOpen());
+    assertNotSame(config.getEditorConfig().getUser().getLastSaved(), 0);
+    node.remove();
+  }
+
+  /**
+   * Test update Document for status code 7 Received Onlyoffice error of forced
+   * saving of document
+   */
+  @Test
+  public void testUpdateDocumentWhileErrorInForceSaving() throws Exception {
+    // Given
+    startSessionAs("john");
+    Node node = createDocument("Test Document.docx", "nt:file", "testContent", true);
+    Config config = editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());
+    DocumentStatus status = new DocumentStatus.Builder().status(7L)
+                                                        .users(new String[] { "john" })
+                                                        .userId("john")
+                                                        .saved(true)
+                                                        .key(config.getDocument().getKey())
+                                                        .build();
+
+    // When
+    editorService.updateDocument(status);
+
+    // Then
+    node.remove();
+  }
+
+  /**
+   * Test update Document for status code 6 Forcedsave done, save the version
+   * with its URL and save link
+   */
+  @Test
+  public void testUpdateDocumentWithSaveLink() throws Exception {
+    // Given
+    startSessionAs("john");
+    Node node = createDocument("Test Document.docx", "nt:file", "testContent", true);
+    Config config = editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());
+    DocumentStatus status = new DocumentStatus.Builder().status(6L)
+                                                        .users(new String[] { "john" })
+                                                        .userId("john")
+                                                        .saved(false)
+                                                        .url("http://127.0.0.1:8080/editor/")
+                                                        .key(config.getDocument().getKey())
+                                                        .build();
+
+    // When
+    editorService.updateDocument(status);
+
+    // Then
+    assertNotNull(status.getConfig());
+    assertNotSame(config.getEditorConfig().getUser().getLinkSaved(), 0);
+    assertNotNull(config.getEditorConfig().getUser().getDownloadLink());
+    node.remove();
+  }
 }
