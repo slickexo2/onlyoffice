@@ -119,27 +119,6 @@
     return m ? m : key;
   };
 
-  var adjustWidth = function() {
-      var $editorBar = $("#editor-top-bar");
-        $editorBar.ready(function(){
-          setTimeout(function(){
-            if ($editorBar[0].scrollHeight > $editorBar[0].offsetHeight) {
-              var $commentBox = $editorBar.find(".editors-comment a");
-              var comment = $commentBox.html();
-              if(comment.length >= 15) {
-                comment = comment.slice(0, -10) + "...";
-                $commentBox.html(comment);
-                adjustWidth();
-              }
-            } else {
-                setTimeout(() => {
-                  $("#editor-top-bar-loader").hide();
-              }, 10);
-            }
-          }, 10);
-        }); 
-    };
-  
   var formatDate = function(date) {
     var yyyy = date.getFullYear();
     var dd = date.getDate();
@@ -561,7 +540,6 @@
               currentConfig.document.title = state.title;
               window.document.title = window.document.title.replace(oldTitle, state.title);
               $("#editor-top-bar").find(".editable-title").text(state.title);
-              adjustWidth();
             }
           });
 
@@ -883,16 +861,15 @@
     
     this.updateBar = function(changer, comment) {
       var $bar = $("#editor-top-bar");
-      var $commentBox = $bar.find(".editors-comment a");
+      var $commentBox = $bar.find(".editors-comment");
       $commentBox.attr("data-original-title", comment);
       $commentBox.empty();
       if(comment){
-        $commentBox.append("\"" + comment + "\"");
+        $commentBox.append(comment);
       }
       var $lastEditedElem = $bar.find(".last-edited");
       $lastEditedElem.empty();
       $lastEditedElem.append("Last edited by " + changer + " " + formatDate(new Date()));
-      adjustWidth();
     };
 
     this.initBar = function(config) {
@@ -918,8 +895,8 @@
       var $lastEditedElem = $bar.find(".last-edited");
       $lastEditedElem.append("Last edited by " + config.editorPage.lastModifier + " " + config.editorPage.lastModified);
       if(config.editorPage.comment){
-        var $comment = $bar.find(".editors-comment a");
-        $comment.append("\"" + config.editorPage.comment + "\"");
+        var $comment = $bar.find(".editors-comment");
+        $comment.append(config.editorPage.comment);
         $comment.attr("data-original-title", config.editorPage.comment);
       }
 
@@ -930,9 +907,6 @@
           $saveBtn.css("color", "")
         }, 300)
       });
-      setTimeout(function() { 
-        adjustWidth();
-      }, 1500);
       return $bar;
     };
 
@@ -961,10 +935,9 @@
           docEditor = new DocsAPI.DocEditor("onlyoffice", localConfig);
           console.log('>>>> ' + JSON.stringify(localConfig))
           // show editor
-          $container.find("#editor-top-bar").show("blind");
-          $container.find("#editor-top-bar-loader").show("blind");
-          $container.find(".editor").show("blind");
-          $container.find(".loading").hide("blind");
+          $container.find("#editor-top-bar").show();
+          $container.find(".editor").show();
+          $container.find(".loading").hide();
         } else {
           log("WARN: Editor client already initialized");
         }
