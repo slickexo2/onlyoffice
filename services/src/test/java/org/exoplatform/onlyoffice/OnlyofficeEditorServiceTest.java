@@ -1,9 +1,7 @@
 package org.exoplatform.onlyoffice;
 
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.jcr.Node;
 
@@ -487,20 +485,17 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
    * Test add listener
    */
   @Test
-  public void testAddListener() throws Exception {
+  public void testCallListenerOnCreateWhenAddingListener() throws Exception {
     // Given
     startSessionAs("john");
     Node node = createDocument("Test Document.docx", "nt:file", "testContent", true);
-    Config config = editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());
-    new DocumentStatus.Builder().status(1L)
-                                .users(new String[] { "john" })
-                                .userId("john")
-                                .key(config.getDocument().getKey())
-                                .build();
+
+    AtomicBoolean onCreateCalled = new AtomicBoolean(false);
+
     OnlyofficeEditorListener listener = new OnlyofficeEditorListener() {
       @Override
       public void onCreate(DocumentStatus status) {
-
+        onCreateCalled.set(true);
       }
 
       @Override
@@ -528,11 +523,13 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
 
       }
     };
-
-    // When
     editorService.addListener(listener);
 
+    // When
+    editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());
+
     // Then
+    assertTrue(onCreateCalled.get());
     node.remove();
   }
 
