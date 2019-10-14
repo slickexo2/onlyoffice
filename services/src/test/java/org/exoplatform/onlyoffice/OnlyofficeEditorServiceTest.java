@@ -162,10 +162,10 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
   }
 
   /**
-   * Test create editor
+   * Test create new editor config and document key
    */
   @Test
-  public void testCreateEditor() throws Exception {
+  public void testCreateNewEditorConfigAndDocumentKey() throws Exception {
     startSessionAs("john");
     Node node = session.getRootNode().addNode("Test Document.docx", "nt:file");
     node.addMixin("mix:referenceable");
@@ -290,10 +290,10 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
   }
 
   /**
-   * Test get document by id with workspace and ID
+   * Test get document by id when document exists with workspace and ID
    */
   @Test
-  public void testGetDocumentById() throws Exception {
+  public void testGetDocumentByIdWhenDocumentExists() throws Exception {
     // Given
     startSessionAs("john");
     Node node = createDocument("Test Document.docx", "nt:file", "testContent", true);
@@ -327,10 +327,10 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
   }
 
   /**
-   * Test get editor
+   * Test get editor when editor exists
    */
   @Test
-  public void testGetEditor() throws Exception {
+  public void testGetEditorWhenEditorAlreadyExists() throws Exception {
     // Given
     startSessionAs("john");
     Node node = createDocument("Test Document.docx", "nt:file", "testContent", true);
@@ -358,7 +358,9 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
     String editorLink = editorService.getEditorLink("http", "127.0.0.1", 8080, null, node.getUUID());
 
     // Then
+    String editorLinkTest = "http://127.0.0.1:8080/portal/intranet/oeditor?docId=" + node.getUUID();
     assertNotNull(editorLink);
+    assertEquals(editorLink, editorLinkTest);
     node.remove();
   }
 
@@ -597,8 +599,13 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
 
     // When
     editorService.updateDocument(status);
+    Node Document = editorService.getDocumentById("portal-test", node.getUUID());
 
     // Then
+    assertNotNull(Document);
+    assertSame(node.getUUID(), Document.getUUID());
+    assertSame(node.getPath(), Document.getPath());
+    assertEquals(node.getPrimaryNodeType().getName(), Document.getPrimaryNodeType().getName());
     node.remove();
   }
 
@@ -701,10 +708,15 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
 
     // When
     editorService.updateDocument(status);
+    Node Document = editorService.getDocumentById("portal-test", node.getUUID());
 
     // Then
     assertNotNull(status.getConfig());
     assertNotSame(config.getEditorConfig().getUser().getLastSaved(), 0);
+    assertNotNull(Document);
+    assertSame(node.getUUID(), Document.getUUID());
+    assertSame(node.getPath(), Document.getPath());
+    assertEquals(node.getPrimaryNodeType().getName(), Document.getPrimaryNodeType().getName());
     node.remove();
   }
 
