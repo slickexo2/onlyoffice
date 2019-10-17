@@ -19,8 +19,8 @@
     02110-1301 USA, or see the FSF site: http://www.fsf.org.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <artifactId>addons-parent-pom</artifactId>
@@ -36,10 +36,10 @@
   <description>eXo OnlyOffice Editor for Documents extension</description>
 
   <scm>
-    <connection>scm:git:git://github.com/exo-addons/onlyoffice.git</connection>
-    <developerConnection>scm:git:git@github.com:exo-addons/onlyoffice.git</developerConnection>
+    <connection>scm:git:git://github.com/exoplatform/onlyoffice.git</connection>
+    <developerConnection>scm:git:git@github.com:exoplatform/onlyoffice.git</developerConnection>
     <tag>HEAD</tag>
-    <url>https://github.com/exo-addons/onlyoffice</url>
+    <url>https://github.com/exoplatform/onlyoffice</url>
   </scm>
 
   <properties>
@@ -67,7 +67,7 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
-      
+
       <!-- Onlyoffice extension -->
       <dependency>
         <groupId>org.exoplatform.addons.onlyoffice</groupId>
@@ -81,7 +81,7 @@
         <version>${project.version}</version>
         <type>war</type>
       </dependency>
-      
+
       <!-- for tests -->
       <dependency>
         <groupId>org.exoplatform</groupId>
@@ -96,8 +96,8 @@
         <version>${junit.version}</version>
         <scope>test</scope>
       </dependency>
-      
-      
+
+
       <dependency>
         <groupId>io.jsonwebtoken</groupId>
         <artifactId>jjwt-api</artifactId>
