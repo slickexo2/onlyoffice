@@ -88,7 +88,7 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
     rootNode.setPermission("john", new String[] { PermissionType.ADD_NODE, PermissionType.SET_PROPERTY });
 
     NodeImpl node = createAtRoot ? (NodeImpl) rootNode.addNode(title, type)
-                                 : (NodeImpl) rootNode.addNode("parent", "nt:folder").addNode(title, type);
+                                 : (NodeImpl) rootNode.addNode("Users", "nt:folder").addNode(title, type);
     node.addMixin("mix:lockable");
     node.addMixin("mix:referenceable");
     node.addMixin("exo:privilegeable");
@@ -317,6 +317,43 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
     assertNotNull(config.getEditorConfig().getUser());
     node.remove();
     session.save();
+  }
+
+  /**
+   * Test create document when drive data not null
+   * User's documents
+   */
+  @Test
+  public void testCreateDocumentWhenUserDocuments() throws Exception {
+    // Given
+    startSessionAs("john");
+    Node node = createDocument("Test Document.docx", "nt:file", "testContent", false);
+
+    // When
+    editorService.addFilePreferences(node, "john", node.getPath());
+    Config config = editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());
+
+    // Then
+    String docId = node.getUUID();
+    String editorURL = "http://127.0.0.1:8080/portal/intranet/oeditor?docId=" + docId;
+    assertNotNull(config);
+    assertTrue(node.getPath().startsWith("/Users"));
+    assertTrue(config.getPath().endsWith("/Test Document.docx"));
+    assertTrue(config.isCreated());
+    assertFalse(config.isClosing());
+    assertFalse(config.isOpen());
+    assertFalse(config.isClosed());
+    assertNull(config.getError());
+    assertEquals(docId, config.getDocId());
+    assertEquals(editorURL, config.getEditorUrl());
+
+    assertNotNull(config.getDocument());
+    assertEquals("Test Document.docx", config.getDocument().getTitle());
+    assertEquals("docx", config.getDocument().getFileType());
+
+    assertNotNull(config.getEditorConfig());
+    assertNotNull(config.getEditorConfig().getUser());
+    node.remove();
   }
 
   /**
