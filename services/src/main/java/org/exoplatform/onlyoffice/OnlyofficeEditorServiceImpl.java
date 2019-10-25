@@ -2030,27 +2030,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   }
 
   /**
-   * System node.
-   *
-   * @param workspace the workspace
-   * @param path the path
-   * @return the node
-   * @throws BadParameterException the bad parameter exception
-   * @throws RepositoryException the repository exception
-   */
-  protected Node systemNode(String workspace, String path) throws BadParameterException, RepositoryException {
-    SessionProvider sp = sessionProviders.getSystemSessionProvider(null);
-    Session sysSession = sp.getSession(workspace, jcrService.getCurrentRepository());
-
-    Item item = finder.findItem(sysSession, path);
-    if (item.isNode()) {
-      return (Node) item;
-    } else {
-      throw new BadParameterException("Not a node " + path);
-    }
-  }
-
-  /**
    * Node by UUID.
    *
    * @param workspace the workspace
@@ -2306,20 +2285,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       LOG.warn("Error creating document link for " + jcrPath, e);
       return new StringBuilder().append('/').append(PortalContainer.getCurrentPortalContainerName()).toString();
     }
-  }
-
-  /**
-   * Platform REST URL.
-   *
-   * @param platformUrl the platform URL
-   * @return the string builder
-   */
-  protected StringBuilder platformRestUrl(CharSequence platformUrl) {
-    StringBuilder restUrl = new StringBuilder(platformUrl);
-    restUrl.append('/');
-    restUrl.append(PortalContainer.getCurrentRestContextName());
-
-    return restUrl;
   }
 
   /**
