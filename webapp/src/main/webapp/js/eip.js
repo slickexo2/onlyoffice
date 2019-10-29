@@ -7,8 +7,8 @@
 $.fn.editable = function (options) {
     const STYLE_EDITABLE = {
         "cursor": "pointer",
-        "text-decoration": "underline",
-        "text-decoration-style": "dotted"
+        "color": "black",
+        "text-decoration": "none",
     };
 
     options          = options || {};
