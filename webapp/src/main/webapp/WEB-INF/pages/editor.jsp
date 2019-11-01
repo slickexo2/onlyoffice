@@ -7,25 +7,28 @@
     <a class="uiIconClose uiIconWhite" title="Close"></a>
   </div --%>
   <div id="editor-top-bar" style="display: none">
-    <img src="/onlyoffice/images/avatarOnlyOffice.png" alt="" id="HomeImage" />
+    <img class="homeImage" src="/onlyoffice/images/avatarOnlyOffice.png" id="homeImage" />
     <div class="document-path"></div>
     <div class="document-title">
       <a data-placement="bottom" rel="tooltip" data-original-title="Click to edit"> </a>
-      <i class="icon-edit"></i>
+      <i class="uiIconEdit"></i>
     </div>
     <div class="last-edited"></div>
+    <div class="avatarCircle">
+          <img alt="" class="user-avatar">
+     </div>
     <div class="editors-comment" data-placement="bottom" rel="tooltip" data-original-title=""></div>
     <div class="comment">
       <input type="text" id="comment-box" placeholder="Type summarize ..."></input>
       <div id="save-btn" type="button" class="btn btn-primary">
         <a data-placement="bottom" rel="tooltip" data-original-title="Save">
         </a>
-        Save version
+        <a class="nameStyle">Save version</a>
       </div>
     </div>
     <div class="close-btn">
       <a data-placement="left" rel="tooltip" data-original-title="Close">
-        <i class="uiIconEcmsLightGray uiIconRemove"></i>
+        <i class="uiIconRemove iconRemoveStyle"></i>
       </a>
     </div>
   </div>

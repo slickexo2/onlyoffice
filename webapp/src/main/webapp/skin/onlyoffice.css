@@ -20,7 +20,7 @@
 }
 .onlyofficeEditorBody #editor-top-bar {
   display: flex;
-  height: 30px;
+  height: 35px;
   background-color: #FFF;
   padding: 5px 10px;
 }
@@ -44,25 +44,28 @@
 
 .onlyofficeEditorBody #save-btn {
   position: relative;
-  top: -4px;
-   width: 100px;
+  top: -5px;
+   width: 116px;
    height: 30px;
 }
 
 .onlyofficeEditorBody #editor-top-bar .comment input,
 .onlyofficeEditorBody  #editor-top-bar .document-title {
   margin: 0;
+  width: 270px;
   height: 31px !important;
 }
 
 .onlyofficeEditorBody #editor-top-bar .comment input {
-  margin-top: -30px;
+  margin-top: -11px;
+  font-size: 12px;
 }
 
 
 .onlyofficeEditorBody  #editor-top-bar .document-title {
-  padding-top: 5px;
+  padding-top: 4px;
   width: auto !important;
+  font-weight: 600;
 }
 
 .onlyofficeEditorBody #editor-top-bar .last-edited,
@@ -70,7 +73,7 @@
 .onlyofficeEditorBody #editor-top-bar .comment {
   padding-left: 30px;
   color: gray;
-  padding-top: 5px;
+  padding-top: 7px;
 }
 
 .onlyofficeEditorBody #editor-top-bar .editors-comment {
@@ -80,7 +83,7 @@
   overflow: hidden;
   white-space: nowrap;
   position: relative;
-  padding-right: 20px;
+  padding-right: 5px;
 }
 
 .onlyofficeEditorBody #editor-top-bar .editors-comment:not(:empty):before {
@@ -90,26 +93,27 @@
 .onlyofficeEditorBody #editor-top-bar .editors-comment:not(:empty):after {
     content: "\"";
     position: absolute;
-    top: 0;
-    right: 1px;
+    top: 5px;
+    right: 0px;
 }
 
 .onlyofficeEditorBody  #editor-top-bar #save-btn {
   display: inline-block;
   cursor: pointer;
-  margin-right: 25px;
+  margin-right: 0px;
 }
 
 .onlyofficeEditorBody  #editor-top-bar .close-btn {
   position: absolute;
-  right: 10px;
+  right: 4px;
   cursor: pointer;
-  top: 7px;
+  top: 3px;
 }
 
 .onlyofficeEditorBody #editor-top-bar .document-path {
   padding-right: 5px;
-  padding-top: 5px;
+  padding-top: 7px;
+  font-weight: 600
 }
 
 .onlyofficeEditorBody .RightBodyTDContainer {
@@ -281,7 +285,47 @@ i.uiIconRemove.iconRemoveStyle {
   font-size: 24px;
 }
 
-img#HomeImage {
-    width: 35px;
+.homeImage {
+    width: 30px;
+    height: 30px;
     margin-right: 6px;
+}
+
+.uiIconEdit:before {
+    content: "\e9e4";
+    color: black;
+    font-size: 13px;
+}
+
+a.nameStyle {
+    color: white;
+    font-size: 13px;
+}
+
+.btn.btn-primary, .btn-primary {
+    padding: 5px 20px !important;
+}
+
+.avatarCircle{
+     width: 25px;
+     height: 25px;
+     margin-left: 6px;
+}
+
+.uiIconRemove:before {
+    font-weight: 600;
+    color: gray;
+    font-size: 35px;
+    content: "\ea4b";
+}
+.userAvatar{
+    margin: -5px -6px 14px;
+    width: 35px;
+    height: 35px;
+}
+
+.avatarCircle img {
+    margin: -14px -11px 0px!important;
+    max-height: 35px;
+    max-width: 35px;
 }

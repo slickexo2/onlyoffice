@@ -893,7 +893,10 @@
       $titleElem.append("<span class='editable-title'>" + title + "</span>");
 
       var $lastEditedElem = $bar.find(".last-edited");
-      $lastEditedElem.append("Last edited by " + config.editorPage.lastModifier + " " + config.editorPage.lastModified);
+      $lastEditedElem.append("Last edited about" + " " + config.editorPage.lastModified +"by");
+       var $avatarElem = $bar.find(".user-avatar");
+       $avatarElem.append("/rest/v1/social/users/" + config.editorConfig.user.id + "/avatar ");
+       $avatarElem.attr("src", "/rest/v1/social/users/" + config.editorConfig.user.id  + "/avatar ");
       if(config.editorPage.comment){
         var $comment = $bar.find(".editors-comment");
         $comment.append(config.editorPage.comment);
