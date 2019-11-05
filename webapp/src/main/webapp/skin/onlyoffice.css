@@ -53,7 +53,7 @@
 .onlyofficeEditorBody  #editor-top-bar .document-title {
   margin: 0;
   width: 270px;
-  height: 31px !important;
+  height: 32px !important;
 }
 
 .onlyofficeEditorBody #editor-top-bar .comment input {
@@ -63,9 +63,14 @@
 
 
 .onlyofficeEditorBody  #editor-top-bar .document-title {
-  padding-top: 4px;
+  padding-top: 6px;
   width: auto !important;
   font-weight: 600;
+}
+
+.onlyofficeEditorBody  #editor-top-bar .document-title-update {
+    padding-left: 4px;
+    padding-top: 3px;
 }
 
 .onlyofficeEditorBody #editor-top-bar .last-edited,

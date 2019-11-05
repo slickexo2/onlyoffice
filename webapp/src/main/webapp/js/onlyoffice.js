@@ -372,6 +372,7 @@
               var extension = oldTitle.substr(oldTitle.lastIndexOf("."));
               if (!newTitle.endsWith(extension)) {
                 newTitle += extension;
+
               }
             }
             publishDocument(currentConfig.docId, {
@@ -539,7 +540,9 @@
               var oldTitle = currentConfig.document.title;
               currentConfig.document.title = state.title;
               window.document.title = window.document.title.replace(oldTitle, state.title);
-              $("#editor-top-bar").find(".editable-title").text(state.title);
+              $("#editor-top-bar").find(".editable-title").text(state.title) ;
+              var $titleElem = $("#editor-top-bar").find(".editable-title").text(state.title);
+              $titleElem.append(" <span> <i class='uiIconEdit'></i> </span>");
             }
           });
 
@@ -888,12 +891,12 @@
       var $pathElem = $bar.find(".document-path");
       $pathElem.append(drive + " : ");
       $pathElem.append("<span class='folder'>" + folders[0] + "</span>" + " <i class='uiIconArrowRight'></i> ");
-     
+
       var $titleElem = $bar.find(".document-title a");
-      $titleElem.append("<span class='editable-title'>" + title + "</span>");
+      $titleElem.append("<span class='editable-title'>" + title + " " + "<i class='uiIconEdit'></i> </span>");
 
       var $lastEditedElem = $bar.find(".last-edited");
-      $lastEditedElem.append("Last edited about" + " " + config.editorPage.lastModified +"by");
+      $lastEditedElem.append("Last edited about" + " " + config.editorPage.lastModified + " " + "by");
        var $avatarElem = $bar.find(".user-avatar");
        $avatarElem.append("/rest/v1/social/users/" + config.editorConfig.user.id + "/avatar ");
        $avatarElem.attr("src", "/rest/v1/social/users/" + config.editorConfig.user.id  + "/avatar ");

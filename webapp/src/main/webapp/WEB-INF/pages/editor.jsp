@@ -10,8 +10,7 @@
     <img class="homeImage" src="/onlyoffice/images/avatarOnlyOffice.png" id="homeImage" />
     <div class="document-path"></div>
     <div class="document-title">
-      <a data-placement="bottom" rel="tooltip" data-original-title="Click to edit"> </a>
-      <i class="uiIconEdit"></i>
+      <a data-placement="bottom" rel="tooltip" data-original-title="Click to edit"></a>
     </div>
     <div class="last-edited"></div>
     <div class="avatarCircle">
