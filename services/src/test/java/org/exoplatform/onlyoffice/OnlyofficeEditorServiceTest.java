@@ -1,15 +1,14 @@
 package org.exoplatform.onlyoffice;
 
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.jcr.Node;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ArrayUtils;
+import org.exoplatform.commons.utils.ActivityTypeUtils;
+import org.exoplatform.onlyoffice.mock.IdentityManagerMock;
 import org.junit.Test;
 
 import org.exoplatform.commons.testing.BaseCommonsTestCase;
@@ -92,9 +91,12 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
     node.addMixin("mix:lockable");
     node.addMixin("mix:referenceable");
     node.addMixin("exo:privilegeable");
+    node.addMixin("exo:activityInfo");
     node.addMixin("exo:datetime");
     node.addMixin("exo:modify");
     node.addMixin("exo:sortable");
+    node.setProperty("exo:activityId", Calendar.getInstance());
+    node.setProperty("exo:dateModified", Calendar.getInstance());
     node.setProperty("exo:lastModifier", "john");
     node.setProperty("exo:lastModifiedDate", Calendar.getInstance());
     if (type.equals("nt:file")) {
@@ -361,6 +363,31 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
    */
   @Test
   public void testDownloadVersion() throws Exception {
+    // Given
+    startSessionAs("john");
+    Node node = createDocument("Test Document.docx", "nt:file", "testContent", true);
+    ActivityTypeUtils.attachActivityId(node, "activityId");
+    IdentityManagerMock identityManagerMock = getService(IdentityManagerMock.class);
+
+    // When
+    Config config = editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());
+    editorService.downloadVersion("john", node.getUUID(), false, false, "comment", null);
+
+    // Then
+    node = editorService.getDocumentById(config.getWorkspace(), config.getDocId());
+    String[] newMixinNodeTypes = ((NodeImpl) node).getMixinTypeNames();
+    assertTrue(ArrayUtils.contains(newMixinNodeTypes, "eoo:onlyofficeFile"));
+    assertTrue(node.hasProperty("exo:lastModifiedDate"));
+    assertTrue(node.hasProperty("exo:lastModifier"));
+    assertNotSame(config.getEditorConfig().getUser().lastSaved.toString(), "0");
+    node.remove();
+  }
+
+  /**
+   * Test download version when contentUrl not null
+   */
+  @Test
+  public void testDownloadVersionWhenContentUrlNotNull() throws Exception {
     // Given
     startSessionAs("john");
     Node node = createDocument("Test Document.docx", "nt:file", "testContent", true);
