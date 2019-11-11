@@ -1,21 +1,24 @@
 package org.exoplatform.onlyoffice;
 
-import java.util.*;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.jcr.Node;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ArrayUtils;
-import org.exoplatform.commons.utils.ActivityTypeUtils;
-import org.exoplatform.onlyoffice.mock.IdentityManagerMock;
 import org.junit.Test;
 
 import org.exoplatform.commons.testing.BaseCommonsTestCase;
+import org.exoplatform.commons.utils.ActivityTypeUtils;
 import org.exoplatform.component.test.ConfigurationUnit;
 import org.exoplatform.component.test.ConfiguredBy;
 import org.exoplatform.component.test.ContainerScope;
 import org.exoplatform.container.ExoContainerContext;
+import org.exoplatform.onlyoffice.mock.IdentityManagerMock;
 import org.exoplatform.services.jcr.access.PermissionType;
 import org.exoplatform.services.jcr.ext.app.SessionProviderService;
 import org.exoplatform.services.jcr.ext.common.SessionProvider;
@@ -41,6 +44,8 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
   protected static final String     SECRET_KEY = "1fRW5pBZu3UIBEdebbpDpKJ4hwExSQoSe97tw8gyYNhqnM1biHb";
 
   protected OnlyofficeEditorService editorService;
+
+  protected IdentityManagerMock     identityManagerMock;
 
   protected SessionProviderService  sessionProviderService;
 
@@ -88,8 +93,8 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
 
     NodeImpl node = createAtRoot ? (NodeImpl) rootNode.addNode(title, type)
                                  : (NodeImpl) rootNode.addNode("Users", "nt:folder").addNode(title, type);
-    node.addMixin("mix:lockable");
     node.addMixin("mix:referenceable");
+    node.addMixin("mix:versionable");
     node.addMixin("exo:privilegeable");
     node.addMixin("exo:activityInfo");
     node.addMixin("exo:datetime");
@@ -228,6 +233,42 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
   }
 
   /**
+   * Test create document when drive data not null User's documents
+   */
+  @Test
+  public void testCreateDocumentWhenUserDocuments() throws Exception {
+    // Given
+    startSessionAs("john");
+    Node node = createDocument("Test Document.docx", "nt:file", "testContent", false);
+
+    // When
+    editorService.addFilePreferences(node, "john", node.getPath());
+    Config config = editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());
+
+    // Then
+    String docId = node.getUUID();
+    String editorURL = "http://127.0.0.1:8080/portal/intranet/oeditor?docId=" + docId;
+    assertNotNull(config);
+    assertTrue(node.getPath().startsWith("/Users"));
+    assertTrue(config.getPath().endsWith("/Test Document.docx"));
+    assertTrue(config.isCreated());
+    assertFalse(config.isClosing());
+    assertFalse(config.isOpen());
+    assertFalse(config.isClosed());
+    assertNull(config.getError());
+    assertEquals(docId, config.getDocId());
+    assertEquals(editorURL, config.getEditorUrl());
+
+    assertNotNull(config.getDocument());
+    assertEquals("Test Document.docx", config.getDocument().getTitle());
+    assertEquals("docx", config.getDocument().getFileType());
+
+    assertNotNull(config.getEditorConfig());
+    assertNotNull(config.getEditorConfig().getUser());
+    node.remove();
+  }
+
+  /**
    * Test create editor for incorrect file
    */
   @Test
@@ -322,43 +363,6 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
   }
 
   /**
-   * Test create document when drive data not null
-   * User's documents
-   */
-  @Test
-  public void testCreateDocumentWhenUserDocuments() throws Exception {
-    // Given
-    startSessionAs("john");
-    Node node = createDocument("Test Document.docx", "nt:file", "testContent", false);
-
-    // When
-    editorService.addFilePreferences(node, "john", node.getPath());
-    Config config = editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());
-
-    // Then
-    String docId = node.getUUID();
-    String editorURL = "http://127.0.0.1:8080/portal/intranet/oeditor?docId=" + docId;
-    assertNotNull(config);
-    assertTrue(node.getPath().startsWith("/Users"));
-    assertTrue(config.getPath().endsWith("/Test Document.docx"));
-    assertTrue(config.isCreated());
-    assertFalse(config.isClosing());
-    assertFalse(config.isOpen());
-    assertFalse(config.isClosed());
-    assertNull(config.getError());
-    assertEquals(docId, config.getDocId());
-    assertEquals(editorURL, config.getEditorUrl());
-
-    assertNotNull(config.getDocument());
-    assertEquals("Test Document.docx", config.getDocument().getTitle());
-    assertEquals("docx", config.getDocument().getFileType());
-
-    assertNotNull(config.getEditorConfig());
-    assertNotNull(config.getEditorConfig().getUser());
-    node.remove();
-  }
-
-  /**
    * Test download version
    */
   @Test
@@ -367,7 +371,6 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
     startSessionAs("john");
     Node node = createDocument("Test Document.docx", "nt:file", "testContent", true);
     ActivityTypeUtils.attachActivityId(node, "activityId");
-    IdentityManagerMock identityManagerMock = getService(IdentityManagerMock.class);
 
     // When
     Config config = editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());
@@ -377,6 +380,7 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
     node = editorService.getDocumentById(config.getWorkspace(), config.getDocId());
     String[] newMixinNodeTypes = ((NodeImpl) node).getMixinTypeNames();
     assertTrue(ArrayUtils.contains(newMixinNodeTypes, "eoo:onlyofficeFile"));
+    assertTrue(node.hasProperty("eoo:commentId"));
     assertTrue(node.hasProperty("exo:lastModifiedDate"));
     assertTrue(node.hasProperty("exo:lastModifier"));
     assertNotSame(config.getEditorConfig().getUser().lastSaved.toString(), "0");
@@ -605,6 +609,7 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
     // When
     Config config = editorService.createEditor("http", "127.0.0.1", 8080, "john", null, node.getUUID());
     node.removeMixin("mix:referenceable");
+    node.removeMixin("mix:versionable");
 
     // Then
     Config configTest = editorService.getEditor("john", config.getWorkspace(), node.getPath());
