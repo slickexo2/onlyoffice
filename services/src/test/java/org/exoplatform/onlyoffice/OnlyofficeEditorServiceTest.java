@@ -236,7 +236,7 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
    * Test create document when drive data not null User's documents
    */
   @Test
-  public void testCreateDocumentWhenUserDocuments() throws Exception {
+  public void testCreateDocumentWhenUserDataNotNull() throws Exception {
     // Given
     startSessionAs("john");
     Node node = createDocument("Test Document.docx", "nt:file", "testContent", false);
@@ -364,9 +364,10 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
 
   /**
    * Test download version
+   * Add comment to the FileActivity with current file
    */
   @Test
-  public void testDownloadVersion() throws Exception {
+  public void testDownloadVersionToJcrNodeAndAddingCommentToCurrentFile() throws Exception {
     // Given
     startSessionAs("john");
     Node node = createDocument("Test Document.docx", "nt:file", "testContent", true);
@@ -381,8 +382,11 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
     String[] newMixinNodeTypes = ((NodeImpl) node).getMixinTypeNames();
     assertTrue(ArrayUtils.contains(newMixinNodeTypes, "eoo:onlyofficeFile"));
     assertTrue(node.hasProperty("eoo:commentId"));
+    assertEquals(node.getProperty("eoo:commentId").getName(), "eoo:commentId");
     assertTrue(node.hasProperty("exo:lastModifiedDate"));
+    assertEquals(node.getProperty("exo:lastModifiedDate").getName(), "exo:lastModifiedDate");
     assertTrue(node.hasProperty("exo:lastModifier"));
+    assertEquals(node.getProperty("exo:lastModifier").getName(), "exo:lastModifier");
     assertNotSame(config.getEditorConfig().getUser().lastSaved.toString(), "0");
     node.remove();
   }
