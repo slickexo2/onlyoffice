@@ -10,6 +10,11 @@
     <type>org.exoplatform.onlyoffice.mock.DocumentServiceMock</type>
   </component>
 
+  <component>
+    <key>org.exoplatform.onlyoffice.mock.ExoContinuationBayeuxMock</key>
+    <type>org.exoplatform.onlyoffice.mock.ExoContinuationBayeuxMock</type>
+  </component>
+
 
   <component>
     <key>org.exoplatform.social.core.space.spi.SpaceService</key>
@@ -108,6 +113,11 @@
       </properties-param>
     </init-params>
   </component>
+
+  <component>
+    <key>org.exoplatform.onlyoffice.cometd.CometdOnlyofficeService</key>
+    <type>org.exoplatform.onlyoffice.cometd.CometdOnlyofficeService</type>
+  </component>
   <component>
     <key>org.exoplatform.onlyoffice.jcr.NodeFinder</key>
     <type>org.exoplatform.onlyoffice.jcr.CMSNodeFinder</type>
@@ -116,7 +126,7 @@
     <key>org.exoplatform.onlyoffice.rest.EditorService</key>
     <type>org.exoplatform.onlyoffice.rest.EditorService</type>
   </component>
-  
+
   <!-- DocumentTypePlugin for OnlyOfficeEditorService -->
   <external-component-plugins>
     <target-component>org.exoplatform.onlyoffice.OnlyofficeEditorService</target-component>
