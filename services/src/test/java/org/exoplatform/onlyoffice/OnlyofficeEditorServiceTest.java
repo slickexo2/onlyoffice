@@ -18,7 +18,6 @@ import org.exoplatform.component.test.ConfigurationUnit;
 import org.exoplatform.component.test.ConfiguredBy;
 import org.exoplatform.component.test.ContainerScope;
 import org.exoplatform.container.ExoContainerContext;
-import org.exoplatform.onlyoffice.mock.IdentityManagerMock;
 import org.exoplatform.services.jcr.access.PermissionType;
 import org.exoplatform.services.jcr.ext.app.SessionProviderService;
 import org.exoplatform.services.jcr.ext.common.SessionProvider;
@@ -44,8 +43,6 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
   protected static final String     SECRET_KEY = "1fRW5pBZu3UIBEdebbpDpKJ4hwExSQoSe97tw8gyYNhqnM1biHb";
 
   protected OnlyofficeEditorService editorService;
-
-  protected IdentityManagerMock     identityManagerMock;
 
   protected SessionProviderService  sessionProviderService;
 
