@@ -379,11 +379,11 @@ public class OnlyofficeEditorServiceTest extends BaseCommonsTestCase {
     String[] newMixinNodeTypes = ((NodeImpl) node).getMixinTypeNames();
     assertTrue(ArrayUtils.contains(newMixinNodeTypes, "eoo:onlyofficeFile"));
     assertTrue(node.hasProperty("eoo:commentId"));
-    assertEquals(node.getProperty("eoo:commentId").getName(), "eoo:commentId");
+    assertEquals("", node.getProperty("eoo:commentId").getValue().getString());
     assertTrue(node.hasProperty("exo:lastModifiedDate"));
-    assertEquals(node.getProperty("exo:lastModifiedDate").getName(), "exo:lastModifiedDate");
+    assertNotNull(node.getProperty("exo:lastModifiedDate").getValue().getString());
     assertTrue(node.hasProperty("exo:lastModifier"));
-    assertEquals(node.getProperty("exo:lastModifier").getName(), "exo:lastModifier");
+    assertEquals("john", node.getProperty("exo:lastModifier").getValue().getString());
     assertNotSame(config.getEditorConfig().getUser().lastSaved.toString(), "0");
     node.remove();
   }
