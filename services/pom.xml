@@ -211,6 +211,7 @@
             <include>**/**/EditorServiceTest.java</include>
             <include>**/**/OnlyofficeEditorServiceTest.java</include>
             <include>**/**/CometdOnlyofficeServiceTest.java</include>
+            <include>**/**/NewDocumentServiceTest.java</include>
           </includes>
         </configuration>
       </plugin>

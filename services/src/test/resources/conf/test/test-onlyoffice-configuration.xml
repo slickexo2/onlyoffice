@@ -118,6 +118,12 @@
     <key>org.exoplatform.onlyoffice.cometd.CometdOnlyofficeService</key>
     <type>org.exoplatform.onlyoffice.cometd.CometdOnlyofficeService</type>
   </component>
+
+  <component>
+    <key>org.exoplatform.onlyoffice.documents.NewDocumentService</key>
+    <type>org.exoplatform.onlyoffice.documents.NewDocumentService</type>
+  </component>
+
   <component>
     <key>org.exoplatform.onlyoffice.jcr.NodeFinder</key>
     <type>org.exoplatform.onlyoffice.jcr.CMSNodeFinder</type>
@@ -167,6 +173,65 @@
     </component-plugin>
   </external-component-plugins>
 
-
+  <!-- NewDocumentTypePlugin for NewDocumentService-->
+  <external-component-plugins>
+    <target-component>org.exoplatform.onlyoffice.documents.NewDocumentService</target-component>
+    <component-plugin>
+      <name>documentTypePlugin</name>
+      <set-method>addTypePlugin</set-method>
+      <type>org.exoplatform.onlyoffice.documents.NewDocumentTypePlugin</type>
+      <description>The document type plugin contains a list of mimetypes</description>
+      <init-params>
+        <object-param>
+          <name>document-types-configuration</name>
+          <object type="org.exoplatform.onlyoffice.documents.NewDocumentService$NewDocumentTypesConfig">
+            <field name="types">
+              <collection type="java.util.ArrayList">
+                <value>
+                  <object type="org.exoplatform.onlyoffice.documents.NewDocumentType">
+                    <field name="path">
+                      <string>classpath:files/template.docx</string>
+                    </field>
+                    <field name="label">
+                      <string>MicrosoftOfficeDocument</string>
+                    </field>
+                    <field name="mimeType">
+                      <string>application/vnd.openxmlformats-officedocument.wordprocessingml.document</string>
+                    </field>
+                  </object>
+                </value>
+                <value>
+                  <object type="org.exoplatform.onlyoffice.documents.NewDocumentType">
+                    <field name="path">
+                      <string>classpath:files/template.xlsx</string>
+                    </field>
+                    <field name="label">
+                      <string>MicrosoftOfficeSpreadsheet</string>
+                    </field>
+                    <field name="mimeType">
+                      <string>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</string>
+                    </field>
+                  </object>
+                </value>
+                <value>
+                  <object type="org.exoplatform.onlyoffice.documents.NewDocumentType">
+                    <field name="path">
+                      <string>classpath:files/template.pptx</string>
+                    </field>
+                    <field name="label">
+                      <string>MicrosoftOfficePresentation</string>
+                    </field>
+                    <field name="mimeType">
+                      <string>application/vnd.openxmlformats-officedocument.presentationml.presentation</string>
+                    </field>
+                  </object>
+                </value>
+              </collection>
+            </field>
+          </object>
+        </object-param>
+      </init-params>
+    </component-plugin>
+  </external-component-plugins>
 
 </configuration>
