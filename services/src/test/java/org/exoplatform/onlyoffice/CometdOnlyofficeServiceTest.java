@@ -11,7 +11,6 @@ import org.exoplatform.onlyoffice.test.AbstractResourceTest;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.junit.Test;
-import org.mortbay.cometd.continuation.EXoContinuationBayeux;
 
 @ConfiguredBy({ @ConfigurationUnit(scope = ContainerScope.ROOT, path = "conf/test-configuration.xml"),
     @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/portal/configuration.xml"),
@@ -25,8 +24,6 @@ public class CometdOnlyofficeServiceTest extends AbstractResourceTest {
 
   protected ExoContinuationBayeuxMock   exoBayeux;
 
-  protected OnlyofficeEditorService   onlyofficeEditorService;
-
   /**
    * Before class.
    */
@@ -34,7 +31,6 @@ public class CometdOnlyofficeServiceTest extends AbstractResourceTest {
   public void beforeClass() {
     super.beforeClass();
     ExoContainerContext.setCurrentContainer(container);
-    this.onlyofficeEditorService = getService(OnlyofficeEditorService.class);
     this.exoBayeux = getService(ExoContinuationBayeuxMock.class);
     this.cometdOnlyofficeService = getService(CometdOnlyofficeService.class);
   }

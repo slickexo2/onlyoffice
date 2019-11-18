@@ -11,7 +11,7 @@
   </component>
 
   <component>
-    <key>org.exoplatform.onlyoffice.mock.ExoContinuationBayeuxMock</key>
+    <key>org.mortbay.cometd.continuation.EXoContinuationBayeux</key>
     <type>org.exoplatform.onlyoffice.mock.ExoContinuationBayeuxMock</type>
   </component>
 
@@ -99,6 +99,7 @@
     <key>org.exoplatform.services.cms.lock.LockService</key>
     <type>org.exoplatform.onlyoffice.mock.LockServiceMock</type>
   </component>
+
   <component>
     <key>org.exoplatform.onlyoffice.OnlyofficeEditorService</key>
     <type>org.exoplatform.onlyoffice.OnlyofficeEditorServiceImpl</type>
@@ -128,6 +129,7 @@
     <key>org.exoplatform.onlyoffice.jcr.NodeFinder</key>
     <type>org.exoplatform.onlyoffice.jcr.CMSNodeFinder</type>
   </component>
+
   <component>
     <key>org.exoplatform.onlyoffice.rest.EditorService</key>
     <type>org.exoplatform.onlyoffice.rest.EditorService</type>

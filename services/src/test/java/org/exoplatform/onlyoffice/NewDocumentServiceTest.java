@@ -36,20 +36,20 @@ public class NewDocumentServiceTest extends AbstractResourceTest {
   public void testGetDocumentType() throws Exception {
 
     // When
-    List<NewDocumentType> DocumentType = newDocumentService.getTypes();
+    List<NewDocumentType> documentTypes = newDocumentService.getTypes();
 
     // Then
-    assertNotNull(DocumentType);
-    assertEquals(3, DocumentType.size());
-    assertEquals("MicrosoftOfficeDocument", DocumentType.get(0).getLabel());
-    assertEquals("classpath:files/template.docx", DocumentType.get(0).getPath());
-    assertEquals("application/vnd.openxmlformats-officedocument.wordprocessingml.document", DocumentType.get(0).getMimeType());
-    assertEquals("MicrosoftOfficeSpreadsheet", DocumentType.get(1).getLabel());
-    assertEquals("classpath:files/template.xlsx", DocumentType.get(1).getPath());
-    assertEquals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", DocumentType.get(1).getMimeType());
-    assertEquals("MicrosoftOfficePresentation", DocumentType.get(2).getLabel());
-    assertEquals("classpath:files/template.pptx", DocumentType.get(2).getPath());
-    assertEquals("application/vnd.openxmlformats-officedocument.presentationml.presentation", DocumentType.get(2).getMimeType());
+    assertNotNull(documentTypes);
+    assertEquals(3, documentTypes.size());
+    assertEquals("MicrosoftOfficeDocument", documentTypes.get(0).getLabel());
+    assertEquals("classpath:files/template.docx", documentTypes.get(0).getPath());
+    assertEquals("application/vnd.openxmlformats-officedocument.wordprocessingml.document", documentTypes.get(0).getMimeType());
+    assertEquals("MicrosoftOfficeSpreadsheet", documentTypes.get(1).getLabel());
+    assertEquals("classpath:files/template.xlsx", documentTypes.get(1).getPath());
+    assertEquals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", documentTypes.get(1).getMimeType());
+    assertEquals("MicrosoftOfficePresentation", documentTypes.get(2).getLabel());
+    assertEquals("classpath:files/template.pptx", documentTypes.get(2).getPath());
+    assertEquals("application/vnd.openxmlformats-officedocument.presentationml.presentation", documentTypes.get(2).getMimeType());
   }
 
   /**
@@ -59,10 +59,10 @@ public class NewDocumentServiceTest extends AbstractResourceTest {
   public void testGetFileName() throws Exception {
 
     // Given
-    List<NewDocumentType> DocumentType = newDocumentService.getTypes();
-    String labelDocx = DocumentType.get(0).getLabel();
-    String labelPptx = DocumentType.get(2).getLabel();
-    String labelXlsx = DocumentType.get(1).getLabel();
+    List<NewDocumentType> documentTypes = newDocumentService.getTypes();
+    String labelDocx = documentTypes.get(0).getLabel();
+    String labelPptx = documentTypes.get(2).getLabel();
+    String labelXlsx = documentTypes.get(1).getLabel();
 
     // Then
     String fileNameDocx = newDocumentService.getFileName("title", labelDocx);
