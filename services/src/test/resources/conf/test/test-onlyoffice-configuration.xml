@@ -14,6 +14,10 @@
     <key>org.mortbay.cometd.continuation.EXoContinuationBayeux</key>
     <type>org.exoplatform.onlyoffice.mock.ExoContinuationBayeuxMock</type>
   </component>
+  <component>
+    <key>org.exoplatform.social.core.manager.IdentityManager</key>
+    <type>org.exoplatform.onlyoffice.mock.IdentityManagerMock</type>
+  </component>
 
 
   <component>
