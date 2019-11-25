@@ -22,7 +22,6 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
 import org.exoplatform.container.component.ComponentPlugin;
-import org.exoplatform.ecm.jcr.model.VersionNode;
 import org.exoplatform.onlyoffice.Config.Editor;
 import org.exoplatform.services.organization.User;
 
@@ -229,7 +228,7 @@ public interface OnlyofficeEditorService {
    *
    * @param  - the plugin to be added
    */
-  List<VersionNode> geVersionList(Node node)  throws Exception ;
+  List<VersionNode> geVersionList(Node node) throws Exception ;
 
   /**
    * Checks if the node isn't locked and can be edited by the current user.

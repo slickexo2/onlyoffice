@@ -21,10 +21,7 @@ package org.exoplatform.onlyoffice.rest;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URI;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.security.RolesAllowed;
@@ -43,7 +40,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
-import org.exoplatform.ecm.jcr.model.VersionNode;
+import org.exoplatform.onlyoffice.*;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -51,14 +48,6 @@ import org.json.simple.parser.ParseException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.exoplatform.onlyoffice.BadParameterException;
-import org.exoplatform.onlyoffice.ChangeState;
-import org.exoplatform.onlyoffice.Config;
-import org.exoplatform.onlyoffice.DocumentContent;
-import org.exoplatform.onlyoffice.DocumentStatus;
-import org.exoplatform.onlyoffice.OnlyofficeEditorException;
-import org.exoplatform.onlyoffice.OnlyofficeEditorService;
-import org.exoplatform.onlyoffice.Userdata;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.services.rest.resource.ResourceContainer;
@@ -505,7 +494,7 @@ public class EditorService implements ResourceContainer {
    * Editing document state in local storage.
    *
    * @param uriInfo - request info
-   * @param key the path
+   * @param key the key
    * @param workspace the workspace
    * @return {@link Response}
    */
@@ -518,29 +507,13 @@ public class EditorService implements ResourceContainer {
     if (LOG.isDebugEnabled()) {
       LOG.debug("> localState: " + workspace + key);
     }
-    EditorResponse resp = new EditorResponse();
-    if (workspace != null) {
-      try {
+    try {
       List<VersionNode> versionNodes = editors.geVersionList(editors.getDocumentById(workspace, key));
-      resp.entity(versionNodes);
-      } catch (BadParameterException e) {
-        LOG.warn("Bad parameter for creating editor config " + workspace + ":" + key + ". " + e.getMessage());
-        resp.error(e.getMessage()).status(Status.BAD_REQUEST);
-      } catch (OnlyofficeEditorException e) {
-        LOG.error("Error creating editor config " + workspace + ":" + key, e);
-        resp.error("Error creating editor config. " + e.getMessage()).status(Status.INTERNAL_SERVER_ERROR);
-      } catch (RepositoryException e) {
-        LOG.error("Storage error while creating editor config " + workspace + ":" + key, e);
-        resp.error("Storage error.").status(Status.INTERNAL_SERVER_ERROR);
-      } catch (Throwable e) {
-        LOG.error("Runtime error while creating editor config " + workspace + ":" + key, e);
-        resp.error("Error creating editor config.").status(Status.INTERNAL_SERVER_ERROR);
-      }
-
-    } else {
-      resp.status(Status.BAD_REQUEST).error("Null workspace.");
+      return Response.ok().entity(versionNodes).build();
+    } catch (Exception e) {
+      LOG.error("Error in version list  " , e);
+      return Response.serverError().build();
     }
-    return resp.build();
   }
 
   /**
