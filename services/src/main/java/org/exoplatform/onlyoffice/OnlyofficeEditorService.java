@@ -22,8 +22,11 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
 import org.exoplatform.container.component.ComponentPlugin;
+import org.exoplatform.ecm.jcr.model.VersionNode;
 import org.exoplatform.onlyoffice.Config.Editor;
 import org.exoplatform.services.organization.User;
+
+import java.util.List;
 
 /**
  * Created by The eXo Platform SAS.
@@ -220,6 +223,13 @@ public interface OnlyofficeEditorService {
    * @param plugin - the plugin to be added
    */
   void addTypePlugin(ComponentPlugin plugin);
+
+  /**
+   * Adds DocumentTypePlugin to the service to check mimetypes of documents.
+   *
+   * @param  - the plugin to be added
+   */
+  List<VersionNode> geVersionList(Node node)  throws Exception ;
 
   /**
    * Checks if the node isn't locked and can be edited by the current user.
