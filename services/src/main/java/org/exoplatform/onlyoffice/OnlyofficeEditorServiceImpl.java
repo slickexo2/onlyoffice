@@ -41,7 +41,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.AutoCloseInputStream;
 import org.apache.commons.lang.StringUtils;
 import org.exoplatform.commons.utils.*;
-import org.exoplatform.ecm.jcr.model.VersionNode;
 import org.exoplatform.webui.core.UIPageIterator;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
@@ -357,7 +356,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /** The document type plugin. */
   protected DocumentTypePlugin                                    documentTypePlugin;
 
-  protected List<VersionNode> listVersion = new ArrayList<VersionNode>() ;
+  protected List<org.exoplatform.onlyoffice.VersionNode> listVersion = new ArrayList<org.exoplatform.onlyoffice.VersionNode>() ;
 
   protected String rootVersionNum_;
 
@@ -1033,7 +1032,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     rootVersion_ = new VersionNode(currentNode, currentNode.getSession());
 
     listVersion = getNodeVersions(rootVersion_.getChildren());
-    VersionNode currentNodeTuple = new VersionNode(currentNode, currentNode.getSession());
+    VersionNode currentNodeTuple =
+        new VersionNode(currentNode, currentNode.getSession());
     if(!listVersion.isEmpty()) {
       int lastVersionNum = Integer.parseInt(listVersion.get(0).getName());
       setRootVersionNum(String.valueOf(++lastVersionNum));
@@ -1041,9 +1041,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       setRootVersionNum("1");
     }
     listVersion.add(0, currentNodeTuple);
-    ListAccess<VersionNode> recordList = new ListAccessImpl<VersionNode>(VersionNode.class, listVersion);
-    LazyPageList<VersionNode> dataPageList = new LazyPageList<VersionNode>(recordList, 10);
-    uiPageIterator_.setPageList(dataPageList);
     return listVersion;
   }
 
