@@ -46,6 +46,9 @@ import org.exoplatform.webui.core.UIPageIterator;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
 
+import org.exoplatform.commons.utils.ActivityTypeUtils;
+import org.exoplatform.commons.utils.CommonsUtils;
+import org.exoplatform.commons.utils.MimeTypeResolver;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.component.ComponentPlugin;
 import org.exoplatform.container.configuration.ConfigurationException;
