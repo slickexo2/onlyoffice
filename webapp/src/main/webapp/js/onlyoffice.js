@@ -405,11 +405,13 @@
           clearTimeout(changesTimer);
           changesTimer = null;
         }
+        UI.alertSave();
       });
 
       $bar.find(".close-btn").on("click", function() {
         window.close();
       });
+
     };
 
     /**
@@ -540,6 +542,8 @@
               currentConfig.document.title = state.title;
               window.document.title = window.document.title.replace(oldTitle, state.title);
               $("#editor-top-bar").find(".editable-title").text(state.title);
+              var $titleElem = $("#editor-top-bar").find(".editable-title").text(state.title);
+              $titleElem.append(" <span> <i class='uiIconEdit'></i> </span>");
             }
           });
 
@@ -582,6 +586,21 @@
         log("ERROR: editor config creation failed : " + error);
         UI.showError(message("ErrorTitle"), message("ErrorCreateConfig"));
       });
+
+     //Function to open drawer
+      $("#open-drawer-btn").on('click', function() {
+         return UI.openDrawer();
+      });
+
+      //Function to close drawer
+      $("#editor-top-bar .header .closebtn").on('click', function() {
+         return UI.closeDrawer();
+       });
+
+       $("#see-more-btn").on('click', function() {
+         return UI.seemoreButton(config);
+       });
+
     };
 
     /**
@@ -858,7 +877,24 @@
       }
       $body.addClass("onlyofficeEditorBody");
     };
-    
+
+        /**
+         * Alert save changes.
+         */
+      this.alertSave = function() {
+         $("#alert-saved").show(50);
+         setTimeout(function(){ $("#alert-saved").hide(50); }, 3000);
+      };
+
+       /**
+         * button see more.
+         */
+      this.seemoreButton = function(config) {
+        var path = config.explorerUrl;
+        $("#see-more-btn").attr("href", path);
+        window.open($("#see-more-btn").attr('href'));
+      };
+
     this.updateBar = function(changer, comment) {
       var $bar = $("#editor-top-bar");
       var $commentBox = $bar.find(".editors-comment");
@@ -876,6 +912,9 @@
       var drive = config.editorPage.displayPath.split(':')[0];
       var folders = config.editorPage.displayPath.split(':')[1].split('/');
       var title = folders.pop();
+      var pathDocument = config.path.split(drive+'/')[1].split("/" + title)[0];
+      var documentPath = pathDocument.replace(/\//g , function() {
+        return "<i class='uiIconArrowRight'></i>" } );
       var $bar = $("#editor-top-bar");
       if(config.editorPage.renameAllowed){
         $bar.find("a[rel=tooltip]").tooltip();
@@ -886,14 +925,26 @@
         $bar.find("#comment-box").prop("disabled", true);
       }
       var $pathElem = $bar.find(".document-path");
-      $pathElem.append(drive + " : ");
-      $pathElem.append("<span class='folder'>" + folders[0] + "</span>" + " <i class='uiIconArrowRight'></i> ");
+      $pathElem.append("<span class='folder'>" + documentPath + "</span>" + " <i class='uiIconArrowRight'></i> ");
      
       var $titleElem = $bar.find(".document-title a");
-      $titleElem.append("<span class='editable-title'>" + title + "</span>");
+       $titleElem.append("<span class='editable-title'>" + title + " " + "<i class='uiIconEdit'></i> </span>");
 
       var $lastEditedElem = $bar.find(".last-edited");
       $lastEditedElem.append("Last edited by " + config.editorPage.lastModifier + " " + config.editorPage.lastModified);
+
+      var $avatarUserElem = $bar.find(".user-avatar");
+      $avatarUserElem.append("/rest/v1/social/users/" + config.editorConfig.user.id + "/avatar ");
+      $avatarUserElem.attr("src", "/rest/v1/social/users/" + config.editorConfig.user.id  + "/avatar ");
+
+      var $avatarSpaceElem = $bar.find(".space-avatar");
+      $avatarSpaceElem.append("src","/rest/v1/social/spaces/" + drive +"/avatar");
+      $avatarSpaceElem.attr("src", "/rest/v1/social/spaces/" + drive +"/avatar");
+
+      var $tooltipSpaceElem = $bar.find(".space-avatar");
+      $tooltipSpaceElem.append("data-original-title",  drive);
+      $tooltipSpaceElem.attr("data-original-title", drive);
+
       if(config.editorPage.comment){
         var $comment = $bar.find(".editors-comment");
         $comment.append(config.editorPage.comment);
@@ -913,6 +964,24 @@
     this.isEditorLoaded = function() {
       return $("#UIPage .onlyofficeContainer").length > 0;
     };
+
+
+     /**
+         *Function to open drawer
+     */
+    this.openDrawer = function() {
+     $("#editor-top-bar").addClass("drawerOpened");
+    };
+
+     /**
+         *Function to close drawer
+     */
+    this.closeDrawer = function() {
+         setTimeout(function() {
+           $("#editor-top-bar").removeClass("drawerOpened");
+            }, 100);
+
+     };
 
     /**
      * Use it when user close the page, to notify in the channel doc is closed.

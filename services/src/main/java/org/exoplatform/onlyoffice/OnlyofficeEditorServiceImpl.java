@@ -40,12 +40,12 @@ import javax.jcr.lock.Lock;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.AutoCloseInputStream;
 import org.apache.commons.lang.StringUtils;
+import org.exoplatform.commons.utils.*;
+import org.exoplatform.ecm.jcr.model.VersionNode;
+import org.exoplatform.webui.core.UIPageIterator;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
 
-import org.exoplatform.commons.utils.ActivityTypeUtils;
-import org.exoplatform.commons.utils.CommonsUtils;
-import org.exoplatform.commons.utils.MimeTypeResolver;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.container.component.ComponentPlugin;
 import org.exoplatform.container.configuration.ConfigurationException;
@@ -353,6 +353,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
   /** The document type plugin. */
   protected DocumentTypePlugin                                    documentTypePlugin;
+
+  protected List<VersionNode> listVersion = new ArrayList<VersionNode>() ;
+
+  protected String rootVersionNum_;
+
+  protected UIPageIterator uiPageIterator_ ;
 
   /**
    * Cloud Drive service with storage in JCR and with managed features.
@@ -1012,6 +1018,57 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       }
       return null;
     }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public List<VersionNode> geVersionList(Node currentNode) throws Exception {
+    VersionNode rootVersion_;
+    listVersion.clear();
+    rootVersion_ = new VersionNode(currentNode, currentNode.getSession());
+
+    listVersion = getNodeVersions(rootVersion_.getChildren());
+    VersionNode currentNodeTuple = new VersionNode(currentNode, currentNode.getSession());
+    if(!listVersion.isEmpty()) {
+      int lastVersionNum = Integer.parseInt(listVersion.get(0).getName());
+      setRootVersionNum(String.valueOf(++lastVersionNum));
+    } else {
+      setRootVersionNum("1");
+    }
+    listVersion.add(0, currentNodeTuple);
+    ListAccess<VersionNode> recordList = new ListAccessImpl<VersionNode>(VersionNode.class, listVersion);
+    LazyPageList<VersionNode> dataPageList = new LazyPageList<VersionNode>(recordList, 10);
+    uiPageIterator_.setPageList(dataPageList);
+    return listVersion;
+  }
+
+  private List<VersionNode> getNodeVersions(List<VersionNode> children) throws Exception {
+    List<VersionNode> child = new ArrayList<VersionNode>() ;
+    for(int i = 0; i < children.size(); i ++){
+      listVersion.add(children.get(i));
+      child = children.get(i).getChildren() ;
+      if(!child.isEmpty()) getNodeVersions(child) ;
+    }
+    listVersion.sort(new Comparator<VersionNode>() {
+      @Override
+      public int compare(VersionNode v1, VersionNode v2) {
+        try {
+          if (Integer.parseInt(v1.getName()) < Integer.parseInt(v2.getName()))
+            return 1;
+          else
+            return 0;
+        }catch (Exception e) {
+          return 0;
+        }
+      }
+    });
+    return listVersion;
+  }
+
+  private void setRootVersionNum(String rootVersionNum) {
+    this.rootVersionNum_ = rootVersionNum;
   }
 
   /**

@@ -21,12 +21,14 @@ package org.exoplatform.onlyoffice.rest;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URI;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.security.RolesAllowed;
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.FormParam;
@@ -41,6 +43,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
+import org.exoplatform.ecm.jcr.model.VersionNode;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -495,6 +498,48 @@ public class EditorService implements ResourceContainer {
       resp.error("User not provided").status(Status.BAD_REQUEST);
     }
 
+    return resp.build();
+  }
+
+  /**
+   * Editing document state in local storage.
+   *
+   * @param uriInfo - request info
+   * @param key the path
+   * @param workspace the workspace
+   * @return {@link Response}
+   */
+  @GET
+  @Path("/versionList/{workspace}/{key}")
+  @RolesAllowed("users")
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response getVersionList(@Context UriInfo uriInfo,  @PathParam("workspace") String workspace,
+                                 @PathParam("key") String key) throws Exception {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("> localState: " + workspace + key);
+    }
+    EditorResponse resp = new EditorResponse();
+    if (workspace != null) {
+      try {
+      List<VersionNode> versionNodes = editors.geVersionList(editors.getDocumentById(workspace, key));
+      resp.entity(versionNodes);
+      } catch (BadParameterException e) {
+        LOG.warn("Bad parameter for creating editor config " + workspace + ":" + key + ". " + e.getMessage());
+        resp.error(e.getMessage()).status(Status.BAD_REQUEST);
+      } catch (OnlyofficeEditorException e) {
+        LOG.error("Error creating editor config " + workspace + ":" + key, e);
+        resp.error("Error creating editor config. " + e.getMessage()).status(Status.INTERNAL_SERVER_ERROR);
+      } catch (RepositoryException e) {
+        LOG.error("Storage error while creating editor config " + workspace + ":" + key, e);
+        resp.error("Storage error.").status(Status.INTERNAL_SERVER_ERROR);
+      } catch (Throwable e) {
+        LOG.error("Runtime error while creating editor config " + workspace + ":" + key, e);
+        resp.error("Error creating editor config.").status(Status.INTERNAL_SERVER_ERROR);
+      }
+
+    } else {
+      resp.status(Status.BAD_REQUEST).error("Null workspace.");
+    }
     return resp.build();
   }
 
