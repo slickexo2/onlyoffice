@@ -25,10 +25,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.security.RolesAllowed;
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -40,6 +38,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.commons.lang3.StringUtils;
 import org.exoplatform.onlyoffice.*;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -508,10 +507,21 @@ public class EditorService implements ResourceContainer {
       LOG.debug("> localState: " + workspace + key);
     }
     try {
-      List<VersionNode> versionNodes = editors.geVersionList(editors.getDocumentById(workspace, key));
-      return Response.ok().entity(versionNodes).build();
+      if (StringUtils.isBlank(workspace)) {
+         return Response.status(Response.Status.BAD_REQUEST).build();
+      }
+      if (StringUtils.isBlank(key)) {
+         return Response.status(Response.Status.BAD_REQUEST).build();
+      }
+
+      List<Version> versionNodes = editors.geVersionList(editors.getDocumentById(workspace, key));
+      if (versionNodes != null) {
+         return Response.ok(versionNodes).build();
+      } else {
+         return Response.status(Response.Status.NOT_FOUND).build();
+      }
     } catch (Exception e) {
-      LOG.error("Error in version list  " , e);
+      LOG.error("Error in version list " , e);
       return Response.serverError().build();
     }
   }

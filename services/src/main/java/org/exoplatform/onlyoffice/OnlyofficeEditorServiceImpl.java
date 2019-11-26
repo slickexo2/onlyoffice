@@ -40,7 +40,7 @@ import javax.jcr.lock.Lock;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.AutoCloseInputStream;
 import org.apache.commons.lang.StringUtils;
-import org.exoplatform.commons.utils.*;
+import org.exoplatform.ecm.jcr.model.VersionNode;
 import org.exoplatform.webui.core.UIPageIterator;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
@@ -265,7 +265,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /** The document type plugin. */
   protected DocumentTypePlugin                                    documentTypePlugin;
 
-  protected List<org.exoplatform.onlyoffice.VersionNode> listVersion = new ArrayList<org.exoplatform.onlyoffice.VersionNode>() ;
+  protected List<VersionNode> listVersion = new ArrayList<VersionNode>() ;
 
   protected String rootVersionNum_;
 
@@ -1001,7 +1001,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * {@inheritDoc}
    */
   @Override
-  public List<VersionNode> geVersionList(Node currentNode) throws Exception {
+  public List<Version> geVersionList(Node currentNode) throws Exception {
+     List<Version> versionList = new ArrayList<Version>() ;
+
     VersionNode rootVersion_;
     listVersion.clear();
     rootVersion_ = new VersionNode(currentNode, currentNode.getSession());
@@ -1016,7 +1018,18 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       setRootVersionNum("1");
     }
     listVersion.add(0, currentNodeTuple);
-    return listVersion;
+
+    for (VersionNode versionNode : listVersion){
+      Version version = new Version();
+      version.setAuthor_(versionNode.getAuthor());
+      version.setName_(versionNode.getName());
+      version.setDisplayName(versionNode.getDisplayName());
+      version.setVersionLabels_(versionNode.getVersionLabels());
+      version.setcreatedTime_(versionNode.getCreatedTime().getTimeInMillis());
+      versionList.add(version);
+    }
+
+    return versionList;
   }
 
   private List<VersionNode> getNodeVersions(List<VersionNode> children) throws Exception {
