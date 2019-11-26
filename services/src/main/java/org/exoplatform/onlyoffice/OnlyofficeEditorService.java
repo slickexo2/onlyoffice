@@ -228,7 +228,7 @@ public interface OnlyofficeEditorService {
    *
    * @param  - the plugin to be added
    */
-  List<VersionNode> geVersionList(Node node) throws Exception ;
+  List<Version> geVersionList(Node node) throws Exception ;
 
   /**
    * Checks if the node isn't locked and can be edited by the current user.
