@@ -224,11 +224,14 @@ public interface OnlyofficeEditorService {
   void addTypePlugin(ComponentPlugin plugin);
 
   /**
-   * Adds DocumentTypePlugin to the service to check mimetypes of documents.
+   *get the list of versions.
    *
-   * @param  - the plugin to be added
+   * @param  workspace the workspace
+   * @param docId the document id
+   * @return list of versions for node
+   * @throws Exception the exception
    */
-  List<Version> geVersionList(Node node) throws Exception ;
+  List<Version> getVersions(String workspace, String docId) throws Exception ;
 
   /**
    * Checks if the node isn't locked and can be edited by the current user.

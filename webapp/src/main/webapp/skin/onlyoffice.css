@@ -283,9 +283,9 @@
   margin-left: 10px;
 }
 .uiIconSave:before {
-    content: "\e79e"!important;
+    content: "\e79e";
     margin: 0px -5px;
-    font-size: 23px!important;
+    font-size: 23px;
 }
 
 .drawer .content {
@@ -324,10 +324,6 @@ a.icon-place {
 
 .contentDisplay{
    display: inline-flex;
-}
-
-.drawerOpened {
-   width:33%;
 }
 
 i.uiIconArrowRight {
@@ -409,4 +405,26 @@ tr.tableContent {
     width: 150px!important;
     position: absolute!important;
     margin: 35px 105px 5px!important;
+}
+
+th.displayAvatarFullName {
+    display: inline-flex;
+}
+
+.first-user-edit {
+    margin: 8px 9px;
+    color: #333333;
+}
+
+.created-date {
+    margin: 8px;
+    margin-left: 170px;
+    color: #999999;
+    font-size: 12px;
+}
+
+.user-label {
+    display: flex;
+    margin: 7px;
+    color: #999999;
 }

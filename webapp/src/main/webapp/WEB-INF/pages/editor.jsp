@@ -46,16 +46,19 @@
 
        <table class="tableContentStyle">
          <tr class="tableHead">
-           <th>
+           <th class="displayAvatarFullName">
                <div class="avatarCircle">
-                  <img alt="" class="user-avatar">
+                  <img alt="" class="first-user-avatar">
                </div>
+               <div class="first-user-edit"></div>
+               <div class="created-date"></div>
+
            </th>
          </tr>
 
          <tr class="tableContent">
            <th>
-
+             <div class="user-label"></div>
            </th>
          </tr>
        </table>

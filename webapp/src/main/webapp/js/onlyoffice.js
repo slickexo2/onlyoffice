@@ -598,7 +598,7 @@
        });
 
        $("#see-more-btn").on('click', function() {
-         return UI.seemoreButton(config);
+         window.open(config.explorerUrl);
        });
 
     };
@@ -886,15 +886,6 @@
          setTimeout(function(){ $("#alert-saved").hide(50); }, 3000);
       };
 
-       /**
-         * button see more.
-         */
-      this.seemoreButton = function(config) {
-        var path = config.explorerUrl;
-        $("#see-more-btn").attr("href", path);
-        window.open($("#see-more-btn").attr('href'));
-      };
-
     this.updateBar = function(changer, comment) {
       var $bar = $("#editor-top-bar");
       var $commentBox = $bar.find(".editors-comment");
@@ -934,16 +925,42 @@
       $lastEditedElem.append("Last edited by " + config.editorPage.lastModifier + " " + config.editorPage.lastModified);
 
       var $avatarUserElem = $bar.find(".user-avatar");
-      $avatarUserElem.append("/rest/v1/social/users/" + config.editorConfig.user.id + "/avatar ");
       $avatarUserElem.attr("src", "/rest/v1/social/users/" + config.editorConfig.user.id  + "/avatar ");
 
       var $avatarSpaceElem = $bar.find(".space-avatar");
-      $avatarSpaceElem.append("src","/rest/v1/social/spaces/" + drive +"/avatar");
       $avatarSpaceElem.attr("src", "/rest/v1/social/spaces/" + drive +"/avatar");
+
+      var $versionList = $bar.find(".first-user-avatar");
+      $versionList.attr("id", "/rest/v1/social/spaces/" + drive +"/avatar");
 
       var $tooltipSpaceElem = $bar.find(".space-avatar");
       $tooltipSpaceElem.append("data-original-title",  drive);
       $tooltipSpaceElem.attr("data-original-title", drive);
+
+      $(document).ready(function () {
+         $.ajax({
+        url: "/rest/private/onlyoffice/editor/versions/"+config.workspace+"/"+config.docId,
+        success: function (data) {
+
+       var limit = 3;
+        if(data.length < 3)
+        limit=data.length;
+       for (var i=0; i < limit; i++) {
+         var $avatarSpaceElem = $bar.find(".first-user-avatar");
+         $avatarSpaceElem.attr("src", "/rest/v1/social/users/" + data[i].author +"/avatar");
+         var $firstUserEdit = $bar.find(".first-user-edit");
+         $firstUserEdit.append(data[i].fullName);
+         var $createdDate = $bar.find(".created-date");
+         $createdDate.append(data[i].createdTime);
+         var $label = $bar.find(".user-label");
+         $label.append(data[i].versionLabels);
+         }
+        },
+         error: function (xhr, ajaxOptions, thrownError) {
+            alert(xhr.responseText + "\n" + xhr.status + "\n" + thrownError);
+         }
+        });
+      });
 
       if(config.editorPage.comment){
         var $comment = $bar.find(".editors-comment");
@@ -970,7 +987,7 @@
          *Function to open drawer
      */
     this.openDrawer = function() {
-     $("#editor-top-bar").addClass("drawerOpened");
+     $("#editor-top-bar").addClass("open");
     };
 
      /**
@@ -978,9 +995,8 @@
      */
     this.closeDrawer = function() {
          setTimeout(function() {
-           $("#editor-top-bar").removeClass("drawerOpened");
+           $("#editor-top-bar").removeClass("open");
             }, 100);
-
      };
 
     /**

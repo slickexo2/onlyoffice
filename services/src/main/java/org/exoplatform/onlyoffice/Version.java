@@ -1,62 +1,68 @@
 package org.exoplatform.onlyoffice;
 
-import java.util.*;
-
 public class Version {
 
 
-  private String              author_                = "";
+  private String              author              = "";
 
-  private Long            createdTime_;
+  private Long            createdTime;
 
   private String              displayName            = "";
 
-  private String              name_                  = "";
+  private String              name                 = "";
 
-  private String[]            versionLabels_         = new String[0];
+  private String              fullName                 = "";
+
+  private String[]            versionLabels         = new String[0];
 
 
 
 
   public String getAuthor() {
-    return this.author_;
+    return this.author;
   }
 
   public Long getCreatedTime() {
-    return this.createdTime_;
+    return this.createdTime;
+  }
+
+  public String getFullName() {
+    return this.fullName;
   }
 
   public String getDisplayName() {
     return this.displayName;
   }
 
-  public void setDisplayName(String displayName_) {
-    this.displayName = displayName_;
+  public void setDisplayName(String displayName) {
+    this.displayName = displayName;
   }
 
-  public void setName_(String name_) {
-    this.name_ = name_;
+  public void setName(String name) {
+    this.name = name;
   }
 
-  public void setAuthor_(String author_) {
-    this.author_ = author_;
+  public void setFullName(String fullName) { this.fullName = fullName; }
+
+  public void setAuthor(String author) {
+    this.author = author;
   }
 
-  public void setcreatedTime_(Long createdTime_) {
-    this.createdTime_ = createdTime_;
+  public void setcreatedTime(Long createdTime) {
+    this.createdTime = createdTime;
   }
 
-  public void setVersionLabels_(String[] versionLabels_) {
-    this.versionLabels_ = versionLabels_;
+  public void setVersionLabels(String[] versionLabels) {
+    this.versionLabels = versionLabels;
   }
 
   public String getName() {
-    return this.name_;
+    return this.name;
   }
 
 
   public String[] getVersionLabels() {
-    return this.versionLabels_;
+    return this.versionLabels;
   }
 
 
