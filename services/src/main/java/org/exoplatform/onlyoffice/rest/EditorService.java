@@ -498,11 +498,11 @@ public class EditorService implements ResourceContainer {
    * @return {@link Response}
    */
   @GET
-  @Path("/versionList/{workspace}/{key}")
+  @Path("/versions/{workspace}/{key}")
   @RolesAllowed("users")
   @Produces(MediaType.APPLICATION_JSON)
   public Response getVersionList(@Context UriInfo uriInfo,  @PathParam("workspace") String workspace,
-                                 @PathParam("key") String key) throws Exception {
+                                 @PathParam("key") String key) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("> localState: " + workspace + key);
     }
@@ -514,14 +514,14 @@ public class EditorService implements ResourceContainer {
          return Response.status(Response.Status.BAD_REQUEST).build();
       }
 
-      List<Version> versionNodes = editors.geVersionList(editors.getDocumentById(workspace, key));
-      if (versionNodes != null) {
-         return Response.ok(versionNodes).build();
+      List<Version> versions = editors.getVersions(workspace, key);
+      if (versions != null) {
+         return Response.ok(versions).build();
       } else {
-         return Response.status(Response.Status.NOT_FOUND).build();
+         return Response.ok(Collections.EMPTY_LIST).build();
       }
     } catch (Exception e) {
-      LOG.error("Error in version list " , e);
+      LOG.error("Error when fetching the versions of the document " + key, e);
       return Response.serverError().build();
     }
   }

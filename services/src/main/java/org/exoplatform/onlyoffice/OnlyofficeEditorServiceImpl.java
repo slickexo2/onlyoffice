@@ -265,11 +265,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /** The document type plugin. */
   protected DocumentTypePlugin                                    documentTypePlugin;
 
+  /** List of verions */
   protected List<VersionNode> listVersion = new ArrayList<VersionNode>() ;
-
-  protected String rootVersionNum_;
-
-  protected UIPageIterator uiPageIterator_ ;
 
   /**
    * Cloud Drive service with storage in JCR and with managed features.
@@ -1001,11 +998,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * {@inheritDoc}
    */
   @Override
-  public List<Version> geVersionList(Node currentNode) throws Exception {
-     List<Version> versionList = new ArrayList<Version>() ;
-
+  public List<Version> getVersions(String workspace, String docId) throws Exception {
+    List<Version> versionList = new ArrayList<Version>() ;
+    String rootVersionNum;
     VersionNode rootVersion_;
     listVersion.clear();
+    Node currentNode = getDocumentById(workspace, docId);
     rootVersion_ = new VersionNode(currentNode, currentNode.getSession());
 
     listVersion = getNodeVersions(rootVersion_.getChildren());
@@ -1013,22 +1011,22 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
         new VersionNode(currentNode, currentNode.getSession());
     if(!listVersion.isEmpty()) {
       int lastVersionNum = Integer.parseInt(listVersion.get(0).getName());
-      setRootVersionNum(String.valueOf(++lastVersionNum));
+      rootVersionNum = String.valueOf(++lastVersionNum);
     } else {
-      setRootVersionNum("1");
+      rootVersionNum = "1";
     }
     listVersion.add(0, currentNodeTuple);
 
     for (VersionNode versionNode : listVersion){
       Version version = new Version();
-      version.setAuthor_(versionNode.getAuthor());
-      version.setName_(versionNode.getName());
+      version.setAuthor(versionNode.getAuthor());
+      version.setName(versionNode.getName());
       version.setDisplayName(versionNode.getDisplayName());
-      version.setVersionLabels_(versionNode.getVersionLabels());
-      version.setcreatedTime_(versionNode.getCreatedTime().getTimeInMillis());
+      version.setFullName(getUser(versionNode.getAuthor()).getDisplayName());
+      version.setVersionLabels(versionNode.getVersionLabels());
+      version.setcreatedTime(versionNode.getCreatedTime().getTimeInMillis());
       versionList.add(version);
     }
-
     return versionList;
   }
 
@@ -1053,10 +1051,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       }
     });
     return listVersion;
-  }
-
-  private void setRootVersionNum(String rootVersionNum) {
-    this.rootVersionNum_ = rootVersionNum;
   }
 
   /**
