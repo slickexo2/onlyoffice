@@ -41,7 +41,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.AutoCloseInputStream;
 import org.apache.commons.lang.StringUtils;
 import org.exoplatform.ecm.jcr.model.VersionNode;
-import org.exoplatform.webui.core.UIPageIterator;
+import org.exoplatform.services.resources.ResourceBundleService;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
 
@@ -358,6 +358,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
   /** List of verions */
   protected List<VersionNode> listVersion = new ArrayList<VersionNode>() ;
+
+  public static final String COMMONS_RESOUCE_BUNDLE_NAME = "locale.commons.Commons";
 
   /**
    * Cloud Drive service with storage in JCR and with managed features.
@@ -1049,7 +1051,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       version.setDisplayName(versionNode.getDisplayName());
       version.setFullName(getUser(versionNode.getAuthor()).getDisplayName());
       version.setVersionLabels(versionNode.getVersionLabels());
-      version.setcreatedTime(versionNode.getCreatedTime().getTimeInMillis());
+      version.setcreatedTime(getRelativeTimeLabel(Locale.getDefault(), versionNode.getCreatedTime().getTimeInMillis()));
       versionList.add(version);
     }
     return versionList;
@@ -1076,6 +1078,59 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       }
     });
     return listVersion;
+  }
+
+  /**
+   * Gets prettyTime by timestamp.
+   *
+   * @param locale
+   * @param postedTime
+   * @return String
+   */
+
+  public static String getRelativeTimeLabel(Locale locale, long postedTime) {
+    ResourceBundleService rs = CommonsUtils.getService(ResourceBundleService.class);
+    ResourceBundle resourceBundle = rs.getResourceBundle(COMMONS_RESOUCE_BUNDLE_NAME, locale);
+    long time = (System.currentTimeMillis() - postedTime) / 1000;
+    long value;
+    if (time < 60) {
+      return resourceBundle.getString("TimeConvert.label.Less_Than_A_Minute");
+    } else {
+      if (time < 120) {
+        return resourceBundle.getString("TimeConvert.label.About_A_Minute");
+      } else {
+        if (time < 3600) {
+          value = Math.round(time / 60);
+          return resourceBundle.getString("TimeConvert.label.About_?_Minutes").replaceFirst("\\{0\\}", String.valueOf(value));
+        } else {
+          if (time < 7200) {
+            return resourceBundle.getString("TimeConvert.label.About_An_Hour");
+          } else {
+            if (time < 86400) {
+              value = Math.round(time / 3600);
+              return resourceBundle.getString("TimeConvert.label.About_?_Hours").replaceFirst("\\{0\\}", String.valueOf(value));
+            } else {
+              if (time < 172800) {
+                return resourceBundle.getString("TimeConvert.label.About_A_Day");
+              } else {
+                if (time < 2592000) {
+                  value = Math.round(time / 86400);
+                  return resourceBundle.getString("TimeConvert.label.About_?_Days").replaceFirst("\\{0\\}", String.valueOf(value));
+                } else {
+                  if (time < 5184000) {
+                    return resourceBundle.getString("TimeConvert.label.About_A_Month");
+                  } else {
+                    value = Math.round(time / 2592000);
+                    return resourceBundle.getString("TimeConvert.label.About_?_Months")
+                                         .replaceFirst("\\{0\\}", String.valueOf(value));
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   /**
