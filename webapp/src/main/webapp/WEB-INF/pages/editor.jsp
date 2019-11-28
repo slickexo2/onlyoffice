@@ -44,44 +44,7 @@
           <a class="nameStyle">Save</a>
        </div>
 
-       <table class="tableContentStyle">
-         <tr class="tableHead">
-           <th class="displayAvatarFullName">
-               <div class="avatarCircle">
-                  <img alt="" class="first-user-avatar">
-               </div>
-               <div class="first-user-edit"></div>
-               <div class="created-date"></div>
-
-           </th>
-         </tr>
-
-         <tr class="tableContent">
-           <th>
-             <div class="user-label"></div>
-           </th>
-         </tr>
-       </table>
-
-       <table class="tableStyle">
-         <tr class="tableHead">
-           <th></th>
-         </tr>
-
-         <tr class="tableContent">
-           <th></th>
-         </tr>
-       </table>
-
-       <table class="tableStyle">
-         <tr class="tableHead">
-           <th></th>
-         </tr>
-
-         <tr class="tableContent">
-           <th></th>
-         </tr>
-       </table>
+       <div id="versions"></div>
 
      </div>
 

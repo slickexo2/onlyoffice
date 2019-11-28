@@ -951,25 +951,41 @@
       var $lastEditedElem = $bar.find(".last-edited");
       $lastEditedElem.append("Last edited by " + config.editorPage.lastModifier + " " + config.editorPage.lastModified);
 
-
-      $(document).ready(function () {
+      $("#editor-top-bar").ready(function () {
          $.ajax({
         url: "/rest/private/onlyoffice/editor/versions/"+config.workspace+"/"+config.docId,
         success: function (data) {
+       var html = "";
 
        var limit = 3;
         if(data.length < 3)
         limit=data.length;
        for (var i=0; i < limit; i++) {
-         var $avatarSpaceElem = $bar.find(".first-user-avatar");
-         $avatarSpaceElem.attr("src", "/rest/v1/social/users/" + data[i].author +"/avatar");
-         var $firstUserEdit = $bar.find(".first-user-edit");
-         $firstUserEdit.append(data[i].fullName);
-         var $createdDate = $bar.find(".created-date");
-         $createdDate.append(data[i].createdTime);
-         var $label = $bar.find(".user-label");
-         $label.append(data[i].versionLabels);
-         }
+         html += "<table class='tableContentStyle'>" +
+         "<tr class='tableHead'>" +
+         "<th class='displayAvatarFullName'>" +
+         "<div class='avatarCircle'>" +
+         "<img  src='/rest/v1/social/users/" + data[i].author + "/avatar' class='first-user-avatar'>"+
+         "</div>" +
+         "<div class='first-user-edit'>" +
+         data[i].fullName +
+         "</div>" +
+         "<div class='created-date'>" +
+         data[i].createdTime +
+         "</div>" +
+         "</th>" +
+         "</tr>" +
+         "<tr class='tableContent'>" +
+         "<th>" +
+         "<div class='versionslabel'>" +
+         data[i].versionLabels +
+         "</div>" +
+         "</th>" +
+         "</tr>" +
+         "</table>";
+         $("#versions").html(html);
+        };
+
         },
          error: function (xhr, ajaxOptions, thrownError) {
             alert(xhr.responseText + "\n" + xhr.status + "\n" + thrownError);
