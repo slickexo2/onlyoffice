@@ -5,7 +5,7 @@ public class Version {
 
   private String              author              = "";
 
-  private Long            createdTime;
+  private String            createdTime;
 
   private String              displayName            = "";
 
@@ -22,7 +22,7 @@ public class Version {
     return this.author;
   }
 
-  public Long getCreatedTime() {
+  public String getCreatedTime() {
     return this.createdTime;
   }
 
@@ -48,7 +48,7 @@ public class Version {
     this.author = author;
   }
 
-  public void setcreatedTime(Long createdTime) {
+  public void setcreatedTime(String createdTime) {
     this.createdTime = createdTime;
   }
 
