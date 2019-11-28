@@ -901,12 +901,39 @@
 
     this.initBar = function(config) {
       var drive = config.editorPage.displayPath.split(':')[0];
+      var $bar = $("#editor-top-bar");
+
+      if(drive ==="Personal Documents"){
+       var folders = config.editorPage.displayPath.split(':')[1].split('/');
+       var title = folders.pop();
+       var path = config.editorPage.displayPath.split('/')[0];
+       var documentPath = path.replace(/\//g , function() {
+        return "<i class='uiIconArrowRight'></i>" } );
+
+      var $avatarSpaceElem = $bar.find(".space-avatar");
+      $avatarSpaceElem.attr("src", "/rest/v1/social/users/"+ config.editorConfig.user.id +"/avatar");
+
+      var $tooltipSpaceElem = $bar.find(".space-avatar");
+      $tooltipSpaceElem.append("data-original-title",  config.editorConfig.user.name);
+      $tooltipSpaceElem.attr("data-original-title", config.editorConfig.user.name);
+      }
+
+      else {
       var folders = config.editorPage.displayPath.split(':')[1].split('/');
       var title = folders.pop();
-      var pathDocument = config.path.split(drive+'/')[1].split("/" + title)[0];
+      var NewDrivePath = drive.replace(/\ /g, '_');
+      var pathDocument = config.path.split(NewDrivePath+'/')[1].split("/" + title)[0];
       var documentPath = pathDocument.replace(/\//g , function() {
         return "<i class='uiIconArrowRight'></i>" } );
-      var $bar = $("#editor-top-bar");
+
+      var $avatarSpaceElem = $bar.find(".space-avatar");
+      $avatarSpaceElem.attr("src", "/rest/v1/social/spaces/" + NewDrivePath +"/avatar");
+
+      var $tooltipSpaceElem = $bar.find(".space-avatar");
+      $tooltipSpaceElem.append("data-original-title",  drive);
+      $tooltipSpaceElem.attr("data-original-title", drive);
+      }
+
       if(config.editorPage.renameAllowed){
         $bar.find("a[rel=tooltip]").tooltip();
       } else {
@@ -917,25 +944,13 @@
       }
       var $pathElem = $bar.find(".document-path");
       $pathElem.append("<span class='folder'>" + documentPath + "</span>" + " <i class='uiIconArrowRight'></i> ");
-     
+
       var $titleElem = $bar.find(".document-title a");
        $titleElem.append("<span class='editable-title'>" + title + " " + "<i class='uiIconEdit'></i> </span>");
 
       var $lastEditedElem = $bar.find(".last-edited");
       $lastEditedElem.append("Last edited by " + config.editorPage.lastModifier + " " + config.editorPage.lastModified);
 
-      var $avatarUserElem = $bar.find(".user-avatar");
-      $avatarUserElem.attr("src", "/rest/v1/social/users/" + config.editorConfig.user.id  + "/avatar ");
-
-      var $avatarSpaceElem = $bar.find(".space-avatar");
-      $avatarSpaceElem.attr("src", "/rest/v1/social/spaces/" + drive +"/avatar");
-
-      var $versionList = $bar.find(".first-user-avatar");
-      $versionList.attr("id", "/rest/v1/social/spaces/" + drive +"/avatar");
-
-      var $tooltipSpaceElem = $bar.find(".space-avatar");
-      $tooltipSpaceElem.append("data-original-title",  drive);
-      $tooltipSpaceElem.attr("data-original-title", drive);
 
       $(document).ready(function () {
          $.ajax({
