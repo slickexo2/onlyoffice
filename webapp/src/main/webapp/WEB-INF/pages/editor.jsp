@@ -20,12 +20,10 @@
      </div>
 
      <div class="content">
-
        <div class="contentDisplay">
           <div class="spaceAvatar">
-               <img alt="" class="space-avatar" rel="tooltip" data-placement="bottom" data-original-title="">
+               <img alt="" class="space-avatar" rel="tooltip" data-placement="right" data-original-title="">
             </div>
-
          <div class="displayPathTitle">
            <div class="document-path"></div>
            <div class="document-title">
@@ -33,7 +31,6 @@
            </div>
          </div>
        </div>
-
        <div class="comment">
         <div id="alert-saved" class="alert alert-success" style="display: none;"><i class="uiIconSuccess"></i>Changes saved</div>
          <textarea type="text" id="comment-box" placeholder="Write your summary of changes ..."></textarea>
@@ -43,16 +40,12 @@
           </a>
           <a class="nameStyle">Save</a>
        </div>
-
        <div id="versions"></div>
-
      </div>
-
      <div class="footer">
         <button id="see-more-btn" type="button" class="btn lineStyle">See more</button>
      </div>
    </div>
-
 
   <div class="editor" style="display: none;">
     <div id="onlyoffice"></div>

@@ -97,10 +97,14 @@
   font-size: 15px;
 }
 
+.onlyofficeEditorBody  #editor-top-bar #versions {
+   margin-top: 50px;
+}
+
 .onlyofficeEditorBody  #editor-top-bar #save-btn {
-  display: inline-block;
+  display: flex;
   cursor: pointer;
-  left: 310px;
+  float: right;
 }
 
 .onlyofficeEditorBody  #editor-top-bar .close-btn {
@@ -348,7 +352,7 @@ a.nameStyle {
 
 textarea {
     height: 100px!important;
-    width: 390px!important;
+    width: -webkit-fill-available;
     margin-top: 10px!important;
 }
 
@@ -394,7 +398,7 @@ table.tableStyle {
 
 table.tableContentStyle {
     margin-top: 10px;
-    width: 390px;
+    width: -webkit-fill-available;
 }
 
 tr.tableContent {
@@ -412,14 +416,17 @@ th.displayAvatarFullName {
     display: flex;
 }
 
-.first-user-edit {
+.user-edit {
     padding: 8px;
     color: #333333;
+    width: 155px;
+    text-align: left;
 }
 
 .created-date {
     padding: 9px;
-    margin-left: 55px;
+    width: 155px;
+    text-align: end;
     color: #999999;
     font-size: 12px;
 }
@@ -429,3 +436,9 @@ th.displayAvatarFullName {
     padding: 7px;
     color: #999999;
 }
+
+.versionslabel {
+    font-size: 12px;
+    text-align: initial;
+    margin-left: 10px;
+ }
