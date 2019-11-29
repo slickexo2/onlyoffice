@@ -900,14 +900,14 @@
     };
 
     this.initBar = function(config) {
-      var drive = config.editorPage.displayPath.split(':')[0];
+      var drive = config.editorPage.displayPath.split(':')[0].replace(/\  /g , ' ');
       var $bar = $("#editor-top-bar");
 
       if(drive ==="Personal Documents"){
        var folders = config.editorPage.displayPath.split(':')[1].split('/');
        var title = folders.pop();
        var path = config.editorPage.displayPath.split('/')[0];
-       var documentPath = path.replace(/\//g , function() {
+       var pathDocumentWithIcon = path.replace(/\//g , function() {
         return "<i class='uiIconArrowRight'></i>" } );
 
       var $avatarSpaceElem = $bar.find(".space-avatar");
@@ -921,9 +921,9 @@
       else {
       var folders = config.editorPage.displayPath.split(':')[1].split('/');
       var title = folders.pop();
-      var NewDrivePath = drive.replace(/\ /g, '_');
+      var NewDrivePath = drive.replace(/\ /g, '_').toLowerCase();
       var pathDocument = config.path.split(NewDrivePath+'/')[1].split("/" + title)[0];
-      var documentPath = pathDocument.replace(/\//g , function() {
+      var pathDocumentWithIcon = pathDocument.replace(/\//g , function() {
         return "<i class='uiIconArrowRight'></i>" } );
 
       var $avatarSpaceElem = $bar.find(".space-avatar");
@@ -943,7 +943,7 @@
         $bar.find("#comment-box").prop("disabled", true);
       }
       var $pathElem = $bar.find(".document-path");
-      $pathElem.append("<span class='folder'>" + documentPath + "</span>" + " <i class='uiIconArrowRight'></i> ");
+      $pathElem.append("<span class='folder'>" + pathDocumentWithIcon + "</span>" + " <i class='uiIconArrowRight'></i> ");
 
       var $titleElem = $bar.find(".document-title a");
        $titleElem.append("<span class='editable-title'>" + title + " " + "<i class='uiIconEdit'></i> </span>");
@@ -967,7 +967,7 @@
          "<div class='avatarCircle'>" +
          "<img  src='/rest/v1/social/users/" + data[i].author + "/avatar' class='first-user-avatar'>"+
          "</div>" +
-         "<div class='first-user-edit'>" +
+         "<div class='user-edit'>" +
          data[i].fullName +
          "</div>" +
          "<div class='created-date'>" +
@@ -1012,7 +1012,6 @@
     this.isEditorLoaded = function() {
       return $("#UIPage .onlyofficeContainer").length > 0;
     };
-
 
      /**
          *Function to open drawer
