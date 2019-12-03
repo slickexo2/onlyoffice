@@ -55,7 +55,8 @@
 
 
 .onlyofficeEditorBody  #editor-top-bar .document-title {
-  width: auto !important;
+  width: auto;
+  cursor: pointer;
 }
 
 .onlyofficeEditorBody #editor-top-bar .last-edited,
@@ -66,20 +67,19 @@
 
 .onlyofficeEditorBody #editor-top-bar .editors-comment {
   font-style: italic;
-  max-width: 150px;
+  max-width: 370px;
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+  font-size: 12px;
+  text-align: initial;
+  margin-left: 10px;
   position: relative;
   padding-right: 6px;
-}
-
-.onlyofficeEditorBody #editor-top-bar .editors-comment:not(:empty):before {
-    content: "\"";
+  color: #999999;
 }
 
 .onlyofficeEditorBody #editor-top-bar .editors-comment:not(:empty):after {
-    content: "\"";
     position: absolute;
     top: 0;
     right: 1px;
@@ -333,7 +333,7 @@ i.uiIconArrowRight {
     color: #999;
 }
 
-.uiIconEdit:before {
+.uiIconPencilEdit:before {
     content: "\e9e4";
     margin-left: 5px;
     color: black;
@@ -363,8 +363,8 @@ textarea {
 
 .avatarCircle img {
     margin: -14px -11px 0px!important;
-    max-height: 35px;
-    max-width: 35px;
+    max-height: 35px!important;
+    max-width: 35px!important;
 }
 
 .userAvatar{
@@ -436,8 +436,3 @@ th.displayAvatarFullName {
     color: #999999;
 }
 
-.versionslabel {
-    font-size: 12px;
-    text-align: initial;
-    margin-left: 10px;
- }

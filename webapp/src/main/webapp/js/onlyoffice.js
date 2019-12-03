@@ -541,9 +541,7 @@
               var oldTitle = currentConfig.document.title;
               currentConfig.document.title = state.title;
               window.document.title = window.document.title.replace(oldTitle, state.title);
-              $("#editor-top-bar").find(".editable-title").text(state.title);
-              var $titleElem = $("#editor-top-bar").find(".editable-title").text(state.title);
-              $titleElem.append(" <span> <i class='uiIconEdit'></i> </span>");
+              $("#editor-top-bar").find(".editable-title").text(state.title).append("<i class='uiIconPencilEdit'></i>");
             }
           });
 
@@ -946,7 +944,7 @@
       $pathElem.append("<span class='folder'>" + pathDocumentWithIcon + "</span>" + " <i class='uiIconArrowRight'></i> ");
 
       var $titleElem = $bar.find(".document-title a");
-       $titleElem.append("<span class='editable-title'>" + title + " " + "<i class='uiIconEdit'></i> </span>");
+       $titleElem.append("<span class='editable-title'>" + title + " " + "<i class='uiIconPencilEdit'></i> </span>");
 
       var $lastEditedElem = $bar.find(".last-edited");
       $lastEditedElem.append("Last edited by " + config.editorPage.lastModifier + " " + config.editorPage.lastModified);
@@ -956,10 +954,7 @@
         url: "/rest/private/onlyoffice/editor/versions/"+config.workspace+"/"+config.docId,
         success: function (data) {
        var html = "";
-
-       var limit = 3;
-        if(data.length < 3)
-        limit=data.length;
+       var limit = data.length < 3 ? data.length : 3;
        for (var i=0; i < limit; i++) {
          html += "<table class='tableContentStyle'>" +
          "<tr class='tableHead'>" +
@@ -977,7 +972,7 @@
          "</tr>" +
          "<tr class='tableContent'>" +
          "<th>" +
-         "<div class='versionslabel'>" +
+         "<div class='editors-comment'>" +
          data[i].versionLabels +
          "</div>" +
          "</th>" +
@@ -992,12 +987,6 @@
          }
         });
       });
-
-      if(config.editorPage.comment){
-        var $comment = $bar.find(".editors-comment");
-        $comment.append(config.editorPage.comment);
-        $comment.attr("data-original-title", config.editorPage.comment);
-      }
 
       var $saveBtn = $bar.find("#save-btn .uiIconSave");
       $saveBtn.on("click", function(){

@@ -64,15 +64,17 @@ $.fn.editable = function (options) {
         const parentClassList = [...parent.classList];
         // Get required width from editable title
         var width = $(".editable-title").width() + "px";
+        // Get the document title without extension and space
+        var documentTitle = $.trim(parent.textContent.split('.')[0]);
         // Since we can't submit a form on "enter" whenever there is only one input in the form, a ghost one has been added.
         const wrapper = `
             <input type="text" style="display:none"/>
             <div class="form-group" style="margin: 0px;">
-                <input type="${type}" class="form-control eip-editable input-sm" value="${editableElement.textContent}"/>
+                <input type="${type}" class="form-control eip-editable input-sm" value="${documentTitle}"/>
             </div>
         `;
 
-        setParent(parent, wrapper, `${parent.clientWidth}px`);
+        setParent(parent, wrapper, width);
         const input = parent.querySelector('.eip-editable');
         input.style.width = width;
         input.style.margin = "0px";
