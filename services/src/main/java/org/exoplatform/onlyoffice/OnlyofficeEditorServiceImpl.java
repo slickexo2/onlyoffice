@@ -40,6 +40,9 @@ import javax.jcr.lock.Lock;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.AutoCloseInputStream;
 import org.apache.commons.lang.StringUtils;
+import org.exoplatform.commons.utils.ActivityTypeUtils;
+import org.exoplatform.commons.utils.CommonsUtils;
+import org.exoplatform.commons.utils.MimeTypeResolver;
 import org.exoplatform.ecm.jcr.model.VersionNode;
 import org.exoplatform.services.resources.ResourceBundleService;
 import org.json.JSONObject;
@@ -1203,118 +1206,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       }
     } else {
       LOG.error("The documentTypePlugin plugin is not an instance of " + pclass.getName());
-    }
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public List<Version> getVersions(String workspace, String docId) throws Exception {
-    List<Version> versionList = new ArrayList<Version>() ;
-    String rootVersionNum;
-    VersionNode rootVersion_;
-    listVersion.clear();
-    Node currentNode = getDocumentById(workspace, docId);
-    rootVersion_ = new VersionNode(currentNode, currentNode.getSession());
-
-    listVersion = getNodeVersions(rootVersion_.getChildren());
-    VersionNode currentNodeTuple =
-        new VersionNode(currentNode, currentNode.getSession());
-    if(!listVersion.isEmpty()) {
-      int lastVersionNum = Integer.parseInt(listVersion.get(0).getName());
-      rootVersionNum = String.valueOf(++lastVersionNum);
-    } else {
-      rootVersionNum = "1";
-    }
-    listVersion.add(0, currentNodeTuple);
-
-    for (VersionNode versionNode : listVersion){
-      Version version = new Version();
-      version.setAuthor(versionNode.getAuthor());
-      version.setName(versionNode.getName());
-      version.setDisplayName(versionNode.getDisplayName());
-      version.setFullName(getUser(versionNode.getAuthor()).getDisplayName());
-      version.setVersionLabels(versionNode.getVersionLabels());
-      version.setcreatedTime(getRelativeTimeLabel(Locale.getDefault(), versionNode.getCreatedTime().getTimeInMillis()));
-      versionList.add(version);
-    }
-    return versionList;
-  }
-
-  private List<VersionNode> getNodeVersions(List<VersionNode> children) throws Exception {
-    List<VersionNode> child = new ArrayList<VersionNode>() ;
-    for(int i = 0; i < children.size(); i ++){
-      listVersion.add(children.get(i));
-      child = children.get(i).getChildren() ;
-      if(!child.isEmpty()) getNodeVersions(child) ;
-    }
-    listVersion.sort(new Comparator<VersionNode>() {
-      @Override
-      public int compare(VersionNode v1, VersionNode v2) {
-        try {
-          if (Integer.parseInt(v1.getName()) < Integer.parseInt(v2.getName()))
-            return 1;
-          else
-            return 0;
-        }catch (Exception e) {
-          return 0;
-        }
-      }
-    });
-    return listVersion;
-  }
-
-  /**
-   * Gets prettyTime by timestamp.
-   *
-   * @param locale
-   * @param postedTime
-   * @return String
-   */
-
-  public static String getRelativeTimeLabel(Locale locale, long postedTime) {
-    ResourceBundleService rs = CommonsUtils.getService(ResourceBundleService.class);
-    ResourceBundle resourceBundle = rs.getResourceBundle(COMMONS_RESOUCE_BUNDLE_NAME, locale);
-    long time = (System.currentTimeMillis() - postedTime) / 1000;
-    long value;
-    if (time < 60) {
-      return resourceBundle.getString("TimeConvert.label.Less_Than_A_Minute");
-    } else {
-      if (time < 120) {
-        return resourceBundle.getString("TimeConvert.label.About_A_Minute");
-      } else {
-        if (time < 3600) {
-          value = Math.round(time / 60);
-          return resourceBundle.getString("TimeConvert.label.About_?_Minutes").replaceFirst("\\{0\\}", String.valueOf(value));
-        } else {
-          if (time < 7200) {
-            return resourceBundle.getString("TimeConvert.label.About_An_Hour");
-          } else {
-            if (time < 86400) {
-              value = Math.round(time / 3600);
-              return resourceBundle.getString("TimeConvert.label.About_?_Hours").replaceFirst("\\{0\\}", String.valueOf(value));
-            } else {
-              if (time < 172800) {
-                return resourceBundle.getString("TimeConvert.label.About_A_Day");
-              } else {
-                if (time < 2592000) {
-                  value = Math.round(time / 86400);
-                  return resourceBundle.getString("TimeConvert.label.About_?_Days").replaceFirst("\\{0\\}", String.valueOf(value));
-                } else {
-                  if (time < 5184000) {
-                    return resourceBundle.getString("TimeConvert.label.About_A_Month");
-                  } else {
-                    value = Math.round(time / 2592000);
-                    return resourceBundle.getString("TimeConvert.label.About_?_Months")
-                                         .replaceFirst("\\{0\\}", String.valueOf(value));
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
     }
   }
 
