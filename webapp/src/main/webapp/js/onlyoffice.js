@@ -1211,11 +1211,10 @@
 
   $(function() {
     try {
-      // load required styles (it didn't work right via gatein-resources.xml in PLF 5.0)
+      // load jquery-ui required stylesheets in js since only 1 stylesheet can be loaded for a given portlet in gatein-resources.xml
       loadStyle("/onlyoffice/skin/jquery-ui.css");
       loadStyle("/onlyoffice/skin/jquery.pnotify.default.css");
       loadStyle("/onlyoffice/skin/jquery.pnotify.default.icons.css");
-      loadStyle("/onlyoffice/skin/onlyoffice.css");
 
       // configure Pnotify
       $.pnotify.defaults.styling = "jqueryui";

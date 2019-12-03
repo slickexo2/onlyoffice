@@ -172,8 +172,7 @@
 }
 
 .waitThrobber {
-  display: inline-block;
-  width: 50%;
+  width: 32px;
   height: 320px;
   margin-right: auto;
   margin-left: auto;
