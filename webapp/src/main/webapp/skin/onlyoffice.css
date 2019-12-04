@@ -65,7 +65,7 @@
   padding-left: 0px;
 }
 
-.onlyofficeEditorBody #editor-top-bar .editors-comment {
+.onlyofficeEditorBody #editor-top-bar .editors-comment-versions {
   font-style: italic;
   max-width: 370px;
   text-overflow: ellipsis;
@@ -79,7 +79,7 @@
   color: #999999;
 }
 
-.onlyofficeEditorBody #editor-top-bar .editors-comment:not(:empty):after {
+.onlyofficeEditorBody #editor-top-bar .editors-comment-versions:not(:empty):after {
     position: absolute;
     top: 0;
     right: 1px;
@@ -351,7 +351,7 @@ a.nameStyle {
 
 textarea {
     height: 100px!important;
-    width: -webkit-fill-available;
+    width: 100%;
     margin-top: 10px!important;
 }
 

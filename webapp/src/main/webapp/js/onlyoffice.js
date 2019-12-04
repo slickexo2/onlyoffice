@@ -972,7 +972,7 @@
          "</tr>" +
          "<tr class='tableContent'>" +
          "<th>" +
-         "<div class='editors-comment'>" +
+         "<div class='editors-comment-versions'>" +
          data[i].versionLabels +
          "</div>" +
          "</th>" +

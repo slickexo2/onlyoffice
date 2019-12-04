@@ -25,6 +25,10 @@ import java.io.OutputStream;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,9 +46,11 @@ import org.apache.commons.io.input.AutoCloseInputStream;
 import org.apache.commons.lang.StringUtils;
 import org.exoplatform.commons.utils.ActivityTypeUtils;
 import org.exoplatform.commons.utils.CommonsUtils;
+import org.exoplatform.commons.utils.DateUtils;
 import org.exoplatform.commons.utils.MimeTypeResolver;
 import org.exoplatform.ecm.jcr.model.VersionNode;
 import org.exoplatform.services.resources.ResourceBundleService;
+import org.exoplatform.webui.core.lifecycle.WebuiBindingContext;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
 
@@ -1052,6 +1058,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       version.setFullName(getUser(versionNode.getAuthor()).getDisplayName());
       version.setVersionLabels(versionNode.getVersionLabels());
       version.setcreatedTime(getRelativeTimeLabel(Locale.getDefault(), versionNode.getCreatedTime().getTimeInMillis()));
+      version.setRelaviveCreatedTime(getAbsolutePostedTime( versionNode.getCreatedTime().getTimeInMillis()));
       versionList.add(version);
     }
     return versionList;
@@ -1078,6 +1085,19 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       }
     });
     return listVersion;
+  }
+
+  /**
+   * Gets absolute posted time.
+   *
+   * @param postedTime
+   * @return String
+   */
+
+  public String getAbsolutePostedTime(Long postedTime) {
+    Locale currentLocale = Locale.getDefault();
+    DateTimeFormatter df = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT, FormatStyle.SHORT).withLocale(currentLocale).withZone(ZoneId.systemDefault());
+    return df.format(Instant.ofEpochMilli(postedTime));
   }
 
   /**
