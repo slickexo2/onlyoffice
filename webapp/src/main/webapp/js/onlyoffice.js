@@ -965,20 +965,22 @@
          "<div class='user-edit'>" +
          data[i].fullName +
          "</div>" +
-         "<div class='created-date'>" +
+         "<div class='created-date' rel='tooltip' data-placement='bottom'  data-original-title='"+data[i].relaviveCreatedTime+"'>" +
          data[i].createdTime +
          "</div>" +
          "</th>" +
          "</tr>" +
          "<tr class='tableContent'>" +
          "<th>" +
-         "<div class='editors-comment-versions'>" +
+         "<div class='editors-comment-versions b' rel='tooltip' data-placement='bottom'  data-original-title='"+data[i].versionLabels+"'>" +
          data[i].versionLabels +
          "</div>" +
          "</th>" +
          "</tr>" +
          "</table>";
          $("#versions").html(html);
+         $(".editors-comment-versions").tooltip();
+         $(".created-date").tooltip();
         };
 
         },

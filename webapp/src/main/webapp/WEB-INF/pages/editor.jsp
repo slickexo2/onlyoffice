@@ -36,8 +36,6 @@
          <textarea type="text" id="comment-box" placeholder="Write your summary of changes ..."></textarea>
        </div>
        <div id="save-btn" type="button" class="btn btn-primary">
-          <a data-placement="bottom" rel="tooltip" data-original-title="Save">
-          </a>
           <a class="nameStyle">Save</a>
        </div>
        <div id="versions"></div>
