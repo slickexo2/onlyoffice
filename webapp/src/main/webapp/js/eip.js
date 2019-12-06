@@ -65,7 +65,8 @@ $.fn.editable = function (options) {
         // Get required width from editable title
         var width = $(".editable-title").width() + "px";
         // Get the document title without extension and space
-        var documentTitle = $.trim(parent.textContent.split('.')[0]);
+        var extension = parent.textContent.substr(parent.textContent.lastIndexOf("."));
+        var documentTitle = $.trim(parent.textContent.split(extension)[0]);
         // Since we can't submit a form on "enter" whenever there is only one input in the form, a ghost one has been added.
         const wrapper = `
             <input type="text" style="display:none"/>

@@ -901,7 +901,7 @@
       var drive = config.editorPage.displayPath.split(':')[0].replace(/\  /g , ' ');
       var $bar = $("#editor-top-bar");
 
-      if(drive ==="Personal Documents"){
+      if(drive === "Personal Documents") {
        var folders = config.editorPage.displayPath.split(':')[1].split('/');
        var title = folders.pop();
        var path = config.editorPage.displayPath.split('/')[0];
@@ -915,7 +915,20 @@
       $tooltipSpaceElem.append("data-original-title",  config.editorConfig.user.name);
       $tooltipSpaceElem.attr("data-original-title", config.editorConfig.user.name);
       }
+      else  if(drive === "" || drive.match('///')) {
+             var folders = config.editorPage.displayPath.split(':')[1].split('/');
+             var title = folders.pop();
+             var path = config.path.split('/'+title)[0];
+             var pathDocumentWithIcon = path.replace(/\//g , function() {
+              return "<i class='uiIconArrowRight'></i>" } );
 
+            var $avatarSpaceElem = $bar.find(".space-avatar");
+            $avatarSpaceElem.attr("src", "/rest/v1/social/users/"+ config.editorConfig.user.id +"/avatar");
+
+            var $tooltipSpaceElem = $bar.find(".space-avatar");
+            $tooltipSpaceElem.append("data-original-title",  config.editorConfig.user.name);
+            $tooltipSpaceElem.attr("data-original-title", config.editorConfig.user.name);
+      }
       else {
       var folders = config.editorPage.displayPath.split(':')[1].split('/');
       var title = folders.pop();
@@ -928,7 +941,6 @@
       $avatarSpaceElem.attr("src", "/rest/v1/social/spaces/" + NewDrivePath +"/avatar");
 
       var $tooltipSpaceElem = $bar.find(".space-avatar");
-      $tooltipSpaceElem.append("data-original-title",  drive);
       $tooltipSpaceElem.attr("data-original-title", drive);
       }
 
@@ -944,7 +956,7 @@
       $pathElem.append("<span class='folder'>" + pathDocumentWithIcon + "</span>" + " <i class='uiIconArrowRight'></i> ");
 
       var $titleElem = $bar.find(".document-title a");
-       $titleElem.append("<span class='editable-title'>" + title + " " + "<i class='uiIconPencilEdit'></i> </span>");
+      $titleElem.append("<span class='editable-title'>" + title + " " + "<i class='uiIconPencilEdit'></i> </span>");
 
       var $lastEditedElem = $bar.find(".last-edited");
       $lastEditedElem.append("Last edited by " + config.editorPage.lastModifier + " " + config.editorPage.lastModified);
@@ -960,7 +972,7 @@
          "<tr class='tableHead'>" +
          "<th class='displayAvatarFullName'>" +
          "<div class='avatarCircle'>" +
-         "<img  src='/rest/v1/social/users/" + data[i].author + "/avatar' class='first-user-avatar'>"+
+         "<img  class='avatar-circle' src='/rest/v1/social/users/" + data[i].author + "/avatar'>"+
          "</div>" +
          "<div class='user-edit'>" +
          data[i].fullName +

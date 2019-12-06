@@ -26,6 +26,7 @@ import org.exoplatform.onlyoffice.Config.Editor;
 import org.exoplatform.services.organization.User;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Created by The eXo Platform SAS.
@@ -224,14 +225,14 @@ public interface OnlyofficeEditorService {
   void addTypePlugin(ComponentPlugin plugin);
 
   /**
-   *get the list of versions.
+   *get the list of versions of the document with the given id.
    *
    * @param  workspace the workspace
    * @param docId the document id
    * @return list of versions for node
    * @throws Exception the exception
    */
-  List<Version> getVersions(String workspace, String docId) throws Exception ;
+  List<Version> getVersions(String workspace, String docId, Locale locale) throws Exception ;
 
   /**
    * Checks if the node isn't locked and can be edited by the current user.

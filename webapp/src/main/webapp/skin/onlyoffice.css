@@ -41,6 +41,7 @@
 .onlyofficeEditorBody #save-btn {
   position: relative;
   top: 1px;
+  padding: 6px 25px;
 }
 
 .onlyofficeEditorBody #editor-top-bar .comment input,
@@ -296,8 +297,8 @@
 }
 
 div#open-drawer-btn{
-    width: 10px;
-    height: 44px;
+    width: 20px;
+    height: 40px;
     position: fixed;
     border-radius: 50%;
     display: block;
@@ -311,7 +312,7 @@ div#open-drawer-btn:hover {
     cursor: pointer;
 }
 a.icon-place {
-    margin-top: 5px;
+    padding: 4px;
 }
 
 .drawer .header .closebtn {
@@ -345,11 +346,7 @@ a.nameStyle {
     font-size: 13px;
 }
 
-.btn.btn-primary, .btn-primary {
-    padding: 6px 25px !important;
-}
-
-textarea {
+.textareaStyle {
     height: 100px!important;
     width: 100%;
     margin-top: 10px!important;
@@ -361,46 +358,44 @@ textarea {
      margin-left: 6px;
 }
 
-.avatarCircle img {
+.avatar-circle {
     margin: -14px -11px 0px!important;
     max-height: 35px!important;
     max-width: 35px!important;
 }
 
 .userAvatar{
-    margin: -5px -6px 14px;
-    width: 35px;
+    margin: -5px -6px 14px!important;
+    width: 35px!important;
     height: 35px;
 }
 
 .spaceAvatar {
     width: 33px;
-    height: 33px;
     margin-right: 10px;
 }
 
-.spaceAvatar img {
-    max-height: 35px;
+.space-avatar {
     max-width: 35px;
     border-radius: 5px;
 }
 
-tr.tableHead {
+.tableHead {
     background: aliceblue;
     height: 35px;
     border: solid 0.5px lightgray;
 }
 
-table.tableStyle {
+.tableStyle {
     margin-top: 8px;
 }
 
-table.tableContentStyle {
+.tableContentStyle {
     margin-top: 10px;
     width: -webkit-fill-available;
 }
 
-tr.tableContent {
+.tableContent {
     height: 40px;
     border: solid 0.5px lightgrey;
 }
@@ -411,7 +406,7 @@ tr.tableContent {
     margin: 35px 105px 5px!important;
 }
 
-th.displayAvatarFullName {
+.displayAvatarFullName {
     display: flex;
 }
 

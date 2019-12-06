@@ -494,6 +494,7 @@ public class EditorService implements ResourceContainer {
    *
    * @param uriInfo - request info
    * @param key the key
+   * @param request the request
    * @param workspace the workspace
    * @return {@link Response}
    */
@@ -501,10 +502,10 @@ public class EditorService implements ResourceContainer {
   @Path("/versions/{workspace}/{key}")
   @RolesAllowed("users")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response getVersionList(@Context UriInfo uriInfo,  @PathParam("workspace") String workspace,
+  public Response getVersionList(@Context UriInfo uriInfo, @Context HttpServletRequest request, @PathParam("workspace") String workspace,
                                  @PathParam("key") String key) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("> localState: " + workspace + key);
+      LOG.debug("> get versions of doc " + key + " in workspace " + workspace);
     }
     try {
       if (StringUtils.isBlank(workspace)) {
@@ -514,7 +515,7 @@ public class EditorService implements ResourceContainer {
          return Response.status(Response.Status.BAD_REQUEST).build();
       }
 
-      List<Version> versions = editors.getVersions(workspace, key);
+      List<Version> versions = editors.getVersions(workspace, key, request.getLocale());
       if (versions != null) {
          return Response.ok(versions).build();
       } else {

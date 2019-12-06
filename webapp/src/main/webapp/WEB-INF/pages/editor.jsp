@@ -33,7 +33,7 @@
        </div>
        <div class="comment">
         <div id="alert-saved" class="alert alert-success" style="display: none;"><i class="uiIconSuccess"></i>Changes saved</div>
-         <textarea type="text" id="comment-box" placeholder="Write your summary of changes ..."></textarea>
+         <textarea class="textareaStyle" type="text" id="comment-box" placeholder="Write your summary of changes ..."></textarea>
        </div>
        <div id="save-btn" type="button" class="btn btn-primary">
           <a class="nameStyle">Save</a>

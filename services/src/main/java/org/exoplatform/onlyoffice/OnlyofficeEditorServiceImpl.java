@@ -1031,7 +1031,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * {@inheritDoc}
    */
   @Override
-  public List<Version> getVersions(String workspace, String docId) throws Exception {
+  public List<Version> getVersions(String workspace, String docId, Locale locale) throws Exception {
     List<Version> versionList = new ArrayList<Version>() ;
     String rootVersionNum;
     VersionNode rootVersion_;
@@ -1057,8 +1057,8 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       version.setDisplayName(versionNode.getDisplayName());
       version.setFullName(getUser(versionNode.getAuthor()).getDisplayName());
       version.setVersionLabels(versionNode.getVersionLabels());
-      version.setcreatedTime(getRelativeTimeLabel(Locale.getDefault(), versionNode.getCreatedTime().getTimeInMillis()));
-      version.setRelaviveCreatedTime(getAbsolutePostedTime( versionNode.getCreatedTime().getTimeInMillis()));
+      version.setcreatedTime(getRelativeTimeLabel(locale, versionNode.getCreatedTime().getTimeInMillis()));
+      version.setRelaviveCreatedTime(getAbsolutePostedTime(locale, versionNode.getCreatedTime().getTimeInMillis()));
       versionList.add(version);
     }
     return versionList;
@@ -1090,13 +1090,13 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /**
    * Gets absolute posted time.
    *
+   *  @param locale
    * @param postedTime
    * @return String
    */
 
-  public String getAbsolutePostedTime(Long postedTime) {
-    Locale currentLocale = Locale.getDefault();
-    DateTimeFormatter df = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT, FormatStyle.SHORT).withLocale(currentLocale).withZone(ZoneId.systemDefault());
+  public String getAbsolutePostedTime(Locale locale, Long postedTime) {
+    DateTimeFormatter df = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT, FormatStyle.SHORT).withLocale(locale).withZone(ZoneId.systemDefault());
     return df.format(Instant.ofEpochMilli(postedTime));
   }
 
