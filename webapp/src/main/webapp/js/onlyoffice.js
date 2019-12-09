@@ -879,10 +879,10 @@
         /**
          * Alert save changes.
          */
-      this.alertSave = function() {
-         $("#alert-saved").show(50);
-         setTimeout(function(){ $("#alert-saved").hide(50); }, 3000);
-      };
+    this.alertSave = function() {
+      $("#alert-saved").show(50);
+      setTimeout(function(){ $("#alert-saved").hide(50); }, 3000);
+     };
 
     this.updateBar = function(changer, comment) {
       var $bar = $("#editor-top-bar");
@@ -898,52 +898,38 @@
     };
 
     this.initBar = function(config) {
-      var drive = config.editorPage.displayPath.split(':')[0].replace(/\  /g , ' ');
-      var $bar = $("#editor-top-bar");
-
-      if(drive === "Personal Documents") {
+       var drive = config.editorPage.displayPath.split(':')[0].replace(/\  /g , ' ');
+       var $bar = $("#editor-top-bar");
+      if(drive.startsWith('spaces/')){
+       var folders = config.editorPage.displayPath.split(':')[1].split('/');
+       var title = folders.pop();
+       var spaceName = drive.split('spaces/')[1];
+       var NewDrivePath = spaceName.replace(/\ /g, '_').toLowerCase();
+       var pathDocument = config.path.split(NewDrivePath+'/')[1].split("/" + title)[0];
+       var pathDocumentWithIcon = pathDocument.replace(/\//g , function() {
+       return "<i class='uiIconArrowRight'></i>" } );
+       var $avatarSpaceElem = $bar.find(".space-avatar");
+       $avatarSpaceElem.attr("src", "/rest/v1/social/spaces/" + NewDrivePath +"/avatar");
+       var $tooltipSpaceElem = $bar.find(".space-avatar");
+       $tooltipSpaceElem.attr("data-original-title", spaceName);
+      }
+      else {
        var folders = config.editorPage.displayPath.split(':')[1].split('/');
        var title = folders.pop();
        var path = config.editorPage.displayPath.split('/')[0];
        var pathDocumentWithIcon = path.replace(/\//g , function() {
-        return "<i class='uiIconArrowRight'></i>" } );
-
-      var $avatarSpaceElem = $bar.find(".space-avatar");
-      $avatarSpaceElem.attr("src", "/rest/v1/social/users/"+ config.editorConfig.user.id +"/avatar");
-
-      var $tooltipSpaceElem = $bar.find(".space-avatar");
-      $tooltipSpaceElem.append("data-original-title",  config.editorConfig.user.name);
-      $tooltipSpaceElem.attr("data-original-title", config.editorConfig.user.name);
+       return "<i class='uiIconArrowRight'></i>" } );
+       var $avatarSpaceElem = $bar.find(".space-avatar");
+       $avatarSpaceElem.attr("src", "/rest/v1/social/users/"+ config.editorConfig.user.id +"/avatar");
+       var $tooltipSpaceElem = $bar.find(".space-avatar");
+       $tooltipSpaceElem.attr("data-original-title", config.editorConfig.user.name);
       }
-      else  if(drive === "" || drive.match('///')) {
-             var folders = config.editorPage.displayPath.split(':')[1].split('/');
-             var title = folders.pop();
-             var path = config.path.split('/'+title)[0];
-             var pathDocumentWithIcon = path.replace(/\//g , function() {
-              return "<i class='uiIconArrowRight'></i>" } );
-
-            var $avatarSpaceElem = $bar.find(".space-avatar");
-            $avatarSpaceElem.attr("src", "/rest/v1/social/users/"+ config.editorConfig.user.id +"/avatar");
-
-            var $tooltipSpaceElem = $bar.find(".space-avatar");
-            $tooltipSpaceElem.append("data-original-title",  config.editorConfig.user.name);
-            $tooltipSpaceElem.attr("data-original-title", config.editorConfig.user.name);
-      }
-      else {
-      var folders = config.editorPage.displayPath.split(':')[1].split('/');
-      var title = folders.pop();
-      var NewDrivePath = drive.replace(/\ /g, '_').toLowerCase();
-      var pathDocument = config.path.split(NewDrivePath+'/')[1].split("/" + title)[0];
-      var pathDocumentWithIcon = pathDocument.replace(/\//g , function() {
-        return "<i class='uiIconArrowRight'></i>" } );
-
-      var $avatarSpaceElem = $bar.find(".space-avatar");
-      $avatarSpaceElem.attr("src", "/rest/v1/social/spaces/" + NewDrivePath +"/avatar");
-
-      var $tooltipSpaceElem = $bar.find(".space-avatar");
-      $tooltipSpaceElem.attr("data-original-title", drive);
-      }
-
+      $(".header").append(message('SaveVersionLavel'));
+      $("#save-btn").append(message('SaveButton'));
+      $("#see-more-btn").append(message('SeeMoreButton'));
+      $("#open-drawer-btn").attr("data-original-title", message('OpenDrawerBtn'));
+      $(".closebtn").attr("data-original-title", message('CloseButton'));
+      $(".textareaStyle").attr("placeholder", message('PlaceHolderTextarea'));
       if(config.editorPage.renameAllowed){
         $bar.find("a[rel=tooltip]").tooltip();
       } else {
@@ -957,13 +943,14 @@
 
       var $titleElem = $bar.find(".document-title a");
       $titleElem.append("<span class='editable-title'>" + title + " " + "<i class='uiIconPencilEdit'></i> </span>");
+      $titleElem.attr("data-original-title", message('TitleTooltip'));
 
       var $lastEditedElem = $bar.find(".last-edited");
       $lastEditedElem.append("Last edited by " + config.editorPage.lastModifier + " " + config.editorPage.lastModified);
 
       $("#editor-top-bar").ready(function () {
          $.ajax({
-        url: "/rest/private/onlyoffice/editor/versions/"+config.workspace+"/"+config.docId,
+        url: "/portal/rest/onlyoffice/editor/versions/"+config.workspace+"/"+config.docId,
         success: function (data) {
        var html = "";
        var limit = data.length < 3 ? data.length : 3;
@@ -972,7 +959,7 @@
          "<tr class='tableHead'>" +
          "<th class='displayAvatarFullName'>" +
          "<div class='avatarCircle'>" +
-         "<img  class='avatar-circle' src='/rest/v1/social/users/" + data[i].author + "/avatar'>"+
+         "<img  class='avatar-circle' src='/rest/v1/social/users/" + data[i].author + "/avatar'>" +
          "</div>" +
          "<div class='user-edit'>" +
          data[i].fullName +

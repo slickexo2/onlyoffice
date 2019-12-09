@@ -365,7 +365,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /** List of verions */
   protected List<VersionNode> listVersion = new ArrayList<VersionNode>() ;
 
-  public static final String COMMONS_RESOUCE_BUNDLE_NAME = "locale.commons.Commons";
+  public static final String COMMONS_RESOUCE_BUNDLE_NAME = "locale.navigation.portal.intranet";
 
   /**
    * Cloud Drive service with storage in JCR and with managed features.
@@ -2834,14 +2834,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           String spacePrettyName = driveName.substring(driveName.lastIndexOf(".") + 1);
           Space space = spaceService.getSpaceByPrettyName(spacePrettyName);
           if (space != null) {
-            drive = space.getDisplayName();
+            drive = "spaces/" + space.getDisplayName();
           } else {
             LOG.warn("Cannot find space by pretty name {}", spacePrettyName);
             drive = spacePrettyName;
           }
           // Group's documents
         } else if (driveName.startsWith(".platform.")) {
-          String groupId = driveName.replaceAll(".", "/");
+          String groupId = driveName.replaceAll("\\.", "/");
           Group group = organization.getGroupHandler().findGroupById(groupId);
           if (group != null) {
             drive = group.getLabel();
@@ -2849,6 +2849,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             LOG.warn("Cannot find group by id {}", groupId);
             drive = groupId;
           }
+        }
+        else {
+          drive = driveData.getName();
         }
       }
       return drive + ":" + parentFolder + "/" + title;

@@ -6,7 +6,7 @@
   <%-- div class="exitWindow onlyofficeEditorClose" style="display: none;">
     <a class="uiIconClose uiIconWhite" title="Close"></a>
   </div --%>
-   <div id="open-drawer-btn" class="btn-primary open-drawer-btn" rel="tooltip" data-placement="bottom" data-original-title="Add new version">
+   <div id="open-drawer-btn" class="btn-primary open-drawer-btn" rel="tooltip" data-placement="bottom" data-original-title="">
           <a class="icon-place">
             <i class="uiIconSave"></i>
           </a>
@@ -15,8 +15,7 @@
    <div id="editor-top-bar" class="drawer">
 
      <div class="header">
-           <span>Save version</span>
-           <a class="closebtn">×</a>
+           <a class="closebtn" rel="tooltip" data-placement="bottom" data-original-title="">×</a>
      </div>
 
      <div class="content">
@@ -27,21 +26,19 @@
          <div class="displayPathTitle">
            <div class="document-path"></div>
            <div class="document-title">
-             <a data-placement="bottom" rel="tooltip" data-original-title="Click to edit"> </a>
+             <a data-placement="bottom" rel="tooltip" data-original-title=""> </a>
            </div>
          </div>
        </div>
        <div class="comment">
         <div id="alert-saved" class="alert alert-success" style="display: none;"><i class="uiIconSuccess"></i>Changes saved</div>
-         <textarea class="textareaStyle" type="text" id="comment-box" placeholder="Write your summary of changes ..."></textarea>
+         <textarea class="textareaStyle" type="text" id="comment-box" placeholder=""></textarea>
        </div>
-       <div id="save-btn" type="button" class="btn btn-primary">
-          <a class="nameStyle">Save</a>
-       </div>
+       <div id="save-btn" type="button" class="btn btn-primary"></div>
        <div id="versions"></div>
      </div>
      <div class="footer">
-        <button id="see-more-btn" type="button" class="btn lineStyle">See more</button>
+        <button id="see-more-btn" type="button" class="btn lineStyle"></button>
      </div>
    </div>
 

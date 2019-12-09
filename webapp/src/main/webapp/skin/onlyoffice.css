@@ -346,6 +346,11 @@ i.uiIconArrowRight {
     font-size: 13px;
 }
 
+.header {
+    font-size: 19px;
+    font-weight: bold;
+}
+
 a.nameStyle {
     color: white;
     font-size: 13px;

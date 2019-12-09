@@ -5,6 +5,13 @@
     <EditButtonTitle>Modifier en ligne</EditButtonTitle>
     <UpdateBannerTitle>Le document a été mis à jour.</UpdateBannerTitle>
     <ReloadButtonTitle>Recharger</ReloadButtonTitle>
+    <SaveVersionLavel> Enregistrer la version</SaveVersionLavel>
+    <SeeMoreButton>Voir plus</SeeMoreButton>
+    <CloseButton>Fermer</CloseButton>
+    <SaveButton>Enregistrer</SaveButton>
+    <PlaceHolderTextarea>Écrivez votre résumé des changements ...</PlaceHolderTextarea>
+    <TitleTooltip>Cliquez pour modifier</TitleTooltip>
+    <OpenDrawerBtn>Ajouter une nouvelle version</OpenDrawerBtn>
 
     <ErrorTitle>Erreur</ErrorTitle>
     <InfoTitle>Information</InfoTitle>
