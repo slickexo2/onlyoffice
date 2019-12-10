@@ -25,10 +25,6 @@ import java.io.OutputStream;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,11 +42,8 @@ import org.apache.commons.io.input.AutoCloseInputStream;
 import org.apache.commons.lang.StringUtils;
 import org.exoplatform.commons.utils.ActivityTypeUtils;
 import org.exoplatform.commons.utils.CommonsUtils;
-import org.exoplatform.commons.utils.DateUtils;
 import org.exoplatform.commons.utils.MimeTypeResolver;
 import org.exoplatform.ecm.jcr.model.VersionNode;
-import org.exoplatform.services.resources.ResourceBundleService;
-import org.exoplatform.webui.core.lifecycle.WebuiBindingContext;
 import org.json.JSONObject;
 import org.picocontainer.Startable;
 
@@ -1031,7 +1024,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    * {@inheritDoc}
    */
   @Override
-  public List<Version> getVersions(String workspace, String docId, Locale locale) throws Exception {
+  public List<Version> getVersions(String workspace, String docId) throws Exception {
     List<Version> versionList = new ArrayList<Version>() ;
     String rootVersionNum;
     VersionNode rootVersion_;
@@ -1057,8 +1050,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       version.setDisplayName(versionNode.getDisplayName());
       version.setFullName(getUser(versionNode.getAuthor()).getDisplayName());
       version.setVersionLabels(versionNode.getVersionLabels());
-      version.setcreatedTime(getRelativeTimeLabel(locale, versionNode.getCreatedTime().getTimeInMillis()));
-      version.setRelaviveCreatedTime(getAbsolutePostedTime(locale, versionNode.getCreatedTime().getTimeInMillis()));
+      version.setCreatedTime(versionNode.getCreatedTime().getTimeInMillis());
       versionList.add(version);
     }
     return versionList;
@@ -1085,72 +1077,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       }
     });
     return listVersion;
-  }
-
-  /**
-   * Gets absolute posted time.
-   *
-   *  @param locale
-   * @param postedTime
-   * @return String
-   */
-
-  public String getAbsolutePostedTime(Locale locale, Long postedTime) {
-    DateTimeFormatter df = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT, FormatStyle.SHORT).withLocale(locale).withZone(ZoneId.systemDefault());
-    return df.format(Instant.ofEpochMilli(postedTime));
-  }
-
-  /**
-   * Gets prettyTime by timestamp.
-   *
-   * @param locale
-   * @param postedTime
-   * @return String
-   */
-
-  public static String getRelativeTimeLabel(Locale locale, long postedTime) {
-    ResourceBundleService rs = CommonsUtils.getService(ResourceBundleService.class);
-    ResourceBundle resourceBundle = rs.getResourceBundle(COMMONS_RESOUCE_BUNDLE_NAME, locale);
-    long time = (System.currentTimeMillis() - postedTime) / 1000;
-    long value;
-    if (time < 60) {
-      return resourceBundle.getString("TimeConvert.label.Less_Than_A_Minute");
-    } else {
-      if (time < 120) {
-        return resourceBundle.getString("TimeConvert.label.About_A_Minute");
-      } else {
-        if (time < 3600) {
-          value = Math.round(time / 60);
-          return resourceBundle.getString("TimeConvert.label.About_?_Minutes").replaceFirst("\\{0\\}", String.valueOf(value));
-        } else {
-          if (time < 7200) {
-            return resourceBundle.getString("TimeConvert.label.About_An_Hour");
-          } else {
-            if (time < 86400) {
-              value = Math.round(time / 3600);
-              return resourceBundle.getString("TimeConvert.label.About_?_Hours").replaceFirst("\\{0\\}", String.valueOf(value));
-            } else {
-              if (time < 172800) {
-                return resourceBundle.getString("TimeConvert.label.About_A_Day");
-              } else {
-                if (time < 2592000) {
-                  value = Math.round(time / 86400);
-                  return resourceBundle.getString("TimeConvert.label.About_?_Days").replaceFirst("\\{0\\}", String.valueOf(value));
-                } else {
-                  if (time < 5184000) {
-                    return resourceBundle.getString("TimeConvert.label.About_A_Month");
-                  } else {
-                    value = Math.round(time / 2592000);
-                    return resourceBundle.getString("TimeConvert.label.About_?_Months")
-                                         .replaceFirst("\\{0\\}", String.valueOf(value));
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
   }
 
   /**

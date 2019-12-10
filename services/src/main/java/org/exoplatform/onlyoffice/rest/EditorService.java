@@ -515,7 +515,7 @@ public class EditorService implements ResourceContainer {
          return Response.status(Response.Status.BAD_REQUEST).build();
       }
 
-      List<Version> versions = editors.getVersions(workspace, key, request.getLocale());
+      List<Version> versions = editors.getVersions(workspace, key);
       if (versions != null) {
          return Response.ok(versions).build();
       } else {

@@ -4,15 +4,13 @@ public class Version {
 
   private String   author              = "";
 
-  private String   createdTime         = "";
+  private long     createdTime;
 
   private String   displayName         = "";
 
   private String   fullName            = "";
 
   private String   name                = "";
-
-  private String   relaviveCreatedTime = "";
 
   private String[] versionLabels       = new String[0];
 
@@ -24,12 +22,12 @@ public class Version {
     this.author = author;
   }
 
-  public String getCreatedTime() {
+  public long getCreatedTime() {
     return this.createdTime;
   }
 
-  public String getRelaviveCreatedTime() {
-    return this.relaviveCreatedTime;
+  public void setCreatedTime(long createdTime) {
+    this.createdTime = createdTime;
   }
 
   public String getDisplayName() {
@@ -62,14 +60,6 @@ public class Version {
 
   public void setVersionLabels(String[] versionLabels) {
     this.versionLabels = versionLabels;
-  }
-
-  public void setcreatedTime(String createdTime) {
-    this.createdTime = createdTime;
-  }
-
-  public void setRelaviveCreatedTime(String relaviveCreatedTime) {
-    this.relaviveCreatedTime = relaviveCreatedTime;
   }
 
 }

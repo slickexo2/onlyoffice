@@ -232,7 +232,7 @@ public interface OnlyofficeEditorService {
    * @return list of versions for node
    * @throws Exception the exception
    */
-  List<Version> getVersions(String workspace, String docId, Locale locale) throws Exception ;
+  List<Version> getVersions(String workspace, String docId) throws Exception ;
 
   /**
    * Checks if the node isn't locked and can be edited by the current user.

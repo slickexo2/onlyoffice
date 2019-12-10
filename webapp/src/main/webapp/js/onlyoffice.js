@@ -965,39 +965,38 @@
 
       $("#editor-top-bar").ready(function () {
          $.ajax({
-        url: "/portal/rest/onlyoffice/editor/versions/"+config.workspace+"/"+config.docId,
+        url: "/portal/rest/onlyoffice/editor/versions/" + config.workspace + "/" + config.docId,
         success: function (data) {
-       var html = "";
-       var limit = data.length < 3 ? data.length : 3;
-       for (var i=0; i < limit; i++) {
-         html += "<table class='tableContentStyle'>" +
-         "<tr class='tableHead'>" +
-         "<th class='displayAvatarFullName'>" +
-         "<div class='avatarCircle'>" +
-         "<img  class='avatar-circle' src='/rest/v1/social/users/" + data[i].author + "/avatar'>" +
-         "</div>" +
-         "<div class='user-edit'>" +
-         data[i].fullName +
-         "</div>" +
-         "<div class='created-date' rel='tooltip' data-placement='bottom'  data-original-title='"+data[i].relaviveCreatedTime+"'>" +
-         data[i].createdTime +
-         "</div>" +
-         "</th>" +
-         "</tr>" +
-         "<tr class='tableContent'>" +
-         "<th>" +
-         "<div class='editors-comment-versions b' rel='tooltip' data-placement='bottom'  data-original-title='"+data[i].versionLabels+"'>" +
-         data[i].versionLabels +
-         "</div>" +
-         "</th>" +
-         "</tr>" +
-         "</table>";
-         $("#versions").html(html);
-         $(".editors-comment-versions").tooltip();
-         $(".created-date").tooltip();
-        };
+         var html = "";
+         var limit = data.length < 3 ? data.length : 3;
+         for (var i=0; i < limit; i++) {
+           html += "<table class='tableContentStyle'>" +
+             "<tr class='tableHead'>" +
+             "<th class='displayAvatarFullName'>" +
+             "<div class='avatarCircle'>" +
+             "<img  class='avatar-circle' src='/rest/v1/social/users/" + data[i].author + "/avatar'>" +
+             "</div>" +
+             "<div class='user-edit'>" + data[i].fullName + "</div>" +
+             "<div class='created-date' rel='tooltip' data-placement='bottom'  data-original-title='" + UI.getAbsoluteTime(data[i].createdTime) + "'>" +
+             UI.getRelativeTime(data[i].createdTime) +
+             "</div>" +
+             "</th>" +
+             "</tr>" +
+             "<tr class='tableContent'>" +
+             "<th>" +
+             "<div class='editors-comment-versions b' rel='tooltip' data-placement='bottom'  data-original-title='" + data[i].versionLabels + "'>" +
+             data[i].versionLabels +
+             "</div>" +
+             "</th>" +
+             "</tr>" +
+             "</table>";
 
-        },
+            $("#versions").html(html);
+            $(".editors-comment-versions").tooltip();
+            $(".created-date").tooltip();
+          };
+
+         },
          error: function (xhr, ajaxOptions, thrownError) {
             alert(xhr.responseText + "\n" + xhr.status + "\n" + thrownError);
          }
@@ -1012,6 +1011,52 @@
         }, 300)
       });
       return $bar;
+    };
+
+    this.getAbsoluteTime = function(time) {
+      return new Date(time).toLocaleString();
+    };
+
+    this.getRelativeTime = function(time) {
+      const relativeTime = (new Date().getTime() - time) / 1000;
+      let value;
+      if (relativeTime < 60) {
+        return message('TimeConvert.Less_Than_A_Minute');
+      } else {
+        if (relativeTime < 120) {
+          return message('TimeConvert.About_A_Minute');
+        } else {
+          if (relativeTime < 3600) {
+            value = Math.round(relativeTime / 60);
+            return message('TimeConvert.About_X_Minutes').replace('{0}', value);
+          } else {
+            if (relativeTime < 7200) {
+              return message('TimeConvert.About_An_Hour');
+            } else {
+              if (relativeTime < 86400) {
+                value = Math.round(relativeTime / 3600);
+                return message('TimeConvert.About_X_Hours').replace('{0}', value);
+              } else {
+                if (relativeTime < 172800) {
+                  return message('TimeConvert.About_A_Day');
+                } else {
+                  if (relativeTime < 2592000) {
+                    value = Math.round(relativeTime / 86400);
+                    return message('TimeConvert.About_X_Days').replace('{0}', value);
+                  } else {
+                    if (relativeTime < 5184000) {
+                      return message('TimeConvert.About_A_Month');
+                    } else {
+                      value = Math.round(relativeTime / 2592000);
+                      return message('TimeConvert.label.About_X_Months').replace('{0}', value);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     };
 
     this.isEditorLoaded = function() {
