@@ -31,7 +31,8 @@
          </div>
        </div>
        <div class="comment">
-        <div id="alert-saved" class="alert alert-success" style="display: none;"><i class="uiIconSuccess"></i>Changes saved</div>
+        <div id="alert-saved" class="alert alert-success" style="display: none;"><i class="uiIconSuccess"></i></div>
+        <div id="alert-error" class="alert alert-error" style="display: none;"><i class="uiIconError"></i></div>
          <textarea class="textareaStyle" type="text" id="comment-box" placeholder=""></textarea>
        </div>
        <div id="save-btn" type="button" class="btn btn-primary"></div>

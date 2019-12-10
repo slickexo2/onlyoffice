@@ -12,6 +12,8 @@
     <PlaceHolderTextarea>Écrivez votre résumé des changements ...</PlaceHolderTextarea>
     <TitleTooltip>Cliquez pour modifier</TitleTooltip>
     <OpenDrawerBtn>Ajouter une nouvelle version</OpenDrawerBtn>
+    <AlertSave>Changements sauvegardés</AlertSave>
+    <ErrorSave>Pas plus de 500 caractères</ErrorSave>
 
     <ErrorTitle>Erreur</ErrorTitle>
     <InfoTitle>Information</InfoTitle>

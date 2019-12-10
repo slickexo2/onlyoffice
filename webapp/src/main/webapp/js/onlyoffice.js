@@ -386,6 +386,10 @@
       }
       $bar.find("#save-btn").on("click", function() {
         var comment = $bar.find("#comment-box").val();
+        if (comment.length > 510){
+           UI.errorSave();
+           return;
+        }
         publishDocument(currentConfig.docId, {
           "type" : DOCUMENT_USERSAVED,
           "userId" : currentUserId,
@@ -884,6 +888,15 @@
       setTimeout(function(){ $("#alert-saved").hide(50); }, 3000);
      };
 
+        /**
+         * Alert you have exceeded the limit of comment changes.
+         */
+    this.errorSave = function() {
+      $("#alert-error").show(50);
+      setTimeout(function(){ $("#alert-error").hide(50); }, 3000);
+     };
+
+
     this.updateBar = function(changer, comment) {
       var $bar = $("#editor-top-bar");
       var $commentBox = $bar.find(".editors-comment");
@@ -925,6 +938,8 @@
        $tooltipSpaceElem.attr("data-original-title", config.editorConfig.user.name);
       }
       $(".header").append(message('SaveVersionLavel'));
+      $("#alert-saved").append(message('AlertSave'));
+      $("#alert-error").append(message('ErrorSave'));
       $("#save-btn").append(message('SaveButton'));
       $("#see-more-btn").append(message('SeeMoreButton'));
       $("#open-drawer-btn").attr("data-original-title", message('OpenDrawerBtn'));

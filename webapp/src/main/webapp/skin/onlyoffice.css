@@ -416,6 +416,12 @@ a.nameStyle {
     margin: 35px 105px 5px!important;
 }
 
+.alert.alert-error {
+    width: 150px!important;
+    position: absolute!important;
+    margin: 35px 105px 5px!important;
+}
+
 .displayAvatarFullName {
     display: flex;
 }
