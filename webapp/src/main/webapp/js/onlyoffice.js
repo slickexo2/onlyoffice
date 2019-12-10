@@ -1014,7 +1014,7 @@
     };
 
     this.getAbsoluteTime = function(time) {
-      return new Date(time).toLocaleString();
+      return new Date(time).toLocaleString(eXo.env.portal.language);
     };
 
     this.getRelativeTime = function(time) {
