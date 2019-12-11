@@ -490,20 +490,20 @@ public class EditorService implements ResourceContainer {
   }
 
   /**
-   * Editing document state in local storage.
+   * Getting versions of the given document
    *
-   * @param uriInfo - request info
-   * @param key the key
+   * @param uriInfo the request info
    * @param request the request
-   * @param workspace the workspace
+   * @param workspace the document workspace
+   * @param key the document key
    * @return {@link Response}
    */
   @GET
   @Path("/versions/{workspace}/{key}")
   @RolesAllowed("users")
   @Produces(MediaType.APPLICATION_JSON)
-  public Response getVersionList(@Context UriInfo uriInfo, @Context HttpServletRequest request, @PathParam("workspace") String workspace,
-                                 @PathParam("key") String key) {
+  public Response getVersions(@Context UriInfo uriInfo, @Context HttpServletRequest request, @PathParam("workspace") String workspace,
+                              @PathParam("key") String key) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("> get versions of doc " + key + " in workspace " + workspace);
     }

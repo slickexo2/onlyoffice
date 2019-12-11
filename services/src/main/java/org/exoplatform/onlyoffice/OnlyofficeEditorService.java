@@ -26,7 +26,6 @@ import org.exoplatform.onlyoffice.Config.Editor;
 import org.exoplatform.services.organization.User;
 
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Created by The eXo Platform SAS.

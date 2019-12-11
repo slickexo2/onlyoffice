@@ -6,7 +6,6 @@ import org.exoplatform.social.common.RealtimeListAccess;
 import org.exoplatform.social.core.ActivityProcessor;
 import org.exoplatform.social.core.BaseActivityProcessorPlugin;
 import org.exoplatform.social.core.activity.ActivityListenerPlugin;
-import org.exoplatform.social.core.activity.model.ActivityFile;
 import org.exoplatform.social.core.activity.model.ExoSocialActivity;
 import org.exoplatform.social.core.identity.model.Identity;
 import org.exoplatform.social.core.manager.ActivityManager;
@@ -238,14 +237,6 @@ public class ActivityManagerMock implements ActivityManager {
   @Override
   public boolean isActivityEditable(ExoSocialActivity activity, org.exoplatform.services.security.Identity viewer) {
     return false;
-  }
-
-  @Override public List<String> getActivityFilesIds(ExoSocialActivity activity) {
-    return null;
-  }
-
-  @Override public ActivityFile getActivityFileById(long fileId) throws Exception {
-    return null;
   }
 
 }

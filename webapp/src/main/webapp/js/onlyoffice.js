@@ -546,14 +546,14 @@
               var oldTitle = currentConfig.document.title;
               currentConfig.document.title = state.title;
               window.document.title = window.document.title.replace(oldTitle, state.title);
-              $("#editor-top-bar").find(".editable-title").text(state.title).append("<i class='uiIconPencilEdit'></i>");
+              $("#editor-drawer").find(".editable-title").text(state.title).append("<i class='uiIconPencilEdit'></i>");
               var documentOldTitle = config.explorerUrl.substr(config.explorerUrl.lastIndexOf("/"));
-              var Url = config.explorerUrl.split(documentOldTitle)[0];
-              var documentNewPath = Url +"/"+state.title;
+              var url = config.explorerUrl.split(documentOldTitle)[0];
+              var documentNewPath = url + "/" + state.title;
               config.explorerUrl = documentNewPath;
               $("#see-more-btn").prop("disabled", true);
               setTimeout(function() {
-              $("#see-more-btn").prop("disabled", false);
+                $("#see-more-btn").prop("disabled", false);
               }, 5000);
             }
           });
@@ -599,17 +599,14 @@
         UI.showError(message("ErrorTitle"), message("ErrorCreateConfig"));
       });
 
-     //Function to open drawer
       $("#open-drawer-btn").on('click', function() {
          return UI.openDrawer();
       });
 
-      //Function to close drawer
-      $("#editor-top-bar .header .closebtn").on('click', function() {
+      $("#editor-drawer .header .closebtn").on('click', function() {
          return UI.closeDrawer();
        });
 
-      //Function for see more button
        $("#see-more-btn").on('click', function() {
          window.open(config.explorerUrl);
        });
@@ -891,21 +888,25 @@
       $body.addClass("onlyofficeEditorBody");
     };
 
-        /**
-         * Alert save changes.
-         */
+    /**
+     * Alert save changes.
+     */
     this.alertSave = function() {
-      $("#alert-saved").show(50);
-      setTimeout(function(){ $("#alert-saved").hide(50); }, 3000);
-     };
+      $("#alert-saved").show();
+      setTimeout(function() {
+        $("#alert-saved").hide();
+      }, 3000);
+    };
 
-        /**
-         * Alert you have exceeded the limit of comment changes.
-         */
+    /**
+     * Alert you have exceeded the limit of comment changes.
+     */
     this.errorSave = function() {
-      $("#alert-error").show(50);
-      setTimeout(function(){ $("#alert-error").hide(50); }, 3000);
-     };
+      $("#alert-error").show();
+      setTimeout(function() {
+        $("#alert-error").hide();
+      }, 3000);
+    };
 
 
     this.updateBar = function(changer, comment, workspace, docId) {
@@ -914,31 +915,30 @@
 
     this.initBar = function(config) {
       var drive = config.editorPage.displayPath.split(':')[0].replace(/\  /g , ' ');
-      var $bar = $("#editor-top-bar");
-      if(drive.startsWith('spaces/')){
+      var $bar = $("#editor-drawer");
+      if(drive.startsWith('spaces/')) {
         var folders = config.editorPage.displayPath.split(':')[1].split('/');
         var title = folders.pop();
         var spaceName = drive.split('spaces/')[1];
-        var NewDrivePath = spaceName.replace(/\ /g, '_').toLowerCase();
-        var pathDocument = config.path.split(NewDrivePath+'/')[1].split("/" + title)[0];
+        var newDrivePath = spaceName.replace(/\ /g, '_').toLowerCase();
+        var pathDocument = config.path.split(newDrivePath + '/')[1].split("/" + title)[0];
         var pathDocumentWithIcon = pathDocument.replace(/\//g , function() {
           return "<i class='uiIconArrowRight'></i>";
         });
-        var $avatarSpaceElem = $bar.find(".space-avatar");
-        $avatarSpaceElem.attr("src", "/rest/v1/social/spaces/" + NewDrivePath +"/avatar");
-        var $tooltipSpaceElem = $bar.find(".space-avatar");
+        var $avatarSpaceElem = $bar.find(".spaceAvatar img");
+        $avatarSpaceElem.attr("src", "/rest/v1/social/spaces/" + newDrivePath + "/avatar");
+        var $tooltipSpaceElem = $bar.find(".spaceAvatar img");
         $tooltipSpaceElem.attr("data-original-title", spaceName);
-      }
-      else {
+      } else {
         var folders = config.editorPage.displayPath.split(':')[1].split('/');
         var title = folders.pop();
         var path = config.editorPage.displayPath.split('/')[0];
         var pathDocumentWithIcon = path.replace(/\//g , function() {
           return "<i class='uiIconArrowRight'></i>";
         } );
-        var $avatarSpaceElem = $bar.find(".space-avatar");
-        $avatarSpaceElem.attr("src", "/rest/v1/social/users/"+ config.editorConfig.user.id +"/avatar");
-        var $tooltipSpaceElem = $bar.find(".space-avatar");
+        var $avatarSpaceElem = $bar.find(".spaceAvatar img");
+        $avatarSpaceElem.attr("src", "/rest/v1/social/users/" + config.editorConfig.user.id + "/avatar");
+        var $tooltipSpaceElem = $bar.find(".spaceAvatar img");
         $tooltipSpaceElem.attr("data-original-title", config.editorConfig.user.name);
       }
       $(".header").append(message('SaveVersionLavel'));
@@ -948,7 +948,7 @@
       $("#see-more-btn").append(message('SeeMoreButton'));
       $("#open-drawer-btn").attr("data-original-title", message('OpenDrawerBtn'));
       $(".closebtn").attr("data-original-title", message('CloseButton'));
-      $(".textareaStyle").attr("placeholder", message('PlaceHolderTextarea'));
+      $(".versionSummaryField").attr("placeholder", message('PlaceHolderTextarea'));
       if(config.editorPage.renameAllowed){
         $bar.find("a[rel=tooltip]").tooltip();
       } else {
@@ -964,7 +964,7 @@
       $titleElem.append("<span class='editable-title'>" + title + " " + "<i class='uiIconPencilEdit'></i> </span>");
       $titleElem.attr("data-original-title", message('TitleTooltip'));
 
-      $("#editor-top-bar").ready(function () {
+      $("#editor-drawer").ready(function () {
         UI.loadVersions(config.workspace, config.docId);
       });
 
@@ -989,7 +989,7 @@
              "<tr class='tableHead'>" +
              "<th class='displayAvatarFullName'>" +
              "<div class='avatarCircle'>" +
-             "<img  class='avatar-circle' src='/rest/v1/social/users/" + data[i].author + "/avatar'>" +
+             "<img src='/rest/v1/social/users/" + data[i].author + "/avatar'>" +
              "</div>" +
              "<div class='user-edit'>" + data[i].fullName + "</div>" +
              "<div class='created-date' rel='tooltip' data-placement='bottom'  data-original-title='" + UI.getAbsoluteTime(data[i].createdTime) + "'>" +
@@ -1067,21 +1067,19 @@
       return $("#UIPage .onlyofficeContainer").length > 0;
     };
 
-     /**
-         *Function to open drawer
+    /**
+     * Open the drawer
      */
     this.openDrawer = function() {
-     $("#editor-top-bar").addClass("open");
+     $("#editor-drawer").addClass("open");
     };
 
-     /**
-         *Function to close drawer
+    /**
+     * Close the drawer
      */
     this.closeDrawer = function() {
-         setTimeout(function() {
-           $("#editor-top-bar").removeClass("open");
-            }, 100);
-     };
+      $("#editor-drawer").removeClass("open");
+    };
 
     /**
      * Use it when user close the page, to notify in the channel doc is closed.
@@ -1103,7 +1101,7 @@
           // create and start editor (this also will re-use an existing editor config from the server)
           docEditor = new DocsAPI.DocEditor("onlyoffice", localConfig);
           // show editor
-          $container.find("#editor-top-bar").show();
+          $container.find("#editor-drawer").show();
           $container.find(".editor").show();
           $container.find(".loading").hide();
         } else {
