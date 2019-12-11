@@ -386,7 +386,7 @@
       }
       $bar.find("#save-btn").on("click", function() {
         var comment = $bar.find("#comment-box").val();
-        if (comment.length > 510){
+        if (comment.length > 511){
            UI.errorSave();
            return;
         }
@@ -547,6 +547,14 @@
               currentConfig.document.title = state.title;
               window.document.title = window.document.title.replace(oldTitle, state.title);
               $("#editor-top-bar").find(".editable-title").text(state.title).append("<i class='uiIconPencilEdit'></i>");
+              var documentOldTitle = config.explorerUrl.substr(config.explorerUrl.lastIndexOf("/"));
+              var Url = config.explorerUrl.split(documentOldTitle)[0];
+              var documentNewPath = Url +"/"+state.title;
+              config.explorerUrl = documentNewPath;
+              $("#see-more-btn").prop("disabled", true);
+              setTimeout(function() {
+              $("#see-more-btn").prop("disabled", false);
+              }, 5000);
             }
           });
 
@@ -568,6 +576,7 @@
               publishDocument(currentConfig.docId, {
                 "type" : EDITOR_CLOSED,
                 "userId" : currentUserId,
+                "explorerUrl" : config.explorerUrl,
                 "key" : currentConfig.document.key,
                 "changes" : currentUserChanges
               });
@@ -600,6 +609,7 @@
          return UI.closeDrawer();
        });
 
+      //Function for see more button
        $("#see-more-btn").on('click', function() {
          window.open(config.explorerUrl);
        });

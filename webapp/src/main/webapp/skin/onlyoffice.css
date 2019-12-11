@@ -384,6 +384,7 @@ a.nameStyle {
 }
 
 .space-avatar {
+    cursor: pointer;
     max-width: 35px;
     border-radius: 5px;
 }
@@ -409,15 +410,15 @@ a.nameStyle {
 }
 
 .alert.alert-success {
-    width: 150px!important;
+    width: 220px!important;
     position: absolute!important;
-    margin: 35px 105px 5px!important;
+    margin: 35px 85px 5px!important;
 }
 
 .alert.alert-error {
-    width: 150px!important;
+    width: 220px!important;
     position: absolute!important;
-    margin: 35px 105px 5px!important;
+    margin: 35px 85px 5px!important;
 }
 
 .displayAvatarFullName {
