@@ -396,6 +396,8 @@
           "clientId" : clientId,
           "key" : currentConfig.document.key,
           "comment" : comment
+        }).done(function() {
+          UI.alertSave();
         });
         $bar.find("#comment-box").val('');
         // Reset all timers after forcesaving
@@ -409,7 +411,6 @@
           clearTimeout(changesTimer);
           changesTimer = null;
         }
-        UI.alertSave();
       });
 
       $bar.find(".close-btn").on("click", function() {
@@ -532,7 +533,7 @@
               UI.showError(message("ErrorTitle"), message("ErrorFileDeletedEditor"));
             }
             if(state.type === DOCUMENT_SAVED) {
-              UI.updateBar(state.displayName, state.comment);
+              UI.updateBar(state.displayName, state.comment, currentConfig.workspace, currentConfig.docId);
               if(state.comment){
                 currentConfig.editorPage.comment = state.comment;
               }
@@ -897,45 +898,38 @@
      };
 
 
-    this.updateBar = function(changer, comment) {
-      var $bar = $("#editor-top-bar");
-      var $commentBox = $bar.find(".editors-comment");
-      $commentBox.attr("data-original-title", comment);
-      $commentBox.empty();
-      if(comment){
-        $commentBox.append(comment);
-      }
-      var $lastEditedElem = $bar.find(".last-edited");
-      $lastEditedElem.empty();
-      $lastEditedElem.append("Last edited by " + changer + " " + formatDate(new Date()));
+    this.updateBar = function(changer, comment, workspace, docId) {
+      UI.loadVersions(workspace, docId);
     };
 
     this.initBar = function(config) {
-       var drive = config.editorPage.displayPath.split(':')[0].replace(/\  /g , ' ');
-       var $bar = $("#editor-top-bar");
+      var drive = config.editorPage.displayPath.split(':')[0].replace(/\  /g , ' ');
+      var $bar = $("#editor-top-bar");
       if(drive.startsWith('spaces/')){
-       var folders = config.editorPage.displayPath.split(':')[1].split('/');
-       var title = folders.pop();
-       var spaceName = drive.split('spaces/')[1];
-       var NewDrivePath = spaceName.replace(/\ /g, '_').toLowerCase();
-       var pathDocument = config.path.split(NewDrivePath+'/')[1].split("/" + title)[0];
-       var pathDocumentWithIcon = pathDocument.replace(/\//g , function() {
-       return "<i class='uiIconArrowRight'></i>" } );
-       var $avatarSpaceElem = $bar.find(".space-avatar");
-       $avatarSpaceElem.attr("src", "/rest/v1/social/spaces/" + NewDrivePath +"/avatar");
-       var $tooltipSpaceElem = $bar.find(".space-avatar");
-       $tooltipSpaceElem.attr("data-original-title", spaceName);
+        var folders = config.editorPage.displayPath.split(':')[1].split('/');
+        var title = folders.pop();
+        var spaceName = drive.split('spaces/')[1];
+        var NewDrivePath = spaceName.replace(/\ /g, '_').toLowerCase();
+        var pathDocument = config.path.split(NewDrivePath+'/')[1].split("/" + title)[0];
+        var pathDocumentWithIcon = pathDocument.replace(/\//g , function() {
+          return "<i class='uiIconArrowRight'></i>";
+        });
+        var $avatarSpaceElem = $bar.find(".space-avatar");
+        $avatarSpaceElem.attr("src", "/rest/v1/social/spaces/" + NewDrivePath +"/avatar");
+        var $tooltipSpaceElem = $bar.find(".space-avatar");
+        $tooltipSpaceElem.attr("data-original-title", spaceName);
       }
       else {
-       var folders = config.editorPage.displayPath.split(':')[1].split('/');
-       var title = folders.pop();
-       var path = config.editorPage.displayPath.split('/')[0];
-       var pathDocumentWithIcon = path.replace(/\//g , function() {
-       return "<i class='uiIconArrowRight'></i>" } );
-       var $avatarSpaceElem = $bar.find(".space-avatar");
-       $avatarSpaceElem.attr("src", "/rest/v1/social/users/"+ config.editorConfig.user.id +"/avatar");
-       var $tooltipSpaceElem = $bar.find(".space-avatar");
-       $tooltipSpaceElem.attr("data-original-title", config.editorConfig.user.name);
+        var folders = config.editorPage.displayPath.split(':')[1].split('/');
+        var title = folders.pop();
+        var path = config.editorPage.displayPath.split('/')[0];
+        var pathDocumentWithIcon = path.replace(/\//g , function() {
+          return "<i class='uiIconArrowRight'></i>";
+        } );
+        var $avatarSpaceElem = $bar.find(".space-avatar");
+        $avatarSpaceElem.attr("src", "/rest/v1/social/users/"+ config.editorConfig.user.id +"/avatar");
+        var $tooltipSpaceElem = $bar.find(".space-avatar");
+        $tooltipSpaceElem.attr("data-original-title", config.editorConfig.user.name);
       }
       $(".header").append(message('SaveVersionLavel'));
       $("#alert-saved").append(message('AlertSave'));
@@ -960,12 +954,23 @@
       $titleElem.append("<span class='editable-title'>" + title + " " + "<i class='uiIconPencilEdit'></i> </span>");
       $titleElem.attr("data-original-title", message('TitleTooltip'));
 
-      var $lastEditedElem = $bar.find(".last-edited");
-      $lastEditedElem.append("Last edited by " + config.editorPage.lastModifier + " " + config.editorPage.lastModified);
-
       $("#editor-top-bar").ready(function () {
-         $.ajax({
-        url: "/portal/rest/onlyoffice/editor/versions/" + config.workspace + "/" + config.docId,
+        UI.loadVersions(config.workspace, config.docId);
+      });
+
+      var $saveBtn = $bar.find("#save-btn .uiIconSave");
+      $saveBtn.on("click", function(){
+        $saveBtn.css("color", "gray");
+        setTimeout(function(){
+          $saveBtn.css("color", "")
+        }, 300)
+      });
+      return $bar;
+    };
+
+    this.loadVersions = function(workspace, docId) {
+      $.ajax({
+        url: "/portal/rest/onlyoffice/editor/versions/" + workspace + "/" + docId,
         success: function (data) {
          var html = "";
          var limit = data.length < 3 ? data.length : 3;
@@ -990,27 +995,16 @@
              "</th>" +
              "</tr>" +
              "</table>";
+         };
 
-            $("#versions").html(html);
-            $(".editors-comment-versions").tooltip();
-            $(".created-date").tooltip();
-          };
-
-         },
-         error: function (xhr, ajaxOptions, thrownError) {
-            alert(xhr.responseText + "\n" + xhr.status + "\n" + thrownError);
-         }
-        });
+         $("#versions").html(html);
+         $(".editors-comment-versions").tooltip();
+         $(".created-date").tooltip();
+       },
+       error: function (xhr, ajaxOptions, thrownError) {
+         alert(xhr.responseText + "\n" + xhr.status + "\n" + thrownError);
+       }
       });
-
-      var $saveBtn = $bar.find("#save-btn .uiIconSave");
-      $saveBtn.on("click", function(){
-        $saveBtn.css("color", "gray");
-        setTimeout(function(){
-          $saveBtn.css("color", "")
-        }, 300)
-      });
-      return $bar;
     };
 
     this.getAbsoluteTime = function(time) {
@@ -1098,7 +1092,6 @@
 
           // create and start editor (this also will re-use an existing editor config from the server)
           docEditor = new DocsAPI.DocEditor("onlyoffice", localConfig);
-          console.log('>>>> ' + JSON.stringify(localConfig))
           // show editor
           $container.find("#editor-top-bar").show();
           $container.find(".editor").show();

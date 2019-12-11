@@ -65,8 +65,6 @@
   cursor: pointer;
 }
 
-.onlyofficeEditorBody #editor-top-bar .last-edited,
-.onlyofficeEditorBody #editor-top-bar .editors-comment,
 .onlyofficeEditorBody #editor-top-bar .comment {
   padding-left: 0px;
 }

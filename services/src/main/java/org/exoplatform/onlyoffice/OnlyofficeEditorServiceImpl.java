@@ -355,9 +355,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
   /** The document type plugin. */
   protected DocumentTypePlugin                                    documentTypePlugin;
 
-  /** List of verions */
-  protected List<VersionNode> listVersion = new ArrayList<VersionNode>() ;
-
   public static final String COMMONS_RESOUCE_BUNDLE_NAME = "locale.navigation.portal.intranet";
 
   /**
@@ -1025,25 +1022,14 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
    */
   @Override
   public List<Version> getVersions(String workspace, String docId) throws Exception {
-    List<Version> versionList = new ArrayList<Version>() ;
-    String rootVersionNum;
-    VersionNode rootVersion_;
-    listVersion.clear();
+    List<Version> versions = new ArrayList<>() ;
+
     Node currentNode = getDocumentById(workspace, docId);
-    rootVersion_ = new VersionNode(currentNode, currentNode.getSession());
+    VersionNode rootVersion = new VersionNode(currentNode, currentNode.getSession());
 
-    listVersion = getNodeVersions(rootVersion_.getChildren());
-    VersionNode currentNodeTuple =
-        new VersionNode(currentNode, currentNode.getSession());
-    if(!listVersion.isEmpty()) {
-      int lastVersionNum = Integer.parseInt(listVersion.get(0).getName());
-      rootVersionNum = String.valueOf(++lastVersionNum);
-    } else {
-      rootVersionNum = "1";
-    }
-    listVersion.add(0, currentNodeTuple);
+    List<VersionNode> versionNodes = getNodeVersions(rootVersion.getChildren(), new ArrayList<>());
 
-    for (VersionNode versionNode : listVersion){
+    for (VersionNode versionNode : versionNodes){
       Version version = new Version();
       version.setAuthor(versionNode.getAuthor());
       version.setName(versionNode.getName());
@@ -1051,32 +1037,32 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       version.setFullName(getUser(versionNode.getAuthor()).getDisplayName());
       version.setVersionLabels(versionNode.getVersionLabels());
       version.setCreatedTime(versionNode.getCreatedTime().getTimeInMillis());
-      versionList.add(version);
+      versions.add(version);
     }
-    return versionList;
+
+    return versions;
   }
 
-  private List<VersionNode> getNodeVersions(List<VersionNode> children) throws Exception {
-    List<VersionNode> child = new ArrayList<VersionNode>() ;
+  private List<VersionNode> getNodeVersions(List<VersionNode> children, List<VersionNode> versionNodes) throws Exception {
     for(int i = 0; i < children.size(); i ++){
-      listVersion.add(children.get(i));
-      child = children.get(i).getChildren() ;
-      if(!child.isEmpty()) getNodeVersions(child) ;
+      versionNodes.add(children.get(i));
+      List<VersionNode> child = children.get(i).getChildren() ;
+      if(!child.isEmpty()) {
+        getNodeVersions(child, versionNodes) ;
+      }
     }
-    listVersion.sort(new Comparator<VersionNode>() {
-      @Override
-      public int compare(VersionNode v1, VersionNode v2) {
-        try {
-          if (Integer.parseInt(v1.getName()) < Integer.parseInt(v2.getName()))
-            return 1;
-          else
-            return 0;
-        }catch (Exception e) {
+    versionNodes.sort((v1, v2) -> {
+      try {
+        if (Integer.parseInt(v1.getName()) < Integer.parseInt(v2.getName())) {
+          return 1;
+        } else {
           return 0;
         }
+      } catch (Exception e) {
+        return 0;
       }
     });
-    return listVersion;
+    return versionNodes;
   }
 
   /**
