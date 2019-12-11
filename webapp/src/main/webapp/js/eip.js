@@ -77,7 +77,7 @@ $.fn.editable = function (options) {
 
         setParent(parent, wrapper, width);
         const input = parent.querySelector('.eip-editable');
-        input.style.width = width;
+        input.style.width = '250px';
         input.style.margin = "0px";
         input.style.paddint = "1px";
         setInput(input);
