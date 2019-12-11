@@ -358,6 +358,7 @@ a.nameStyle {
     height: 100px!important;
     width: 100%!important;
     margin-top: 10px!important;
+    resizable: none;
 }
 
 .avatarCircle{
