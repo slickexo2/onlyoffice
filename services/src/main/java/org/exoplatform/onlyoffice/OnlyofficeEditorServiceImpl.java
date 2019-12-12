@@ -1025,19 +1025,21 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     List<Version> versions = new ArrayList<>() ;
 
     Node currentNode = getDocumentById(workspace, docId);
-    VersionNode rootVersion = new VersionNode(currentNode, currentNode.getSession());
+    if(currentNode != null) {
+      VersionNode rootVersion = new VersionNode(currentNode, currentNode.getSession());
 
-    List<VersionNode> versionNodes = getNodeVersions(rootVersion.getChildren(), new ArrayList<>());
+      List<VersionNode> versionNodes = getNodeVersions(rootVersion.getChildren(), new ArrayList<>());
 
-    for (VersionNode versionNode : versionNodes){
-      Version version = new Version();
-      version.setAuthor(versionNode.getAuthor());
-      version.setName(versionNode.getName());
-      version.setDisplayName(versionNode.getDisplayName());
-      version.setFullName(getUser(versionNode.getAuthor()).getDisplayName());
-      version.setVersionLabels(versionNode.getVersionLabels());
-      version.setCreatedTime(versionNode.getCreatedTime().getTimeInMillis());
-      versions.add(version);
+      for (VersionNode versionNode : versionNodes) {
+        Version version = new Version();
+        version.setAuthor(versionNode.getAuthor());
+        version.setName(versionNode.getName());
+        version.setDisplayName(versionNode.getDisplayName());
+        version.setFullName(getUser(versionNode.getAuthor()).getDisplayName());
+        version.setVersionLabels(versionNode.getVersionLabels());
+        version.setCreatedTime(versionNode.getCreatedTime().getTimeInMillis());
+        versions.add(version);
+      }
     }
 
     return versions;
