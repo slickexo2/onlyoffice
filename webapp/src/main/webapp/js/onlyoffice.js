@@ -386,7 +386,7 @@
       }
       $bar.find("#save-btn").on("click", function() {
         var comment = $bar.find("#comment-box").val();
-        if (comment.length > 511){
+        if (comment.length > 510){
            UI.errorSave();
            return;
         }
