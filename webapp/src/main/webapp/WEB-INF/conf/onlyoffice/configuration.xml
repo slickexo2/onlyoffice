@@ -49,26 +49,22 @@
     <type>org.exoplatform.onlyoffice.cometd.CometdOnlyofficeService</type>
   </component>
 
-  <component>
-    <type>org.exoplatform.onlyoffice.documents.NewDocumentService</type>
-  </component>
-  
-  <!-- NewDocumentTypePlugin for NewDocumentService-->
+  <!-- NewDocumentTemplatePlugin for NewDocumentService-->
   <external-component-plugins>
-    <target-component>org.exoplatform.onlyoffice.documents.NewDocumentService</target-component>
+    <target-component>org.exoplatform.ecm.webui.component.explorer.documents.NewDocumentService</target-component>
     <component-plugin>
-      <name>documentTypePlugin</name>
-      <set-method>addTypePlugin</set-method>
-      <type>org.exoplatform.onlyoffice.documents.NewDocumentTypePlugin</type>
-      <description>The document type plugin contains a list of mimetypes</description>
+      <name>onlyofficePlugin</name>
+      <set-method>addDocumentTemplatePlugin</set-method>
+      <type>org.exoplatform.onlyoffice.documents.OnlyOfficeNewDocumentTemplatePlugin</type>
+      <description>The document templates plugin contains a list of avaliable templates</description>
       <init-params>
         <object-param>
-          <name>document-types-configuration</name>
-          <object type="org.exoplatform.onlyoffice.documents.NewDocumentService$NewDocumentTypesConfig">
-            <field name="types">
+          <name>document-templates-configuration</name>
+          <object type="org.exoplatform.ecm.webui.component.explorer.documents.NewDocumentService$DocumentTemplatesConfig">
+            <field name="templates">
               <collection type="java.util.ArrayList">
                 <value>
-                  <object type="org.exoplatform.onlyoffice.documents.NewDocumentType">
+                  <object type="org.exoplatform.ecm.webui.component.explorer.documents.DocumentTemplate">
                     <field name="path">
                       <string>classpath:files/template.docx</string>
                     </field>
@@ -81,7 +77,7 @@
                   </object>
                 </value>
                 <value>
-                  <object type="org.exoplatform.onlyoffice.documents.NewDocumentType">
+                  <object type="org.exoplatform.ecm.webui.component.explorer.documents.DocumentTemplate">
                     <field name="path">
                       <string>classpath:files/template.xlsx</string>
                     </field>
@@ -94,7 +90,7 @@
                   </object>
                 </value>
                 <value>
-                  <object type="org.exoplatform.onlyoffice.documents.NewDocumentType">
+                  <object type="org.exoplatform.ecm.webui.component.explorer.documents.DocumentTemplate">
                     <field name="path">
                       <string>classpath:files/template.pptx</string>
                     </field>
@@ -113,6 +109,18 @@
       </init-params>
     </component-plugin>
   </external-component-plugins>
+  
+    <!-- NewDocumentEditorPlugin for NewDocumentService-->
+  <external-component-plugins>
+    <target-component>org.exoplatform.ecm.webui.component.explorer.documents.NewDocumentService</target-component>
+    <component-plugin>
+      <name>onlyofficePlugin</name>
+      <set-method>addDocumentEditorPlugin</set-method>
+      <type>org.exoplatform.onlyoffice.documents.OnlyOfficeNewDocumentEditorPlugin</type>
+      <description>The document editor plugin contains a list of avaliable templates</description>
+    </component-plugin>
+  </external-component-plugins>
+  
 
   <!-- DocumentTypePlugin for OnlyOfficeEditorService -->
   <external-component-plugins>
@@ -295,23 +303,6 @@
             </field>
           </object>
         </object-param>
-        <object-param>
-          <name>NewDocument</name>
-          <object type="org.exoplatform.webui.ext.UIExtension">
-            <field name="type">
-              <string>org.exoplatform.ecm.dms.UIActionBar</string>
-            </field>
-            <field name="name">
-              <string>NewDocument</string>
-            </field>
-            <field name="rank">
-              <int>10</int>
-            </field>
-            <field name="component">
-              <string>org.exoplatform.onlyoffice.webui.explorer.NewDocumentManageComponent</string>
-            </field>
-          </object>
-        </object-param>
       </init-params>
     </component-plugin>
   </external-component-plugins>
@@ -322,7 +313,7 @@
     <component-plugin>
       <name>customize.view.plugin</name>
       <set-method>setManageViewPlugin</set-method>
-      <type>org.exoplatform.onlyoffice.webui.CustomizeViewPlugin</type>
+      <type>org.exoplatform.ecm.webui.component.explorer.documents.CustomizeViewPlugin</type>
       <description>this plugin customize user view</description>
       <init-params>
         <object-param>
@@ -342,18 +333,6 @@
                     <field name="buttons">
                       <string>
                         onlyofficeOpen
-                      </string>
-                    </field>
-                  </object>
-                </value>
-                <value>
-                  <object type="org.exoplatform.services.cms.views.ViewConfig$Tab">
-                    <field name="tabName">
-                      <string>Admin</string>
-                    </field>
-                    <field name="buttons">
-                      <string>
-                        newDocument
                       </string>
                     </field>
                   </object>
@@ -383,18 +362,6 @@
                     </field>
                   </object>
                 </value>
-                <value>
-                  <object type="org.exoplatform.services.cms.views.ViewConfig$Tab">
-                    <field name="tabName">
-                      <string>Icons</string>
-                    </field>
-                    <field name="buttons">
-                      <string>
-                        newDocument
-                      </string>
-                    </field>
-                  </object>
-                </value>
               </collection>
             </field>
           </object>
@@ -416,18 +383,6 @@
                     <field name="buttons">
                       <string>
                         onlyofficeOpen
-                      </string>
-                    </field>
-                  </object>
-                </value>
-                <value>
-                  <object type="org.exoplatform.services.cms.views.ViewConfig$Tab">
-                    <field name="tabName">
-                      <string>List</string>
-                    </field>
-                    <field name="buttons">
-                      <string>
-                        newDocument
                       </string>
                     </field>
                   </object>
@@ -457,18 +412,6 @@
                     </field>
                   </object>
                 </value>
-                <value>
-                  <object type="org.exoplatform.services.cms.views.ViewConfig$Tab">
-                    <field name="tabName">
-                      <string>Authoring</string>
-                    </field>
-                    <field name="buttons">
-                      <string>
-                        newDocument
-                      </string>
-                    </field>
-                  </object>
-                </value>
               </collection>
             </field>
           </object>
@@ -490,18 +433,6 @@
                     <field name="buttons"><!-- ; onlyofficeClose -->
                       <string>
                         onlyofficeOpen
-                      </string>
-                    </field>
-                  </object>
-                </value>
-                <value>
-                  <object type="org.exoplatform.services.cms.views.ViewConfig$Tab">
-                    <field name="tabName">
-                      <string>Collaboration</string>
-                    </field>
-                    <field name="buttons">
-                      <string>
-                        newDocument
                       </string>
                     </field>
                   </object>

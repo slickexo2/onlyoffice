@@ -123,11 +123,11 @@
     var yyyy = date.getFullYear();
     var dd = date.getDate();
     var mm = (date.getMonth() + 1);
-    
+
     if (dd < 10)
-        dd = "0" + dd;
+      dd = "0" + dd;
     if (mm < 10)
-        mm = "0" + mm;
+      mm = "0" + mm;
 
     var cur_day = dd + "." + mm + "." + yyyy;
 
@@ -135,10 +135,10 @@
     var minutes = date.getMinutes()
 
     if (hours < 10)
-        hours = "0" + hours;
+      hours = "0" + hours;
 
     if (minutes < 10)
-        minutes = "0" + minutes;
+      minutes = "0" + minutes;
 
     return cur_day + " " + hours + ":" + minutes;
   }
@@ -363,7 +363,7 @@
     var initBar = function(config) {
       var $bar = UI.initBar(config);
       // Edit title
-      if(config.editorPage.renameAllowed) {
+      if (config.editorPage.renameAllowed) {
         $bar.find(".editable-title").editable({
           onChange : function(event) {
             var newTitle = event.newValue;
@@ -467,7 +467,7 @@
 
         log("ONLYOFFICE editor config: " + JSON.stringify(config));
 
-        if((typeof DocsAPI === "undefined") || (typeof DocsAPI.DocEditor === "undefined")) {
+        if ((typeof DocsAPI === "undefined") || (typeof DocsAPI.DocEditor === "undefined")) {
           log("ERROR: ONLYOFFICE script load timeout: " + config.documentserverJsUrl);
           process.reject("ONLYOFFICE script load timeout. Ensure Document Server is running and accessible.");
         } else {
@@ -525,16 +525,16 @@
             if (state.type === DOCUMENT_DELETED) {
               UI.showError(message("ErrorTitle"), message("ErrorFileDeletedEditor"));
             }
-            if(state.type === DOCUMENT_SAVED) {
+            if (state.type === DOCUMENT_SAVED) {
               UI.updateBar(state.displayName, state.comment);
-              if(state.comment){
+              if (state.comment) {
                 currentConfig.editorPage.comment = state.comment;
               }
-              if(state.userId === currentUserId){
+              if (state.userId === currentUserId) {
                 currentUserChanges = false;
               }
             }
-            if(state.type === DOCUMENT_TITLE_UPDATED) {
+            if (state.type === DOCUMENT_TITLE_UPDATED) {
               console.log("Title updated");
               var oldTitle = currentConfig.document.title;
               currentConfig.document.title = state.title;
@@ -656,12 +656,10 @@
     };
 
     /**
-     * Sets the onClick listener for Create Document button (used in creating a new document)
+     * Opens new editor window
      */
     this.initNewDocument = function() {
-      $("#UINewDocumentForm .newDocumentButton").on('click', function() {
-        editorWindow = window.open();
-      });
+      editorWindow = window.open();
     };
 
     /**
@@ -858,13 +856,13 @@
       }
       $body.addClass("onlyofficeEditorBody");
     };
-    
+
     this.updateBar = function(changer, comment) {
       var $bar = $("#editor-top-bar");
       var $commentBox = $bar.find(".editors-comment");
       $commentBox.attr("data-original-title", comment);
       $commentBox.empty();
-      if(comment){
+      if (comment) {
         $commentBox.append(comment);
       }
       var $lastEditedElem = $bar.find(".last-edited");
@@ -877,33 +875,33 @@
       var folders = config.editorPage.displayPath.split(':')[1].split('/');
       var title = folders.pop();
       var $bar = $("#editor-top-bar");
-      if(config.editorPage.renameAllowed){
+      if (config.editorPage.renameAllowed) {
         $bar.find("a[rel=tooltip]").tooltip();
       } else {
         $bar.find("a[rel=tooltip]").not(".document-title a[rel=tooltip]").tooltip();
       }
-      if(!config.activity) {
+      if (!config.activity) {
         $bar.find("#comment-box").prop("disabled", true);
       }
       var $pathElem = $bar.find(".document-path");
       $pathElem.append(drive + " : ");
       $pathElem.append("<span class='folder'>" + folders[0] + "</span>" + " <i class='uiIconArrowRight'></i> ");
-     
+
       var $titleElem = $bar.find(".document-title a");
       $titleElem.append("<span class='editable-title'>" + title + "</span>");
 
       var $lastEditedElem = $bar.find(".last-edited");
       $lastEditedElem.append("Last edited by " + config.editorPage.lastModifier + " " + config.editorPage.lastModified);
-      if(config.editorPage.comment){
+      if (config.editorPage.comment) {
         var $comment = $bar.find(".editors-comment");
         $comment.append(config.editorPage.comment);
         $comment.attr("data-original-title", config.editorPage.comment);
       }
 
       var $saveBtn = $bar.find("#save-btn .uiIconSave");
-      $saveBtn.on("click", function(){
+      $saveBtn.on("click", function() {
         $saveBtn.css("color", "gray");
-        setTimeout(function(){
+        setTimeout(function() {
           $saveBtn.css("color", "")
         }, 300)
       });

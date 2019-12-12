@@ -31,7 +31,6 @@ import org.exoplatform.onlyoffice.OnlyofficeEditorService;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 import org.exoplatform.web.application.Parameter;
-import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.config.annotation.ComponentConfig;
 import org.exoplatform.webui.config.annotation.EventConfig;
 import org.exoplatform.webui.core.lifecycle.UIContainerLifecycle;
@@ -96,12 +95,9 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
       if (uiExplorer != null) {
         OnlyofficeEditorService editorService = this.getApplicationComponent(OnlyofficeEditorService.class);
         Node node = uiExplorer.getCurrentNode();
+        // TODO can the node be null here?
         node = editorService.getDocument(node.getSession().getWorkspace().getName(), node.getPath());
-        
-        Node symlink = (Node) uiExplorer.getSession().getItem(uiExplorer.getCurrentPath());
-        if(symlink.isNodeType("exo:symlink")) {
-          editorService.addFilePreferences(node, WebuiRequestContext.getCurrentInstance().getRemoteUser(), symlink.getPath());
-        }
+        // TODO the node can be null here
         String editorLink = editorService.getEditorLink(node);
         if (editorLink != null && !editorLink.isEmpty()) {
           return "javascript:window.open('" + editorLink(editorLink, "documents") + "');";
@@ -120,4 +116,5 @@ public class OnlyofficeOpenManageComponent extends UIAbstractManagerComponent {
   public Class<? extends UIAbstractManager> getUIAbstractManagerClass() {
     return null;
   }
+
 }
