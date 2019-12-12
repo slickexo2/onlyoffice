@@ -42,6 +42,7 @@
       <button id="see-more-btn" type="button" class="btn lineStyle"></button>
     </div>
   </div>
+  <div id="drawer-backdrop"></div>
 
   <div class="editor" style="display: none;">
     <div id="onlyoffice"></div>

@@ -1072,6 +1072,7 @@
      */
     this.openDrawer = function() {
      $("#editor-drawer").addClass("open");
+     $("#drawer-backdrop").addClass("drawer-backdrop");
     };
 
     /**
@@ -1079,6 +1080,7 @@
      */
     this.closeDrawer = function() {
       $("#editor-drawer").removeClass("open");
+      $("#drawer-backdrop").removeClass("drawer-backdrop");
     };
 
     /**
