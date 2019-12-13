@@ -3,7 +3,6 @@
   <!-- For menu caption in Action Bar -->
   <UIActionBar>
     <tooltip>
-      <NewDocument>Nouveau document</NewDocument>
       <OnlyofficeOpen>Modifier en ligne</OnlyofficeOpen>
     </tooltip>
   </UIActionBar>
@@ -13,12 +12,6 @@
       <onlyofficeOpen>Modifier en ligne</onlyofficeOpen>
     </label>
   </UITabForm>
-  <!-- For new document popup window -->
-  <UIPopupWindow>
-    <title>
-      <UINewDocumentForm>Nouveau document</UINewDocumentForm>
-    </title>
-  </UIPopupWindow>
    <!-- For new document form -->
   <UINewDocumentForm>
     <action>

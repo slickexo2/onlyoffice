@@ -15,6 +15,9 @@ import org.exoplatform.ecm.webui.component.explorer.documents.NewDocumentTemplat
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
+/**
+ * The Class OnlyOfficeNewDocumentTemplatePlugin.
+ */
 public class OnlyOfficeNewDocumentTemplatePlugin extends BaseComponentPlugin implements NewDocumentTemplatePlugin {
 
   /** The Constant LOG. */
@@ -27,6 +30,9 @@ public class OnlyOfficeNewDocumentTemplatePlugin extends BaseComponentPlugin imp
   /** The document types. */
   protected List<DocumentTemplate> templates                        = Collections.emptyList();
 
+  /** The provider. */
+  protected String                 provider;
+
   /**
    * Instantiates a new new document type plugin.
    *
@@ -37,23 +43,44 @@ public class OnlyOfficeNewDocumentTemplatePlugin extends BaseComponentPlugin imp
     if (typesParam != null) {
       Object obj = typesParam.getObject();
       if (obj != null && NewDocumentService.DocumentTemplatesConfig.class.isAssignableFrom(obj.getClass())) {
-        this.templates = NewDocumentService.DocumentTemplatesConfig.class.cast(obj).getTemplates();
+        NewDocumentService.DocumentTemplatesConfig config = NewDocumentService.DocumentTemplatesConfig.class.cast(obj);
+        this.templates = config.getTemplates();
+        this.provider = config.getProvider();
       } else {
         LOG.error("The document templates are not set");
       }
     }
   }
 
+  /**
+   * Gets the provider.
+   *
+   * @return the provider
+   */
   @Override
   public String getProvider() {
-    return name;
+    return provider;
   }
 
+  /**
+   * Gets the templates.
+   *
+   * @return the templates
+   */
   @Override
   public List<DocumentTemplate> getTemplates() {
     return templates;
   }
 
+  /**
+   * Creates the document.
+   *
+   * @param parent the parent
+   * @param title the title
+   * @param template the template
+   * @return the node
+   * @throws Exception the exception
+   */
   @Override
   public Node createDocument(Node parent, String title, DocumentTemplate template) throws Exception {
     LOG.debug("Creating new document {} from template {}", title, template);
