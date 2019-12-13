@@ -169,6 +169,12 @@ a.icon-place {
   font-size: 13px;
 }
 
+.onlyofficeEditorBody #open-drawer-btn .uiIconSaveDrawer:before {
+  content: "\e79e";
+  margin: 0px -5px;
+  font-size: 23px;
+}
+
 .onlyofficeEditorBody #editor-drawer .header {
   font-size: 19px;
   font-weight: bold;
@@ -381,7 +387,6 @@ a.icon-place {
 
 .picon.picon-process-stop {
   background-image: url("icons/oxygen/16/actions/process-stop.png")
-<<<<<<< HEAD
 }
 
 .documentRefreshBanner {
@@ -433,9 +438,4 @@ a.icon-place {
   position: absolute;
   top: 0;
   margin-left: 10px;
-}
-.uiIconSaveDrawer:before {
-  content: "\e79e";
-  margin: 0px -5px;
-  font-size: 23px;
 }
