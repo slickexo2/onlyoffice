@@ -29,11 +29,11 @@
   </parent>
   <artifactId>exo-onlyoffice-editor-services</artifactId>
   <packaging>jar</packaging>
-  <name>eXo OnlyOffice Editor :: Extension Services</name>
+  <name>eXo Add-on:: OnlyOffice Editor Services</name>
   <description>eXo OnlyOffice Editor services of portal extension</description>
 
   <properties>
-    <exo.test.coverage.ratio>0.42</exo.test.coverage.ratio>
+    <exo.test.coverage.ratio>0.39</exo.test.coverage.ratio>
   </properties>
 
   <dependencies>
