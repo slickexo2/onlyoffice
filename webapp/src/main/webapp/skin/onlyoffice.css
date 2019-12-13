@@ -433,7 +433,7 @@ a.icon-place {
   top: 0;
   margin-left: 10px;
 }
-.uiIconSave:before {
+.uiIconSaveDrawer:before {
   content: "\e79e";
   margin: 0px -5px;
   font-size: 23px;
