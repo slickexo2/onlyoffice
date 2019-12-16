@@ -59,7 +59,7 @@ public class OnlyOfficeNewDocumentEditorPlugin extends BaseComponentPlugin imple
    */
   @Override
   public void onDocumentCreated(Node node) throws Exception {
-    LOG.info("On Document Created Invoked {}", node);
+    LOG.debug("Opening editor page for document {}", node);
     OnlyofficeEditorService editorService = ExoContainerContext.getCurrentContainer()
                                                                .getComponentInstanceOfType(OnlyofficeEditorService.class);
     String link = editorService.getEditorLink(node);
