@@ -14,7 +14,7 @@
   </UITabForm>
   
   <!-- For new document form -->
-  <UINewMSDocumentForm>
+  <UINewDocumentForm>
     <label>
       <option>
         <MicrosoftOfficeDocument>Microsoft Word Document (*.docx)</MicrosoftOfficeDocument>
@@ -22,7 +22,7 @@
         <MicrosoftOfficePresentation>Microsoft PowerPoint Presentation (*.pptx)</MicrosoftOfficePresentation>
       </option>
     </label>
-  </UINewMSDocumentForm>  
+  </UINewDocumentForm>  
   
   <!-- Messages -->
   <OnlyofficeEditor>
