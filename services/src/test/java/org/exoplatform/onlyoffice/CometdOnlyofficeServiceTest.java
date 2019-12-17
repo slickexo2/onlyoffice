@@ -39,7 +39,7 @@ public class CometdOnlyofficeServiceTest extends AbstractResourceTest {
    * Test get cometd server path
    */
   @Test
-  public void testgetCometdServerPath() {
+  public void testGetCometdServerPath() {
     // When
     String cometdServerPath = cometdOnlyofficeService.getCometdServerPath();
 
@@ -57,6 +57,7 @@ public class CometdOnlyofficeServiceTest extends AbstractResourceTest {
 
     // Then
     assertNotNull(userToken);
+    assertSame(userToken, cometdOnlyofficeService.getUserToken("john"));
   }
 
 }
