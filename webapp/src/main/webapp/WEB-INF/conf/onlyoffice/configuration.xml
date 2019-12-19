@@ -60,7 +60,7 @@
       <init-params>
         <object-param>
           <name>document-templates-configuration</name>
-          <object type="org.exoplatform.ecm.webui.component.explorer.documents.NewDocumentService$DocumentTemplatesConfig">
+          <object type="org.exoplatform.ecm.webui.component.explorer.documents.NewDocumentServiceImpl$DocumentTemplatesConfig">
             <field name="templates">
               <collection type="java.util.ArrayList">
                 <value>

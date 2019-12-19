@@ -8,6 +8,7 @@ import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.component.BaseComponentPlugin;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
+import org.exoplatform.ecm.webui.component.explorer.documents.DocumentTemplate;
 import org.exoplatform.ecm.webui.component.explorer.documents.NewDocumentEditorPlugin;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
 import org.exoplatform.services.log.ExoLogger;
@@ -58,11 +59,13 @@ public class OnlyOfficeNewDocumentEditorPlugin extends BaseComponentPlugin imple
    * @throws Exception the exception
    */
   @Override
-  public void onDocumentCreated(Node node) throws Exception {
-    LOG.debug("Opening editor page for document {}", node);
+  public void onDocumentCreated(String workspace, String path) throws Exception {
+    
     OnlyofficeEditorService editorService = ExoContainerContext.getCurrentContainer()
                                                                .getComponentInstanceOfType(OnlyofficeEditorService.class);
-    String link = editorService.getEditorLink(node);
+    Node document = editorService.getDocument(workspace, path);
+    LOG.debug("Opening editor page for document {}", document);
+    String link = editorService.getEditorLink(document);
     if (link != null) {
       link = "'" + editorLink(link, "documents") + "'";
     } else {
@@ -79,7 +82,7 @@ public class OnlyOfficeNewDocumentEditorPlugin extends BaseComponentPlugin imple
    * On document create.
    */
   @Override
-  public void beforeDocumentCreate() {
+  public void beforeDocumentCreate(DocumentTemplate template, String parentPath, String title) {
     WebuiRequestContext requestContext = WebuiRequestContext.getCurrentInstance();
     JavascriptManager js = requestContext.getJavascriptManager();
     js.require("SHARED/onlyoffice", "onlyoffice").addScripts("onlyoffice.initNewDocument();");

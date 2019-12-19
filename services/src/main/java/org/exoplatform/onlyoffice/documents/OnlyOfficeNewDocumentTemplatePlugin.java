@@ -10,7 +10,7 @@ import org.exoplatform.container.component.BaseComponentPlugin;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ObjectParameter;
 import org.exoplatform.ecm.webui.component.explorer.documents.DocumentTemplate;
-import org.exoplatform.ecm.webui.component.explorer.documents.NewDocumentService;
+import org.exoplatform.ecm.webui.component.explorer.documents.NewDocumentServiceImpl;
 import org.exoplatform.ecm.webui.component.explorer.documents.NewDocumentTemplatePlugin;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -42,8 +42,8 @@ public class OnlyOfficeNewDocumentTemplatePlugin extends BaseComponentPlugin imp
     ObjectParameter typesParam = initParams.getObjectParam(DOCUMENT_TEMPLATES_CONFIGURATION);
     if (typesParam != null) {
       Object obj = typesParam.getObject();
-      if (obj != null && NewDocumentService.DocumentTemplatesConfig.class.isAssignableFrom(obj.getClass())) {
-        NewDocumentService.DocumentTemplatesConfig config = NewDocumentService.DocumentTemplatesConfig.class.cast(obj);
+      if (obj != null && NewDocumentServiceImpl.DocumentTemplatesConfig.class.isAssignableFrom(obj.getClass())) {
+        NewDocumentServiceImpl.DocumentTemplatesConfig config = NewDocumentServiceImpl.DocumentTemplatesConfig.class.cast(obj);
         this.templates = config.getTemplates();
         this.provider = config.getProvider();
       } else {
@@ -84,8 +84,8 @@ public class OnlyOfficeNewDocumentTemplatePlugin extends BaseComponentPlugin imp
   @Override
   public Node createDocument(Node parent, String title, DocumentTemplate template) throws Exception {
     LOG.debug("Creating new document {} from template {}", title, template);
-    NewDocumentService documentService = ExoContainerContext.getCurrentContainer()
-                                                            .getComponentInstanceOfType(NewDocumentService.class);
+    NewDocumentServiceImpl documentService = ExoContainerContext.getCurrentContainer()
+                                                            .getComponentInstanceOfType(NewDocumentServiceImpl.class);
     return documentService.createDocument(parent, title, template);
   }
 
