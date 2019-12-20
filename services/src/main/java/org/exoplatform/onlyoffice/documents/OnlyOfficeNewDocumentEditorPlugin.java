@@ -4,7 +4,6 @@ import static org.exoplatform.onlyoffice.webui.OnlyofficeContext.editorLink;
 
 import javax.jcr.Node;
 
-import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.container.component.BaseComponentPlugin;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ValueParam;
@@ -22,24 +21,29 @@ import org.exoplatform.webui.application.WebuiRequestContext;
 public class OnlyOfficeNewDocumentEditorPlugin extends BaseComponentPlugin implements NewDocumentEditorPlugin {
 
   /** The Constant PROVIDER_PARAM. */
-  protected static final String PROVIDER_PARAM = "provider";
+  protected static final String           PROVIDER_PARAM = "provider";
 
   /** The Constant LOG. */
-  protected static final Log    LOG            = ExoLogger.getLogger(OnlyOfficeNewDocumentEditorPlugin.class);
+  protected static final Log              LOG            = ExoLogger.getLogger(OnlyOfficeNewDocumentEditorPlugin.class);
 
   /** The provider. */
-  protected String              provider;
+  protected String                        provider;
+
+  /** The editor service. */
+  protected final OnlyofficeEditorService editorService;
 
   /**
    * Instantiates a new only office new document editor plugin.
    *
+   * @param editorService the editor service
    * @param initParams the init params
    */
-  public OnlyOfficeNewDocumentEditorPlugin(InitParams initParams) {
+  public OnlyOfficeNewDocumentEditorPlugin(OnlyofficeEditorService editorService, InitParams initParams) {
     ValueParam providerParam = initParams.getValueParam(PROVIDER_PARAM);
     if (providerParam != null) {
       this.provider = providerParam.getValue();
     }
+    this.editorService = editorService;
   }
 
   /**
@@ -55,14 +59,12 @@ public class OnlyOfficeNewDocumentEditorPlugin extends BaseComponentPlugin imple
   /**
    * On document created.
    *
-   * @param node the node
+   * @param workspace the workspace
+   * @param path the path
    * @throws Exception the exception
    */
   @Override
   public void onDocumentCreated(String workspace, String path) throws Exception {
-    
-    OnlyofficeEditorService editorService = ExoContainerContext.getCurrentContainer()
-                                                               .getComponentInstanceOfType(OnlyofficeEditorService.class);
     Node document = editorService.getDocument(workspace, path);
     LOG.debug("Opening editor page for document {}", document);
     String link = editorService.getEditorLink(document);
@@ -80,6 +82,10 @@ public class OnlyOfficeNewDocumentEditorPlugin extends BaseComponentPlugin imple
 
   /**
    * On document create.
+   *
+   * @param template the template
+   * @param parentPath the parent path
+   * @param title the title
    */
   @Override
   public void beforeDocumentCreate(DocumentTemplate template, String parentPath, String title) {
