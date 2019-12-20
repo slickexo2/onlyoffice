@@ -11,7 +11,7 @@ import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ObjectParameter;
 import org.exoplatform.ecm.webui.component.explorer.documents.DocumentTemplate;
 import org.exoplatform.ecm.webui.component.explorer.documents.NewDocumentService;
-import org.exoplatform.ecm.webui.component.explorer.documents.NewDocumentServiceImpl;
+import org.exoplatform.ecm.webui.component.explorer.documents.NewDocumentService;
 import org.exoplatform.ecm.webui.component.explorer.documents.NewDocumentTemplatePlugin;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
@@ -43,7 +43,7 @@ public class OnlyOfficeNewDocumentTemplatePlugin extends BaseComponentPlugin imp
     ObjectParameter typesParam = initParams.getObjectParam(DOCUMENT_TEMPLATES_CONFIGURATION);
     if (typesParam != null) {
       Object obj = typesParam.getObject();
-      if (obj != null && NewDocumentServiceImpl.DocumentTemplatesConfig.class.isAssignableFrom(obj.getClass())) {
+      if (obj != null && NewDocumentService.DocumentTemplatesConfig.class.isAssignableFrom(obj.getClass())) {
         NewDocumentService.DocumentTemplatesConfig config = NewDocumentService.DocumentTemplatesConfig.class.cast(obj);
         this.templates = config.getTemplates();
         this.provider = config.getProvider();
