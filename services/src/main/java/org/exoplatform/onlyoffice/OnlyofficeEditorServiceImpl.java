@@ -1880,6 +1880,9 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           // update document
           if (data != null) {
             content.setProperty("jcr:data", data);
+          } else {
+            // Set the same data to call listeners
+            content.setProperty("jcr:data", content.getProperty("jcr:data").getStream());
           }
           node.save();
           long statusCode = status.getStatus() != null ? status.getStatus() : -1;
@@ -2009,10 +2012,12 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
                                                                    identityManager.getOrCreateIdentity(OrganizationIdentityProvider.NAME,
                                                                                                        userId,
                                                                                                        false);
+      ExoSocialActivity activity = activityManager.getActivity(activityId);
       ExoSocialActivity comment = new ExoSocialActivityImpl(identity.getId(),
                                                             SpaceActivityPublisher.SPACE_APP_ID,
                                                             commentText,
                                                             null);
+      activityManager.saveComment(activity, comment);
       return comment.getId();
     } else {
       LOG.warn("Cannot add comment. ActivityId and comment shouldn't be null or empty. activityId: {}, comment: {}",
