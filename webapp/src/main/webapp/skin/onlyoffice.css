@@ -257,13 +257,13 @@ a.icon-place {
 .onlyofficeEditorBody #editor-drawer .user-edit {
   padding: 8px;
   color: #333333;
-  width: 155px;
+  width: 45%;
   text-align: left;
 }
 
 .onlyofficeEditorBody #editor-drawer .created-date {
   padding: 9px;
-  width: 155px;
+  width: 40%;
   text-align: end;
   color: #999999;
   font-size: 12px;
