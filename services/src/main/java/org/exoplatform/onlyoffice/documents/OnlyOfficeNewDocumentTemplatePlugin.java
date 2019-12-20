@@ -10,6 +10,7 @@ import org.exoplatform.container.component.BaseComponentPlugin;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ObjectParameter;
 import org.exoplatform.ecm.webui.component.explorer.documents.DocumentTemplate;
+import org.exoplatform.ecm.webui.component.explorer.documents.NewDocumentService;
 import org.exoplatform.ecm.webui.component.explorer.documents.NewDocumentServiceImpl;
 import org.exoplatform.ecm.webui.component.explorer.documents.NewDocumentTemplatePlugin;
 import org.exoplatform.services.log.ExoLogger;
@@ -43,7 +44,7 @@ public class OnlyOfficeNewDocumentTemplatePlugin extends BaseComponentPlugin imp
     if (typesParam != null) {
       Object obj = typesParam.getObject();
       if (obj != null && NewDocumentServiceImpl.DocumentTemplatesConfig.class.isAssignableFrom(obj.getClass())) {
-        NewDocumentServiceImpl.DocumentTemplatesConfig config = NewDocumentServiceImpl.DocumentTemplatesConfig.class.cast(obj);
+        NewDocumentService.DocumentTemplatesConfig config = NewDocumentService.DocumentTemplatesConfig.class.cast(obj);
         this.templates = config.getTemplates();
         this.provider = config.getProvider();
       } else {
@@ -84,8 +85,8 @@ public class OnlyOfficeNewDocumentTemplatePlugin extends BaseComponentPlugin imp
   @Override
   public Node createDocument(Node parent, String title, DocumentTemplate template) throws Exception {
     LOG.debug("Creating new document {} from template {}", title, template);
-    NewDocumentServiceImpl documentService = ExoContainerContext.getCurrentContainer()
-                                                            .getComponentInstanceOfType(NewDocumentServiceImpl.class);
+    NewDocumentService documentService = ExoContainerContext.getCurrentContainer()
+                                                            .getComponentInstanceOfType(NewDocumentService.class);
     return documentService.createDocument(parent, title, template);
   }
 
