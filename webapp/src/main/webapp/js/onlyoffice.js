@@ -1017,7 +1017,7 @@
          $(".created-date").tooltip();
        },
        error: function (xhr, ajaxOptions, thrownError) {
-         alert(xhr.responseText + "\n" + xhr.status + "\n" + thrownError);
+         console.log(xhr.responseText + "\n" + xhr.status + "\n" + thrownError);
        }
       });
     };
