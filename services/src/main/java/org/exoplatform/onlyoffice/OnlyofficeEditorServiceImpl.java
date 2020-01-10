@@ -1863,7 +1863,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
           if (status.getComment() != null && !status.getComment().trim().isEmpty()) {
             String activityId = ActivityTypeUtils.getActivityId(node);
             if (activityId != null) {
-              commentId = addComment(activityId, status.getComment(), userId);
+              commentId = getCommentId(activityId, status.getComment(), userId);
               versionSummary = status.getComment().trim();
             }
           }
@@ -2003,7 +2003,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
     }
   }
 
-  protected String addComment(String activityId, String commentText, String userId) {
+  protected String getCommentId(String activityId, String commentText, String userId) {
     if (activityId != null && !activityId.isEmpty() && commentText != null && !commentText.trim().isEmpty()) {
       IdentityManager identityManager = WCMCoreUtils.getService(IdentityManager.class);
       org.exoplatform.social.core.identity.model.Identity identity =
