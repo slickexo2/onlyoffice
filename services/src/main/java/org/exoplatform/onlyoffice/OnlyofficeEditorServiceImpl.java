@@ -1430,7 +1430,7 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
 
     Node userPreferences;
     if (!preferences.hasNode(userId)) {
-      userPreferences = preferences.addNode(userId, "eoo:userPreferences");
+      userPreferences = preferences.addNode(userId, "exo:userPreferences");
     } else {
       userPreferences = preferences.getNode(userId);
     }
