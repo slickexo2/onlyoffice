@@ -8,9 +8,9 @@ import javax.jcr.Node;
 import org.exoplatform.container.component.BaseComponentPlugin;
 import org.exoplatform.container.xml.InitParams;
 import org.exoplatform.container.xml.ObjectParameter;
-import org.exoplatform.ecm.webui.component.explorer.documents.DocumentTemplate;
-import org.exoplatform.ecm.webui.component.explorer.documents.NewDocumentService;
-import org.exoplatform.ecm.webui.component.explorer.documents.NewDocumentTemplatePlugin;
+import org.exoplatform.services.cms.documents.DocumentService;
+import org.exoplatform.services.cms.documents.DocumentTemplate;
+import org.exoplatform.services.cms.documents.NewDocumentTemplatePlugin;
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
 
@@ -32,8 +32,8 @@ public class OnlyOfficeNewDocumentTemplatePlugin extends BaseComponentPlugin imp
   /** The provider. */
   protected String                   provider;
 
-  /** The new document service. */
-  protected final NewDocumentService newDocumentService;
+  /** The document service. */
+  protected final DocumentService documentService;
 
 
   /**
@@ -42,19 +42,19 @@ public class OnlyOfficeNewDocumentTemplatePlugin extends BaseComponentPlugin imp
    * @param newDocumentService the new document service
    * @param initParams the init params
    */
-  public OnlyOfficeNewDocumentTemplatePlugin(NewDocumentService newDocumentService, InitParams initParams) {
+  public OnlyOfficeNewDocumentTemplatePlugin(DocumentService documentService, InitParams initParams) {
     ObjectParameter typesParam = initParams.getObjectParam(DOCUMENT_TEMPLATES_CONFIGURATION);
     if (typesParam != null) {
       Object obj = typesParam.getObject();
-      if (obj != null && NewDocumentService.DocumentTemplatesConfig.class.isAssignableFrom(obj.getClass())) {
-        NewDocumentService.DocumentTemplatesConfig config = NewDocumentService.DocumentTemplatesConfig.class.cast(obj);
+      if (obj != null && DocumentService.DocumentTemplatesConfig.class.isAssignableFrom(obj.getClass())) {
+        DocumentService.DocumentTemplatesConfig config = DocumentService.DocumentTemplatesConfig.class.cast(obj);
         this.templates = config.getTemplates();
         this.provider = config.getProvider();
       } else {
         LOG.error("The document templates are not set");
       }
     }
-    this.newDocumentService = newDocumentService;
+    this.documentService = documentService;
   }
 
   /**
@@ -89,7 +89,7 @@ public class OnlyOfficeNewDocumentTemplatePlugin extends BaseComponentPlugin imp
   @Override
   public Node createDocument(Node parent, String title, DocumentTemplate template) throws Exception {
     LOG.debug("Creating new document {} from template {}", title, template);
-    return newDocumentService.createDocument(parent, title, template);
+    return documentService.createDocumentFromTemplate(parent, title, template);
   }
 
 }

@@ -49,9 +49,9 @@
     <type>org.exoplatform.onlyoffice.cometd.CometdOnlyofficeService</type>
   </component>
 
-  <!-- NewDocumentTemplatePlugin for NewDocumentService-->
+  <!-- NewDocumentTemplatePlugin for DocumentService-->
   <external-component-plugins>
-    <target-component>org.exoplatform.ecm.webui.component.explorer.documents.NewDocumentService</target-component>
+    <target-component>org.exoplatform.services.cms.documents.DocumentService</target-component>
     <component-plugin>
       <name>onlyofficeTemplatePlugin</name>
       <set-method>addDocumentTemplatePlugin</set-method>
@@ -60,11 +60,11 @@
       <init-params>
         <object-param>
           <name>document-templates-configuration</name>
-          <object type="org.exoplatform.ecm.webui.component.explorer.documents.NewDocumentService$DocumentTemplatesConfig">
+          <object type="org.exoplatform.services.cms.documents.DocumentService$DocumentTemplatesConfig">
             <field name="templates">
               <collection type="java.util.ArrayList">
                 <value>
-                  <object type="org.exoplatform.ecm.webui.component.explorer.documents.DocumentTemplate">
+                  <object type="org.exoplatform.services.cms.documents.DocumentTemplate">
                     <field name="path">
                       <string>classpath:files/template.docx</string>
                     </field>
@@ -77,7 +77,7 @@
                   </object>
                 </value>
                 <value>
-                  <object type="org.exoplatform.ecm.webui.component.explorer.documents.DocumentTemplate">
+                  <object type="org.exoplatform.services.cms.documents.DocumentTemplate">
                     <field name="path">
                       <string>classpath:files/template.xlsx</string>
                     </field>
@@ -90,7 +90,7 @@
                   </object>
                 </value>
                 <value>
-                  <object type="org.exoplatform.ecm.webui.component.explorer.documents.DocumentTemplate">
+                  <object type="org.exoplatform.services.cms.documents.DocumentTemplate">
                     <field name="path">
                       <string>classpath:files/template.pptx</string>
                     </field>
@@ -113,9 +113,9 @@
     </component-plugin>
   </external-component-plugins>
   
-    <!-- NewDocumentEditorPlugin for NewDocumentService-->
+    <!-- NewDocumentEditorPlugin for DocumentService-->
   <external-component-plugins>
-    <target-component>org.exoplatform.ecm.webui.component.explorer.documents.NewDocumentService</target-component>
+    <target-component>org.exoplatform.services.cms.documents.DocumentService</target-component>
     <component-plugin>
       <name>onlyofficeEditorPlugin</name>
       <set-method>addDocumentEditorPlugin</set-method>

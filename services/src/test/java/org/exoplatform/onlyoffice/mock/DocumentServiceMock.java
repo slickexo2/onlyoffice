@@ -1,10 +1,16 @@
 package org.exoplatform.onlyoffice.mock;
 
 import java.util.List;
+import java.util.Map;
 
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
+import org.exoplatform.container.component.ComponentPlugin;
 import org.exoplatform.services.cms.documents.DocumentService;
+import org.exoplatform.services.cms.documents.DocumentTemplate;
+import org.exoplatform.services.cms.documents.NewDocumentEditorPlugin;
+import org.exoplatform.services.cms.documents.NewDocumentTemplatePlugin;
 import org.exoplatform.services.cms.documents.model.Document;
 import org.exoplatform.services.cms.drives.DriveData;
 
@@ -92,6 +98,46 @@ public class DocumentServiceMock implements DocumentService {
   @Override
   public DriveData getDriveOfNode(String nodePath, String userId, List<String> memberships) throws Exception {
     return null;
+  }
+
+  @Override
+  public void addDocumentTemplatePlugin(ComponentPlugin plugin) {
+    
+  }
+
+  @Override
+  public void addDocumentEditorPlugin(ComponentPlugin plugin) {
+    
+  }
+
+  @Override
+  public Node createDocumentFromTemplate(Node currentNode, String title, DocumentTemplate template) throws Exception {
+    return null;
+  }
+
+  @Override
+  public DocumentTemplate getDocumentTemplate(String provider, String label) {
+    return null;
+  }
+
+  @Override
+  public NewDocumentTemplatePlugin getDocumentTemplatePlugin(String provider) {
+    return null;
+  }
+
+  @Override
+  public NewDocumentEditorPlugin getDocumentEditorPlugin(String provider) {
+    return null;
+  }
+
+  @Override
+  public Map<String, NewDocumentTemplatePlugin> getRegisteredTemplatePlugins() {
+    return null;
+  }
+
+  @Override
+  public boolean hasDocumentTemplatePlugins() {
+    return false;
   }
 
 }

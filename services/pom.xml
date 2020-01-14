@@ -89,6 +89,11 @@
       <artifactId>ecms-core-webui</artifactId>
       <scope>provided</scope>
     </dependency>
+        <dependency>
+      <groupId>org.exoplatform.ecms</groupId>
+      <artifactId>ecms-core-services</artifactId>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>org.exoplatform.social</groupId>
       <artifactId>social-component-webui</artifactId>
