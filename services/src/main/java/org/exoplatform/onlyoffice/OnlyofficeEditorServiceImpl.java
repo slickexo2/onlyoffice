@@ -1857,24 +1857,15 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
             node.setProperty("exo:dateModified", editedTime);
           }
 
-          // Add comment to the FileActivity with current file
-          String commentId = null;
+          // Add comment to version summary
           String versionSummary = null;
           if (status.getComment() != null && !status.getComment().trim().isEmpty()) {
             String activityId = ActivityTypeUtils.getActivityId(node);
             if (activityId != null) {
-              commentId = addComment(activityId, status.getComment(), userId);
               versionSummary = status.getComment().trim();
             }
           }
 
-          if (commentId != null) {
-            node.setProperty("eoo:commentId", commentId);
-            config.getEditorPage().setComment(status.getComment());
-          } else {
-            node.setProperty("eoo:commentId", "");
-            config.getEditorPage().setComment(null);
-          }
           updateCache(config);
 
           // update document
@@ -2003,29 +1994,6 @@ public class OnlyofficeEditorServiceImpl implements OnlyofficeEditorService, Sta
       activeCache.put(config.getDocument().getKey(), configs);
       activeCache.put(config.getDocId(), configs);
     }
-  }
-
-  protected String addComment(String activityId, String commentText, String userId) {
-    if (activityId != null && !activityId.isEmpty() && commentText != null && !commentText.trim().isEmpty()) {
-      IdentityManager identityManager = WCMCoreUtils.getService(IdentityManager.class);
-      org.exoplatform.social.core.identity.model.Identity identity =
-                                                                   identityManager.getOrCreateIdentity(OrganizationIdentityProvider.NAME,
-                                                                                                       userId,
-                                                                                                       false);
-      ExoSocialActivity activity = activityManager.getActivity(activityId);
-      ExoSocialActivity comment = new ExoSocialActivityImpl(identity.getId(),
-                                                            SpaceActivityPublisher.SPACE_APP_ID,
-                                                            commentText,
-                                                            null);
-      activityManager.saveComment(activity, comment);
-      return comment.getId();
-    } else {
-      LOG.warn("Cannot add comment. ActivityId and comment shouldn't be null or empty. activityId: {}, comment: {}",
-               activityId,
-               commentText);
-      return null;
-    }
-
   }
 
   /**
