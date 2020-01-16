@@ -685,7 +685,8 @@
     };
 
     /**
-     * Sets the onClick listener for Create Document button (used in creating a new document)
+     * Opens a new window for the editor. We open the empty tab and then init editor there.
+     * It's used to provide better UX (no delay between click on the button and openning window with the editor)
      */
     this.initNewDocument = function() {
       editorWindow = window.open();

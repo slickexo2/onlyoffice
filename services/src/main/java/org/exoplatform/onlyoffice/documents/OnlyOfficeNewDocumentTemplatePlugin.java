@@ -63,7 +63,7 @@ public class OnlyOfficeNewDocumentTemplatePlugin extends BaseComponentPlugin imp
    * @return the provider
    */
   @Override
-  public String getProvider() {
+  public String getProviderName() {
     return provider;
   }
 
