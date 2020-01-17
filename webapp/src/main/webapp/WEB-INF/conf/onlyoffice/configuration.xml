@@ -68,7 +68,7 @@
                     <field name="path">
                       <string>classpath:files/template.docx</string>
                     </field>
-                    <field name="label">
+                    <field name="name">
                       <string>MicrosoftOfficeDocument</string>
                     </field>
                     <field name="mimeType">
@@ -81,7 +81,7 @@
                     <field name="path">
                       <string>classpath:files/template.xlsx</string>
                     </field>
-                    <field name="label">
+                    <field name="name">
                       <string>MicrosoftOfficeSpreadsheet</string>
                     </field>
                     <field name="mimeType">
@@ -94,7 +94,7 @@
                     <field name="path">
                       <string>classpath:files/template.pptx</string>
                     </field>
-                    <field name="label">
+                    <field name="name">
                       <string>MicrosoftOfficePresentation</string>
                     </field>
                     <field name="mimeType">
@@ -103,9 +103,6 @@
                   </object>
                 </value>
               </collection>
-            </field>
-            <field name="provider">
-              <string>onlyoffice</string>
             </field>
           </object>
         </object-param>
@@ -121,12 +118,6 @@
       <set-method>addDocumentEditorPlugin</set-method>
       <type>org.exoplatform.onlyoffice.documents.OnlyOfficeNewDocumentEditorPlugin</type>
       <description>The document editor plugin</description>
-      <init-params>
-        <value-param>
-          <name>provider</name>
-          <value>onlyoffice</value>
-        </value-param>
-      </init-params>
     </component-plugin>
   </external-component-plugins>
   

@@ -5,8 +5,6 @@ import static org.exoplatform.onlyoffice.webui.OnlyofficeContext.editorLink;
 import javax.jcr.Node;
 
 import org.exoplatform.container.component.BaseComponentPlugin;
-import org.exoplatform.container.xml.InitParams;
-import org.exoplatform.container.xml.ValueParam;
 import org.exoplatform.onlyoffice.OnlyofficeEditorService;
 import org.exoplatform.services.cms.documents.DocumentTemplate;
 import org.exoplatform.services.cms.documents.NewDocumentEditorPlugin;
@@ -20,14 +18,11 @@ import org.exoplatform.webui.application.WebuiRequestContext;
  */
 public class OnlyOfficeNewDocumentEditorPlugin extends BaseComponentPlugin implements NewDocumentEditorPlugin {
 
-  /** The Constant PROVIDER_PARAM. */
-  protected static final String           PROVIDER_PARAM = "provider";
+  /** The Constant PROVIDER_NAME. */
+  protected static final String PROVIDER_NAME = "OnlyOffice";
 
   /** The Constant LOG. */
   protected static final Log              LOG            = ExoLogger.getLogger(OnlyOfficeNewDocumentEditorPlugin.class);
-
-  /** The provider. */
-  protected String                        provider;
 
   /** The editor service. */
   protected final OnlyofficeEditorService editorService;
@@ -36,24 +31,19 @@ public class OnlyOfficeNewDocumentEditorPlugin extends BaseComponentPlugin imple
    * Instantiates a new only office new document editor plugin.
    *
    * @param editorService the editor service
-   * @param initParams the init params
    */
-  public OnlyOfficeNewDocumentEditorPlugin(OnlyofficeEditorService editorService, InitParams initParams) {
-    ValueParam providerParam = initParams.getValueParam(PROVIDER_PARAM);
-    if (providerParam != null) {
-      this.provider = providerParam.getValue();
-    }
+  public OnlyOfficeNewDocumentEditorPlugin(OnlyofficeEditorService editorService) {
     this.editorService = editorService;
   }
 
   /**
-   * Gets the provider.
+   * Gets the provider name.
    *
-   * @return the provider
+   * @return the provider name
    */
   @Override
-  public String getProvider() {
-    return provider;
+  public String getProviderName() {
+    return PROVIDER_NAME;
   }
 
   /**
