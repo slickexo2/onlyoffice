@@ -1,10 +1,17 @@
 package org.exoplatform.onlyoffice.mock;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
+import org.exoplatform.container.component.ComponentPlugin;
 import org.exoplatform.services.cms.documents.DocumentService;
+import org.exoplatform.services.cms.documents.DocumentTemplate;
+import org.exoplatform.services.cms.documents.NewDocumentEditorPlugin;
+import org.exoplatform.services.cms.documents.NewDocumentTemplatePlugin;
 import org.exoplatform.services.cms.documents.model.Document;
 import org.exoplatform.services.cms.drives.DriveData;
 
@@ -91,6 +98,72 @@ public class DocumentServiceMock implements DocumentService {
    */
   @Override
   public DriveData getDriveOfNode(String nodePath, String userId, List<String> memberships) throws Exception {
+    return null;
+  }
+
+  /**
+   * Adds the document template plugin.
+   *
+   * @param plugin the plugin
+   */
+  @Override
+  public void addDocumentTemplatePlugin(ComponentPlugin plugin) {
+
+  }
+
+  /**
+   * Adds the document editor plugin.
+   *
+   * @param plugin the plugin
+   */
+  @Override
+  public void addDocumentEditorPlugin(ComponentPlugin plugin) {
+
+  }
+
+  /**
+   * Creates the document from template.
+   *
+   * @param currentNode the current node
+   * @param title the title
+   * @param template the template
+   * @return the node
+   * @throws Exception the exception
+   */
+  @Override
+  public Node createDocumentFromTemplate(Node currentNode, String title, DocumentTemplate template) throws Exception {
+    return null;
+  }
+
+  /**
+   * Checks for document template plugins.
+   *
+   * @return true, if successful
+   */
+  @Override
+  public boolean hasDocumentTemplatePlugins() {
+    return false;
+  }
+
+  /**
+   * Gets the registered template plugins.
+   *
+   * @return the registered template plugins
+   */
+  @Override
+  public Set<NewDocumentTemplatePlugin> getRegisteredTemplatePlugins() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  /**
+   * Gets the registered editor plugins.
+   *
+   * @return the registered editor plugins
+   */
+  @Override
+  public Set<NewDocumentEditorPlugin> getRegisteredEditorPlugins() {
+    // TODO Auto-generated method stub
     return null;
   }
 
